@@ -186,6 +186,28 @@
   .ans-cell.ok{border-color:var(--green);background:var(--green-soft)}
   .ans-cell.bad{border-color:var(--red);background:var(--red-soft)}
   .ans-cell .sol{font-size:11px;color:var(--muted);min-height:14px}
+  /* ===== Compases ===== */
+  .com-opt{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);color:var(--muted);
+    border-radius:8px;padding:6px 11px;font-size:12px;font-weight:800;cursor:pointer;transition:background .15s,color .15s;text-transform:capitalize}
+  .com-opt:hover{background:rgba(255,255,255,.1);color:var(--ink)}
+  .com-opt.on{background:var(--teoria);color:#fff;border-color:transparent}
+  .com-fig{border:1px solid rgba(255,255,255,.16);background:var(--paper);color:#10131f;
+    border-radius:8px;flex:1 1 0;min-width:0;height:50px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:box-shadow .15s,border-color .15s;padding:2px}
+  .com-fig:hover{border-color:var(--muted2)}
+  .com-fig.on{border-color:var(--teoria);background:#fbdcec;box-shadow:0 0 0 2px rgba(232,67,147,.35)}
+  .com-fig svg{width:26px;height:30px}
+  .com-banner{max-height:0;opacity:0;overflow:hidden;background:linear-gradient(90deg,#e84393,#c0307a);
+    color:#fff;border-radius:10px;font-size:13px;font-weight:800;text-align:center;
+    transition:max-height .3s ease,opacity .3s ease,margin .3s ease,padding .3s ease;margin:0;padding:0 14px}
+  .com-banner.show{max-height:60px;opacity:1;margin:0 0 12px;padding:10px 14px}
+  .com-cell{background:var(--paper);border:2px solid var(--line);border-radius:10px;min-height:66px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s,box-shadow .15s,background .15s;overflow:hidden;position:relative}
+  .com-cell:hover{border-color:var(--muted2)}
+  .com-cell.marcada{border-color:var(--teoria);background:#fbdcec;box-shadow:0 0 0 3px rgba(232,67,147,.25)}
+  .com-cell.ok{border-color:var(--green);background:#d8f3e3;box-shadow:0 0 0 3px rgba(60,200,120,.28)}
+  .com-cell.bad{border-color:var(--red);background:#fadbdd;box-shadow:0 0 0 3px rgba(232,80,90,.28)}
+  .com-cell.falta{border-color:#2f6df6;background:#dbe7ff;box-shadow:0 0 0 3px rgba(47,109,246,.28)}
+  .com-rit{width:100%;display:flex;align-items:center;justify-content:center}
   .ans-cell.bad .sol{color:var(--red)}
 
   /* doble selector tipo iOS */
@@ -564,6 +586,29 @@
 
   </section>
 
+  <!-- ============ VISTA COMPASES ============ -->
+  <section class="view" id="view-compases">
+    <div class="iv-head">
+      <div class="iv-title"><span class="post">COM</span>PASES</div>
+    </div>
+    <p class="iv-sub">Observa el compás de la izquierda e indica su tipo, su subdivisión y las figuras de pulso, de subdivisión y de compás. Después, en la rejilla, marca los ritmos que ocupan exactamente un pulso de ese compás.</p>
+
+    <div class="ex-card" id="cardCOM">
+      <div class="ex-top">
+        <div class="ex-letter"><b></b><span></span></div>
+        <div style="display:flex;gap:8px">
+          <button class="iconbtn" onclick="nuevoCOM()" title="Nuevo ejercicio">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+            Nuevo
+          </button>
+          <button class="iconbtn btn-correct" onclick="corregirCOM()">✓ Corregir</button>
+        </div>
+      </div>
+      <div id="comBody"></div>
+    </div>
+
+  </section>
+
 </div>
 
 
@@ -605,6 +650,7 @@ const PADS=[
   {id:'escalas',nombre:'Escalas',kick:'Teoría',foot:'Menores, mayores y otras',activo:true,open:'openEscalas'},
   {id:'enarmonias',nombre:'Enarmonías',kick:'Teoría',foot:'Equivalencias',activo:false},
   {id:'semitonos',nombre:'Semitonos',kick:'Teoría',foot:'Diatónico / cromático',activo:false},
+  {id:'compases',nombre:'Compases',kick:'Ritmo',foot:'Tipo, subdivisión y ritmos',activo:true,open:'openCompases'},
   {id:'tonalidades',nombre:'Tonalidades',kick:'Teoría',foot:'Armaduras y tonos vecinos',activo:true,open:'openTonalidades',ico:'armT'},
 ];
 function padIcon(p){
@@ -3168,12 +3214,11 @@ const ACO_TIPOS = {
   Dis: {label:'Dis', i3_st:3, i5_st:6},
   D7:  {label:'7D',  i3_st:4, i5_st:7, i7_st:10}, // 7ª de dominante (PM + 7ª menor)
 };
-/* orden visual de la rueda de tipo, de ARRIBA (agudo) a ABAJO (grave):
-   (7D si habilitado), Aum, PM, [—], Pm, Dis */
+/* orden visual de la rueda de tipo, de ARRIBA a ABAJO:
+   guion arriba, luego PM, Pm, Aum, Dis (y 7D al final si está habilitado) */
 function acoTipoItems(){
-  const base=[];
+  const base=['—','PM','Pm','Aum','Dis'];
   if(acoCfg.sept) base.push('7D');
-  base.push('Aum','PM','—','Pm','Dis');
   return base;
 }
 const ACO_RARAS = new Set(['F,-1','C,-1','B,1','E,1']); // Fb, Cb, B#, E# prohibidos
@@ -3623,6 +3668,326 @@ function openAcordes(){
   showView('view-acordes');
   const sw=document.getElementById('acoSwitch'); if(sw) sw.classList.toggle('on',acoCfg.sept);
   if(dataACO.length===0) nuevoACO();
+}
+
+</script>
+<script>
+/* ============================================================
+   COMPASES — análisis de compás + rejilla de ritmos
+   Preguntas: tipo (binario/ternario/cuaternario), subdivisión
+   (binaria/ternaria), figura de pulso, de subdivisión y de compás.
+   Rejilla 3x3: marcar los ritmos que ocupan un compás completo.
+   ============================================================ */
+
+/* catálogo de compases.
+   num/den = cifra; pulsos = nº de pulsos; sub = 'bin'|'ter';
+   pulsoFig = figura del pulso; subFig = figura de subdivisión;
+   compasUnidades = duración del compás en "corcheas" (denominador 8) para medir ritmos. */
+const COM_COMPASES = {
+  '2/4': {num:2,den:4, pulsos:2, tipo:'binario',     sub:'binaria',  pulsoFig:'q', subFig:'8', compasFig:'h',  bloque:'binario'},
+  '3/4': {num:3,den:4, pulsos:3, tipo:'ternario',    sub:'binaria',  pulsoFig:'q', subFig:'8', compasFig:'h.', bloque:'binario'},
+  '4/4': {num:4,den:4, pulsos:4, tipo:'cuaternario', sub:'binaria',  pulsoFig:'q', subFig:'8', compasFig:'w',  bloque:'binario'},
+  '2/2': {num:2,den:2, pulsos:2, tipo:'binario',     sub:'binaria',  pulsoFig:'h', subFig:'q', compasFig:'w',  bloque:'blancas'},
+  '3/2': {num:3,den:2, pulsos:3, tipo:'ternario',    sub:'binaria',  pulsoFig:'h', subFig:'q', compasFig:'w.', bloque:'blancas'},
+  '4/2': {num:4,den:2, pulsos:4, tipo:'cuaternario', sub:'binaria',  pulsoFig:'h', subFig:'q', compasFig:null, bloque:'blancas'},
+  '6/8': {num:6,den:8, pulsos:2, tipo:'binario',     sub:'ternaria', pulsoFig:'q.',subFig:'8', compasFig:'h.', bloque:'ternario'},
+  '9/8': {num:9,den:8, pulsos:3, tipo:'ternario',    sub:'ternaria', pulsoFig:'q.',subFig:'8', compasFig:null, bloque:'ternario'},
+  '12/8':{num:12,den:8,pulsos:4, tipo:'cuaternario', sub:'ternaria', pulsoFig:'q.',subFig:'8', compasFig:'w.', bloque:'ternario'},
+};
+const COM_KEYS = Object.keys(COM_COMPASES);
+
+/* catálogo de células de UN PULSO por bloque (del catálogo rítmico) */
+const COM_CELLS = [
+  {block:'ternario', notes:['8','8','8']},
+  {block:'ternario', notes:['q','8']},
+  {block:'ternario', notes:['8','q']},
+  {block:'ternario', notes:['qd']},
+  {block:'ternario', notes:['16','16','16','16','16','16']},
+  {block:'ternario', notes:['16','16','8','8']},
+  {block:'ternario', notes:['16','16','16','16','8']},
+  {block:'ternario', notes:['8','16','16','16','16']},
+  {block:'ternario', notes:['8d','16','16','16']},
+  {block:'ternario', notes:['8d','16','8']},
+  {block:'binario', notes:['q']},
+  {block:'binario', notes:['8','8']},
+  {block:'binario', notes:['16','16','16','16']},
+  {block:'binario', notes:['8','16','16']},
+  {block:'binario', notes:['16','16','8']},
+  {block:'binario', notes:['16r','16','16','16']},
+  {block:'binario', notes:['8d','16']},
+  {block:'blancas', notes:['q','q']},
+  {block:'blancas', notes:['q','8','8']},
+  {block:'blancas', notes:['8','8','q']},
+  {block:'blancas', notes:['8','8','8','8']},
+  {block:'blancas', notes:['qd','8']},
+  {block:'blancas', notes:['8','q','8']},
+  {block:'blancas', notes:['qr','q']},
+];
+const COM_DUR16 = {'16':1,'8':2,'8d':3,'q':4,'qd':6,'h':8,'hd':12,'w':16};
+const COM_PULSE16 = {ternario:6, binario:4, blancas:8};
+function comCellSemis(cell){
+  let s=0; cell.notes.forEach(f=>{ const raw=(typeof f==='object')?f.d:f; const b=raw.replace('r',''); s+=COM_DUR16[b]||0; });
+  return s;
+}
+
+/* duración de cada figura en NEGRAS (quarter = 1) */
+const FIG_DUR = { w:4, 'h.':3, h:2, 'q.':1.5, q:1, '8':0.5, '8.':0.75, '16':0.25, 'w.':6, 'ww':8, 'h..':3.5 };
+/* figuras que ofrecemos en los selectores de figura */
+const FIG_OPC = ['w','h.','h','q.','q','8','16'];        // figura de pulso / subdivisión (con semicorchea, sin redonda c.p.)
+const FIG_OPC_COMPAS = ['w.','w','h.','h','q.','q'];     // figura de compás (con redonda c.p.)
+
+let dataCOM = null;
+
+function nuevoCOM(){
+  unlockCard('cardCOM');
+  const key = pick(COM_KEYS);
+  const c = COM_COMPASES[key];
+  const nCorrect = 2 + rint(4); // 2..5
+  const celdas = generarRejillaCOM(c, nCorrect);
+  dataCOM = {
+    key, c,
+    selTipo:null, selSub:null,
+    selPulso:null, selSub2:null, selCompas:null,
+    celdas, marcadas:new Set(),
+    corregido:false
+  };
+  renderCOM();
+}
+
+/* genera 9 células: correctas = del bloque del compás (ocupan 1 pulso); incorrectas = de otros bloques */
+function generarRejillaCOM(c, nCorrect){
+  const pulse=COM_PULSE16[c.bloque];
+  const correctas=COM_CELLS.filter(x=>x.block===c.bloque && comCellSemis(x)===pulse);
+  const incorrectas=COM_CELLS.filter(x=>x.block!==c.bloque);
+  const sh=a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=rint(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+  const okN=Math.min(nCorrect, correctas.length);
+  const sel=[];
+  sh(correctas).slice(0,okN).forEach(x=>sel.push({cell:x, ok:true}));
+  sh(incorrectas).slice(0, 9-sel.length).forEach(x=>sel.push({cell:x, ok:false}));
+  while(sel.length<9){ sel.push({cell:pick(correctas), ok:true}); }
+  return sh(sel);
+}
+
+/* ====== RENDER ====== */
+function renderCOM(){
+  const host=document.getElementById('comBody'); if(!host) return; host.innerHTML='';
+  const d=dataCOM, c=d.c;
+  const wrap=document.createElement('div'); wrap.style.cssText='display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start';
+  // izquierda: el compás dado (pentagrama con la cifra)
+  const left=document.createElement('div'); left.style.cssText='flex:0 0 150px;display:flex;flex-direction:column;align-items:center;gap:8px';
+  const scoreHost=document.createElement('div'); scoreHost.className='score'; scoreHost.id='scoreCOM'; scoreHost.style.cssText='width:140px;min-height:120px';
+  left.appendChild(scoreHost);
+  wrap.appendChild(left);
+  // centro: preguntas numeradas
+  const mid=document.createElement('div'); mid.style.cssText='flex:1 1 0;display:flex;flex-direction:column;gap:14px;min-width:330px';
+  mid.appendChild(comApartado('1', 'COMPÁS', comSegTexto(['binario','ternario','cuaternario'], d.selTipo, v=>{d.selTipo=v;})));
+  mid.appendChild(comApartado('2', 'SUBDIVISIÓN', comSegTexto(['binaria','ternaria'], d.selSub, v=>{d.selSub=v;})));
+  mid.appendChild(comApartado('3', 'FIGURA DE PULSO', comSegFigura(d.selPulso, v=>{d.selPulso=v;})));
+  mid.appendChild(comApartado('4', 'FIGURA DE SUBDIVISIÓN', comSegFigura(d.selSub2, v=>{d.selSub2=v;})));
+  wrap.appendChild(mid);
+  // derecha: figura de compás (si existe) + rejilla
+  const right=document.createElement('div'); right.style.cssText='flex:1 1 0;min-width:330px;display:flex;flex-direction:column;gap:14px';
+  let numRej=5;
+  if(c.compasFig){
+    right.appendChild(comApartado('5', 'FIGURA DE COMPÁS', comSegFigura(d.selCompas, v=>{d.selCompas=v;}, FIG_OPC_COMPAS)));
+    numRej=6;
+  }
+  // grid + leyenda como contenido del apartado
+  const rejContent=document.createElement('div');
+  const grid=document.createElement('div'); grid.id='comGrid';
+  grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:8px';
+  d.celdas.forEach((cel,idx)=>{
+    const cell=document.createElement('div'); cell.className='com-cell'; cell.dataset.idx=idx;
+    cell.id='comCell'+idx;
+    cell.innerHTML='<div class="com-rit" id="comRit'+idx+'"></div>';
+    if(d.marcadas.has(idx)) cell.classList.add('marcada');
+    cell.onclick=()=>{ if(d.corregido) return;
+      if(d.marcadas.has(idx)) d.marcadas.delete(idx); else d.marcadas.add(idx);
+      cell.classList.toggle('marcada');
+    };
+    grid.appendChild(cell);
+  });
+  rejContent.appendChild(grid);
+  const tag=document.createElement('div'); tag.className='sol'; tag.id='comSol'; tag.style.cssText='margin-top:10px;font-size:13px;min-height:18px';
+  rejContent.appendChild(tag);
+  right.appendChild(comApartado(String(numRej), 'MARCA LOS RITMOS QUE OCUPAN UN PULSO', rejContent));
+  wrap.appendChild(right);
+  host.appendChild(wrap);
+  // pintar los pentagramas una vez el layout existe (evita anchos 0 intermitentes)
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    renderCompasScore();
+    d.celdas.forEach((cel,idx)=>dibujarRitmoCelda(idx, cel.cell));
+  }));
+}
+
+/* un apartado numerado con título destacado y su contenido (selector) */
+function comApartado(num, titulo, contenido){
+  const box=document.createElement('div'); box.style.cssText='border:1px solid var(--line);border-radius:12px;padding:10px 12px';
+  const head=document.createElement('div'); head.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';
+  const n=document.createElement('span'); n.style.cssText='display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--teoria);color:#fff;font-size:12px;font-weight:900';
+  n.textContent=num;
+  const t=document.createElement('span'); t.style.cssText='font-size:13px;font-weight:900;color:var(--ink);letter-spacing:.03em'; t.textContent=titulo;
+  head.appendChild(n); head.appendChild(t);
+  box.appendChild(head); box.appendChild(contenido);
+  return box;
+}
+/* segmento de texto que ocupa todo el ancho */
+function comSegTexto(opciones, valor, onset){
+  const seg=document.createElement('div'); seg.style.cssText='display:flex;gap:6px';
+  opciones.forEach(op=>{
+    const b=document.createElement('button'); b.className='com-opt'+(valor===op?' on':''); b.textContent=op.toUpperCase();
+    b.style.cssText='flex:1 1 0';
+    b.onclick=()=>{ onset(op); seg.querySelectorAll('.com-opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
+    seg.appendChild(b);
+  });
+  return seg;
+}
+/* segmento de figuras que ocupa todo el ancho (botones flex) */
+function comSegFigura(valor, onset, opciones){
+  const opc = opciones || FIG_OPC;
+  const seg=document.createElement('div'); seg.style.cssText='display:flex;gap:6px';
+  opc.forEach(f=>{
+    const b=document.createElement('button'); b.className='com-fig'+(valor===f?' on':'');
+    b.innerHTML=figuraSVG(f);
+    b.onclick=()=>{ onset(f); seg.querySelectorAll('.com-fig').forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
+    seg.appendChild(b);
+  });
+  return seg;
+}
+/* SVG simple de cada figura rítmica */
+function figuraSVG(f){
+  const head='<circle cx="9" cy="20" r="4.4" fill="currentColor"/>';
+  const headOpen='<ellipse cx="9" cy="20" rx="4.6" ry="3.8" fill="none" stroke="currentColor" stroke-width="1.6"/>';
+  const stem='<rect x="12.6" y="4" width="1.6" height="16" fill="currentColor"/>';
+  const dot='<circle cx="17" cy="20" r="1.3" fill="currentColor"/>';
+  const flag='<path d="M14 4 q6 3 3 9" fill="none" stroke="currentColor" stroke-width="1.6"/>';
+  const flag2='<path d="M14 4 q6 3 3 9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M14 8 q6 3 3 9" fill="none" stroke="currentColor" stroke-width="1.6"/>';
+  let inner='';
+  switch(f){
+    case 'w.': inner=headOpen+'<circle cx="16" cy="20" r="1.3" fill="currentColor"/>'; break; // redonda con puntillo
+    case 'w':  inner=headOpen; break;                          // redonda
+    case 'h.': inner=headOpen+stem+dot; break;                 // blanca con puntillo
+    case 'h':  inner=headOpen+stem; break;                     // blanca
+    case 'q.': inner=head+stem+dot; break;                     // negra con puntillo
+    case 'q':  inner=head+stem; break;                         // negra
+    case '8':  inner=head+stem+flag; break;                    // corchea
+    case '16': inner=head+stem+flag2; break;                   // semicorchea
+    default:   inner=head+stem;
+  }
+  return '<svg viewBox="0 0 24 26">'+inner+'</svg>';
+}
+
+/* pentagrama de la izquierda con la cifra de compás */
+function renderCompasScore(){
+  const host=document.getElementById('scoreCOM'); if(!host) return; host.innerHTML='';
+  try{
+    const W=Math.max(host.clientWidth||0, 120), H=110;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const stave=new VF.Stave(6,18,W-12);
+    stave.addClef('treble');
+    stave.addTimeSignature(dataCOM.c.num+'/'+dataCOM.c.den);
+    stave.setContext(ctx).draw();
+    fitSvgToContent(host, W);
+  }catch(e){}
+}
+
+/* dibuja el ritmo de una celda (una secuencia de figuras) */
+function dibujarRitmoCelda(idx, cell){
+  const host=document.getElementById('comRit'+idx); if(!host) return; host.innerHTML='';
+  const W=Math.max(host.clientWidth||0, 120), H=70;
+  const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+  const ctx=r.getContext();
+  const stave=new VF.Stave(2,4,W-4);
+  stave.setContext(ctx).draw();
+  try{
+    const notes=cell.notes.map(f=>{
+      const raw=(typeof f==='object')?f.d:f;
+      const dur=raw.replace('d','').replace('r',''); const dot=raw.includes('d'); const rest=raw.includes('r');
+      const opt={keys:['b/4'], duration:dur+(rest?'r':''), clef:'treble'};
+      if(!rest) opt.stem_direction=1;
+      const sn=new VF.StaveNote(opt);
+      if(dot && !rest) sn.addModifier(new VF.Dot(),0);
+      return sn;
+    });
+    let tuplets=[];
+    if(cell.tuplet){ const t=cell.tuplet; const off=t.offset||0; const slice=notes.slice(off,off+t.first);
+      tuplets.push(new VF.Tuplet(slice,{num_notes:t.num,notes_occupied:t.notes,bracketed:true,ratioed:false})); }
+    // beaming: une corcheas/semis consecutivas (ocupan un pulso)
+    let beams=[]; let cur=[];
+    cell.notes.forEach((f,i)=>{
+      const raw=(typeof f==='object')?f.d:f; const base=raw.replace('r',''); const rest=raw.includes('r');
+      const bm=(base==='8'||base==='16'||base==='8d');
+      if(bm && !rest){ cur.push(notes[i]); }
+      else { if(cur.length>=2) beams.push(new VF.Beam(cur)); cur=[]; }
+    });
+    if(cur.length>=2) beams.push(new VF.Beam(cur));
+    const voice=new VF.Voice({num_beats:8, beat_value:4}).setMode(VF.Voice.Mode.SOFT);
+    voice.addTickables(notes);
+    new VF.Formatter().joinVoices([voice]).format([voice], W-34);
+    voice.draw(ctx,stave);
+    beams.forEach(b=>b.setContext(ctx).draw());
+    tuplets.forEach(t=>t.setContext(ctx).draw());
+  }catch(e){}
+  fitSvgToContent(host, W);
+}
+
+/* ====== CORRECCIÓN ====== */
+function corregirCOM(){
+  const d=dataCOM; if(!d) return;
+  const c=d.c;
+  // comprobar que los apartados 1-5 estén contestados (el 6 no obliga)
+  const faltan=[];
+  if(d.selTipo==null) faltan.push('Compás');
+  if(d.selSub==null) faltan.push('Subdivisión');
+  if(d.selPulso==null) faltan.push('Figura de pulso');
+  if(d.selSub2==null) faltan.push('Figura de subdivisión');
+  if(c.compasFig && d.selCompas==null) faltan.push('Figura de compás');
+  if(faltan.length){ mostrarBannerCOM('Te falta por completar: '+faltan.join(', ')+'.'); return; }
+  lockCard('cardCOM');
+  d.corregido=true;
+  const figNombre = {w:'redonda','h.':'blanca con puntillo',h:'blanca','q.':'negra con puntillo',q:'negra','8':'corchea','16':'semicorchea'};
+  const okTipo = d.selTipo===c.tipo;
+  const okSub  = d.selSub===c.sub;
+  const okPulso= d.selPulso===c.pulsoFig;
+  const okSub2 = d.selSub2===c.subFig;
+  const tieneCompas = !!c.compasFig;
+  const okComp = tieneCompas ? (d.selCompas===c.compasFig) : true;
+  // rejilla
+  let rejillaOk=true;
+  d.celdas.forEach((cel,idx)=>{
+    const cell=document.getElementById('comCell'+idx);
+    const marcada=d.marcadas.has(idx);
+    cell.classList.remove('ok','bad','falta','marcada');
+    if(cel.ok && marcada) cell.classList.add('ok');               // acierto
+    else if(cel.ok && !marcada){ cell.classList.add('falta'); rejillaOk=false; } // era correcta, no la marcó
+    else if(!cel.ok && marcada){ cell.classList.add('bad'); rejillaOk=false; }    // marcó una incorrecta
+  });
+  const tag=document.getElementById('comSol');
+  const line=(lbl,ok,sol)=> '<div style="color:'+(ok?'var(--green)':'var(--red)')+'">'+(ok?'✓':'✗')+' '+lbl+(ok?'':' — '+sol)+'</div>';
+  let html =
+    line('Compás: '+c.tipo, okTipo, c.tipo)+
+    line('Subdivisión: '+c.sub, okSub, c.sub)+
+    line('Figura de pulso', okPulso, figNombre[c.pulsoFig]||c.pulsoFig)+
+    line('Figura de subdivisión', okSub2, figNombre[c.subFig]||c.subFig);
+  if(tieneCompas) html += line('Figura de compás', okComp, figNombre[c.compasFig]||c.compasFig);
+  html += '<div style="color:'+(rejillaOk?'var(--green)':'var(--red)')+';margin-top:4px">'+(rejillaOk?'✓ Ritmos correctos':'<span style="color:var(--green)">Verde = acierto</span> · <span style="color:#2f6df6">Azul = faltaba marcarlo</span> · <span style="color:var(--red)">Rojo = no ocupaba un pulso</span>')+'</div>';
+  tag.innerHTML = html;
+}
+
+function openCompases(){
+  showView('view-compases');
+  if(!dataCOM) nuevoCOM();
+}
+/* banner de aviso (apartados sin completar) */
+function mostrarBannerCOM(msg){
+  const card=document.getElementById('cardCOM'); if(!card) return;
+  let b=document.getElementById('comBanner');
+  if(!b){ b=document.createElement('div'); b.id='comBanner'; b.className='com-banner';
+    card.insertBefore(b, card.firstChild); }
+  b.textContent=msg;
+  b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+  clearTimeout(b._t); b._t=setTimeout(()=>b.classList.remove('show'), 3500);
 }
 
 </script>
