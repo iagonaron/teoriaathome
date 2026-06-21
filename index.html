@@ -117,6 +117,10 @@
     color:var(--teoria);border-radius:9px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer}
   .tactil-aviso.colapsado .ta-full{max-height:0;opacity:0;padding-top:0;padding-bottom:0;margin:0;border-width:0}
   .tactil-aviso.colapsado .ta-tab{display:inline-block}
+  .sueltos-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:26px 0 2px}
+  .sueltos-row .sueltos-tag{margin:0}
+  .sueltos-aviso{font-size:13px;color:var(--muted);font-style:italic}
+  .sueltos-aviso .rosa{color:var(--teoria);font-weight:800;font-style:normal}
   .sueltos-tag{display:inline-block;margin:26px 0 2px;background:rgba(255,255,255,.05);
     border:1px solid rgba(255,255,255,.14);color:var(--muted);border-radius:20px;
     padding:6px 16px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
@@ -219,6 +223,8 @@
     border-radius:8px;font-size:14px;font-weight:800;cursor:pointer;border:2px solid var(--teoria);
     color:var(--teoria);background:#fbdcec;transition:box-shadow .15s}
   .ena-hueco.vacio{background:transparent;color:var(--teoria);border-style:dashed}
+  .com-opt.sol-ok{background:var(--green);color:#fff;border-color:transparent}
+  .com-opt.sol-bad{background:var(--red);color:#fff;border-color:transparent;text-decoration:line-through}
   .ena-hueco.sel{box-shadow:0 0 0 3px rgba(232,67,147,.3)}
   .ena-hueco.ok{border-color:var(--green);background:#d8f3e3;color:#1c7a47}
   .ena-hueco.mal{border-color:var(--red);background:#fadbdd;color:#b3262f;text-decoration:line-through}
@@ -288,9 +294,9 @@
   .esc-chip .chk{float:right;font-size:16px;color:var(--teoria)}
 
   /* botones de alteración (♭ ♯) destacados */
-  .acc-btn{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;
+  .acc-btn{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:38px;
     border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);color:var(--muted);
-    border-radius:9px;font-size:18px;font-weight:900;cursor:pointer;padding:0 8px;
+    border-radius:9px;font-size:18px;font-weight:700;cursor:pointer;padding:0 6px;
     transition:background .15s,transform .05s,color .15s}
   .acc-btn:hover{background:rgba(255,255,255,.1);color:var(--ink)}
   .acc-btn.on{background:rgba(232,67,147,.9);color:#fff;border-color:transparent}
@@ -380,7 +386,10 @@
       <div class="fc-prof" onclick="event.stopPropagation();abrirZonaProfesor()">Zona profesor</div>
     </div>
 
-    <div class="sueltos-tag">Ejercicios sueltos</div>
+    <div class="sueltos-row">
+      <div class="sueltos-tag">Ejercicios sueltos</div>
+      <div class="sueltos-aviso">Es posible que haya ejercicios que <span class="rosa">no te han explicado todavía</span>. ¡Ya llegará el momento! Practica lo que sabes hacer.</div>
+    </div>
     <div class="pad-grid" id="padGrid"></div>
 
     <div class="foot">TEORÍA at home · by Iago González Alonso</div>
@@ -656,6 +665,30 @@
 
   </section>
 
+  <!-- ============ VISTA SEMITONOS ============ -->
+  <section class="view" id="view-semitonos">
+    <div class="iv-head">
+      <div class="iv-title"><span class="post">SEMI</span>TONOS</div>
+    </div>
+    <p class="iv-sub">En los dos primeros compases di si el semitono es cromático o diatónico. En los dos últimos, construye la segunda nota del semitono que se te pide.</p>
+
+    <div class="ex-card" id="cardSEM">
+      <div class="ex-top">
+        <div class="ex-letter"><b></b><span></span></div>
+        <div style="display:flex;gap:8px">
+          <button class="iconbtn" onclick="nuevoSEM()" title="Nuevo ejercicio">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+            Nuevo
+          </button>
+          <button class="iconbtn btn-correct" onclick="corregirSEM()">✓ Corregir</button>
+        </div>
+      </div>
+      <div class="score" id="scoreSEM"></div>
+      <div class="answers" id="answersSEM"></div>
+    </div>
+
+  </section>
+
 </div>
 
 
@@ -680,7 +713,7 @@ function showView(id){
 /* ¿dispositivo táctil? (iPad, tablets, móviles) */
 const ES_TACTIL = (('ontouchstart' in window) || (navigator.maxTouchPoints>0)) && !window.matchMedia('(pointer:fine)').matches;
 /* vistas donde se pintan notas (ghost) -> tienen consejos táctiles */
-const VISTAS_GHOST = ['view-intervalos','view-tonalidades','view-escalas','view-grados','view-acordes','view-enarmonias'];
+const VISTAS_GHOST = ['view-intervalos','view-tonalidades','view-escalas','view-grados','view-acordes','view-enarmonias','view-semitonos'];
 function mostrarAvisoTactil(viewId){
   if(!ES_TACTIL) return;
   if(VISTAS_GHOST.indexOf(viewId)<0) return;       // solo donde hay ghost notes
@@ -731,7 +764,7 @@ const PADS=[
   {id:'grados',nombre:'Grados',kick:'Teoría',foot:'Señala el grado pedido',activo:true,open:'openGrados'},
   {id:'escalas',nombre:'Escalas',kick:'Teoría',foot:'Menores, mayores y otras',activo:true,open:'openEscalas'},
   {id:'enarmonias',nombre:'Enarmonías',kick:'Teoría',foot:'Equivalencias',activo:true,open:'openEnarmonias'},
-  {id:'semitonos',nombre:'Semitonos',kick:'Teoría',foot:'Diatónico / cromático',activo:false},
+  {id:'semitonos',nombre:'Semitonos',kick:'Teoría',foot:'Diatónico / cromático',activo:true,open:'openSemitonos'},
   {id:'compases',nombre:'Compases',kick:'Ritmo',foot:'Tipo, subdivisión y ritmos',activo:true,open:'openCompases'},
   {id:'tonalidades',nombre:'Tonalidades',kick:'Teoría',foot:'Armaduras y tonos vecinos',activo:true,open:'openTonalidades',ico:'armT'},
 ];
@@ -898,6 +931,14 @@ function noteName(nb){
   const a=nb.alter===1?"♯":nb.alter===-1?"♭":nb.alter===2?"𝄪":nb.alter===-2?"𝄫":"";
   return n+a;
 }
+/* flecha de dirección grande y gruesa (SVG macizo) */
+function flechaDir(dir){
+  const up = (dir==='asc' || dir==='up' || dir===1 || dir==='↑');
+  const path = up
+    ? 'M10 2 L17 11 H12.5 V20 H7.5 V11 H3 Z'   // flecha arriba maciza
+    : 'M10 20 L3 11 H7.5 V2 H12.5 V11 H17 Z';  // flecha abajo maciza
+  return '<svg viewBox="0 0 20 22" width="15" height="17" style="vertical-align:-3px;margin-left:2px"><path d="'+path+'" fill="var(--teoria)"/></svg>';
+}
 </script>
 
 <!-- ====== BLOQUE 2: selectores iOS + estado ====== -->
@@ -994,11 +1035,11 @@ function makeWheel(host, items, startIdx, onChange, invert){
     if(!dragging) return;
     dragging=false; accum=0;
     // momentum: convertir velocidad (px/ms) en arrastre que se desacelera
-    let v = vel*16; // px por frame (~16ms)
-    if(Math.abs(v)<2){ return; }
+    let v = vel*28; // px por frame (~16ms) — ganancia alta para que al ir rápido avance varios pasos
+    if(Math.abs(v)<1.5){ return; }
     let carry=0;
     const step=()=>{
-      v *= 0.92;                // fricción
+      v *= 0.95;                // fricción suave (dura más -> recorre más pasos)
       carry += v;
       while(carry<=-DRAG_STEP){ setIndex(state.idx+DIR); carry+=DRAG_STEP; }
       while(carry>=DRAG_STEP){ setIndex(state.idx-DIR); carry-=DRAG_STEP; }
@@ -1084,6 +1125,8 @@ function dibujarCompases(hostId, items, opts){
       const sn=new VF.StaveNote({keys,duration:"w",clef:"treble"});
       if(it.n1.alter) sn.addModifier(new VF.Accidental(accStr(it.n1.alter)),0);
       if(!opts.modoB && it.n2.alter) sn.addModifier(new VF.Accidental(accStr(it.n2.alter)),keys.length-1);
+      if(!opts.modoB && it._solB) sn.setKeyStyle(1,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
+      else if(!opts.modoB && it.n2 && it._userPlaced) sn.setKeyStyle(1,{fillStyle:'#e84393',strokeStyle:'#e84393'});
       notas.push(sn);
     } else {
       const sn1=new VF.StaveNote({keys:[k1],duration:"w",clef:"treble"});
@@ -1096,6 +1139,8 @@ function dibujarCompases(hostId, items, opts){
       } else {
         const sn2=new VF.StaveNote({keys:[notaToKey(it.n2)],duration:"w",clef:"treble"});
         if(it.n2.alter) sn2.addModifier(new VF.Accidental(accStr(it.n2.alter)),0);
+        if(opts.modoB && !it._solB) sn2.setKeyStyle(0,{fillStyle:'#e84393',strokeStyle:'#e84393'});
+        if(it._solB) sn2.setKeyStyle(0,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
         notas.push(sn2);
       }
     }
@@ -1350,6 +1395,7 @@ function onBoardClick(e){
   // coloca la nota NATURAL elegida; conserva alteración previa si reubica la misma nota, si no, 0
   respB[slot]={step:nat.step, octave:nat.octave, alter:0};
   dataB[slot].n2={...respB[slot]};
+  dataB[slot]._userPlaced=true;
   redrawB();
   renderAnswersB();
 }
@@ -1359,34 +1405,50 @@ function redrawB(){
   setupBoardB();
 }
 
-/* botones de alteración por compás (a posteriori). Doble clic en ♭ o ♯ = doble, y bloquea. */
+/* selector de alteración táctil (como Enarmonías) + opción de borrar la nota */
 function renderAnswersB(){
   const host=document.getElementById('answersB'); host.innerHTML='';
   dataB.forEach((it,i)=>{
     const cell=document.createElement('div'); cell.className='ans-cell'; cell.id='ansB'+i;
     const lab=document.createElement('div');
-    lab.style.cssText='font-size:16px;font-weight:900;color:var(--ink)';
-    lab.textContent=it.num+ESP_LABEL[it.code]+(it.direccion==='desc'?' ↓':' ↑');
-    const ctr=document.createElement('div');
-    ctr.style.cssText='display:flex;gap:6px;align-items:center;justify-content:center';
+    lab.style.cssText='font-size:15px;font-weight:900;color:var(--ink);text-align:center;margin-bottom:6px';
+    lab.innerHTML=it.num+ESP_LABEL[it.code]+' '+flechaDir(it.direccion==='desc'?'desc':'asc');
+    cell.appendChild(lab);
     const colocada = respB[i]!=null;
-    ctr.innerHTML =
-      '<button type="button" class="acc-btn" '+(colocada?'':'disabled')+' onclick="altB('+i+',-1)">♭</button>'+
-      '<span style="min-width:40px;text-align:center;font-weight:800">'+(colocada?noteName(respB[i]):'—')+'</span>'+
-      '<button type="button" class="acc-btn" '+(colocada?'':'disabled')+' onclick="altB('+i+',1)">♯</button>';
-    const tag=document.createElement('div'); tag.className='sol';
-    cell.appendChild(lab); cell.appendChild(ctr); cell.appendChild(tag); host.appendChild(cell);
+    // chip de la nota colocada (rosa) con opción de borrar
+    const chipRow=document.createElement('div'); chipRow.style.cssText='display:flex;gap:6px;justify-content:center;align-items:center;margin-bottom:8px';
+    const chip=document.createElement('div'); chip.className='ena-hueco'+(colocada?'':' vacio');
+    chip.textContent=colocada?noteName(respB[i]):'?';
+    chipRow.appendChild(chip);
+    if(colocada){
+      const del=document.createElement('button'); del.className='acc-btn'; del.textContent='×';
+      del.title='Borrar nota'; del.style.cssText='min-width:30px;height:30px;font-size:15px';
+      del.onclick=()=>{ respB[i]=null; dataB[i].n2=null; dataB[i]._userPlaced=false; redrawB(); renderAnswersB(); };
+      chipRow.appendChild(del);
+    }
+    cell.appendChild(chipRow);
+    // selector de alteración grande (deshabilitado hasta colocar)
+    const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:6px;justify-content:center';
+    [['-2','𝄫'],['-1','♭'],['0','♮'],['1','♯'],['2','×']].forEach(([a,sym])=>{
+      const b=document.createElement('button'); b.className='acc-btn'; b.textContent=sym;
+      b.style.cssText='min-width:38px;height:38px;font-size:18px;font-weight:700;padding:0';
+      if(!colocada) b.disabled=true;
+      if(colocada && (respB[i].alter||0)===parseInt(a,10)) b.classList.add('on');
+      b.onclick=()=>{ setAltB(i, parseInt(a,10)); };
+      accRow.appendChild(b);
+    });
+    cell.appendChild(accRow);
+    const tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='text-align:center;min-height:18px;margin-top:6px';
+    cell.appendChild(tag);
+    host.appendChild(cell);
   });
 }
-/* aplica alteración respetando: 1 clic = simple en esa dirección; 2 clics misma dir = doble; bloquea */
-function altB(i,dir){
+/* fija la alteración de la 2ª nota colocada */
+function setAltB(i, alter){
   const r=respB[i]; if(!r) return;
   const sx=window.scrollX, sy=window.scrollY;
-  let alter=(r.alter||0);
-  if(dir>0){ alter = alter<0?0:Math.min(2,alter+1); }
-  else     { alter = alter>0?0:Math.max(-2,alter-1); }
   respB[i]={step:r.step,octave:r.octave,alter};
-  dataB[i].n2={...respB[i]};
+  dataB[i].n2={...respB[i]}; dataB[i]._userPlaced=true;
   redrawB(); renderAnswersB();
   window.scrollTo(sx,sy);
 }
@@ -1399,7 +1461,10 @@ function corregirB(){
     const ok = got && got.step===want.step && got.octave===want.octave && got.alter===want.alter;
     cell.classList.remove('ok','bad'); cell.classList.add(ok?'ok':'bad');
     cell.querySelector('.sol').textContent = ok?'✓':('Era: '+noteName(want));
+    // si falla, dibuja la solución correcta en azul sobre el pentagrama
+    if(!ok){ dataB[i].n2={...want}; dataB[i]._solB=true; }
   });
+  bMeta=dibujarCompases('scoreB', dataB.map((it)=> it.n2? {...it} : {...it,n2:null}), {modoB:true});
 }
 
 /* init */
@@ -1490,9 +1555,9 @@ function renderAnswersTA(){
     ['M','m'].forEach((modo,mi)=>{
       const colu=document.createElement('div'); colu.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px';
       const wNota=document.createElement('div'); wNota.className='wheel'; wNota.style.cssText='height:78px;width:64px';
-      const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:3px';
-      accRow.innerHTML='<button class="acc-btn ta-acc" data-i="'+i+'" data-m="'+mi+'" data-a="#" style="min-width:24px;height:24px;font-size:13px;padding:0 4px">♯</button>'+
-                       '<button class="acc-btn ta-acc" data-i="'+i+'" data-m="'+mi+'" data-a="b" style="min-width:24px;height:24px;font-size:13px;padding:0 4px">♭</button>';
+      const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:5px';
+      accRow.innerHTML='<button class="acc-btn ta-acc" data-i="'+i+'" data-m="'+mi+'" data-a="b">♭</button>'+
+                       '<button class="acc-btn ta-acc" data-i="'+i+'" data-m="'+mi+'" data-a="#">♯</button>';
       colu.appendChild(wNota); colu.appendChild(accRow);
       cols.appendChild(colu);
       const suf = modo==='M'?'M':'m';
@@ -2165,7 +2230,7 @@ function buildEscEditControls(ans, e, i){
     const btns=document.createElement('div'); btns.className='esc-acc-group'; btns.dataset.i=i; btns.dataset.g=gi;
     btns.style.cssText='display:flex;flex-direction:column;gap:3px';
     [['♯',1],['♮',0],['♭',-1]].forEach(([sym,a])=>{   // ♯ arriba, ♭ abajo
-      const b=document.createElement('button'); b.className='acc-btn esc-acc'; b.style.cssText='min-width:28px;height:26px;font-size:14px';
+      const b=document.createElement('button'); b.className='acc-btn esc-acc'; b.style.cssText='min-width:32px;height:30px;font-size:16px';
       b.textContent=sym; b.dataset.i=i; b.dataset.g=gi; b.dataset.a=a;
       if(e.userNotas[gi].alter===a) b.classList.add('on');
       b.addEventListener('click',()=>{
@@ -3491,9 +3556,9 @@ function buildACOIdControls(ans, e, i){
   // nombre de la fundamental
   const colN=document.createElement('div'); colN.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px';
   const wN=document.createElement('div'); wN.className='wheel'; wN.style.cssText='height:78px;width:60px';
-  const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:3px';
-  accRow.innerHTML='<button class="acc-btn aco-acc" data-a="b" style="min-width:24px;height:24px;font-size:13px;padding:0 4px">♭</button>'+
-                   '<button class="acc-btn aco-acc" data-a="#" style="min-width:24px;height:24px;font-size:13px;padding:0 4px">♯</button>';
+  const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:5px';
+  accRow.innerHTML='<button class="acc-btn aco-acc" data-a="b">♭</button>'+
+                   '<button class="acc-btn aco-acc" data-a="#">♯</button>';
   colN.appendChild(wN); colN.appendChild(accRow);
   // tipo de acorde
   const colT=document.createElement('div'); colT.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px';
@@ -4466,6 +4531,351 @@ function corregirENA(){
 function openEnarmonias(){
   showView('view-enarmonias');
   if(dataENA.length===0) nuevoENA();
+}
+
+</script>
+<script>
+/* ============================================================
+   SEMITONOS — 4 compases.
+   1-2: dos notas (semitono) -> elegir Cromático / Diatónico.
+   3-4: una nota + etiqueta -> construir la 2ª nota con ghost.
+   Reglas: cromático = misma letra ±1 alteración; diatónico = letra
+   contigua a 1 semitono. Rango La3..Sol5, sin dobles, sin raras.
+   ============================================================ */
+
+const SEM_RARAS = new Set(['F,-1','C,-1','B,1','E,1']);
+const SEM_MIDI_MIN = midiNota('A',3,0);
+const SEM_MIDI_MAX = midiNota('G',5,0);
+const SEM_PARTIDA = (function(){ const out=[]; for(let o=3;o<=5;o++) for(const s of STEPS){ const m=midiNota(s,o,0); if(m>=SEM_MIDI_MIN-2&&m<=SEM_MIDI_MAX+2) out.push({s,o}); } return out; })();
+
+/* segunda nota del semitono */
+function semSegunda(step,octave,alter,dir,tipo){
+  if(tipo==='cromatico'){
+    const na=alter+(dir==='asc'?1:-1);
+    if(Math.abs(na)>1) return null;
+    if(SEM_RARAS.has(step+','+na)) return null;
+    return {step,octave,alter:na};
+  } else {
+    const idx=STEPS.indexOf(step);
+    const raw=idx+(dir==='asc'?1:-1);
+    const oShift=Math.floor(raw/7), nIdx=((raw%7)+7)%7;
+    const step2=STEPS[nIdx], oct2=octave+oShift;
+    const target=midiNota(step,octave,alter)+(dir==='asc'?1:-1);
+    const alter2=target-midiNota(step2,oct2,0);
+    if(Math.abs(alter2)>1) return null;
+    if(SEM_RARAS.has(step2+','+alter2)) return null;
+    return {step:step2,octave:oct2,alter:alter2};
+  }
+}
+function semEnRango(n){ const m=midiNota(n.step,n.octave,n.alter); return m>=SEM_MIDI_MIN&&m<=SEM_MIDI_MAX; }
+/* sortea un semitono de tipo dado */
+function semSortea(tipo){
+  for(let i=0;i<400;i++){
+    const dir=pick(['asc','desc']);
+    const {s,o}=pick(SEM_PARTIDA);
+    let alter=0; if(chance(0.4)) alter=pick([-1,1]);
+    if(SEM_RARAS.has(s+','+alter)) continue;
+    const n1={step:s,octave:o,alter};
+    if(!semEnRango(n1)) continue;
+    const n2=semSegunda(s,o,alter,dir,tipo);
+    if(!n2||!semEnRango(n2)) continue;
+    return {tipo,dir,n1,n2};
+  }
+  return null;
+}
+
+let dataSEM=[];
+let semScoreMeta=null, semYMaps={}, semPendingAlt={};
+
+function nuevoSEM(){
+  unlockCard('cardSEM');
+  dataSEM=[];
+  // compases 1-2: identificar (uno cromático, uno diatónico, orden mezclado)
+  const tiposId=shuffleSEM(['cromatico','diatonico']);
+  tiposId.forEach(t=>{
+    let s=null,intentos=0; do{ s=semSortea(t); intentos++; }while(!s&&intentos<6); if(!s) s=semSortea(t);
+    dataSEM.push({modo:'id', tipo:s.tipo, dir:s.dir, n1:s.n1, n2:s.n2, sel:null});
+  });
+  // compases 3-4: construir (uno cromático, uno diatónico)
+  const tiposB=shuffleSEM(['cromatico','diatonico']);
+  tiposB.forEach(t=>{
+    let s=null,intentos=0; do{ s=semSortea(t); intentos++; }while(!s&&intentos<6); if(!s) s=semSortea(t);
+    dataSEM.push({modo:'build', tipo:s.tipo, dir:s.dir, dada:s.n1, objetivo:s.n2, userSeq:[], _selVar:null});
+  });
+  renderSEM();
+}
+function shuffleSEM(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=rint(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function renderSEM(){
+  semScoreMeta={staves:[]}; semYMaps={};
+  renderSEMScore();
+  renderSEMAnswers();
+}
+
+function renderSEMScore(){
+  const host=document.getElementById('scoreSEM'); if(!host) return; host.innerHTML='';
+  const W=Math.max(host.clientWidth||0,720), H=150;
+  const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+  const ctx=r.getContext();
+  const x0=10,usable=W-20,wC=usable/4;
+  semScoreMeta={staves:[], wC, x0};
+  dataSEM.forEach((e,i)=>{
+    const stave=new VF.Stave(x0+i*wC,14,wC);
+    if(i===0) stave.addClef('treble');
+    if(i===2) stave.setBegBarType(VF.Barline.type.DOUBLE);
+    if(i===3) stave.setEndBarType(VF.Barline.type.DOUBLE);
+    stave.setContext(ctx).draw();
+    semScoreMeta.staves[i]=stave;
+    if(e.modo==='id'){
+      // dos notas melódicas (slots separados)
+      const slots=[e.n1, e.n2];
+      const tickables=slots.map(s=>{ const sn=new VF.StaveNote({keys:[notaToKey(s)],duration:'w',clef:'treble'}); if(s.alter) sn.addModifier(new VF.Accidental(accStr(s.alter)),0); return sn; });
+      try{
+        const voice=new VF.Voice({num_beats:8,beat_value:4}).setStrict(false);
+        voice.addTickables(tickables);
+        new VF.Formatter().joinVoices([voice]).format([voice], wC-(i===0?44:24));
+        voice.draw(ctx,stave);
+      }catch(err){}
+    } else {
+      // nota dada + 2ª nota (o solución azul)
+      const slots=[ Object.assign({},e.dada,{_dada:true}) ];
+      if(e._solVisible){
+        const u=e.userSeq[0];
+        const correcta=u && u.step===e.objetivo.step && u.octave===e.objetivo.octave && u.alter===e.objetivo.alter;
+        slots.push(correcta ? Object.assign({},u) : Object.assign({},e.objetivo,{_blue:true}));
+      } else {
+        slots.push(e.userSeq[0] ? Object.assign({},e.userSeq[0]) : null);
+      }
+      const tickables=[]; 
+      slots.forEach((s,si)=>{
+        if(!s){ tickables.push(new VF.GhostNote({duration:'w'})); return; }
+        const sn=new VF.StaveNote({keys:[notaToKey(s)],duration:'w',clef:'treble'});
+        if(s.alter && !s._inherited) sn.addModifier(new VF.Accidental(accStr(s.alter)),0);
+        if(s._blue) sn.setKeyStyle(0,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
+        else if(!e._solVisible && !s._dada && e._selVar===0) sn.setKeyStyle(0,{fillStyle:'#e84393',strokeStyle:'#e84393'});
+        tickables.push(sn);
+      });
+      const slotX=new Array(slots.length).fill(0);
+      try{
+        const voice=new VF.Voice({num_beats:8,beat_value:4}).setStrict(false);
+        voice.addTickables(tickables);
+        new VF.Formatter().joinVoices([voice]).format([voice], wC-(i===0?44:24));
+        voice.draw(ctx,stave);
+        tickables.forEach((t,si)=>{ try{ slotX[si]=t.getAbsoluteX(); }catch(_){ slotX[si]=x0+i*wC+wC*(si+0.5)/slots.length; } });
+      }catch(err){ for(let si=0;si<slots.length;si++) slotX[si]=x0+i*wC+wC*(si+0.5)/slots.length; }
+      e._slotX=slotX;
+      buildSEMYMap(i, stave);
+      semWire();
+    }
+  });
+  fitSvgToContent(host, W);
+  semPersistDelX();
+}
+
+function buildSEMYMap(i, stave){
+  try{
+    const yTop=stave.getYForLine(0), yBot=stave.getYForLine(4);
+    const half=(yBot-yTop)/8;
+    const refStep=diatonicStep(midiNota("F",5,0));
+    const map={};
+    for(let oct=3;oct<=6;oct++){ for(const st of STEPS){ const m=midiNota(st,oct,0); if(m<53||m>86) continue; const ds=diatonicStep(m); map[st+oct]={step:st,octave:oct,y:yTop+(refStep-ds)*half}; } }
+    semYMaps[i]=map;
+  }catch(e){}
+}
+
+function semDirArrow(dir){ return dir==='asc'?'↑':'↓'; }
+function semTipoLabel(e){ return (e.tipo==='cromatico'?'Cromático':'Diatónico')+' '+flechaDir(e.dir); }
+
+function renderSEMAnswers(){
+  const host=document.getElementById('answersSEM'); if(!host) return; host.innerHTML='';
+  host.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px';
+  dataSEM.forEach((e,i)=>{
+    const cell=document.createElement('div'); cell.className='ans-cell'; cell.id='ansSEM'+i;
+    if(e.modo==='id'){
+      const cap=document.createElement('div'); cap.style.cssText='font-size:12px;font-weight:800;color:var(--ink);text-align:center;margin-bottom:8px';
+      cap.textContent='¿Qué semitono es?';
+      cell.appendChild(cap);
+      const row=document.createElement('div'); row.style.cssText='display:flex;gap:6px;justify-content:center';
+      [['cromatico','Cromático'],['diatonico','Diatónico']].forEach(([val,lab])=>{
+        const b=document.createElement('button'); b.className='com-opt'+(e.sel===val?' on':''); b.textContent=lab; b.style.cssText='flex:1 1 0';
+        if(e._corregido){ if(val===e.tipo) b.classList.add('sol-ok'); else if(e.sel===val) b.classList.add('sol-bad'); }
+        b.onclick=()=>{ if(e._corregido) return; e.sel=val; row.querySelectorAll('.com-opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
+        row.appendChild(b);
+      });
+      cell.appendChild(row);
+    } else {
+      const cap=document.createElement('div'); cap.style.cssText='font-size:12px;font-weight:800;color:var(--ink);text-align:center;margin-bottom:6px';
+      cap.innerHTML='Construye: '+semTipoLabel(e);
+      cell.appendChild(cap);
+      // hueco con la nota puesta + selector de alteración
+      const huecoRow=document.createElement('div'); huecoRow.style.cssText='display:flex;flex-direction:column;gap:6px;align-items:center;margin-bottom:8px';
+      const chip=document.createElement('div'); chip.className='ena-hueco';
+      const puesta=e.userSeq[0];
+      chip.textContent=puesta?noteName(puesta):'?';
+      if(!puesta) chip.classList.add('vacio');
+      if(e._selVar===0 && !e._corregido) chip.classList.add('sel');
+      if(e._corregido && puesta) chip.classList.add(e._notaOk?'ok':'mal');
+      chip.onclick=()=>{ if(e._solVisible) return; if(e.userSeq[0]){ e._selVar=(e._selVar===0)?null:0; renderSEM(); } };
+      huecoRow.appendChild(chip);
+      if(e._corregido && !e._notaOk){ const c=document.createElement('div'); c.className='ena-hueco azul'; c.textContent=noteName(e.objetivo); huecoRow.appendChild(c); }
+      cell.appendChild(huecoRow);
+      const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:6px;justify-content:center';
+      [['-2','𝄫'],['-1','♭'],['0','♮'],['1','♯'],['2','×']].forEach(([a,sym])=>{
+        const b=document.createElement('button'); b.className='acc-btn sem-acc'; b.dataset.a=a; b.textContent=sym; b.style.cssText='min-width:38px;height:38px;font-size:18px;font-weight:700;padding:0';
+        b.onclick=()=>{ if(e._corregido) return; const al=parseInt(a,10);
+          if(e._selVar===0 && e.userSeq[0]){ e.userSeq[0].alter=al; e.userSeq[0]._inherited=false; renderSEM(); }
+          else { semPendingAlt[i]=(semPendingAlt[i]===al)?null:al; accRow.querySelectorAll('.sem-acc').forEach(x=>x.classList.toggle('on', parseInt(x.dataset.a,10)===semPendingAlt[i])); }
+        };
+        accRow.appendChild(b);
+      });
+      cell.appendChild(accRow);
+    }
+    const tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='text-align:center;min-height:18px;margin-top:6px';
+    cell.appendChild(tag);
+    host.appendChild(cell);
+  });
+}
+
+/* ---- ghost (compases de construir) ---- */
+function semWire(){
+  const host=document.getElementById('scoreSEM'); if(!host||host._semWired) return; host._semWired=true;
+  host.style.position='relative';
+  host.addEventListener('mousemove',(ev)=>onSEMHover(ev));
+  host.addEventListener('mouseleave',()=>{ clearSEMGhost(); hideSEMDelX(); });
+  host.addEventListener('click',(ev)=>onSEMClick(ev));
+  host.addEventListener('contextmenu',(ev)=>{ const i=semCompasEn(ev); if(i==null) return; const e=dataSEM[i]; if(e.modo!=='build') return; ev.preventDefault(); if(e.userSeq.length){ e.userSeq.pop(); e._selVar=null; renderSEM(); } });
+}
+function semCompasEn(ev){
+  const host=document.getElementById('scoreSEM'); const svg=host&&host.querySelector('svg'); if(!svg||!semScoreMeta) return null;
+  let p; try{ const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; p=pt.matrixTransform(svg.getScreenCTM().inverse()); }catch(e){ return null; }
+  const {x0,wC}=semScoreMeta;
+  for(let i=0;i<4;i++){ if(p.x>=x0+i*wC && p.x<x0+(i+1)*wC) return i; }
+  return null;
+}
+function semPointIn(ev){ const svg=document.getElementById('scoreSEM').querySelector('svg'); const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+function semNearestByY(i,my){ const map=semYMaps[i]; if(!map) return null; let best=null,bd=1e9; for(const k in map){ const o=map[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} } return best; }
+function semYReal(i,step,octave){ const map=semYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
+function onSEMHover(ev){
+  const i=semCompasEn(ev); if(i==null){ clearSEMGhost(); hideSEMDelX(); return; }
+  const e=dataSEM[i]; if(e.modo!=='build' || e._solVisible){ clearSEMGhost(); hideSEMDelX(); return; }
+  let p; try{ p=semPointIn(ev); }catch(err){ clearSEMGhost(); return; }
+  if(e.userSeq.length){
+    const y=semYReal(i,e.userSeq[0].step,e.userSeq[0].octave); const nx=(e._slotX&&e._slotX[1]);
+    const cercaY=(y!=null&&Math.abs(y-p.y)<10), cercaX=(nx==null)||(Math.abs(nx-p.x)<22);
+    if(cercaY&&cercaX){ showSEMDelX(i); clearSEMGhost(); return; }
+  }
+  hideSEMDelX();
+  if(e.userSeq.length>=1){ clearSEMGhost(); return; }
+  const nat=semNearestByY(i,p.y); if(!nat){ clearSEMGhost(); return; }
+  showSEMGhost(i,nat);
+}
+function showSEMGhost(i,nat){
+  const host=document.getElementById('scoreSEM');
+  let g=document.getElementById('semghost');
+  if(!g){ g=document.createElement('div'); g.id='semghost';
+    g.style.cssText='position:absolute;pointer-events:none;z-index:6;width:12px;height:10px;border:2px solid #e84393;border-radius:50%;box-sizing:border-box';
+    host.appendChild(g); }
+  const svg=host.querySelector('svg'); if(!svg){g.style.display='none';return;}
+  const yInt=semYReal(i,nat.step,nat.octave); if(yInt==null){g.style.display='none';return;}
+  const e=dataSEM[i];
+  const xInt=(e._slotX&&e._slotX[1]) || (semScoreMeta.x0+i*semScoreMeta.wC+semScoreMeta.wC*0.66);
+  try{
+    const pt=svg.createSVGPoint(); pt.x=xInt; pt.y=yInt; const sp=pt.matrixTransform(svg.getScreenCTM()); const hr=host.getBoundingClientRect();
+    g.style.left=(sp.x-hr.left-6)+'px'; g.style.top=(sp.y-hr.top-5)+'px'; g.style.display='block';
+    drawSEMGhostLedger(i, svg, hr, xInt, nat);
+  }catch(err){ g.style.display='none'; }
+}
+function drawSEMGhostLedger(i, svg, hr, xInt, nat){
+  const host=document.getElementById('scoreSEM');
+  host.querySelectorAll('.semghost-ledger').forEach(el=>el.remove());
+  const map=semYMaps[i]; if(!map) return;
+  const top=map['F5'], bot=map['E4']; if(!top||!bot) return;
+  const yNote=semYReal(i,nat.step,nat.octave); if(yNote==null) return;
+  const half=(bot.y-top.y)/8;
+  const lines=[];
+  let y=top.y-2*half; while(y>=yNote-1){ lines.push(y); y-=2*half; }
+  y=bot.y+2*half;     while(y<=yNote+1){ lines.push(y); y+=2*half; }
+  lines.forEach(yL=>{ try{ const pt=svg.createSVGPoint(); pt.x=xInt; pt.y=yL; const sp=pt.matrixTransform(svg.getScreenCTM());
+    const ln=document.createElement('div'); ln.className='semghost-ledger';
+    ln.style.cssText='position:absolute;pointer-events:none;z-index:5;height:1.5px;width:20px;background:#9aa3c0;opacity:.7';
+    ln.style.left=(sp.x-hr.left-10)+'px'; ln.style.top=(sp.y-hr.top-1)+'px'; host.appendChild(ln);
+  }catch(e){} });
+}
+function clearSEMGhost(){ const g=document.getElementById('semghost'); if(g) g.style.display='none';
+  const host=document.getElementById('scoreSEM'); if(host) host.querySelectorAll('.semghost-ledger').forEach(el=>el.remove()); }
+function showSEMDelX(i,persist){
+  const e=dataSEM[i]; const host=document.getElementById('scoreSEM'); const svg=host&&host.querySelector('svg'); if(!svg) return;
+  if(!e.userSeq.length) return;
+  const x=(e._slotX&&e._slotX[1]) || 60; const y=semYReal(i,e.userSeq[0].step,e.userSeq[0].octave); if(y==null) return;
+  let xb=document.getElementById('semDelX');
+  if(!xb){ xb=document.createElement('div'); xb.id='semDelX'; xb.textContent='×';
+    xb.style.cssText='position:absolute;z-index:8;width:17px;height:17px;line-height:15px;text-align:center;border-radius:50%;background:rgba(20,24,48,.8);color:#fff;border:1px solid rgba(255,255,255,.4);font-size:12px;font-weight:600;cursor:pointer';
+    host.appendChild(xb);
+    xb.addEventListener('mouseenter',()=>xb._over=true);
+    xb.addEventListener('mouseleave',()=>{ xb._over=false; if(!xb._persist) setTimeout(()=>{ if(!xb._over) xb.style.display='none'; },60); });
+  }
+  xb._persist=!!persist;
+  try{ const pt=svg.createSVGPoint(); pt.x=x; pt.y=y; const sp=pt.matrixTransform(svg.getScreenCTM()); const hr=host.getBoundingClientRect();
+    xb.style.left=(sp.x-hr.left+9)+'px'; xb.style.top=(sp.y-hr.top-18)+'px'; xb.style.display='block';
+  }catch(e){ xb.style.display='none'; return; }
+  xb.onclick=(ev)=>{ ev.stopPropagation(); e.userSeq=[]; e._selVar=null; renderSEM(); };
+}
+function hideSEMDelX(){ const x=document.getElementById('semDelX'); if(x && !x._over && !x._persist) x.style.display='none'; }
+function semPersistDelX(){
+  hideSEMDelX(); if(!ES_TACTIL) return;
+  for(let i=0;i<dataSEM.length;i++){ const e=dataSEM[i]; if(e.modo==='build' && !e._solVisible && e._selVar===0 && e.userSeq[0]){ showSEMDelX(i,true); break; } }
+}
+function onSEMClick(ev){
+  const i=semCompasEn(ev); if(i==null) return;
+  const e=dataSEM[i]; if(e.modo!=='build' || e._solVisible) return;
+  let p; try{ p=semPointIn(ev); }catch(err){ return; }
+  if(e.userSeq.length){
+    const y=semYReal(i,e.userSeq[0].step,e.userSeq[0].octave); const nx=(e._slotX&&e._slotX[1]);
+    const cercaY=(y!=null&&Math.abs(y-p.y)<10), cercaX=(nx==null)||(Math.abs(nx-p.x)<22);
+    if(cercaY&&cercaX){ e._selVar=(e._selVar===0)?null:0; renderSEM();
+      if(e._selVar===0){ requestAnimationFrame(()=>{ showSEMDelX(i); const x=document.getElementById('semDelX'); if(x) x._over=true; }); }
+      return; }
+  }
+  if(e.userSeq.length>=1) return;
+  const nat=semNearestByY(i,p.y); if(!nat) return;
+  let nb={step:nat.step,octave:nat.octave,alter:0};
+  // convivencia: si coincide con la letra+octava de la nota dada (alterada), hereda su alteración
+  if(nat.step===e.dada.step && nat.octave===e.dada.octave && e.dada.alter){
+    nb.alter=e.dada.alter; nb._inherited=true;
+  }
+  const pend=semPendingAlt[i];
+  if(pend!=null){ nb.alter=pend; nb._inherited=false; }
+  e.userSeq=[nb]; semPendingAlt[i]=null; e._selVar=0;
+  renderSEM();
+}
+
+/* ---- corrección ---- */
+function corregirSEM(){
+  lockCard('cardSEM');
+  dataSEM.forEach((e,i)=>{
+    const cell=document.getElementById('ansSEM'+i);
+    const tag=cell.querySelector('.sol');
+    e._corregido=true;
+    if(e.modo==='id'){
+      const ok=e.sel===e.tipo;
+      cell.classList.remove('ok','bad'); cell.classList.add(ok?'ok':'bad');
+      if(ok){ tag.style.color='var(--green)'; tag.textContent='✓'; }
+      else { tag.style.color='#2f6df6'; tag.textContent='Solución: '+(e.tipo==='cromatico'?'Cromático':'Diatónico'); }
+    } else {
+      const u=e.userSeq[0];
+      const ok = u && u.step===e.objetivo.step && u.octave===e.objetivo.octave && u.alter===e.objetivo.alter;
+      e._notaOk=ok; e._solVisible=!ok;
+      cell.classList.remove('ok','bad'); cell.classList.add(ok?'ok':'bad');
+      if(ok){ tag.style.color='var(--green)'; tag.textContent='✓'; }
+      else { tag.style.color='#2f6df6'; tag.textContent='Solución: '+noteName(e.objetivo); }
+    }
+  });
+  renderSEM();
+}
+
+function openSemitonos(){
+  showView('view-semitonos');
+  if(dataSEM.length===0) nuevoSEM();
 }
 
 </script>
