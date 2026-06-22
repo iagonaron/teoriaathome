@@ -117,6 +117,59 @@
     color:var(--teoria);border-radius:9px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer}
   .tactil-aviso.colapsado .ta-full{max-height:0;opacity:0;padding-top:0;padding-bottom:0;margin:0;border-width:0}
   .tactil-aviso.colapsado .ta-tab{display:inline-block}
+  /* ===== TÉRMINOS ===== */
+  /* fila B + C */
+  .ter-row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  @media(max-width:760px){ .ter-row2{grid-template-columns:1fr} }
+  /* B significado: opción arriba / término / opción abajo */
+  .ter-bq{display:flex;flex-direction:row;align-items:stretch;gap:8px;padding:10px;
+    border:1px solid var(--line);border-radius:12px;margin-bottom:10px}
+  .ter-bterm{flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:96px;
+    font-size:16px;font-weight:900;font-style:italic;color:var(--teoria);text-align:center;padding:0 6px}
+  .ter-bop{flex:1 1 0;padding:12px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);
+    color:var(--ink);font-size:13px;cursor:pointer;transition:background .15s,border-color .15s;text-align:center;
+    display:flex;align-items:center;justify-content:center}
+  .ter-bop:hover{background:rgba(255,255,255,.1)}
+  .ter-bop.on{background:rgba(232,67,147,.85);color:#fff;border-color:transparent}
+  .ter-bop.ok{background:var(--green);color:#fff;border-color:transparent}
+  .ter-bop.bad{background:var(--red);color:#fff;border-color:transparent}
+  /* C ordenar: tarjetas arrastrables (estética oscura) + eje a la derecha */
+  .ter-cwrap{display:flex;gap:12px;align-items:stretch}
+  .ter-corder{display:flex;flex-direction:column;gap:8px;flex:1 1 auto}
+  .ter-ccard{position:relative;padding:13px 38px 13px 14px;border-radius:11px;
+    background:linear-gradient(180deg,rgba(232,67,147,.16),rgba(232,67,147,.06));
+    border:1px solid rgba(232,67,147,.35);color:var(--ink);font-weight:800;font-size:15px;
+    cursor:grab;user-select:none;touch-action:none;transition:transform .08s,box-shadow .15s}
+  .ter-ccard:active{cursor:grabbing}
+  .ter-ccard.dragging{opacity:.4}
+  .ter-ccard.drop-before{box-shadow:0 -3px 0 var(--teoria)}
+  .ter-ccard.drop-after{box-shadow:0 3px 0 var(--teoria)}
+  .ter-ccard.ok{background:rgba(31,122,77,.25);border-color:var(--green)}
+  .ter-ccard.bad{background:rgba(179,38,47,.22);border-color:var(--red)}
+  .ter-cghost{box-shadow:0 6px 16px rgba(0,0,0,.5)}
+  .ter-grip{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted2);font-size:14px;letter-spacing:-1px}
+  .ter-axis{flex:0 0 60px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+    padding:4px 0;font-size:10px;font-weight:800;color:var(--muted);text-align:center}
+  .ter-axis-line{flex:1 1 auto;width:3px;margin:6px 0;border-radius:2px;background:linear-gradient(180deg,#ff2e9a,rgba(232,67,147,.15))}
+  .ter-axis-top{color:#ff2e9a}
+  .ter-chip.pulsando{animation:terPulse .6s ease}
+  @keyframes terPulse{0%,100%{opacity:1}50%{opacity:.35;transform:scale(.96)}}
+  .ter-pool{display:flex;flex-wrap:wrap;gap:8px;min-height:46px;padding:10px;margin-bottom:14px;
+    background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.18);border-radius:12px}
+  .ter-chip{display:inline-flex;align-items:center;padding:8px 14px;border-radius:10px;
+    background:var(--teoria);color:#fff;font-weight:800;font-size:14px;font-style:italic;cursor:grab;
+    user-select:none;touch-action:none;box-shadow:0 2px 6px rgba(232,67,147,.3)}
+  .ter-chip.dragging{opacity:.35}
+  .ter-chip-ghost{box-shadow:0 6px 16px rgba(0,0,0,.4)}
+  .ter-chip.ok{background:var(--green)}
+  .ter-chip.bad{background:var(--red)}
+  .ter-cats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .ter-cat-box{display:flex;flex-direction:column;gap:6px}
+  .ter-cat-h{font-size:12px;font-weight:900;color:var(--ink);text-align:center;text-transform:uppercase;letter-spacing:.02em}
+  .ter-drop{min-height:80px;border:2px dashed rgba(255,255,255,.2);border-radius:12px;padding:8px;
+    display:flex;flex-direction:column;gap:6px;align-items:center;transition:background .15s,border-color .15s}
+  .ter-drop.over{border-color:var(--teoria);background:rgba(232,67,147,.1)}
+  @media(max-width:680px){ .ter-cats{grid-template-columns:repeat(2,1fr)} }
   .sueltos-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:26px 0 2px}
   .sueltos-row .sueltos-tag{margin:0}
   .sueltos-aviso{font-size:13px;color:var(--muted);font-style:italic}
@@ -689,6 +742,45 @@
 
   </section>
 
+  <!-- ============ VISTA TÉRMINOS ============ -->
+  <section class="view" id="view-terminos">
+    <div class="iv-head">
+      <div class="iv-title"><span class="post">TÉR</span>MINOS</div>
+      <button class="iconbtn" onclick="nuevoTER()" title="Nuevos ejercicios" style="display:flex;align-items:center;gap:6px">
+        <svg viewBox="0 0 24 24" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+        Nuevos
+      </button>
+    </div>
+    <p class="iv-sub">Tres actividades sobre los términos musicales: clasifícalos por categoría, descubre su significado y ordena los tempos por velocidad.</p>
+
+    <!-- A: clasificar arrastrando (ancho completo) -->
+    <div class="ex-card" id="cardTERa">
+      <div class="ex-top">
+        <div class="ex-letter"><b>A</b><span>Arrastra cada término a su categoría</span></div>
+      </div>
+      <div id="terA"></div>
+    </div>
+
+    <!-- B y C compartiendo franja -->
+    <div class="ter-row2">
+      <div class="ex-card" id="cardTERb">
+        <div class="ex-top">
+          <div class="ex-letter"><b>B</b><span>Pulsa la palabra y elige la opción correcta</span></div>
+        </div>
+        <div id="terB"></div>
+      </div>
+
+      <div class="ex-card" id="cardTERc">
+        <div class="ex-top">
+          <div class="ex-letter"><b>C</b><span>Ordena los tempos de más grave a más agudo</span></div>
+          <button class="iconbtn btn-correct" onclick="corregirTERc()">✓ Corregir</button>
+        </div>
+        <div id="terC"></div>
+      </div>
+    </div>
+
+  </section>
+
 </div>
 
 
@@ -766,6 +858,7 @@ const PADS=[
   {id:'enarmonias',nombre:'Enarmonías',kick:'Teoría',foot:'Equivalencias',activo:true,open:'openEnarmonias'},
   {id:'semitonos',nombre:'Semitonos',kick:'Teoría',foot:'Diatónico / cromático',activo:true,open:'openSemitonos'},
   {id:'compases',nombre:'Compases',kick:'Ritmo',foot:'Tipo, subdivisión y ritmos',activo:true,open:'openCompases'},
+  {id:'terminos',nombre:'Términos',kick:'Teoría',foot:'Tempo, carácter y dinámica',activo:true,open:'openTerminos'},
   {id:'tonalidades',nombre:'Tonalidades',kick:'Teoría',foot:'Armaduras y tonos vecinos',activo:true,open:'openTonalidades',ico:'armT'},
 ];
 function padIcon(p){
@@ -1002,6 +1095,8 @@ function makeWheel(host, items, startIdx, onChange, invert){
   const center=document.createElement('div'); center.className='center';
   host.appendChild(strip); host.appendChild(center); host.appendChild(mask);
   let state={items:items.slice(), idx:startIdx||0};
+  // offset continuo (px) respecto a la posición "asentada" en state.idx
+  let dragOffset=0;
   function paint(){
     strip.innerHTML='';
     state.items.forEach((it,i)=>{
@@ -1009,44 +1104,65 @@ function makeWheel(host, items, startIdx, onChange, invert){
       el.className='item'+(i===state.idx?' sel':''); el.textContent=it;
       strip.appendChild(el);
     });
-    strip.style.transform='translateY('+(ITEM_H-state.idx*ITEM_H)+'px)';
+    strip.style.transform='translateY('+(ITEM_H-state.idx*ITEM_H+dragOffset)+'px)';
   }
   function setIndex(i,silent){
     i=Math.max(0,Math.min(state.items.length-1,i));
     if(i!==state.idx && !silent) tick();
-    state.idx=i; paint();
+    state.idx=i; dragOffset=0; paint();
     if(onChange&&!silent) onChange(i);
   }
-  // arrastre con inercia (estilo iOS): seguimos posición libre y velocidad
-  let dragging=false,lastY=0,accum=0;
-  let vel=0, lastT=0, momentum=null;
+  // === arrastre con seguimiento continuo (estilo iOS) ===
+  let dragging=false,startY=0,dragStartIdx=0,lastY=0;
+  let vel=0, lastT=0, momentum=null, lastIdxFired=0;
   function stopMomentum(){ if(momentum){ cancelAnimationFrame(momentum); momentum=null; } }
-  function down(y){ dragging=true; lastY=y; accum=0; vel=0; lastT=performance.now(); stopMomentum(); }
+  const clampIdx=v=>Math.max(0,Math.min(state.items.length-1,v));
+  function applyOffset(){
+    // posición flotante = idx - offset/ITEM_H ; el strip sigue el dedo en continuo
+    strip.style.transform='translateY('+(ITEM_H-state.idx*ITEM_H+dragOffset)+'px)';
+    // resaltar el ítem más cercano al centro mientras se arrastra
+    const near=clampIdx(Math.round(state.idx - dragOffset/ITEM_H));
+    if(near!==lastIdxFired){ lastIdxFired=near; tick();
+      strip.querySelectorAll('.item').forEach((el,i)=>el.classList.toggle('sel',i===near)); }
+  }
+  function down(y){ dragging=true; startY=y; lastY=y; dragStartIdx=state.idx; vel=0; lastT=performance.now(); lastIdxFired=state.idx; stopMomentum(); }
   function move(y){
     if(!dragging)return;
     const now=performance.now(); const dt=Math.max(1, now-lastT);
     const dy=(y-lastY); lastY=y; lastT=now;
-    vel = 0.8*vel + 0.2*(dy/dt); // px por ms suavizado
-    accum += dy;
-    while(accum<=-DRAG_STEP){ setIndex(state.idx+DIR); accum+=DRAG_STEP; }
-    while(accum>=DRAG_STEP){ setIndex(state.idx-DIR); accum-=DRAG_STEP; }
+    vel = 0.7*vel + 0.3*(dy/dt);     // px/ms
+    dragOffset = (y-startY)*DIR;       // seguimiento continuo (DIR invierte si procede)
+    // limitar el offset a los extremos para que no se despegue
+    const maxUp = state.idx*ITEM_H, maxDown=(state.items.length-1-state.idx)*ITEM_H;
+    if(dragOffset>maxUp) dragOffset=maxUp;
+    if(dragOffset<-maxDown) dragOffset=-maxDown;
+    applyOffset();
+    host._dragMoved=true;
+  }
+  function settle(){
+    // asienta en el ítem más cercano y dispara onChange una sola vez
+    const target=clampIdx(Math.round(state.idx - dragOffset/ITEM_H));
+    dragOffset=0;
+    if(target!==state.idx){ state.idx=target; paint(); if(onChange) onChange(state.idx); }
+    else paint();
   }
   function up(){
     if(!dragging) return;
-    dragging=false; accum=0;
-    // momentum: convertir velocidad (px/ms) en arrastre que se desacelera
-    let v = vel*28; // px por frame (~16ms) — ganancia alta para que al ir rápido avance varios pasos
-    if(Math.abs(v)<1.5){ return; }
-    let carry=0;
-    const step=()=>{
-      v *= 0.95;                // fricción suave (dura más -> recorre más pasos)
-      carry += v;
-      while(carry<=-DRAG_STEP){ setIndex(state.idx+DIR); carry+=DRAG_STEP; }
-      while(carry>=DRAG_STEP){ setIndex(state.idx-DIR); carry-=DRAG_STEP; }
-      if(Math.abs(v)>0.4) momentum=requestAnimationFrame(step);
-      else momentum=null;
+    dragging=false;
+    let v = vel*16*DIR;   // px por frame proyectado, en la dirección del strip
+    if(Math.abs(v)<3){ settle(); setTimeout(()=>{host._dragMoved=false;},0); return; }
+    const stepM=()=>{
+      v *= 0.94;
+      dragOffset += v;
+      const maxUp = state.idx*ITEM_H, maxDown=(state.items.length-1-state.idx)*ITEM_H;
+      if(dragOffset>maxUp){ dragOffset=maxUp; v=0; }
+      if(dragOffset<-maxDown){ dragOffset=-maxDown; v=0; }
+      applyOffset();
+      if(Math.abs(v)>0.6) momentum=requestAnimationFrame(stepM);
+      else { momentum=null; settle(); }
     };
-    momentum=requestAnimationFrame(step);
+    momentum=requestAnimationFrame(stepM);
+    setTimeout(()=>{host._dragMoved=false;},0);
   }
   host.addEventListener('mousedown',e=>{down(e.clientY);e.preventDefault();});
   window.addEventListener('mousemove',e=>move(e.clientY));
@@ -1054,6 +1170,7 @@ function makeWheel(host, items, startIdx, onChange, invert){
   host.addEventListener('touchstart',e=>{down(e.touches[0].clientY);},{passive:true});
   host.addEventListener('touchmove',e=>{move(e.touches[0].clientY);e.preventDefault();},{passive:false});
   host.addEventListener('touchend',up);
+  host.addEventListener('touchcancel',up);
   // rueda del ratón: 1 paso por "notch", con acumulador para trackpads
   let wheelAcc=0;
   host.addEventListener('wheel',e=>{
@@ -4876,6 +4993,372 @@ function corregirSEM(){
 function openSemitonos(){
   showView('view-semitonos');
   if(dataSEM.length===0) nuevoSEM();
+}
+
+</script>
+<script>
+/* ============================================================
+   TÉRMINOS — 3 actividades:
+   A) clasificar términos por categoría (arrastrar y soltar)
+   B) elegir el significado de un término (opciones no obvias)
+   C) ordenar tempos de más lento a más rápido (reordenar)
+   ============================================================ */
+
+/* --- catálogo por categoría (para el ejercicio A) --- */
+const TER_CATS = {
+  tempo:        {label:'Tempo',        items:['largo','adagio','andante','andantino','moderato','allegretto','allegro','vivace','presto','lento','grave','larghetto','prestissimo','accelerando','ritardando','rallentando','ritenuto','stringendo','allargando']},
+  intensidad:   {label:'Dinámica',     items:['piano','forte','mezzoforte','mezzopiano','pianissimo','fortissimo','crescendo','diminuendo','decrescendo','calando','smorzando','morendo']},
+  acentuacion:  {label:'Acentuación',  items:['sforzando','sforzato','rinforzando','forzando','fortepiano']},
+  articulacion: {label:'Articulación', items:['staccato','picado','legato','ligado','staccatissimo','portato','pizzicato']},
+  caracter:     {label:'Carácter',     items:['dolce','cantabile','maestoso','agitato','grazioso','espressivo','affettuoso','risoluto','con brio','tranquillo','giocoso','marziale','appassionato','mesto','deciso']},
+};
+const TER_CAT_KEYS = Object.keys(TER_CATS);
+/* comodín: válido en cualquiera de estas categorías */
+const TER_COMODIN = {'marcato':['acentuacion','articulacion']};
+
+/* --- significados (ejercicio B): términos EXCLUSIVOS (no salen en A ni en C) ---
+   cada uno: correcta + lista de distractores. Algunos llevan 'humor' (false friend);
+   el motor usa el humor solo de vez en cuando para no parecer un test de chistes. */
+const TER_SIGNIF = [
+  {t:'da capo',          ok:'desde el principio', mal:['repetir el final'],            humor:'el capo (jefe)'},
+  {t:'dal segno',        ok:'desde el signo',     mal:['hasta el final'],              humor:'la señora'},
+  {t:'attacca',          ok:'sigue sin pausa',    mal:['detente un momento'],          humor:'atacar con fuerza'},
+  {t:'come prima',       ok:'como al principio',  mal:['como el final'],               humor:'la prima (familiar)'},
+  {t:'come sopra',       ok:'como arriba',        mal:['como abajo'],                  humor:'la sopa'},
+  {t:'fine',             ok:'fin',                mal:['comienzo'],                    humor:'fino, delgado'},
+  {t:'senza',            ok:'sin',                mal:['con'],                         humor:'sentir'},
+  {t:'assai',            ok:'bastante, muy',      mal:['un poco'],                     humor:'ensayo'},
+  {t:'subito',           ok:'de repente',         mal:['poco a poco'],                 humor:'subido, arriba'},
+  {t:'ma non troppo',    ok:'pero no demasiado',  mal:['mucho más'],                   humor:'mucho tropiezo'},
+  {t:'molto',            ok:'mucho',              mal:['poco'],                        humor:null},
+  {t:'meno',             ok:'menos',              mal:['más'],                         humor:'el menú'},
+  {t:'più',              ok:'más',                mal:['menos'],                       humor:'pío, de ave'},
+  {t:'quasi',            ok:'casi, como',         mal:['nunca'],                       humor:'queso'},
+  {t:'simile',           ok:'de forma similar',   mal:['de forma contraria'],          humor:null},
+  {t:'poco a poco',      ok:'poco a poco',        mal:['de golpe'],                    humor:'un poco loco'},
+  {t:'ad libitum',       ok:'a voluntad',         mal:['a tiempo estricto'],           humor:'a la biblioteca'},
+  {t:'con fuoco',        ok:'con fuego, ardor',   mal:['con frialdad'],                humor:null},
+  {t:'con sordina',      ok:'con sordina',        mal:['a pleno volumen'],             humor:'con sordera'},
+  {t:'doppio movimento', ok:'el doble de rápido', mal:['la mitad de rápido'],          humor:null},
+  {t:'perdendosi',       ok:'perdiéndose, apagándose', mal:['creciendo poco a poco'],  humor:null},
+  {t:'morendo',          ok:'muriendo el sonido', mal:['naciendo el sonido'],          humor:null},
+  {t:'smorzando',        ok:'apagándose poco a poco', mal:['encendiéndose'],           humor:null},
+  {t:'svanendo',         ok:'desvaneciéndose',    mal:['con más fuerza'],              humor:'avanzando'},
+  {t:'lusingando',       ok:'acariciador, cariñoso', mal:['áspero, brusco'],           humor:'lugar amplio'},
+  {t:'flebile',          ok:'lloroso, débil',     mal:['fuerte, robusto'],             humor:null},
+  {t:'giusto',           ok:'a tiempo justo',     mal:['a tiempo libre'],              humor:null},
+  {t:'sostenuto',        ok:'sostenido, contenido', mal:['suelto, ligero'],            humor:'soltado'},
+];
+const TER_HUMOR_PROB = 0.28;  // ~1 de cada 3-4 lleva la trampa de humor
+
+/* --- tempos por franjas (de más lento a más rápido), para el ejercicio C ---
+   coge uno de cada franja; moderato siempre en el centro. Dentro de una franja
+   los términos son equivalentes y no se mezclan entre sí en el mismo ejercicio. */
+const TER_FRANJAS = [
+  {nombre:'muy lento',   items:['grave','larghissimo','largo','lento','adagio']},
+  {nombre:'lento',       items:['adagietto','andante','andantino']},
+  {nombre:'moderato',    items:['moderato']},
+  {nombre:'algo rápido', items:['allegretto','allegro']},
+  {nombre:'muy rápido',  items:['vivace','presto','prestissimo']},
+];
+
+function pickN(arr,n){ const a=arr.slice(); const out=[]; while(out.length<n && a.length){ out.push(a.splice(rint(a.length),1)[0]); } return out; }
+function shuffleArr(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=rint(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* ===================== A: CLASIFICAR (arrastrar) ===================== */
+let dataTERa=null;
+function nuevoTERa(){
+  unlockCard('cardTERa');
+  // un término de cada categoría (5). marcato puede aparecer como comodín ocasional.
+  const fichas=TER_CAT_KEYS.map(k=>({term:pick(TER_CATS[k].items), cat:k}));
+  // 1 de cada 4 veces, sustituye una de las categorías comodín por "marcato"
+  if(chance(0.25)){
+    const catComodin=pick(TER_COMODIN['marcato']);      // acentuacion o articulacion
+    const idx=fichas.findIndex(f=>f.cat===catComodin);
+    if(idx>=0) fichas[idx]={term:'marcato', cat:catComodin, comodin:true};
+  }
+  dataTERa={ fichas: shuffleArr(fichas), colocadas:{} };
+  renderTERa();
+}
+function renderTERa(){
+  const host=document.getElementById('terA'); host.innerHTML='';
+  const d=dataTERa;
+  if(typeof ES_TACTIL!=='undefined' && ES_TACTIL){
+    const tip=document.createElement('div'); tip.style.cssText='font-size:12px;color:var(--teoria);font-weight:700;margin-bottom:8px;text-align:center';
+    tip.textContent='👆 Mantén pulsado un término y arrástralo a su categoría';
+    host.appendChild(tip);
+  }
+  // zona de fichas sin colocar
+  const pool=document.createElement('div'); pool.className='ter-pool'; pool.id='terPool';
+  d.fichas.forEach(f=>{ if(!d.colocadas[f.term]) pool.appendChild(makeChipTERa(f.term)); });
+  host.appendChild(pool);
+  // contenedores por categoría
+  const cols=document.createElement('div'); cols.className='ter-cats';
+  TER_CAT_KEYS.forEach(k=>{
+    const box=document.createElement('div'); box.className='ter-cat-box'; box.dataset.cat=k;
+    const h=document.createElement('div'); h.className='ter-cat-h'; h.textContent=TER_CATS[k].label;
+    const drop=document.createElement('div'); drop.className='ter-drop'; drop.dataset.cat=k;
+    // fichas ya colocadas aquí
+    d.fichas.forEach(f=>{ if(d.colocadas[f.term]===k) drop.appendChild(makeChipTERa(f.term)); });
+    box.appendChild(h); box.appendChild(drop);
+    cols.appendChild(box);
+  });
+  host.appendChild(cols);
+  const tag=document.createElement('div'); tag.className='sol'; tag.id='terAsol'; tag.style.cssText='margin-top:10px;font-size:13px';
+  host.appendChild(tag);
+  wireTERaDrag();
+}
+function makeChipTERa(term){
+  const c=document.createElement('div'); c.className='ter-chip'; c.textContent=term; c.dataset.term=term; c.draggable=false;
+  return c;
+}
+/* drag & drop con pointer events (táctil + ratón) */
+let terDragEl=null, terDragTerm=null, terGhostEl=null;
+function wireTERaDrag(){
+  const host=document.getElementById('terA');
+  host.querySelectorAll('.ter-chip').forEach(chip=>{
+    chip.onpointerdown=(ev)=>{
+      if(dataTERa._locked) return;
+      ev.preventDefault();
+      terDragTerm=chip.dataset.term; terDragEl=chip;
+      // ghost flotante
+      terGhostEl=chip.cloneNode(true); terGhostEl.classList.add('ter-chip-ghost');
+      terGhostEl.style.cssText='position:fixed;z-index:9999;pointer-events:none;opacity:.92';
+      document.body.appendChild(terGhostEl);
+      moveGhost(ev.clientX,ev.clientY);
+      chip.classList.add('dragging');
+      window.addEventListener('pointermove',terMove);
+      window.addEventListener('pointerup',terUp);
+    };
+  });
+}
+function moveGhost(x,y){ if(terGhostEl){ terGhostEl.style.left=(x-30)+'px'; terGhostEl.style.top=(y-16)+'px'; } }
+function terMove(ev){ moveGhost(ev.clientX,ev.clientY);
+  // resaltar drop bajo el cursor
+  document.querySelectorAll('.ter-drop').forEach(d=>d.classList.remove('over'));
+  const el=document.elementFromPoint(ev.clientX,ev.clientY);
+  const drop=el&&el.closest&&el.closest('.ter-drop'); if(drop) drop.classList.add('over');
+}
+function terUp(ev){
+  window.removeEventListener('pointermove',terMove);
+  window.removeEventListener('pointerup',terUp);
+  if(terGhostEl){ terGhostEl.remove(); terGhostEl=null; }
+  if(terDragEl) terDragEl.classList.remove('dragging');
+  document.querySelectorAll('.ter-drop').forEach(d=>d.classList.remove('over'));
+  const el=document.elementFromPoint(ev.clientX,ev.clientY);
+  const drop=el&&el.closest&&el.closest('.ter-drop');
+  const pool=el&&el.closest&&el.closest('.ter-pool');
+  if(drop){ dataTERa.colocadas[terDragTerm]=drop.dataset.cat; renderTERa(); checkTERaDone(); }
+  else if(pool){ delete dataTERa.colocadas[terDragTerm]; renderTERa(); }
+  terDragEl=null; terDragTerm=null;
+}
+/* cuando las 5 fichas están colocadas, parpadeo y autocorrección */
+function checkTERaDone(){
+  const d=dataTERa; if(d._locked) return;
+  const todasColocadas = d.fichas.every(f=>d.colocadas[f.term]);
+  if(!todasColocadas) return;
+  // pequeño parpadeo antes de revelar
+  document.querySelectorAll('#terA .ter-chip').forEach(ch=>ch.classList.add('pulsando'));
+  setTimeout(()=>corregirTERa(), 620);
+}
+function corregirTERa(){
+  const d=dataTERa; d._locked=true; lockCard('cardTERa');
+  let bien=0;
+  const esCorrecta=(f)=>{
+    const puesta=d.colocadas[f.term];
+    if(TER_COMODIN[f.term]) return TER_COMODIN[f.term].indexOf(puesta)>=0; // comodín: válido en varias
+    return puesta===f.cat;
+  };
+  d.fichas.forEach(f=>{
+    const ok=esCorrecta(f);
+    document.querySelectorAll('.ter-chip').forEach(ch=>{ if(ch.dataset.term===f.term){ ch.classList.remove('ok','bad'); ch.classList.add(ok?'ok':'bad'); } });
+    if(ok) bien++;
+  });
+  const tag=document.getElementById('terAsol');
+  const todo = bien===d.fichas.length;
+  tag.style.color = todo?'var(--green)':'var(--red)';
+  const solTxt=f=>{
+    if(TER_COMODIN[f.term]) return f.term+' → '+TER_COMODIN[f.term].map(c=>TER_CATS[c].label).join(' o ');
+    return f.term+' → '+TER_CATS[f.cat].label;
+  };
+  tag.innerHTML = todo? '✓ ¡Todos correctos!' :
+    ('Aciertos: '+bien+'/'+d.fichas.length+'. Solución: '+d.fichas.map(solTxt).join(' · '));
+}
+
+/* ===================== B: SIGNIFICADO ===================== */
+let dataTERb=null;
+function nuevoTERb(){
+  unlockCard('cardTERb');
+  const elegidos=pickN(TER_SIGNIF, 4);
+  const items=elegidos.map(e=>{
+    // distractor: humor (de vez en cuando) o uno sobrio
+    let mala;
+    if(e.humor && chance(TER_HUMOR_PROB)) mala=e.humor;
+    else mala=pick(e.mal);
+    // colocar al azar arriba/abajo
+    const ops = chance(0.5) ? [e.ok, mala] : [mala, e.ok];
+    return {t:e.t, correcta:e.ok, ops, sel:null};
+  });
+  dataTERb={ items };
+  renderTERb();
+}
+function renderTERb(){
+  const host=document.getElementById('terB'); host.innerHTML='';
+  const d=dataTERb;
+  d.items.forEach((it,i)=>{
+    const row=document.createElement('div'); row.className='ter-bq';
+    const mkOpt=(txt)=>{
+      const b=document.createElement('button'); b.className='ter-bop'; b.textContent=txt;
+      if(it.sel!=null){            // ya respondido -> feedback inmediato
+        if(txt===it.correcta) b.classList.add('ok');
+        else if(txt===it.sel) b.classList.add('bad');
+        b.disabled=true;
+      }
+      b.onclick=()=>{ if(it.sel!=null) return; it.sel=txt; renderTERb(); checkTERbDone(); };
+      return b;
+    };
+    const top=mkOpt(it.ops[0]);
+    const term=document.createElement('div'); term.className='ter-bterm'; term.textContent=it.t;
+    const bot=mkOpt(it.ops[1]);
+    row.appendChild(top); row.appendChild(term); row.appendChild(bot);
+    host.appendChild(row);
+  });
+  const tag=document.createElement('div'); tag.className='sol'; tag.id='terBsol'; tag.style.cssText='margin-top:10px;font-size:13px;text-align:center';
+  host.appendChild(tag);
+}
+/* cuando todas están respondidas, muestra el resumen */
+function checkTERbDone(){
+  const d=dataTERb; if(d.items.some(it=>it.sel==null)) return;
+  const bien=d.items.filter(it=>it.sel===it.correcta).length;
+  const tag=document.getElementById('terBsol');
+  tag.style.color = bien===d.items.length?'var(--green)':'var(--red)';
+  tag.textContent = bien===d.items.length? '✓ ¡Todos correctos!' : ('Aciertos: '+bien+'/'+d.items.length);
+}
+function corregirTERb(){ checkTERbDone(); }
+
+/* ===================== C: ORDENAR TEMPOS ===================== */
+let dataTERc=null;
+function nuevoTERc(){
+  unlockCard('cardTERc');
+  // uno de cada franja; orden correcto = de MÁS RÁPIDO (arriba) a MÁS LENTO (abajo)
+  const correcto=TER_FRANJAS.map(fr=>pick(fr.items)).reverse();
+  let orden=shuffleArr(correcto);
+  let intentos=0;
+  while(orden.join()===correcto.join() && intentos<10){ orden=shuffleArr(correcto); intentos++; }
+  dataTERc={ correcto, orden };
+  renderTERc();
+}
+function renderTERc(){
+  const host=document.getElementById('terC'); host.innerHTML='';
+  const d=dataTERc;
+  const wrap=document.createElement('div'); wrap.className='ter-cwrap';
+  // columna de tarjetas arrastrables
+  const row=document.createElement('div'); row.className='ter-corder'; row.id='terCrow';
+  d.orden.forEach((t,idx)=>{
+    const card=document.createElement('div'); card.className='ter-ccard'; card.dataset.t=t; card.dataset.idx=idx;
+    card.textContent=t.charAt(0).toUpperCase()+t.slice(1);
+    const f=1-(idx/(d.orden.length-1||1));
+    card.style.background='linear-gradient(180deg,rgba(255,46,154,'+(0.10+0.30*f).toFixed(2)+'),rgba(232,67,147,'+(0.04+0.12*f).toFixed(2)+'))';
+    card.style.borderColor='rgba(255,46,154,'+(0.25+0.40*f).toFixed(2)+')';
+    const grip=document.createElement('span'); grip.className='ter-grip'; grip.textContent='⠿';
+    card.appendChild(grip);
+    row.appendChild(card);
+  });
+  wrap.appendChild(row);
+  // eje indicador a la derecha
+  const axis=document.createElement('div'); axis.className='ter-axis';
+  axis.innerHTML='<span class="ter-axis-top">más rápido ▲</span><span class="ter-axis-line"></span><span class="ter-axis-bot">▼ más lento</span>';
+  wrap.appendChild(axis);
+  host.appendChild(wrap);
+  const tag=document.createElement('div'); tag.className='sol'; tag.id='terCsol'; tag.style.cssText='margin-top:10px;font-size:13px';
+  host.appendChild(tag);
+  wireTERcDrag();
+}
+/* drag para reordenar las tarjetas de C (pointer events, táctil+ratón) */
+let terCDragIdx=null, terCGhost=null, terCRow=null;
+function wireTERcDrag(){
+  terCRow=document.getElementById('terCrow');
+  terCRow.querySelectorAll('.ter-ccard').forEach(card=>{
+    card.onpointerdown=(ev)=>{
+      if(dataTERc._locked) return;
+      ev.preventDefault();
+      terCDragIdx=+card.dataset.idx;
+      terCGhost=card.cloneNode(true); terCGhost.classList.add('ter-cghost');
+      terCGhost.style.cssText='position:fixed;z-index:9999;pointer-events:none;opacity:.92;width:'+card.offsetWidth+'px';
+      document.body.appendChild(terCGhost);
+      moveCGhost(ev.clientX,ev.clientY);
+      card.classList.add('dragging');
+      window.addEventListener('pointermove',terCMove);
+      window.addEventListener('pointerup',terCUp);
+    };
+  });
+}
+function moveCGhost(x,y){ if(terCGhost){ terCGhost.style.left=(x-terCGhost.offsetWidth/2)+'px'; terCGhost.style.top=(y-20)+'px'; } }
+function terCMove(ev){
+  moveCGhost(ev.clientX,ev.clientY);
+  const cards=[...terCRow.querySelectorAll('.ter-ccard')];
+  cards.forEach(c=>c.classList.remove('drop-before','drop-after'));
+  if(!cards.length) return;
+  // ¿sobre qué tarjeta y en qué mitad?
+  let marcada=false;
+  for(const c of cards){
+    const r=c.getBoundingClientRect();
+    if(ev.clientY < r.top) continue;
+    if(ev.clientY <= r.bottom){
+      if(ev.clientY < r.top+r.height/2) c.classList.add('drop-before');
+      else c.classList.add('drop-after');
+      marcada=true; break;
+    }
+  }
+  // si está por debajo de la última, marcar debajo de la última
+  if(!marcada){ const last=cards[cards.length-1]; const r=last.getBoundingClientRect();
+    if(ev.clientY>r.bottom) last.classList.add('drop-after'); }
+}
+function terCUp(ev){
+  window.removeEventListener('pointermove',terCMove);
+  window.removeEventListener('pointerup',terCUp);
+  if(terCGhost){ terCGhost.remove(); terCGhost=null; }
+  const cards=[...terCRow.querySelectorAll('.ter-ccard')];
+  // calcular destino según el indicador activo
+  let toIdx=null;
+  cards.forEach((c,i)=>{
+    if(c.classList.contains('drop-before')) toIdx=i;
+    if(c.classList.contains('drop-after')) toIdx=i+1;
+  });
+  cards.forEach(c=>c.classList.remove('dragging','drop-before','drop-after'));
+  if(toIdx==null) toIdx=dataTERc.orden.length;
+  const from=terCDragIdx;
+  if(from!=null){
+    const arr=dataTERc.orden;
+    const [m]=arr.splice(from,1);
+    if(toIdx>from) toIdx--;
+    arr.splice(toIdx,0,m);
+    renderTERc();
+  }
+  terCDragIdx=null;
+}
+function corregirTERc(){
+  const d=dataTERc; d._locked=true; lockCard('cardTERc');
+  const row=document.getElementById('terCrow');
+  let bien=0;
+  d.orden.forEach((t,idx)=>{
+    const card=row.children[idx]; card.classList.remove('ok','bad');
+    card.style.background=''; card.style.borderColor='';   // que mande la clase ok/bad
+    if(t===d.correcto[idx]){ card.classList.add('ok'); bien++; } else card.classList.add('bad');
+  });
+  const tag=document.getElementById('terCsol');
+  const todo=bien===d.orden.length;
+  tag.style.color=todo?'var(--green)':'var(--red)';
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  tag.innerHTML = todo? '✓ ¡Orden correcto!' : ('Orden correcto: '+d.correcto.map(cap).join(' → '));
+}
+
+function nuevoTER(){ nuevoTERa(); nuevoTERb(); nuevoTERc(); }
+function openTerminos(){
+  showView('view-terminos');
+  if(!dataTERa) nuevoTERa();
+  if(!dataTERb) nuevoTERb();
+  if(!dataTERc) nuevoTERc();
 }
 
 </script>
