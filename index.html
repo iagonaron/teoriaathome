@@ -243,6 +243,109 @@
   .btn-correct{border-color:var(--green);color:var(--green)}
   .btn-correct:hover{background:var(--green-soft);border-color:var(--green)}
 
+  /* ===== Botón Ejemplo resuelto (blanco) ===== */
+  .btn-ejemplo{border-color:rgba(255,255,255,.55);color:#eef1ff;background:rgba(255,255,255,.08)}
+  .btn-ejemplo:hover{border-color:#fff;background:rgba(255,255,255,.18);color:#fff}
+  .btn-ejemplo svg{width:16px;height:16px}
+  /* ===== Botón Nuevo (color del apartado: rosa) ===== */
+  .btn-nuevo{border-color:var(--teoria);color:var(--teoria)}
+  .btn-nuevo:hover{background:var(--teoria-soft);border-color:var(--teoria)}
+
+  /* ===== Modal "Ejemplo resuelto" — cristal blanco translúcido + nebulosa fría ===== */
+  .ex-modal{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:20px;
+    background:rgba(8,12,30,.55);backdrop-filter:blur(2px)}
+  .ex-modal.show{display:flex;animation:exFade .2s ease 1}
+  @keyframes exFade{from{opacity:0}to{opacity:1}}
+  /* la caja es semitransparente: deja entrever el fondo oscuro a través del cristal */
+  .ex-modal-box{position:relative;max-width:620px;width:100%;max-height:88vh;overflow-y:auto;overflow-x:hidden;
+    background:rgba(244,247,255,.72);color:#16203a;-webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%);
+    border:1px solid rgba(255,255,255,.85);border-radius:20px;
+    box-shadow:0 30px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.9);padding:26px 26px 30px}
+  .ex-modal-box.wide{max-width:980px}
+  /* nebulosa fría MUY visible: blobs blancos puros y azul-hielo que se mueven */
+  .ex-modal-box::before{content:'';position:absolute;inset:-2px;z-index:0;pointer-events:none;border-radius:20px;
+    filter:blur(38px) saturate(125%);opacity:1;mix-blend-mode:screen;
+    background:
+      radial-gradient(34% 44% at 18% 24%, #ffffff 0%, rgba(255,255,255,0) 64%),
+      radial-gradient(32% 42% at 82% 18%, #cfe0ff 0%, rgba(207,224,255,0) 66%),
+      radial-gradient(40% 50% at 70% 80%, #ffffff 0%, rgba(255,255,255,0) 62%),
+      radial-gradient(34% 46% at 26% 82%, #d6e6ff 0%, rgba(214,230,255,0) 64%),
+      radial-gradient(30% 38% at 50% 46%, #eaf1ff 0%, rgba(234,241,255,0) 70%);
+    background-size:230% 230%,230% 230%,230% 230%,230% 230%,200% 200%;
+    animation:exNebula 14s ease-in-out infinite alternate}
+  /* segunda capa de nebulosa, más sutil, en sentido contrario, para dar profundidad */
+  .ex-modal-box::after{content:'';position:absolute;inset:-2px;z-index:0;pointer-events:none;border-radius:20px;
+    filter:blur(50px);opacity:.7;mix-blend-mode:screen;
+    background:
+      radial-gradient(40% 48% at 60% 20%, #ffffff 0%, rgba(255,255,255,0) 62%),
+      radial-gradient(38% 46% at 30% 60%, #c7dcff 0%, rgba(199,220,255,0) 64%),
+      radial-gradient(44% 52% at 84% 70%, #ffffff 0%, rgba(255,255,255,0) 60%);
+    background-size:260% 260%,260% 260%,260% 260%;
+    animation:exNebula2 19s ease-in-out infinite alternate}
+  .ex-modal-box > *{position:relative;z-index:1}
+  @keyframes exNebula{
+    0%{background-position:0% 0%,100% 0%,60% 100%,20% 90%,50% 50%}
+    25%{background-position:50% 25%,45% 60%,90% 25%,70% 40%,35% 65%}
+    50%{background-position:85% 70%,15% 35%,25% 80%,90% 12%,62% 38%}
+    75%{background-position:30% 92%,82% 48%,60% 28%,12% 70%,42% 60%}
+    100%{background-position:100% 38%,8% 82%,18% 60%,80% 30%,55% 46%}
+  }
+  @keyframes exNebula2{
+    0%{background-position:100% 100%,0% 50%,50% 0%}
+    50%{background-position:20% 30%,80% 80%,10% 60%}
+    100%{background-position:60% 70%,30% 10%,90% 40%}
+  }
+  @media (prefers-reduced-motion: reduce){ .ex-modal-box::before,.ex-modal-box::after{animation:none} }
+  .ex-modal-tag{display:inline-block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;
+    color:#1a2c52;background:rgba(255,255,255,.85);padding:5px 11px;border-radius:8px;margin-bottom:14px;
+    box-shadow:0 2px 10px rgba(40,70,140,.18);border:1px solid rgba(255,255,255,.9)}
+  .ex-modal-box h3{margin:0 0 14px;font-size:20px;font-weight:900;color:#0f1830}
+  .ex-modal-sec{margin-bottom:16px}
+  .ex-modal-sec .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5b6a92;font-weight:800;margin-bottom:6px}
+  .ex-modal-sec .enun{font-size:15px;color:#28344f;line-height:1.55}
+  .ex-modal-resp{background:rgba(255,255,255,.55);border:1px solid rgba(120,150,210,.4);border-radius:12px;padding:14px 16px}
+  .ex-modal-resp .lab{color:#3a5694}
+  .ex-modal-resp .val{font-size:18px;font-weight:900;color:#14224a}
+  .ex-modal-sec .expl{font-size:14px;color:#28344f;line-height:1.62}
+  .ex-modal-sec .expl b{color:#0f1830}
+  .ex-modal-scorewrap{margin:0 0 18px}
+  .ex-modal-scorewrap .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5b6a92;font-weight:800;margin-bottom:8px}
+  /* partitura: papel BLANCO puro (como las del alumno) */
+  .ex-modal-scorescroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px;background:#ffffff;
+    box-shadow:inset 0 0 0 1px rgba(40,70,140,.08),0 6px 22px rgba(20,30,60,.16);padding:10px 6px;min-height:110px;
+    display:flex;align-items:center;justify-content:center}
+  .ex-modal-scorescroll svg{display:block;margin:0 auto}
+  #exModalScore{min-width:100%}
+  @media(max-width:560px){ .ex-modal-scorescroll{justify-content:flex-start} }
+  .ex-modal-close{width:34px;height:34px;border-radius:9px;border:1px solid rgba(40,60,110,.18);
+    background:rgba(255,255,255,.6);color:#2a3656;font-size:18px;cursor:pointer;line-height:1;flex:0 0 auto}
+  .ex-modal-close:hover{background:rgba(255,255,255,.9)}
+  /* tabla de pasos (procedimientos) */
+  .ex-pasos{margin:0 0 16px;border:1px solid rgba(120,150,210,.28);border-radius:12px;overflow:hidden;background:rgba(255,255,255,.5)}
+  .ex-pasos .ex-paso{display:flex;gap:10px;align-items:flex-start;padding:9px 13px;border-top:1px solid rgba(120,150,210,.2)}
+  .ex-pasos .ex-paso:first-child{border-top:none}
+  .ex-pasos .ex-paso .num{flex:0 0 22px;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#6f9bff,#3f63c8);
+    color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center}
+  .ex-pasos .ex-paso .txt{font-size:13.5px;color:#28344f;line-height:1.5}
+  .ex-pasos .ex-paso .txt b{color:#0f1830}
+  /* figuras rítmicas dibujadas dentro de un paso */
+  .ex-fig{display:inline-flex;align-items:center;gap:5px;vertical-align:middle;margin:0 2px}
+  .ex-fig svg{display:block}
+  .ex-fig-wrap{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;align-items:center}
+  .ex-fig-chip{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.7);border:1px solid rgba(120,150,210,.3);
+    border-radius:9px;padding:5px 10px}
+  .ex-fig-chip .cap{font-size:11.5px;color:#3a4a6e;font-weight:700}
+  /* truco / nota destacada (frío) */
+  .ex-truco{margin:0 0 16px;border:1px dashed rgba(90,130,210,.55);border-radius:12px;padding:11px 14px;
+    background:rgba(220,232,255,.5);font-size:13.5px;color:#23365f;line-height:1.5}
+  .ex-truco b{color:#14224a}
+  .ex-modal-otro{display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    font-family:inherit;font-size:13px;font-weight:800;padding:8px 13px;border-radius:10px;cursor:pointer;
+    color:#1a2c52;border:1px solid rgba(120,150,210,.5);background:rgba(255,255,255,.6);transition:.12s}
+  .ex-modal-otro svg{width:16px;height:16px}
+  .ex-modal-otro:hover{background:rgba(255,255,255,.92);border-color:#6f9bff}
+  .ex-modal-topbtns{position:absolute;top:14px;right:14px;display:flex;gap:9px;align-items:center;z-index:4}
+
   /* pentagrama */
   .score{background:var(--paper);border:1px solid var(--line);border-radius:12px;
     padding:4px 6px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.32);line-height:0;font-size:0}
@@ -465,7 +568,11 @@
       <div class="ex-top">
         <div class="ex-letter"><b>a)</b><span>Clasifica cada intervalo</span></div>
         <div style="display:flex;gap:8px">
-          <button class="iconbtn" onclick="nuevoA()" title="Nuevo ejercicio">
+          <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('int_clasif')" title="Ver un ejemplo resuelto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            Ejemplo
+          </button>
+          <button class="iconbtn btn-nuevo" onclick="nuevoA()" title="Nuevo ejercicio">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
@@ -481,7 +588,11 @@
       <div class="ex-top">
         <div class="ex-letter"><b>b)</b><span>Coloca la 2ª nota del intervalo</span></div>
         <div style="display:flex;gap:8px">
-          <button class="iconbtn" onclick="nuevoB()" title="Nuevo ejercicio">
+          <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('int_constr')" title="Ver un ejemplo resuelto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            Ejemplo
+          </button>
+          <button class="iconbtn btn-nuevo" onclick="nuevoB()" title="Nuevo ejercicio">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
@@ -507,7 +618,11 @@
       <div class="ex-top">
         <div class="ex-letter"><b>a)</b><span>Escribe la tonalidad Mayor y su menor relativa</span></div>
         <div style="display:flex;gap:8px">
-          <button class="iconbtn" onclick="nuevoTA()" title="Nuevo ejercicio">
+          <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('ton_arm_tono')" title="Ver un ejemplo resuelto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            Ejemplo
+          </button>
+          <button class="iconbtn btn-nuevo" onclick="nuevoTA()" title="Nuevo ejercicio">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
@@ -524,7 +639,11 @@
       <div class="ex-top">
         <div class="ex-letter"><b>b)</b><span>Coloca la armadura de cada tonalidad</span></div>
         <div style="display:flex;gap:8px">
-          <button class="iconbtn" onclick="nuevoTB()" title="Nuevo ejercicio">
+          <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('ton_tono_arm')" title="Ver un ejemplo resuelto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            Ejemplo
+          </button>
+          <button class="iconbtn btn-nuevo" onclick="nuevoTB()" title="Nuevo ejercicio">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
@@ -541,7 +660,11 @@
       <div class="ex-top">
         <div class="ex-letter"><b>c)</b><span>Completa los tonos vecinos</span></div>
         <div style="display:flex;gap:8px">
-          <button class="iconbtn" onclick="nuevoTC()" title="Nuevo ejercicio">
+          <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('ton_vecinos')" title="Ver un ejemplo resuelto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            Ejemplo
+          </button>
+          <button class="iconbtn btn-nuevo" onclick="nuevoTC()" title="Nuevo ejercicio">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
@@ -565,7 +688,11 @@
       <div class="ex-top">
         <div class="ex-letter"><b>a)</b><span>Escribe el nombre de cada nota</span></div>
         <div style="display:flex;gap:8px">
-          <button class="iconbtn" onclick="nuevoCA()" title="Nuevo ejercicio">
+          <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('cla_a')" title="Ver un ejemplo resuelto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            Ejemplo
+          </button>
+          <button class="iconbtn btn-nuevo" onclick="nuevoCA()" title="Nuevo ejercicio">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
@@ -580,7 +707,11 @@
       <div class="ex-top">
         <div class="ex-letter"><b>b)</b><span>Elige la clave correcta para cada nota</span></div>
         <div style="display:flex;gap:8px">
-          <button class="iconbtn" onclick="nuevoCB()" title="Nuevo ejercicio">
+          <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('cla_b')" title="Ver un ejemplo resuelto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            Ejemplo
+          </button>
+          <button class="iconbtn btn-nuevo" onclick="nuevoCB()" title="Nuevo ejercicio">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
@@ -602,21 +733,8 @@
     <div class="esc-banner">Selecciona aquellas escalas que <b>ya hayas visto en clase</b> con tu profesor o profesora.</div>
     <div class="esc-types" id="escTypes"></div>
 
-    <div class="ex-card" id="cardESC">
-      <div class="ex-top">
-        <div class="ex-letter"><b></b><span>Pon la armadura y completa cada escala (los grados 6 y 7, en azul, son editables)</span></div>
-        <div style="display:flex;gap:8px">
-          <button class="iconbtn" onclick="nuevoESC()" title="Nuevo ejercicio">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
-            Nuevo
-          </button>
-          <button class="iconbtn btn-correct" onclick="corregirESC()">✓ Corregir</button>
-        </div>
-      </div>
-      <div id="escRows"></div>
-      <p class="hint" id="hintEscMM" style="margin-top:10px">Toca una nota para seleccionarla y usa ♯/♮/♭ para alterarla.</p>
-      <p class="hint" id="hintEscOtras" style="margin-top:6px;display:none">Otras escalas: toca el pentagrama para añadir cada nota en orden. Para alterar una nota, tócala y usa ♯/♮/♭. Para borrarla, toca la <b>×</b> que aparece sobre ella (o clic derecho).</p>
-    </div>
+    <!-- una tarjeta por familia activa, inyectadas por renderESC() -->
+    <div id="escCards"></div>
 
   </section>
 
@@ -625,13 +743,17 @@
     <div class="iv-head">
       <div class="iv-title"><span class="post">GRA</span>DOS</div>
     </div>
-    <p class="iv-sub">Para cada pregunta: pon la armadura y señala (clic) la cabecita del grado pedido. Puedes alterarla si hace falta.</p>
+    <p class="iv-sub">Para cada pregunta: pon la armadura y señala (clic) la cabeza del grado pedido. Puedes alterarla si hace falta.</p>
 
     <div class="ex-card" id="cardGR">
       <div class="ex-top">
         <div class="ex-letter"><b></b><span>Señala el grado pedido en cada escala</span></div>
         <div style="display:flex;gap:8px">
-          <button class="iconbtn" onclick="nuevoGR()" title="Nuevo ejercicio">
+          <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('gra_senalar')" title="Ver un ejemplo resuelto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            Ejemplo
+          </button>
+          <button class="iconbtn btn-nuevo" onclick="nuevoGR()" title="Nuevo ejercicio">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
@@ -657,8 +779,16 @@
     <div class="ex-card" id="cardACO">
       <div class="ex-top">
         <div class="ex-letter"><b></b><span>Identifica dos acordes y construye otros dos</span></div>
-        <div style="display:flex;gap:8px">
-          <button class="iconbtn" onclick="nuevoACO()" title="Nuevo ejercicio">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('aco_id')" title="Ejemplo: identificar un acorde">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            Ej. identificar
+          </button>
+          <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('aco_constr')" title="Ejemplo: construir un acorde">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            Ej. construir
+          </button>
+          <button class="iconbtn btn-nuevo" onclick="nuevoACO()" title="Nuevo ejercicio">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
@@ -682,7 +812,11 @@
       <div class="ex-top">
         <div class="ex-letter"><b></b><span></span></div>
         <div style="display:flex;gap:8px">
-          <button class="iconbtn" onclick="nuevoCOM()" title="Nuevo ejercicio">
+          <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('com_clasif')" title="Ver un ejemplo resuelto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            Ejemplo
+          </button>
+          <button class="iconbtn btn-nuevo" onclick="nuevoCOM()" title="Nuevo ejercicio">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
@@ -705,7 +839,11 @@
       <div class="ex-top">
         <div class="ex-letter"><b></b><span></span></div>
         <div style="display:flex;gap:8px">
-          <button class="iconbtn" onclick="nuevoENA()" title="Nuevo ejercicio">
+          <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('ena_a')" title="Ver un ejemplo resuelto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            Ejemplo
+          </button>
+          <button class="iconbtn btn-nuevo" onclick="nuevoENA()" title="Nuevo ejercicio">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
@@ -728,8 +866,16 @@
     <div class="ex-card" id="cardSEM">
       <div class="ex-top">
         <div class="ex-letter"><b></b><span></span></div>
-        <div style="display:flex;gap:8px">
-          <button class="iconbtn" onclick="nuevoSEM()" title="Nuevo ejercicio">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('sem_clasif')" title="Ejemplo: clasificar semitono">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            Ej. clasificar
+          </button>
+          <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('sem_constr')" title="Ejemplo: construir semitono">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            Ej. construir
+          </button>
+          <button class="iconbtn btn-nuevo" onclick="nuevoSEM()" title="Nuevo ejercicio">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
@@ -746,7 +892,7 @@
   <section class="view" id="view-terminos">
     <div class="iv-head">
       <div class="iv-title"><span class="post">TÉR</span>MINOS</div>
-      <button class="iconbtn" onclick="nuevoTER()" title="Nuevos ejercicios" style="display:flex;align-items:center;gap:6px">
+      <button class="iconbtn btn-nuevo" onclick="nuevoTER()" title="Nuevos ejercicios" style="display:flex;align-items:center;gap:6px">
         <svg viewBox="0 0 24 24" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
         Nuevos
       </button>
@@ -897,9 +1043,9 @@ const STEPS=["C","D","E","F","G","A","B"];
 const STEP_ST={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 function midiNota(s,o,a){return 12*(o+1)+STEP_ST[s]+a;}
 
-/* rangos: simple = La3–Sol5; compuestos = Do3–Do6 */
+/* rangos: simple = La3–Sol5; compuestos = Do3–Do6 (acotado para no salirse por arriba) */
 const RANGO_SIMPLE={min:midiNota("A",3,0),max:midiNota("G",5,0)};
-const RANGO_COMP={min:midiNota("G",3,0),max:midiNota("B",6,0)};
+const RANGO_COMP={min:midiNota("C",3,0),max:midiNota("C",6,0)};
 const RARAS=new Set(["F,-1","C,-1","B,1","E,1"]);
 
 function notasPartida(rango){
@@ -1545,15 +1691,21 @@ function renderAnswersB(){
     }
     cell.appendChild(chipRow);
     // selector de alteración grande (deshabilitado hasta colocar)
-    const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:6px;justify-content:center';
-    [['-2','𝄫'],['-1','♭'],['0','♮'],['1','♯'],['2','×']].forEach(([a,sym])=>{
+    // distribución fija: 𝄫 ♭ ♮ ♯ a la izquierda, × (doble sostenido) anclado a la derecha
+    const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:6px;justify-content:center;align-items:center';
+    const accLeft=document.createElement('div'); accLeft.style.cssText='display:flex;gap:6px';
+    const mkAcc=(a,sym)=>{
       const b=document.createElement('button'); b.className='acc-btn'; b.textContent=sym;
       b.style.cssText='min-width:38px;height:38px;font-size:18px;font-weight:700;padding:0';
       if(!colocada) b.disabled=true;
       if(colocada && (respB[i].alter||0)===parseInt(a,10)) b.classList.add('on');
       b.onclick=()=>{ setAltB(i, parseInt(a,10)); };
-      accRow.appendChild(b);
-    });
+      return b;
+    };
+    [['-2','𝄫'],['-1','♭'],['0','♮'],['1','♯']].forEach(([a,sym])=>{ accLeft.appendChild(mkAcc(a,sym)); });
+    accRow.appendChild(accLeft);
+    const accX=mkAcc('2','×'); accX.title='Doble sostenido'; accX.style.marginLeft='10px';
+    accRow.appendChild(accX);
     cell.appendChild(accRow);
     const tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='text-align:center;min-height:18px;margin-top:6px';
     cell.appendChild(tag);
@@ -2250,42 +2402,40 @@ function escPickTipo(){
 /* estado: 4 escalas. Cada una: {tonica, tipo, notasSol[7], fifths, userArm, userNotas[7]} */
 let dataESC=[];
 let escVarGeom={};
-function nuevoESC(){
-  unlockCard('cardESC');
-  // composición según selección:
-  //  - solo menores -> 2 menores
-  //  - solo mayores -> 2 mayores
-  //  - solo otras -> 2 otras DISTINTAS entre sí
-  //  - menores+mayores -> 1 menor + 1 mayor
-  //  - menores+otras -> 1 menor + 1 otra
-  //  - mayores+otras -> 1 mayor + 1 otra
-  //  - los tres -> 1 menor + 1 mayor + 1 otra
-  let familias=[];
-  const m=escSel.menores, M=escSel.mayores, O=escSel.otras;
-  const dosOtrasDistintas=()=>{
-    const a=pick(['pentatonica','hexatona','cromatica']);
-    let b; do{ b=pick(['pentatonica','hexatona','cromatica']); }while(b===a);
-    return [a,b];
-  };
-  if(m&&M&&O)      familias=['menor','mayor', pick(['pentatonica','hexatona','cromatica'])];
-  else if(m&&M)    familias=['menor','mayor'];
-  else if(m&&O)    familias=['menor', pick(['pentatonica','hexatona','cromatica'])];
-  else if(M&&O)    familias=['mayor', pick(['pentatonica','hexatona','cromatica'])];
-  else if(O&&!m&&!M) familias=dosOtrasDistintas();
-  else if(M&&!m)   familias=['mayor','mayor'];
-  else             familias=['menor','menor'];
-  dataESC=[];
-  let prevTipo=null;
-  familias.forEach(fam=>{
-    if(fam==='menor'||fam==='mayor'){
-      let it,intentos=0;
-      do{ it=escItem7(fam); intentos++; }while(it.tipo===prevTipo && intentos<30);
-      prevTipo=it.tipo; dataESC.push(it);
-    } else {
-      dataESC.push(escItemVariable(fam));
-    }
-  });
-  dataESC.forEach(e=>{ e._corregido=false; e._solVisible=false; });
+/* familias activas en orden fijo */
+function escFamiliasActivas(){
+  const out=[];
+  if(escSel.menores) out.push('menor');
+  if(escSel.mayores) out.push('mayor');
+  if(escSel.otras)   out.push('otras');
+  return out.length?out:['menor'];
+}
+/* genera UN item de escala de la familia dada */
+function escGenItem(fam, prevTipo){
+  if(fam==='menor'||fam==='mayor'){
+    let it,intentos=0;
+    do{ it=escItem7(fam); intentos++; }while(it.tipo===prevTipo && intentos<30);
+    it._fam=fam; return it;
+  } else {
+    const sub=pick(['pentatonica','hexatona','cromatica']);
+    const it=escItemVariable(sub); it._fam='otras'; return it;
+  }
+}
+/* nuevoESC(): si recibe familia, regenera SOLO esa; si no, regenera todas.
+   Cada familia activa = exactamente 1 escala, en su propia tarjeta. */
+function nuevoESC(soloFam){
+  const fams=escFamiliasActivas();
+  if(soloFam){
+    // regenerar solo la escala de esa familia, manteniendo las demás
+    const idx=dataESC.findIndex(e=>e._fam===soloFam);
+    const nuevo=escGenItem(soloFam, idx>=0?dataESC[idx].tipo:null);
+    nuevo._corregido=false; nuevo._solVisible=false;
+    if(idx>=0) dataESC[idx]=nuevo; else dataESC.push(nuevo);
+  } else {
+    dataESC=[];
+    fams.forEach(fam=>{ const it=escGenItem(fam,null); dataESC.push(it); });
+    dataESC.forEach(e=>{ e._corregido=false; e._solVisible=false; });
+  }
   renderESC();
 }
 /* placeholder para pentatónica/hexátona/cromática hasta definir ingreso */
@@ -2313,25 +2463,64 @@ function escItemVariable(fam){
   return it;
 }
 
+function escFamLabel(fam){ return fam==='menor'?'menores':(fam==='mayor'?'mayores':'otras'); }
+function escFamTitulo(fam){ return fam==='menor'?'Escala menor':(fam==='mayor'?'Escala mayor':'Otra escala'); }
+
 function renderESC(){
   escVarGeom={};
-  const host=document.getElementById('escRows'); host.innerHTML='';
+  const wrap=document.getElementById('escCards'); if(!wrap) return;
+  wrap.innerHTML='';
+  const BULB='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>';
+  const DADO='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>';
   dataESC.forEach((e,i)=>{
+    const fam=e._fam||'menor';
+    // tarjeta de la familia
+    const card=document.createElement('div'); card.className='ex-card'; card.id='cardESC_'+fam;
+    const top=document.createElement('div'); top.className='ex-top';
+    const letter=document.createElement('div'); letter.className='ex-letter';
+    letter.innerHTML='<b></b><span>'+escFamTitulo(fam)+': pon la armadura y completa la escala</span>';
+    const btns=document.createElement('div'); btns.style.cssText='display:flex;gap:8px;flex-wrap:wrap';
+    // Ejemplo (blanco)
+    const bEj=document.createElement('button'); bEj.className='iconbtn btn-ejemplo';
+    bEj.title='Ver un ejemplo resuelto de escalas '+escFamLabel(fam);
+    bEj.innerHTML=BULB+' Ejemplo';
+    bEj.onclick=()=>window.abrirEjemploEscala(fam);
+    // Nuevo (rosa) — solo esta familia
+    const bNu=document.createElement('button'); bNu.className='iconbtn btn-nuevo';
+    bNu.title='Nuevo ejercicio de '+escFamLabel(fam);
+    bNu.innerHTML=DADO+' Nuevo';
+    bNu.onclick=()=>nuevoESC(fam);
+    // Corregir (verde) — solo esta familia
+    const bCo=document.createElement('button'); bCo.className='iconbtn btn-correct';
+    bCo.textContent='✓ Corregir';
+    bCo.onclick=()=>corregirESC(fam);
+    btns.appendChild(bEj); btns.appendChild(bNu); btns.appendChild(bCo);
+    top.appendChild(letter); top.appendChild(btns);
+    card.appendChild(top);
+
+    // fila de la escala (misma estructura que antes, IDs por índice)
     const row=document.createElement('div'); row.className='gr-row';
     const ans=document.createElement('div'); ans.className='gr-ans'; ans.id='ansESC'+i;
     const preg=document.createElement('div'); preg.className='gr-preg';
-    preg.textContent = e.tonica.nom+' '+e.tipo;
+    preg.textContent=e.tonica.nom+' '+e.tipo;
     ans.appendChild(preg);
     buildEscVarControls(ans, e, i);
     const tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='min-height:18px;margin-top:6px';
     ans.appendChild(tag);
     const sc=document.createElement('div'); sc.className='score gr-score'; sc.id='scoreESC'+i;
     row.appendChild(ans); row.appendChild(sc);
-    host.appendChild(row);
+    card.appendChild(row);
+
+    // hint por tipo
+    const hint=document.createElement('p'); hint.className='hint'; hint.style.marginTop='10px';
+    hint.innerHTML = (fam==='otras')
+      ? 'Toca el pentagrama para añadir cada nota en orden. Para alterar, tócala y usa ♯/♮/♭. Para borrar, toca la <b>×</b> (o clic derecho).'
+      : 'Toca una nota para seleccionarla y usa ♯/♮/♭ para alterarla.';
+    card.appendChild(hint);
+
+    wrap.appendChild(card);
     renderESCStaveOne(i);
   });
-  const hintO=document.getElementById('hintEscOtras');
-  if(hintO) hintO.style.display = escSel.otras ? 'block' : 'none';
 }
 /* controles para menores/mayores: rueda de armadura + alteración de 6º y 7º */
 function buildEscEditControls(ans, e, i){
@@ -2450,8 +2639,16 @@ function renderESCStaveOne(i){
     const realNotes=e.userSeq.map((nb,k)=>{
       const sn=new VF.StaveNote({keys:[notaToKey(nb)],duration:"w",clef:"treble"});
       const armA = (e._precolocada||e._conArmadura) ? armAlterFor(nb.step, e.userArm||0) : 0;
-      // dibuja accidental solo si NO es heredado por contexto y difiere de la armadura
-      if(!nb._inherited && nb.alter!==armA) sn.addModifier(new VF.Accidental(accStr(nb.alter)),0);
+      // ¿hay una alteración previa del mismo nombre+octava en el compás que esta nota anula?
+      let prevAlt=null;
+      for(let j=k-1;j>=0;j--){ const pv=e.userSeq[j]; if(pv._opt) continue; if(pv.step===nb.step && pv.octave===nb.octave){ prevAlt=pv.alter; break; } }
+      // dibuja accidental si NO es heredado y difiere de la armadura
+      if(!nb._inherited && nb.alter!==armA){
+        sn.addModifier(new VF.Accidental(accStr(nb.alter)),0);
+      } else if(!nb._inherited && nb.alter===armA && nb.alter===0 && prevAlt!==null && prevAlt!==0){
+        // natural que anula una alteración previa del mismo nombre en el compás → becuadro
+        sn.addModifier(new VF.Accidental('n'),0);
+      }
       if(nb._opt){
         sn.setStyle({fillStyle:"#9aa3c0",strokeStyle:"#9aa3c0"});
         try{ sn.addModifier(new VF.Parenthesis(VF.Modifier.Position.LEFT),0);
@@ -2803,10 +3000,13 @@ function onEscClick(i,ev){
   renderESC();
 }
 
-function corregirESC(){
-  // aviso solo para escalas con ghost (no precolocadas) que estén incompletas
+function corregirESC(soloFam){
+  // índices a corregir
+  const idxs=[];
+  dataESC.forEach((e,i)=>{ if(!soloFam || e._fam===soloFam) idxs.push(i); });
+  // aviso si hay escalas con ghost incompletas
   let incompletas=[];
-  dataESC.forEach((e,i)=>{ if(!e._precolocada && e.userSeq.length<e.nNotas) incompletas.push(i); });
+  idxs.forEach(i=>{ const e=dataESC[i]; if(!e._precolocada && e.userSeq.length<e.nNotas) incompletas.push(i); });
   if(incompletas.length){
     incompletas.forEach(i=>{
       const ans=document.getElementById('ansESC'+i);
@@ -2816,8 +3016,8 @@ function corregirESC(){
     });
     return;
   }
-  lockCard('cardESC');
-  dataESC.forEach((e,i)=>{
+  idxs.forEach(i=>{
+    const e=dataESC[i];
     const ans=document.getElementById('ansESC'+i);
     corregirESCVar(e,i,ans);
   });
@@ -2881,8 +3081,8 @@ function tonStepFromTon(ton){ return ES_STEP[ton.nota]; }
    en orden ascendente partiendo de la tónica en una octava cómoda */
 function grCabecitas(ton){
   const tonStep=tonStepFromTon(ton);
-  // octava base: colocamos la tónica en 4 (o 3 si es grave) para que quepa
-  let o = (["A","B"].includes(tonStep))?3:4;
+  // octava base: 4 para todas (con más aire en el stave ya caben las líneas adicionales)
+  let o = 4;
   const it=STEPS.indexOf(tonStep);
   const out=[];
   for(let i=0;i<7;i++){
@@ -2899,7 +3099,7 @@ function nuevoGR(){
   unlockCard('cardGR');
   dataGR=[];
   const usadas=new Set();
-  for(let i=0;i<2;i++){   // 2 grados, uno por pentagrama
+  for(let i=0;i<1;i++){   // un solo grado por ejercicio
     let ton,grado,key,intentos=0;
     do{
       ton=grSorteaTon(); grado=pick(GR_GRADOS); key=ton.nom+'|'+grado.n; intentos++;
@@ -2968,16 +3168,21 @@ function paintGRAcc(i,accRow){
 function renderGRStaveOne(i){
   const e=dataGR[i];
   const host=document.getElementById('scoreGR'+i); if(!host) return; host.innerHTML='';
-  const W=host.clientWidth||520,H=110;
+  const W=host.clientWidth||520,H=140;
   const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
   const ctx=r.getContext();
-  const stave=new VF.Stave(8,8,W-16);
+  const stave=new VF.Stave(8,30,W-16);
   stave.addClef("treble");
   stave.setEndBarType(VF.Barline.type.DOUBLE);
   if(e.userArm!=null && e.userArm!==0) stave.addKeySignature(KS_VF[String(e.userArm)]);
   stave.setContext(ctx).draw();
+  const GR_GREEN='#22c98a', GR_RED='#ff5c72', GR_BLUE='#2f6df6';
   const notas=e.cab.map((n,gi)=>{
-    const alter = (gi===e.selIdx)? e.userAlter : armAlterFor(n.step, e.userArm||0);
+    // tras corregir, la cabeza de la solución muestra su alteración correcta
+    let alter;
+    if(gi===e.selIdx) alter=e.userAlter;
+    else if(e._corr && gi===e._solIdx) alter=e.sol.alter;
+    else alter=armAlterFor(n.step, e.userArm||0);
     const nb={step:n.step,octave:n.octave,alter};
     const sn=new VF.StaveNote({keys:[notaToKey(nb)],duration:"w",clef:"treble"});
     const armA=armAlterFor(n.step, e.userArm||0);
@@ -2987,6 +3192,14 @@ function renderGRStaveOne(i){
       sn.setStyle({fillStyle:"#9aa3c0",strokeStyle:"#9aa3c0"});
       try{ sn.addModifier(new VF.Parenthesis(VF.Modifier.Position.LEFT),0);
            sn.addModifier(new VF.Parenthesis(VF.Modifier.Position.RIGHT),0); }catch(err){}
+    } else if(e._corr){
+      // verde = acierto del alumno; rojo = nota marcada mal; azul = solución
+      if(gi===e.selIdx){
+        sn.setStyle(e._notaOk ? {fillStyle:GR_GREEN,strokeStyle:GR_GREEN}
+                              : {fillStyle:GR_RED,strokeStyle:GR_RED});
+      } else if(gi===e._solIdx && !e._notaOk){
+        sn.setStyle({fillStyle:GR_BLUE,strokeStyle:GR_BLUE});
+      }
     } else if(gi===e.selIdx){
       sn.setStyle({fillStyle:"#2f6df6",strokeStyle:"#2f6df6"});
     }
@@ -3037,7 +3250,7 @@ function corregirGR(){
       const tag=ans.querySelector('.sol');
       ans.classList.remove('ok','bad');
       tag.style.color='#e0a13a';
-      tag.textContent='Te falta señalar la nota: haz clic en la cabecita del grado en el pentagrama.';
+      tag.textContent='Te falta señalar la nota: haz clic en la cabeza del grado en el pentagrama.';
     });
     return;
   }
@@ -3050,6 +3263,9 @@ function corregirGR(){
     const armOk = (e.userArm||0)===e.ton.f;
     const notaOk = n.step===e.sol.step && e.userAlter===e.sol.alter;
     const ok = armOk && notaOk;
+    // estado de corrección para colorear las cabezas (verde/rojo/azul)
+    e._corr=true; e._notaOk=notaOk; e._solIdx=(e.grado.n-1);
+    renderGRStaveOne(i);
     ans.classList.remove('ok','bad'); ans.classList.add(ok?'ok':'bad');
     // mensaje con cada parte coloreada
     const green='var(--green)', red='var(--red)';
@@ -3601,11 +3817,15 @@ function renderACOScore(){
   const W=host.clientWidth||760, H=150;
   const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
   const ctx=r.getContext();
-  const x0=10,usable=W-20,wC=usable/4;
-  acoScoreMeta={staves:[], wC, x0};
+  const GAP=26; // hueco visual entre el bloque "identificar" (0-1) y "construir" (2-3)
+  const x0=10,usable=W-20-GAP,wC=usable/4;
+  acoScoreMeta={staves:[], wC, x0, GAP};
   dataACO.forEach((e,i)=>{
-    const stave=new VF.Stave(x0+i*wC, 14, wC);
+    const gx = x0 + i*wC + (i>=2?GAP:0);
+    const stave=new VF.Stave(gx, 14, wC);
     if(i===0) stave.addClef('treble');
+    if(i===1) stave.setEndBarType(VF.Barline.type.DOUBLE);
+    if(i===2) stave.setBegBarType(VF.Barline.type.DOUBLE);
     if(i===3) stave.setEndBarType(VF.Barline.type.DOUBLE);
     stave.setContext(ctx).draw();
     acoScoreMeta.staves[i]=stave;
@@ -3639,7 +3859,7 @@ function renderACOScore(){
       voice.draw(ctx,stave);
       e._noteX = sn.getAbsoluteX();
     }catch(err){}
-    if(e.modo==='build'){ buildACOYMap(i, stave); acoVarGeom[i]={baseX:e._noteX||(x0+i*wC+wC/2)}; acoWireVarOne(); }
+    if(e.modo==='build'){ buildACOYMap(i, stave); acoVarGeom[i]={baseX:e._noteX||(x0+i*wC+(i>=2?GAP:0)+wC/2)}; acoWireVarOne(); }
   });
   fitSvgToContent(host, W);
 }
@@ -3780,8 +4000,9 @@ function acoWireVarOne(){
 function acoCompasEn(ev){
   const host=document.getElementById('scoreACO'); const svg=host&&host.querySelector('svg'); if(!svg||!acoScoreMeta) return null;
   let p; try{ const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; p=pt.matrixTransform(svg.getScreenCTM().inverse()); }catch(err){ return null; }
-  const {x0,wC}=acoScoreMeta;
-  for(let i=0;i<4;i++){ if(p.x>=x0+i*wC && p.x<x0+(i+1)*wC) return i; }
+  const {x0,wC,GAP}=acoScoreMeta;
+  const g=GAP||0;
+  for(let i=0;i<4;i++){ const sx=x0+i*wC+(i>=2?g:0); if(p.x>=sx && p.x<sx+wC) return i; }
   return null;
 }
 function acoPointIn(ev){
@@ -4365,17 +4586,16 @@ function renderENAScore(){
     // slots: [nota dada, enarmonía 1, (enarmonía 2)]
     const slots=[ Object.assign({}, e.dada, {_dada:true}) ];
     if(e._solVisible && e._notaOk){
-      // correcciones: cada nota del alumno acertada se queda; las que faltan se rellenan en azul
-      for(let h=0;h<e.sols.length;h++){
+      // correcciones: notas del alumno en verde (acierto) o rojo (fallo);
+      // las soluciones no cubiertas se añaden en azul
+      for(let h=0;h<e.userSeq.length;h++){
         const u=e.userSeq[h];
-        if(u && e._notaOk[h]) slots.push(Object.assign({}, u));        // acierto -> se queda
-        else slots.push(null);                                          // hueco para una faltante
+        if(!u){ slots.push(null); continue; }
+        slots.push(Object.assign({}, u, e._notaOk[h] ? {_green:true} : {_red:true}));
       }
-      // colocar las faltantes (azul) en los huecos null
+      // añadir las soluciones faltantes en azul
       const faltan=(e._faltan||[]).slice();
-      for(let s=1;s<slots.length && faltan.length;s++){
-        if(slots[s]===null) slots[s]=Object.assign({}, faltan.shift(), {_blue:true});
-      }
+      faltan.forEach(n=>{ slots.push(Object.assign({}, n, {_blue:true})); });
     } else {
       for(let h=0;h<e.sols.length;h++){
         slots.push(e.userSeq[h] ? Object.assign({}, e.userSeq[h]) : null);
@@ -4387,7 +4607,9 @@ function renderENAScore(){
       if(!s){ const gn=new VF.GhostNote({duration:'w'}); tickables.push(gn); slotIsNote.push(false); return; }
       const sn=new VF.StaveNote({keys:[notaToKey(s)],duration:'w',clef:'treble'});
       if(s.alter && !s._inherited) sn.addModifier(new VF.Accidental(accStr(s.alter)),0);
-      if(s._blue) sn.setKeyStyle(0,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
+      if(s._green) sn.setKeyStyle(0,{fillStyle:'#22c98a',strokeStyle:'#22c98a'});
+      else if(s._red) sn.setKeyStyle(0,{fillStyle:'#ff5c72',strokeStyle:'#ff5c72'});
+      else if(s._blue) sn.setKeyStyle(0,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
       else if(!e._solVisible && !s._dada && e._selVar===(si-1)) sn.setKeyStyle(0,{fillStyle:'#e84393',strokeStyle:'#e84393'});
       tickables.push(sn); slotIsNote.push(true);
     });
@@ -4734,19 +4956,29 @@ function renderSEMScore(){
   const W=Math.max(host.clientWidth||0,720), H=150;
   const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
   const ctx=r.getContext();
-  const x0=10,usable=W-20,wC=usable/4;
-  semScoreMeta={staves:[], wC, x0};
+  const GAP=26; // hueco visual entre el bloque "definir" (0-1) y "construir" (2-3)
+  const x0=10,usable=W-20-GAP,wC=usable/4;
+  semScoreMeta={staves:[], wC, x0, GAP};
   dataSEM.forEach((e,i)=>{
-    const stave=new VF.Stave(x0+i*wC,14,wC);
+    const gx = x0 + i*wC + (i>=2?GAP:0);
+    const stave=new VF.Stave(gx,14,wC);
     if(i===0) stave.addClef('treble');
-    if(i===2) stave.setBegBarType(VF.Barline.type.DOUBLE);
+    if(i===1) stave.setEndBarType(VF.Barline.type.DOUBLE);   // fin del bloque "definir"
+    if(i===2) stave.setBegBarType(VF.Barline.type.DOUBLE);   // inicio del bloque "construir"
     if(i===3) stave.setEndBarType(VF.Barline.type.DOUBLE);
     stave.setContext(ctx).draw();
     semScoreMeta.staves[i]=stave;
     if(e.modo==='id'){
       // dos notas melódicas (slots separados)
       const slots=[e.n1, e.n2];
-      const tickables=slots.map(s=>{ const sn=new VF.StaveNote({keys:[notaToKey(s)],duration:'w',clef:'treble'}); if(s.alter) sn.addModifier(new VF.Accidental(accStr(s.alter)),0); return sn; });
+      const tickables=slots.map((s,si)=>{
+        const sn=new VF.StaveNote({keys:[notaToKey(s)],duration:'w',clef:'treble'});
+        // becuadro cromático: 2ª nota natural en misma letra/octava que una 1ª alterada
+        const needNat = (si===1 && s.alter===0 && slots[0].step===s.step && slots[0].octave===s.octave && slots[0].alter!==0);
+        if(s.alter) sn.addModifier(new VF.Accidental(accStr(s.alter)),0);
+        else if(needNat) sn.addModifier(new VF.Accidental('n'),0);
+        return sn;
+      });
       try{
         const voice=new VF.Voice({num_beats:8,beat_value:4}).setStrict(false);
         voice.addTickables(tickables);
@@ -4767,7 +4999,10 @@ function renderSEMScore(){
       slots.forEach((s,si)=>{
         if(!s){ tickables.push(new VF.GhostNote({duration:'w'})); return; }
         const sn=new VF.StaveNote({keys:[notaToKey(s)],duration:'w',clef:'treble'});
+        // becuadro cromático: 2ª nota natural en misma letra/octava que la nota dada alterada
+        const needNat = (si===1 && s.alter===0 && !s._inherited && slots[0] && slots[0].step===s.step && slots[0].octave===s.octave && slots[0].alter!==0);
         if(s.alter && !s._inherited) sn.addModifier(new VF.Accidental(accStr(s.alter)),0);
+        else if(needNat) sn.addModifier(new VF.Accidental('n'),0);
         if(s._blue) sn.setKeyStyle(0,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
         else if(!e._solVisible && !s._dada && e._selVar===0) sn.setKeyStyle(0,{fillStyle:'#e84393',strokeStyle:'#e84393'});
         tickables.push(sn);
@@ -4778,8 +5013,8 @@ function renderSEMScore(){
         voice.addTickables(tickables);
         new VF.Formatter().joinVoices([voice]).format([voice], wC-(i===0?44:24));
         voice.draw(ctx,stave);
-        tickables.forEach((t,si)=>{ try{ slotX[si]=t.getAbsoluteX(); }catch(_){ slotX[si]=x0+i*wC+wC*(si+0.5)/slots.length; } });
-      }catch(err){ for(let si=0;si<slots.length;si++) slotX[si]=x0+i*wC+wC*(si+0.5)/slots.length; }
+        tickables.forEach((t,si)=>{ try{ slotX[si]=t.getAbsoluteX(); }catch(_){ slotX[si]=x0+i*wC+(i>=2?GAP:0)+wC*(si+0.5)/slots.length; } });
+      }catch(err){ for(let si=0;si<slots.length;si++) slotX[si]=x0+i*wC+(i>=2?GAP:0)+wC*(si+0.5)/slots.length; }
       e._slotX=slotX;
       buildSEMYMap(i, stave);
       semWire();
@@ -5362,5 +5597,1638 @@ function openTerminos(){
 }
 
 </script>
+<!-- ====== MODAL: Ejemplo resuelto (Grado Elemental) ====== -->
+<div class="ex-modal" id="exModal" onclick="if(event.target===this)cerrarEjemplo()">
+  <div class="ex-modal-box" id="exModalBox">
+    <div class="ex-modal-topbtns">
+      <button class="ex-modal-otro" id="exModalOtro" onclick="otroEjemplo()" title="Ver otro ejemplo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+        Otro ejemplo
+      </button>
+      <button class="ex-modal-close" onclick="cerrarEjemplo()" title="Cerrar">✕</button>
+    </div>
+    <span class="ex-modal-tag">Ejemplo resuelto</span>
+    <h3 id="exModalTitle">—</h3>
+    <div class="ex-modal-sec">
+      <div class="lab">Enunciado</div>
+      <div class="enun" id="exModalEnun">—</div>
+    </div>
+    <div class="ex-modal-scorewrap" id="exModalScoreWrap" style="display:none">
+      <div class="lab">Partitura</div>
+      <div class="ex-modal-scorescroll"><div id="exModalScore"></div></div>
+    </div>
+    <div id="exModalExtra"></div>
+    <div class="ex-modal-sec ex-modal-resp">
+      <div class="lab">Respuesta</div>
+      <div class="val" id="exModalResp">—</div>
+    </div>
+    <div class="ex-modal-sec" id="exModalPorque">
+      <div class="lab">Por qué</div>
+      <div class="expl" id="exModalExpl">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SISTEMA DE EJEMPLOS RESUELTOS (motor generador) ====== -->
+<script>
+(function(){
+  /* ============================================================
+     HELPERS DE NOTACIÓN
+     ============================================================ */
+  const SOLF=['Do','Re','Mi','Fa','Sol','La','Si'];
+  const ACC_ES={'-2':'♭♭','-1':'♭','0':'','1':'♯','2':'♯♯'};
+  function solfDe(step,alter){ return SOLF[STEPS.indexOf(step)]+(ACC_ES[String(alter)]||''); }
+  function keyDe(step,alter,octave){ return notaToKey({step,alter,octave}); }
+  function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+  function randInt(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
+
+  function exAccOf(key){
+    const m=key.split('/')[0];
+    if(m.length<2) return null;
+    const a=m.slice(1);
+    if(a==='#'||a==='##'||a==='b'||a==='bb'||a==='n') return a;
+    return null;
+  }
+  function exKsAccMap(fifths){
+    const SOST=['F','C','G','D','A','E','B'], BEM=['B','E','A','D','G','C','F'];
+    const map={};
+    if(fifths>0){ for(let i=0;i<fifths;i++) map[SOST[i]]='#'; }
+    else if(fifths<0){ for(let i=0;i<(-fifths);i++) map[BEM[i]]='b'; }
+    return map;
+  }
+  function exNeedsAcc(key,ksMap){
+    const letter=key[0].toUpperCase();
+    const acc=exAccOf(key);
+    const ksAcc=ksMap[letter]||null;
+    if(acc===null) return ksAcc?'n':null;
+    if(acc==='n') return ksAcc?'n':null;
+    if(ksAcc===acc) return null;
+    return acc;
+  }
+  // semitonos absolutos de una key tipo "c#/4"
+  function keyToMidi(key){
+    const m=key.split('/'); const o=parseInt(m[1],10);
+    const step=m[0][0].toUpperCase(); let alter=0;
+    const acc=m[0].slice(1);
+    if(acc==='#')alter=1; else if(acc==='##')alter=2; else if(acc==='b')alter=-1; else if(acc==='bb')alter=-2;
+    return midiNota(step,o,alter);
+  }
+
+  /* ============================================================
+     FLECHA + RESALTADO en el pentagrama (post-render sobre el SVG)
+     marca: {index, text, color, dir:'up'|'down'}
+     ============================================================ */
+  function exMarcarNota(host, noteObjs, marks){
+    if(!marks||!marks.length) return;
+    const svg=host.querySelector('svg'); if(!svg) return;
+    const NS='http://www.w3.org/2000/svg';
+    let H=170; const vb=svg.getAttribute('viewBox');
+    if(vb){ const p=vb.split(/\s+/); H=parseFloat(p[3]); }
+    else if(svg.getAttribute('height')) H=parseFloat(svg.getAttribute('height'));
+    marks.forEach(mk=>{
+      const sn=noteObjs[mk.index]; if(!sn) return;
+      let x,y;
+      try{
+        x=sn.getAbsoluteX();
+        const ys=sn.getYs?sn.getYs():null;
+        y=(ys&&ys.length)?ys[0]:H/2;
+      }catch(e){ return; }
+      const color=mk.color||'#e84393';
+      // dirección automática: nota en mitad inferior -> flecha desde arriba; arriba -> desde abajo
+      let dir = mk.dir || ((y > H*0.5) ? 'down' : 'up');
+      // pero si forzando down y no hay hueco arriba, cambiar a up (y viceversa)
+      const len=24, gap=13, textH=16;
+      if(dir==='down' && (y-gap-len-textH) < 4) dir='up';
+      if(dir==='up' && (y+gap+len+textH) > H-2) dir='down';
+      const g=document.createElementNS(NS,'g');
+      let ax=x, ay1, ay2, tx, ty;
+      if(dir==='down'){ ay1=y-gap-len; ay2=y-gap; tx=ax; ty=ay1-5; }
+      else { ay1=y+gap+len; ay2=y+gap; tx=ax; ty=ay1+15; }
+      const line=document.createElementNS(NS,'line');
+      line.setAttribute('x1',ax); line.setAttribute('y1',ay1);
+      line.setAttribute('x2',ax); line.setAttribute('y2',ay2);
+      line.setAttribute('stroke',color); line.setAttribute('stroke-width','2.4'); line.setAttribute('stroke-linecap','round');
+      g.appendChild(line);
+      const head=document.createElementNS(NS,'path');
+      const hy=ay2, s=5.5;
+      if(dir==='down') head.setAttribute('d','M'+(ax-s)+' '+(hy-s)+' L'+ax+' '+hy+' L'+(ax+s)+' '+(hy-s));
+      else head.setAttribute('d','M'+(ax-s)+' '+(hy+s)+' L'+ax+' '+hy+' L'+(ax+s)+' '+(hy+s));
+      head.setAttribute('fill','none'); head.setAttribute('stroke',color); head.setAttribute('stroke-width','2.4');
+      head.setAttribute('stroke-linecap','round'); head.setAttribute('stroke-linejoin','round');
+      g.appendChild(head);
+      if(mk.text){
+        const t=document.createElementNS(NS,'text');
+        t.setAttribute('x',tx); t.setAttribute('y',ty); t.setAttribute('text-anchor','middle');
+        t.setAttribute('font-family','Arial,Helvetica,sans-serif'); t.setAttribute('font-size','14'); t.setAttribute('font-weight','800');
+        t.setAttribute('fill',color); t.setAttribute('stroke','none'); t.textContent=mk.text;
+        g.appendChild(t);
+      }
+      svg.appendChild(g);
+    });
+  }
+  // texto libre centrado sobre el pentagrama (para "diatónico/cromático", "Binario", etc.)
+  function exTextoEnPenta(host, texto, color, yPos){
+    const svg=host.querySelector('svg'); if(!svg) return;
+    const NS='http://www.w3.org/2000/svg';
+    const vb=svg.getAttribute('viewBox'); let w=svg.getAttribute('width')||300; let h=svg.getAttribute('height')||160;
+    if(vb){ const p=vb.split(/\s+/); w=parseFloat(p[2]); h=parseFloat(p[3]); }
+    const y = (yPos==='bottom')? (parseFloat(h)-10) : 26;
+    const t=document.createElementNS(NS,'text');
+    t.setAttribute('x', (parseFloat(w)/2)); t.setAttribute('y', y); t.setAttribute('text-anchor','middle');
+    t.setAttribute('font-family','Arial,Helvetica,sans-serif'); t.setAttribute('font-size','17'); t.setAttribute('font-weight','900');
+    t.setAttribute('fill',color||'#e84393'); t.setAttribute('stroke','none'); t.textContent=texto;
+    svg.appendChild(t);
+  }
+
+  /* ============================================================
+     RENDERIZADORES (devuelven los StaveNote para poder marcar)
+     ============================================================ */
+  const PINK='#e84393';
+  function exDrawChord(host,spec){
+    const W=420,H=200; const NS='http://www.w3.org/2000/svg';
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const stave=new VF.Stave(10,52,300); stave.addClef(spec.clef||'treble');
+    stave.setEndBarType(VF.Barline.type.END); stave.setContext(ctx).draw();
+    const sn=new VF.StaveNote({keys:spec.keys,duration:'w',clef:spec.clef||'treble'});
+    spec.keys.forEach((k,j)=>{ const a=exAccOf(k); if(a) sn.addModifier(new VF.Accidental(a),j); });
+    // colorear notas concretas en rosa (notas añadidas en "construir")
+    if(spec.pinkIdx && spec.pinkIdx.length){
+      try{ spec.keys.forEach((k,j)=>{ if(spec.pinkIdx.indexOf(j)>=0) sn.setKeyStyle(j,{fillStyle:spec.pinkColor||'#e84393',strokeStyle:spec.pinkColor||'#e84393'}); }); }catch(e){}
+    }
+    const v=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false); v.addTickable(sn);
+    new VF.Formatter().joinVoices([v]).format([v],220); v.draw(ctx,stave);
+    const svg=host.querySelector('svg');
+    // cifra resumida DEBAJO del acorde, en rosa
+    if(spec.cifBajo){
+      let x=160; try{ x=sn.getAbsoluteX(); }catch(e){}
+      const t=document.createElementNS(NS,'text');
+      t.setAttribute('x',x); t.setAttribute('y',H-12); t.setAttribute('text-anchor','middle');
+      t.setAttribute('font-family','Arial,Helvetica,sans-serif'); t.setAttribute('font-size','17'); t.setAttribute('font-weight','900');
+      t.setAttribute('fill',spec.cifBajoColor||'#e84393'); t.setAttribute('stroke','none'); t.textContent=spec.cifBajo;
+      svg.appendChild(t);
+    }
+    // LLAVES de intervalo: de la fundamental (grave) a cada nota superior, con el intervalo
+    if(spec.intBraces){
+      try{
+        const ys=sn.getYs(); // grave->agudo (idx 0 = más grave)
+        const x=sn.getAbsoluteX();
+        const color=spec.intBraces.color||'#e84393';
+        const yBase=ys[0];
+        // una llave por cada intervalo (a la 3ª = ys[1], a la 5ª = ys[2], etc.)
+        const braces=spec.intBraces.items||[]; // [{toIdx, text}]
+        braces.forEach((b,bi)=>{
+          const xb=x+34+bi*46;     // separar las llaves horizontalmente
+          const yTop=ys[b.toIdx], yBot=yBase;
+          const g=document.createElementNS(NS,'g');
+          const d='M'+(xb-6)+' '+yTop+' Q'+xb+' '+yTop+' '+xb+' '+((yTop+yBot)/2-7)+' '+
+                  'Q'+xb+' '+((yTop+yBot)/2)+' '+(xb+6)+' '+((yTop+yBot)/2)+' '+
+                  'Q'+xb+' '+((yTop+yBot)/2)+' '+xb+' '+((yTop+yBot)/2+7)+' '+
+                  'Q'+xb+' '+yBot+' '+(xb-6)+' '+yBot;
+          const path=document.createElementNS(NS,'path');
+          path.setAttribute('d',d); path.setAttribute('fill','none'); path.setAttribute('stroke',color); path.setAttribute('stroke-width','1.8');
+          g.appendChild(path);
+          const t=document.createElementNS(NS,'text');
+          t.setAttribute('x',xb+10); t.setAttribute('y',(yTop+yBot)/2+4); t.setAttribute('text-anchor','start');
+          t.setAttribute('font-family','Arial,Helvetica,sans-serif'); t.setAttribute('font-size','13'); t.setAttribute('font-weight','800');
+          t.setAttribute('fill',color); t.setAttribute('stroke','none'); t.textContent=b.text;
+          g.appendChild(t);
+          svg.appendChild(g);
+        });
+      }catch(e){}
+    }
+    return {notes:[sn],host};
+  }
+  function exDrawNotes(host,spec){
+    const items=spec.items||[]; const n=items.length;
+    const wPer=Math.max(92,Math.min(150,Math.floor((560-40)/Math.max(1,n))));
+    const W=Math.max(300,40+wPer*n), H=spec.h||190;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const stave=new VF.Stave(10,52,W-20); stave.addClef(spec.clef||'treble');
+    if(spec.keysig) stave.addKeySignature(spec.keysig);
+    stave.setEndBarType(VF.Barline.type.END); stave.setContext(ctx).draw();
+    const notes=items.map(it=>{
+      const sn=new VF.StaveNote({keys:[it.key],duration:'w',clef:it.clef||spec.clef||'treble'});
+      const a=exAccOf(it.key); if(a&&!it.noAcc) sn.addModifier(new VF.Accidental(a),0);
+      if(it.label) sn.addModifier(new VF.Annotation(it.label).setVerticalJustification(VF.Annotation.VerticalJustify.TOP).setFont('Arial',12,'bold'),0);
+      if(it.color) try{ sn.setStyle({fillStyle:it.color,strokeStyle:it.color}); }catch(e){}
+      return sn;
+    });
+    const v=new VF.Voice({num_beats:n,beat_value:1}).setStrict(false); v.addTickables(notes);
+    new VF.Formatter().joinVoices([v]).format([v],W-70); v.draw(ctx,stave);
+    return {notes,host};
+  }
+  // varios compases, cada uno con 1 o 2 notas (intervalos, inversión, semitonos)
+  // opciones por compás: keys, labels[], intervalLabel{text,color}, small, tie, color, chord, cif
+  // coloca una redonda en un X objetivo del pentagrama (escala/color opcionales) → {sn,x,y}
+  function exPlaceWhole(ctx, st, spec, key, targetX, opts){
+    opts=opts||{};
+    const sn=new VF.StaveNote({keys:[key],duration:'w',clef:spec.clef||'treble'});
+    const a=exAccOf(key); if(a) sn.addModifier(new VF.Accidental(a),0);
+    if(opts.color){ try{ sn.setStyle({fillStyle:opts.color,strokeStyle:opts.color}); }catch(e){} }
+    const vv=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false); vv.addTickable(sn);
+    new VF.Formatter().joinVoices([vv]).format([vv], 40);
+    vv.draw(ctx,st);
+    const el=sn.getSVGElement?sn.getSVGElement():null;
+    const nx=sn.getAbsoluteX(); const ys=sn.getYs?sn.getYs():[st.getYForLine(2)]; const ny=ys[0];
+    const s=opts.scale||1;
+    if(el){
+      if(s!==1) el.setAttribute('transform','translate('+targetX+' '+ny+') scale('+s+') translate('+(-nx)+' '+(-ny)+')');
+      else el.setAttribute('transform','translate('+(targetX-nx)+' 0)');
+    }
+    return {sn, x:targetX, y:ny};
+  }
+  // arco discontinuo (proyección/movimiento de octava) entre dos puntos
+  function exDashArc(svg, NS, x1,y1,x2,y2, color){
+    const midx=(x1+x2)/2; const ctrlY=Math.min(y1,y2)-34;
+    const p=document.createElementNS(NS,'path');
+    p.setAttribute('d','M'+x1+' '+y1+' Q'+midx+' '+ctrlY+' '+x2+' '+y2);
+    p.setAttribute('fill','none'); p.setAttribute('stroke',color); p.setAttribute('stroke-width','1.6');
+    p.setAttribute('stroke-dasharray','5 4'); p.setAttribute('opacity','0.85'); svg.appendChild(p);
+    return {midx, ctrlY};
+  }
+  // ligadura suave por debajo de dos notas → devuelve punto para etiqueta
+  function exSlur(svg, NS, x1,y1,x2,y2, color){
+    const midx=(x1+x2)/2; const yBase=Math.max(y1,y2)+9;
+    const p=document.createElementNS(NS,'path');
+    p.setAttribute('d','M'+x1+' '+(y1+6)+' Q'+midx+' '+(yBase+7)+' '+x2+' '+(y2+6));
+    p.setAttribute('fill','none'); p.setAttribute('stroke',color); p.setAttribute('stroke-width','1.7'); svg.appendChild(p);
+    return {midx, yLabel:yBase+20};
+  }
+  function exMiniLabel(svg, NS, x, y, text, color){
+    const t=document.createElementNS(NS,'text');
+    t.setAttribute('x',x); t.setAttribute('y',y); t.setAttribute('text-anchor','middle');
+    t.setAttribute('font-family','Arial,Helvetica,sans-serif'); t.setAttribute('font-size','11'); t.setAttribute('font-weight','800');
+    t.setAttribute('fill',color); t.setAttribute('stroke','none'); t.textContent=text; svg.appendChild(t);
+  }
+  function exDrawMeasures(host,spec){
+    const ms=spec.measures||[]; const n=ms.length;
+    const wC=Math.max(130,Math.min(210,Math.floor((660-20)/Math.max(1,n))));
+    const W=18+wC*n, H=spec.h||210;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext(); let x=9;
+    const allNotes=[]; const noteOffset=[];
+    const NS='http://www.w3.org/2000/svg';
+    const staveY=70;
+    ms.forEach((m,i)=>{
+      const st=new VF.Stave(x,staveY,wC);
+      if(i===0) st.addClef(spec.clef||'treble');
+      if(m.bar!==false){
+        if(spec.doubleBarAfter===i) st.setEndBarType(VF.Barline.type.DOUBLE);
+        else st.setEndBarType(VF.Barline.type.END);
+      }
+      st.setContext(ctx).draw();
+      // ---- VISUALIZACIÓN DE INVERSIÓN (un solo compás) ----
+      if(m.invA || m.invB){
+        const svg=host.querySelector('svg');
+        let ns0,usable;
+        try{ ns0=st.getNoteStartX(); }catch(e){ ns0=x+30; }
+        usable=(x+wC)-ns0-14;
+        if(m.invA){
+          const iv=m.invA;
+          const xL=ns0+usable*0.10, xH=ns0+usable*0.44, xS=ns0+usable*0.66;
+          const L=exPlaceWhole(ctx,st,spec, iv.lowKey, xL, {});
+          const H=exPlaceWhole(ctx,st,spec, iv.highKey, xH, {});
+          const S=exPlaceWhole(ctx,st,spec, iv.smallKey, xS, {scale:0.62, color:'#3a4a6e'});
+          if(svg){
+            exDashArc(svg,NS, L.x,L.y, S.x,S.y, '#3a4a6e');           // octava: L → S
+            const sl=exSlur(svg,NS, H.x,H.y, S.x,S.y, '#3a4a6e');     // ligadura S ↔ H (inversión)
+            exMiniLabel(svg,NS, sl.midx, sl.yLabel, iv.smallLabel, '#3a4a6e');
+            let yBajo; try{ yBajo=st.getBottomLineY()+30; }catch(e){ yBajo=staveY+74; }
+            const t=document.createElementNS(NS,'text');
+            t.setAttribute('x',(xL+xH)/2); t.setAttribute('y',yBajo); t.setAttribute('text-anchor','middle');
+            t.setAttribute('font-family','Arial,Helvetica,sans-serif'); t.setAttribute('font-size','16'); t.setAttribute('font-weight','800');
+            t.setAttribute('fill', iv.answerColor||'#e84393'); t.setAttribute('stroke','none'); t.textContent=iv.answerLabel; svg.appendChild(t);
+          }
+        } else {
+          const iv=m.invB;
+          const xB=ns0+usable*0.10, xS=ns0+usable*0.30, xA=ns0+usable*0.74;
+          const B=exPlaceWhole(ctx,st,spec, iv.baseKey, xB, {});
+          const S=exPlaceWhole(ctx,st,spec, iv.smallKey, xS, {scale:0.62, color:'#3a4a6e'});
+          const A=exPlaceWhole(ctx,st,spec, iv.answerKey, xA, {color:'#e84393'});
+          if(svg){
+            const sl=exSlur(svg,NS, B.x,B.y, S.x,S.y, '#3a4a6e');     // ligadura B ↔ S (mini intervalo)
+            exMiniLabel(svg,NS, sl.midx, sl.yLabel, iv.smallLabel, '#3a4a6e');
+            exDashArc(svg,NS, S.x,S.y, A.x,A.y, '#3a4a6e');          // proyección de octava S → A
+          }
+        }
+        noteOffset.push(allNotes.length);
+        x+=wC; return;
+      }
+      const keys=m.keys; const dur='w';   // siempre redondas
+      const local=[];
+      if(m.chord){
+        const sn=new VF.StaveNote({keys,duration:'w',clef:spec.clef||'treble'});
+        keys.forEach((k,j)=>{const a=exAccOf(k);if(a)sn.addModifier(new VF.Accidental(a),j);});
+        if(m.cif) sn.addModifier(new VF.Annotation(m.cif).setVerticalJustification(VF.Annotation.VerticalJustify.TOP).setFont('Arial',12,'bold'),0);
+        if(m.color) try{ sn.setStyle({fillStyle:m.color,strokeStyle:m.color}); }catch(e){}
+        local.push(sn);
+      } else {
+        keys.forEach((k,j)=>{
+          const sn=new VF.StaveNote({keys:[k],duration:dur,clef:spec.clef||'treble'});
+          const a=exAccOf(k);
+          if(a) sn.addModifier(new VF.Accidental(a),0);
+          else if(m.forceNat && m.forceNat.indexOf(j)>=0) sn.addModifier(new VF.Accidental('n'),0);
+          const lab=m.labels&&m.labels[j];
+          if(lab) sn.addModifier(new VF.Annotation(lab).setVerticalJustification(VF.Annotation.VerticalJustify.TOP).setFont('Arial',12,'bold'),0);
+          // color: m.color colorea todas; m.pinkNoteIdx colorea solo esas
+          let col=null;
+          if(m.color) col=m.color;
+          if(m.pinkNoteIdx && m.pinkNoteIdx.indexOf(j)>=0) col=m.pinkNoteColor||'#e84393';
+          else if(m.pinkNoteIdx) col=null; // si hay lista, las no incluidas van en negro
+          if(col) try{ sn.setStyle({fillStyle:col,strokeStyle:col}); }catch(e){}
+          local.push(sn);
+        });
+      }
+      const beats=keys.length>1&&!m.chord?keys.length:4;
+      const v=new VF.Voice({num_beats:beats,beat_value:4}).setStrict(false); v.addTickables(local);
+      new VF.Formatter().joinVoices([v]).format([v],wC-46); v.draw(ctx,st);
+
+      // notas pequeñas: escalar el grupo de notas de este compás
+      if(m.small){
+        try{
+          local.forEach(sn=>{
+            const el=sn.getSVGElement? sn.getSVGElement() : null;
+            const nx=sn.getAbsoluteX(); const ys=sn.getYs?sn.getYs():[staveY+30];
+            const ny=ys[0]||staveY+30;
+            if(el){ el.setAttribute('transform','translate('+nx+' '+ny+') scale(0.7) translate('+(-nx)+' '+(-ny)+')'); }
+          });
+        }catch(e){}
+      }
+      // ligadura (arco) entre las dos notas del compás (la que cambia de octava)
+      if(m.tie && local.length>=2){
+        try{
+          const x1=local[0].getAbsoluteX(), x2=local[1].getAbsoluteX();
+          const ys1=local[0].getYs?local[0].getYs():[staveY]; const ys2=local[1].getYs?local[1].getYs():[staveY];
+          const yA=Math.min(ys1[0],ys2[0])-12;
+          const path=document.createElementNS(NS,'path');
+          const midx=(x1+x2)/2;
+          path.setAttribute('d','M'+x1+' '+yA+' Q'+midx+' '+(yA-12)+' '+x2+' '+yA);
+          path.setAttribute('fill','none'); path.setAttribute('stroke', m.tieColor||'#16203a'); path.setAttribute('stroke-width','1.8');
+          (host.querySelector("svg")||{appendChild:()=>{}}).appendChild(path);
+        }catch(e){}
+      }
+      // etiqueta del intervalo: centrada entre las dos notas y SIEMPRE debajo del pentagrama
+      if(m.intervalLabel && local.length>=2){
+        try{
+          const x1=local[0].getAbsoluteX(), x2=local[1].getAbsoluteX();
+          const midx=(x1+x2)/2;
+          // línea inferior real del pentagrama + margen → garantiza estar por debajo
+          let yBajo;
+          try{ yBajo = st.getBottomLineY() + 26; }
+          catch(e){ try{ yBajo = st.getYForLine(4) + 26; } catch(e2){ yBajo = staveY + 64; } }
+          const t=document.createElementNS(NS,'text');
+          t.setAttribute('x',midx); t.setAttribute('y',yBajo); t.setAttribute('text-anchor','middle');
+          t.setAttribute('font-family','Arial,Helvetica,sans-serif');
+          t.setAttribute('font-size', m.intervalLabel.small?'12':'15');
+          t.setAttribute('font-weight','800'); t.setAttribute('stroke','none');
+          t.setAttribute('fill', m.intervalLabel.color||'#16203a');
+          t.textContent=m.intervalLabel.text;
+          (host.querySelector("svg")||{appendChild:()=>{}}).appendChild(t);
+        }catch(e){}
+      }
+      // nota EXTRA pequeña dentro del mismo compás (p.ej. la inversión como paso previo)
+      if(m.extraNote){
+        try{
+          const en=m.extraNote; // {key, color, labelTop}
+          const sn=new VF.StaveNote({keys:[en.key],duration:'w',clef:spec.clef||'treble'});
+          const a=exAccOf(en.key); if(a) sn.addModifier(new VF.Accidental(a),0);
+          if(en.color) sn.setStyle({fillStyle:en.color,strokeStyle:en.color});
+          const vv=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false); vv.addTickable(sn);
+          // colocar la nota extra a la derecha del compás
+          const xExtra = st.getNoteStartX() + (wC*0.66);
+          new VF.Formatter().joinVoices([vv]).format([vv], wC*0.28);
+          vv.draw(ctx,st);
+          // reposicionar + escalar al 70%
+          const el=sn.getSVGElement? sn.getSVGElement() : null;
+          const nx=sn.getAbsoluteX(); const ys=sn.getYs?sn.getYs():[staveY+30]; const ny=ys[0]||staveY+30;
+          if(el){
+            const dx = xExtra - nx;
+            el.setAttribute('transform','translate('+(nx+dx)+' '+ny+') scale(0.62) translate('+(-(nx)) +' '+(-ny)+')');
+          }
+          // etiqueta encima de la nota extra
+          if(en.labelTop){
+            const tt=document.createElementNS(NS,'text');
+            tt.setAttribute('x', xExtra+4); tt.setAttribute('y', staveY-2); tt.setAttribute('text-anchor','middle');
+            tt.setAttribute('font-family','Arial,Helvetica,sans-serif'); tt.setAttribute('font-size','11'); tt.setAttribute('font-weight','800');
+            tt.setAttribute('fill', en.labelColor||'#3a4a6e'); tt.setAttribute('stroke','none');
+            tt.textContent=en.labelTop;
+            (host.querySelector("svg")||{appendChild:()=>{}}).appendChild(tt);
+          }
+        }catch(e){}
+      }
+      noteOffset.push(allNotes.length);
+      local.forEach(s=>allNotes.push(s));
+      x+=wC;
+    });
+    return {notes:allNotes,host,noteOffset};
+  }
+  function exDrawScale(host,spec){
+    const arr=spec.notes; const n=arr.length;
+    const ksMap=exKsAccMap(spec.fifths||0);
+    const wPer=Math.max(58,Math.min(86,Math.floor((860-90)/n)));
+    const W=Math.max(440,80+wPer*n), H=200;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const stave=new VF.Stave(10,64,W-20); stave.addClef(spec.clef||'treble');
+    if(spec.keysig) stave.addKeySignature(spec.keysig);
+    stave.setEndBarType(VF.Barline.type.END); stave.setContext(ctx).draw();
+    const notes=arr.map((it,i)=>{
+      const sn=new VF.StaveNote({keys:[it.key],duration:'w',clef:spec.clef||'treble'});
+      if(it.acc){ const a=exNeedsAcc(it.key,ksMap); if(a) sn.addModifier(new VF.Accidental(a),0); }
+      if(i===0&&spec.tonicLabel) sn.addModifier(new VF.Annotation(spec.tonicLabel).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM).setFont('Arial',11,'bold'),0);
+      if(it.dim){ try{ sn.setStyle({fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'}); }catch(e){} }
+      return sn;
+    });
+    const v=new VF.Voice({num_beats:n,beat_value:1}).setStrict(false); v.addTickables(notes);
+    new VF.Formatter().joinVoices([v]).format([v],W-90); v.draw(ctx,stave);
+    return {notes,host};
+  }
+  function exDrawKeysig(host,spec){
+    const W=spec.w||320, H=spec.h||160;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const stave=new VF.Stave(10,52,W-20); stave.addClef(spec.clef||'treble');
+    if(spec.keysig && spec.keysig!=='C') stave.addKeySignature(spec.keysig);
+    stave.setEndBarType(VF.Barline.type.END); stave.setContext(ctx).draw();
+    // recolorear alteraciones de la armadura por índice (fiable: agrupa glifos por x)
+    const f = spec.fifths;
+    const pink = spec.keysigPink || null;
+    const pinkIdx = spec.keysigPinkIdx || null; // 'all' | [índices] | null
+    if(typeof f==='number' && f!==0 && pink && pinkIdx){
+      const n=Math.abs(f);
+      const paint=()=>{
+        try{
+          const svg=host.querySelector('svg'); if(!svg) return false;
+          const cand=[...svg.querySelectorAll('path')].map(p=>{let bb=null;try{bb=p.getBBox();}catch(e){}return {p,bb};})
+            .filter(o=>o.bb && o.bb.width>0 && o.bb.x>42 && o.bb.x<W-34 && o.bb.height>6 && o.bb.height<34 && o.bb.width<16);
+          if(!cand.length) return false;
+          cand.sort((a,b)=>a.bb.x-b.bb.x);
+          const xs=cand.map(o=>o.bb.x);
+          const minx=xs[0], maxx=xs[xs.length-1];
+          const span=Math.max(1,(maxx-minx));
+          let hecho=false;
+          cand.forEach(o=>{
+            let idx = (n<=1)?0:Math.round((o.bb.x-minx)/(span/(n-1)));
+            idx=Math.max(0,Math.min(n-1,idx));
+            const doPaint = (pinkIdx==='all') || (Array.isArray(pinkIdx)&&pinkIdx.indexOf(idx)>=0);
+            if(doPaint){ o.p.setAttribute('fill',pink); o.p.setAttribute('stroke','none'); hecho=true; }
+          });
+          return hecho;
+        }catch(e){ return false; }
+      };
+      if(!paint()){
+        requestAnimationFrame(()=>{ if(!paint()) requestAnimationFrame(paint); });
+      }
+    }
+    return {notes:[],host,stave,ctx,_keysig:true};
+  }
+  // flecha que apunta a una alteración concreta de la armadura
+  function exMarcarArmadura(host, armMark){
+    if(!armMark) return;
+    const svg=host.querySelector('svg'); if(!svg) return;
+    const NS='http://www.w3.org/2000/svg';
+    // las alteraciones arrancan tras la clave (~x0) y se separan ~ step px
+    const x0=46, step=11.5;
+    const x = x0 + armMark.index*step + step/2;
+    const color=armMark.color||'#e84393';
+    const yTop=14, yBot=44; // flecha encima del pentagrama apuntando abajo
+    const g=document.createElementNS(NS,'g');
+    const line=document.createElementNS(NS,'line');
+    line.setAttribute('x1',x); line.setAttribute('y1',yTop); line.setAttribute('x2',x); line.setAttribute('y2',yBot);
+    line.setAttribute('stroke',color); line.setAttribute('stroke-width','2.4'); line.setAttribute('stroke-linecap','round');
+    g.appendChild(line);
+    const head=document.createElementNS(NS,'path'); const s=5.5;
+    head.setAttribute('d','M'+(x-s)+' '+(yBot-s)+' L'+x+' '+yBot+' L'+(x+s)+' '+(yBot-s));
+    head.setAttribute('fill','none'); head.setAttribute('stroke',color); head.setAttribute('stroke-width','2.4');
+    head.setAttribute('stroke-linecap','round'); head.setAttribute('stroke-linejoin','round'); g.appendChild(head);
+    if(armMark.text){
+      const t=document.createElementNS(NS,'text');
+      t.setAttribute('x',x); t.setAttribute('y',yTop-3); t.setAttribute('text-anchor','middle');
+      t.setAttribute('font-family','Arial,Helvetica,sans-serif'); t.setAttribute('font-size','12'); t.setAttribute('font-weight','800');
+      t.setAttribute('fill',color); t.setAttribute('stroke','none'); t.textContent=armMark.text; g.appendChild(t);
+    }
+    svg.appendChild(g);
+  }
+  // flecha que apunta a la CLAVE (al principio del pentagrama)
+  function exMarcarClave(host, clefMark){
+    const svg=host.querySelector('svg'); if(!svg) return;
+    const NS='http://www.w3.org/2000/svg';
+    const x=26; const color=clefMark.color||'#e84393';
+    // la nota/clave del modal arranca con stave en y~40-64; apuntamos a la zona de la clave
+    const yTop=12, yBot=40;
+    const g=document.createElementNS(NS,'g');
+    const line=document.createElementNS(NS,'line');
+    line.setAttribute('x1',x); line.setAttribute('y1',yTop); line.setAttribute('x2',x); line.setAttribute('y2',yBot);
+    line.setAttribute('stroke',color); line.setAttribute('stroke-width','2.4'); line.setAttribute('stroke-linecap','round'); g.appendChild(line);
+    const head=document.createElementNS(NS,'path'); const s=5.5;
+    head.setAttribute('d','M'+(x-s)+' '+(yBot-s)+' L'+x+' '+yBot+' L'+(x+s)+' '+(yBot-s));
+    head.setAttribute('fill','none'); head.setAttribute('stroke',color); head.setAttribute('stroke-width','2.4');
+    head.setAttribute('stroke-linecap','round'); head.setAttribute('stroke-linejoin','round'); g.appendChild(head);
+    if(clefMark.text){
+      const t=document.createElementNS(NS,'text');
+      t.setAttribute('x',x); t.setAttribute('y',yTop-3); t.setAttribute('text-anchor','middle');
+      t.setAttribute('font-family','Arial,Helvetica,sans-serif'); t.setAttribute('font-size','13'); t.setAttribute('font-weight','800');
+      t.setAttribute('fill',color); t.setAttribute('stroke','none'); t.textContent=clefMark.text; g.appendChild(t);
+    }
+    svg.appendChild(g);
+  }
+  // compás (numerador/denominador) dibujado grande, para el ejercicio de compases
+  function exDrawTimeSig(host,spec){
+    const W=spec.w||220, H=150;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const stave=new VF.Stave(10,40,W-20); stave.addClef('treble'); stave.addTimeSignature(spec.sig);
+    stave.setEndBarType(VF.Barline.type.END); stave.setContext(ctx).draw();
+    return {notes:[],host};
+  }
+
+  function exDraw(spec){
+    const wrap=document.getElementById('exModalScoreWrap');
+    const host=document.getElementById('exModalScore'); host.innerHTML='';
+    if(!spec){ wrap.style.display='none'; return null; }
+    wrap.style.display='block';
+    try{
+      let res=null;
+      switch(spec.type){
+        case 'chord':   res=exDrawChord(host,spec); break;
+        case 'notes':   res=exDrawNotes(host,spec); break;
+        case 'measures':res=exDrawMeasures(host,spec); break;
+        case 'scale':   res=exDrawScale(host,spec); break;
+        case 'keysig':  res=exDrawKeysig(host,spec); break;
+        case 'timesig': res=exDrawTimeSig(host,spec); break;
+        default: wrap.style.display='none'; return null;
+      }
+      // marcas (flechas) y texto sobre el pentagrama
+      if(res){
+        if(spec.clefPink) exClavePink(host, spec.clefPink);
+        if(spec.marks) exMarcarNota(host, res.notes, spec.marks);
+        if(spec.armMark) exMarcarArmadura(host, spec.armMark);
+        if(spec.clefMark) exMarcarClave(host, spec.clefMark);
+        if(spec.pentaTexto) exTextoEnPenta(host, spec.pentaTexto.t, spec.pentaTexto.c, spec.type==='keysig'?'bottom':null);
+      }
+      return res;
+    }catch(e){ console.warn('exDraw',e); wrap.style.display='none'; return null; }
+  }
+  // recolorea la clave (primeros glifos a la izquierda) en rosa
+  function exClavePink(host, color){
+    const paint=()=>{
+      try{
+        const svg=host.querySelector('svg'); if(!svg) return false;
+        let hecho=false;
+        svg.querySelectorAll('path').forEach(p=>{
+          let bb; try{ bb=p.getBBox(); }catch(e){ return; }
+          if(bb && bb.width>0 && bb.x<42 && bb.height>20){ p.setAttribute('fill',color); p.setAttribute('stroke','none'); hecho=true; }
+        });
+        return hecho;
+      }catch(e){ return false; }
+    };
+    if(!paint()){
+      // primer render: el layout aún no está; reintenta en el siguiente frame
+      requestAnimationFrame(()=>{ if(!paint()) requestAnimationFrame(paint); });
+    }
+  }
+
+  /* ---------- figuras rítmicas como SVG (para compases) ---------- */
+  function figSVG(tipo){
+    const C='#16203a';
+    // cabeza negra (elipse rellena, ligeramente inclinada)
+    const headFill=(cx,cy)=>'<ellipse cx="'+cx+'" cy="'+cy+'" rx="6.6" ry="4.9" fill="'+C+'" transform="rotate(-20 '+cx+' '+cy+')"/>';
+    // cabeza blanca (blanca/redonda): anillo con regla evenodd (agujero limpio)
+    const headOpen=(cx,cy)=>'<path fill="'+C+'" fill-rule="evenodd" transform="rotate(-20 '+cx+' '+cy+')" d="'+
+      'M '+(cx-6.8)+' '+cy+' a 6.8 5.0 0 1 0 13.6 0 a 6.8 5.0 0 1 0 -13.6 0 Z'+
+      'M '+(cx-3.7)+' '+cy+' a 3.7 2.6 0 1 1 7.4 0 a 3.7 2.6 0 1 1 -7.4 0 Z"/>';
+    // redonda: óvalo ancho horizontal con agujero (anillo evenodd), sin plica
+    const whole=(cx,cy)=>'<path fill="'+C+'" fill-rule="evenodd" d="'+
+      'M '+(cx-8.4)+' '+cy+' a 8.4 5.4 0 1 0 16.8 0 a 8.4 5.4 0 1 0 -16.8 0 Z'+
+      'M '+(cx-4.4)+' '+cy+' a 4.4 3.4 0 1 1 8.8 0 a 4.4 3.4 0 1 1 -8.8 0 Z"/>';
+    const stem=(x,y1,y2)=>'<line x1="'+x+'" y1="'+y1+'" x2="'+x+'" y2="'+y2+'" stroke="'+C+'" stroke-width="2"/>';
+    const dot=(cx,cy)=>'<circle cx="'+cx+'" cy="'+cy+'" r="2.1" fill="'+C+'"/>';
+    // bandera de corchea: curva limpia que sale del extremo superior de la plica
+    const flag=(x,y)=>'<path d="M '+x+' '+y+' C '+(x+11)+' '+(y+3)+' '+(x+12)+' '+(y+11)+' '+(x+6)+' '+(y+18)+
+      ' C '+(x+11)+' '+(y+10)+' '+(x+9)+' '+(y+4)+' '+x+' '+(y+3)+' Z" fill="'+C+'"/>';
+    const beam=(x1,x2,y)=>'<rect x="'+x1+'" y="'+y+'" width="'+(x2-x1)+'" height="4.4" rx="1" fill="'+C+'"/>';
+    let inner='', w=46;
+    const yh=32;
+    if(tipo==='q'){ inner=headFill(16,yh)+stem(21.8,yh,11); }
+    else if(tipo==='h'){ inner=headOpen(16,yh)+stem(21.8,yh,11); }
+    else if(tipo==='w'){ inner=whole(20,yh); w=46; }
+    else if(tipo==='w.'){ inner=whole(19,yh)+dot(33,yh); w=46; }
+    else if(tipo==='8'){ inner=headFill(16,yh)+stem(21.8,yh,11)+flag(21.8,11); w=42; }
+    else if(tipo==='16'){ inner=headFill(16,yh)+stem(21.8,yh,11)+flag(21.8,11)+flag(21.8,18); w=42; }
+    else if(tipo==='q.'){ inner=headFill(16,yh)+stem(21.8,yh,11)+dot(28,yh); w=40; }
+    else if(tipo==='h.'){ inner=headOpen(16,yh)+stem(21.8,yh,11)+dot(28,yh); w=40; }
+    else if(tipo==='2corcheas'){ inner=headFill(14,yh)+headFill(34,yh)+stem(19.8,yh,12)+stem(39.8,yh,12)+beam(19.8,41.8,12); w=54; }
+    else if(tipo==='3corcheas'){ inner=headFill(13,yh)+headFill(29,yh)+headFill(45,yh)+stem(18.8,yh,12)+stem(34.8,yh,12)+stem(50.8,yh,12)+beam(18.8,52.8,12); w=64; }
+    else if(tipo==='2negras'){ inner=headFill(14,yh)+headFill(35,yh)+stem(19.8,yh,12)+stem(40.8,yh,12); w=56; }
+    else { inner=headFill(16,yh)+stem(21.8,yh,11); }
+    return '<svg class="ex-fig" width="'+w+'" height="48" viewBox="0 0 '+w+' 48" xmlns="http://www.w3.org/2000/svg">'+inner+'</svg>';
+  }
+  function figChip(cap,tipo){ return '<span class="ex-fig-chip">'+figSVG(tipo)+'<span class="cap">'+cap+'</span></span>'; }
+
+  // exponer para el segundo IIFE
+  window.exDraw=exDraw;
+  window.exKsAccMap=exKsAccMap;
+  window.exNeedsAcc=exNeedsAcc;
+  window.exFigSVG=figSVG;
+  window.exFigChip=figChip;
+})();
+
+</script>
+
+<script>
+(function(){
+  // re-declaramos helpers mínimos accesibles en este IIFE
+  const SOLF=['Do','Re','Mi','Fa','Sol','La','Si'];
+  const ACC_ES={'-2':'♭♭','-1':'♭','0':'','1':'♯','2':'♯♯'};
+  function solfDe(step,alter){ return SOLF[STEPS.indexOf(step)]+(ACC_ES[String(alter)]||''); }
+  function keyDe(step,alter,octave){ return notaToKey({step,alter,octave}); }
+  function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+  function randInt(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
+  const PINK='#e84393';
+
+  /* ============================================================
+     1) INTERVALOS — clasificar (A) y construir (B)
+     6ª y 7ª se explican por INVERSIÓN (truco "suman 9").
+     ============================================================ */
+  // tamaño en semitonos de cada (numero,especie)
+  const INT_SEMI={
+    '2m':1,'2M':2,'3m':3,'3M':4,'4J':5,'4A':6,'5D':6,'5J':7,'5A':8,
+    '6m':8,'6M':9,'7m':10,'7M':11,'8J':12
+  };
+  // intervalos "fáciles" sin compuestos (no 6/7 aum/dim)
+  const INT_FACILES=['2m','2M','3m','3M','4J','5J','6m','6M','7m','7M','8J'];
+  const INT_INVIERTE={ // número -> inversión (suman 9); especie se invierte
+    'm':'M','M':'m','J':'J','A':'D','D':'A'
+  };
+  function intInversion(cod){ // '6M' -> '3m'
+    const num=parseInt(cod[0],10); const esp=cod.slice(1);
+    const ninv=9-num; const einv=INT_INVIERTE[esp]||esp;
+    return ''+ninv+einv;
+  }
+  const INT_NOMBRE={m:'menor',M:'Mayor',J:'Justa',A:'Aumentada',D:'disminuida'};
+  function intNombreLargo(cod){
+    const num=parseInt(cod[0],10); const esp=cod.slice(1);
+    const ord={2:'2ª',3:'3ª',4:'4ª',5:'5ª',6:'6ª',7:'7ª',8:'8ª'}[num];
+    return ord+' '+INT_NOMBRE[esp];
+  }
+  // construye la nota superior a dist semitonos y N grados de una base
+  function intNotaSuperior(baseStep,baseOct,num,semis){
+    const it=STEPS.indexOf(baseStep);
+    const topIdx=(it+(num-1))%7;
+    const topOct=baseOct+Math.floor((it+(num-1))/7);
+    const topStep=STEPS[topIdx];
+    const baseM=midiNota(baseStep,baseOct,0);
+    const natural=midiNota(topStep,topOct,0);
+    const alter=baseM+semis-natural;
+    return {step:topStep,octave:topOct,alter};
+  }
+  const INT_BASES=[{s:'C',o:4},{s:'D',o:4},{s:'E',o:4},{s:'F',o:4},{s:'G',o:3},{s:'A',o:3},{s:'B',o:3}];
+
+  // sorteo equilibrado por NÚMERO (que no salgan casi siempre 6/7)
+  function intSorteaCod(){
+    const num=pick([2,2,3,3,4,4,5,5,6,7,8]);
+    const porNum={2:['2m','2M'],3:['3m','3M'],4:['4J','4A'],5:['5J','5D'],6:['6m','6M'],7:['7m','7M'],8:['8J']};
+    if(num===4) return pick(['4J','4J','4J','4A']);
+    if(num===5) return pick(['5J','5J','5J','5D']);
+    return pick(porNum[num]);
+  }
+  // descripción en tonos/semitonos de un intervalo pequeño (2ª, 3ª)
+  function intTonosTexto(cod){
+    const map={'2m':'un semitono','2M':'un tono','3m':'un tono y medio','3M':'dos tonos'};
+    return map[cod]||'';
+  }
+  // explicación CONCRETA de la especie según el caso (criterio de Iago)
+  function intExplEspecieConcreta(cod, base, top){
+    const num=parseInt(cod[0],10), esp=cod.slice(1);
+    const n1=solfDe(base.s,0), n2=solfDe(top.step,top.alter);
+    if(num===2||num===3){
+      // de memoria por tamaño, con el cálculo concreto
+      return 'Las 2ª y 3ª las sabemos de memoria: de '+n1+' a '+n2+' hay '+intTonosTexto(cod)+', así que es una <b>'+intNombreLargo(cod)+'</b>.';
+    }
+    if(num===4||num===5||num===8){
+      const mismaAlt = (base.s.length===1?0:0); // base siempre natural aquí
+      const topAlt = top.alter;
+      if(esp==='J'){
+        if(topAlt===0){
+          return 'Las 4ª, 5ª y 8ª son <b>Justas</b> cuando las dos notas llevan la misma alteración. Aquí ('+n1+'–'+n2+') ambas son naturales: <b>'+intNombreLargo(cod)+'</b>.';
+        } else {
+          const sinAlt = solfDe(top.step,0);
+          if(esEsqFaSi(base.s, top.step)){
+            const seria = (num===4)?'4ª aumentada':(num===5)?'5ª disminuida':'intervalo alterado';
+            return 'Cuidado: '+n1+'–'+sinAlt+' es el caso especial del tritono, que daría una '+seria+'. Al llevar '+n2+' el '+(topAlt<0?'bemol':'sostenido')+' se corrige y queda <b>'+intNombreLargo(cod)+'</b>.';
+          }
+          return 'De '+n1+' a '+sinAlt+' no quedaría justa; al llevar '+n2+' el '+(topAlt<0?'bemol':'sostenido')+', ambas notas quedan equilibradas → <b>'+intNombreLargo(cod)+'</b>.';
+        }
+      }
+      if(esp==='A'){
+        if(esEsqFaSi(base.s, top.step) && top.alter===0){
+          return 'De '+n1+' a '+n2+' es el caso especial <b>Fa–Si</b>: las dos notas son naturales pero forman una 4ª <b>Aumentada</b> (el famoso tritono). Es la excepción a recordar.';
+        }
+        return 'De '+n1+' a '+n2+': como no llevan la misma alteración, es mayor que la Justa → <b>'+intNombreLargo(cod)+'</b>.';
+      }
+      if(esp==='D'){
+        if(esEsqFaSi(base.s, top.step) && top.alter===0){
+          return 'De '+n1+' a '+n2+' es el caso especial <b>Si–Fa</b>: ambas naturales, pero forman una 5ª <b>disminuida</b>. Es la excepción a recordar.';
+        }
+        return 'De '+n1+' a '+n2+': es más pequeña que la Justa → <b>'+intNombreLargo(cod)+'</b>.';
+      }
+    }
+    return '<b>'+intNombreLargo(cod)+'</b>.';
+  }
+  // inversión correcta sobre las NOTAS REALES: sube la nota grave una octava
+  // base (grave) + top (aguda) -> nueva pareja: top (grave) + base+8 (aguda)
+  function intInvierteNotas(base, top){
+    // top pasa a ser la grave (misma), base sube una octava para ser la aguda
+    return {
+      graveStep:top.step, graveAlt:top.alter, graveOct:top.octave,
+      aguda:{step:base.s, alter:0, octave:base.o+1}
+    };
+  }
+
+  function genIntervaloClasif(){
+    const cod=intSorteaCod();
+    let base, top, intentos=0;
+    do{
+      base=pick(INT_BASES);
+      top=intNotaSuperior(base.s,base.o,parseInt(cod[0],10),INT_SEMI[cod]);
+      intentos++;
+    }while((Math.abs(top.alter)>2)&&intentos<40);
+    const num=parseInt(cod[0],10);
+    const esGrande=(num===6||num===7);   // SOLO 6ª y 7ª se invierten (la 8ª no)
+    const k1=keyDe(base.s,0,base.o), k2=keyDe(top.step,top.alter,top.octave);
+    if(esGrande){
+      const inv=intInversion(cod);
+      const invNombre=intNombreLargo(inv);
+      // nota pequeña = la base subida una octava (forma la inversión con la nota aguda)
+      const kSmall=keyDe(base.s, 0, base.o+1);
+      const pasos=[
+        'Cuento el número: de '+solfDe(base.s,0)+' a '+solfDe(top.step,top.alter)+' es una '+num+'ª.',
+        'Subo la nota grave una octava (arco discontinuo): queda una '+(9-num)+'ª con la aguda, más fácil de medir.',
+        'Clasifico esa inversión ('+invNombre+') y aplico que número y especie se invierten: <b>'+intNombreLargo(cod)+'</b>.'
+      ];
+      return {
+        titulo:'Clasificar un intervalo de '+num+'ª',
+        enun:'Clasifica el intervalo '+solfDe(base.s,0)+' → '+solfDe(top.step,top.alter)+'.',
+        resp:cod,
+        // UN SOLO COMPÁS: las dos notas reales (negras) + la nota pequeña de inversión (arco+ligadura)
+        spec:{type:'measures',clef:'treble',
+              measures:[{
+                invA:{ lowKey:k1, highKey:k2, smallKey:kSmall, smallLabel:inv, answerLabel:cod, answerColor:PINK }
+              }]},
+        pasos,
+        truco:'un intervalo y su inversión suman 9 (y la especie se invierte: M↔m, A↔D, J queda J).'
+      };
+    } else {
+      const pasos=[
+        'Cuento el número: de '+solfDe(base.s,0)+' a '+solfDe(top.step,top.alter)+' hay una '+num+'ª.',
+        intExplEspecieConcreta(cod, base, top)
+      ];
+      return {
+        titulo:'Clasificar un intervalo de '+num+'ª',
+        enun:'Clasifica el intervalo '+solfDe(base.s,0)+' → '+solfDe(top.step,top.alter)+'.',
+        resp:cod,
+        spec:{type:'measures',clef:'treble',measures:[
+                {keys:[k1,k2], intervalLabel:{text:cod, color:PINK}}
+              ]},
+        pasos
+      };
+    }
+  }
+
+  function genIntervaloConstr(){
+    const cod=intSorteaCod();
+    let base, top, intentos=0;
+    do{
+      base=pick(INT_BASES);
+      top=intNotaSuperior(base.s,base.o,parseInt(cod[0],10),INT_SEMI[cod]);
+      intentos++;
+    }while((Math.abs(top.alter)>2)&&intentos<40);
+    const num=parseInt(cod[0],10);
+    const esGrande=(num===6||num===7);
+    const k1=keyDe(base.s,0,base.o), k2=keyDe(top.step,top.alter,top.octave);
+    const n1=solfDe(base.s,0), n2=solfDe(top.step,top.alter);
+    const esp=cod.slice(1);
+    let pasos, spec;
+    if(esGrande){
+      const inv=intInversion(cod);
+      const invNombre=intNombreLargo(inv);
+      // nota pequeña (paso previo) = la solución bajada una octava: forma la inversión PEGADA a la base
+      const kSmall=keyDe(top.step, top.alter, top.octave-1);
+      pasos=[
+        'Quiero una '+intNombreLargo(cod)+' sobre '+n1+'. Como es 6ª/7ª, me apoyo en su inversión.',
+        'Paso previo (nota pequeña pegada a '+n1+'): construyo la '+invNombre+', el intervalo contrario.',
+        'Proyecto esa nota una octava hacia arriba (línea discontinua) y obtengo la solución: <b>'+n2+'</b>.'
+      ];
+      // UN SOLO COMPÁS: base (negra) + paso previo pegado + proyección de octava a la solución (rosa)
+      spec={type:'measures',clef:'treble',
+            measures:[{
+              invB:{ baseKey:k1, smallKey:kSmall, smallLabel:inv, answerKey:k2 }
+            }]};
+      return {titulo:'Construir una '+intNombreLargo(cod)+' ascendente',
+        enun:'Coloca la nota que forma una '+intNombreLargo(cod)+' ascendente sobre '+n1+'.',
+        resp:n2, spec, pasos,
+        truco:'un intervalo y su inversión suman 9 (la especie se invierte: M↔m, A↔D, J queda J).'};
+    } else if(num===4||num===5||num===8){
+      // detectar caso Fa-Si (excepción) y alteraciones que agrandan/reducen
+      const esFaSiNatural = (Math.abs(top.alter)===0 && esEsqFaSi(base.s, top.step));
+      if(esp==='J'){
+        if(top.alter===0 && !esFaSiNatural){
+          pasos=[
+            'Subo una '+num+'ª desde '+n1+' (cuento los nombres).',
+            'Las 4ª, 5ª y 8ª son Justas cuando las dos notas llevan la misma alteración. Aquí ambas son naturales: la nota es <b>'+n2+'</b>.'
+          ];
+        } else {
+          // la 2ª lleva alteración para arreglar la excepción (Fa-Sib, Si-Fa#, etc.)
+          const sinAlt=solfDe(top.step,0);
+          const seria = (esEsqFaSi(base.s, top.step))
+            ? ('De '+n1+' a '+sinAlt+' caería en el caso especial '+n1+'–'+sinAlt+' (4ª aumentada / 5ª disminuida). ')
+            : ('De '+n1+' a '+sinAlt+' no quedaría justa. ');
+          pasos=[
+            'Subo una '+num+'ª desde '+n1+' (cuento los nombres).',
+            seria+'Por eso pongo <b>'+n2+'</b>: con esa alteración las dos notas quedan equilibradas y la '+num+'ª es Justa.'
+          ];
+        }
+      } else if(esp==='A'){
+        // aumentada
+        const motivo = (top.alter>0)
+          ? ('como '+n2+' lleva sostenido y '+n1+' no, no tienen la misma alteración y el intervalo se <b>agranda</b>')
+          : ('por la posición de las notas el intervalo es mayor que la Justa');
+        pasos=[
+          'Subo una '+num+'ª desde '+n1+' (cuento los nombres).',
+          'Una '+num+'ª justa lleva la misma alteración en ambas notas; '+motivo+': '+num+'ª <b>Aumentada</b>. La nota es <b>'+n2+'</b>.'
+        ];
+      } else { // disminuida
+        pasos=[
+          'Subo una '+num+'ª desde '+n1+' (cuento los nombres).',
+          'Aquí el intervalo es más pequeño que la Justa → '+num+'ª <b>disminuida</b>. La nota es <b>'+n2+'</b>.'
+        ];
+      }
+    } else {
+      // 2ª y 3ª: cálculo concreto
+      pasos=[
+        'Una '+intNombreLargo(cod)+' mide '+intTonosTexto(cod)+'.',
+        'Subo '+intTonosTexto(cod)+' desde '+n1+': la nota es <b>'+n2+'</b>.'
+      ];
+    }
+    return {
+      titulo:'Construir una '+intNombreLargo(cod)+' ascendente',
+      enun:'Coloca la nota que forma una '+intNombreLargo(cod)+' ascendente sobre '+n1+'.',
+      resp:n2,
+      spec:{type:'measures',clef:'treble',
+            measures:[{keys:[k1,k2], pinkNoteIdx:[1], pinkNoteColor:PINK}]},
+      pasos
+    };
+  }
+  // ¿el par de nombres es el tritono natural Fa–Si (en cualquier orden)?
+  function esEsqFaSi(step1, step2){
+    const s=[step1,step2];
+    return (s.indexOf('F')>=0 && s.indexOf('B')>=0);
+  }
+
+  /* ============================================================
+     2) CLAVES — A (nombrar nota, variedad de claves) · B (poner clave, señalada)
+     ============================================================ */
+  const CLAVES_VF={treble:'Sol en 2ª',bass:'Fa en 4ª',alto:'Do en 3ª',tenor:'Do en 4ª',
+                   soprano:'Do en 1ª', 'mezzo-soprano':'Do en 2ª', 'baritone-f':'Fa en 3ª'};
+  const CLAVES_LIST=['treble','bass','alto','tenor','soprano','mezzo-soprano','baritone-f'];
+  // rangos cómodos por clave (para que la nota quepa) -> [keys candidatas]
+  const CLAVE_NOTAS={
+    treble:['e/4','g/4','b/4','d/5','f/5','a/4','c/5'],
+    bass:['g/2','b/2','d/3','f/3','a/3','c/3','e/3'],
+    alto:['f/3','a/3','c/4','e/4','g/4','b/3','d/4'],
+    tenor:['d/3','f/3','a/3','c/4','e/4','g/3','b/3'],
+    soprano:['c/4','e/4','g/4','b/4','d/4','f/4','a/4'],
+    'mezzo-soprano':['e/4','g/4','b/3','d/4','f/4','a/4','c/4'],
+    'baritone-f':['a/2','c/3','e/3','g/3','b/3','d/3','f/3']
+  };
+  function keyANombre(key){
+    const step=key.split('/')[0][0].toUpperCase();
+    return SOLF[STEPS.indexOf(step)];
+  }
+  function genClaveA(){
+    const clef=pick(CLAVES_LIST);
+    const key=pick(CLAVE_NOTAS[clef]);
+    const nombre=keyANombre(key);
+    return {
+      titulo:'Nombrar una nota (clave de '+CLAVES_VF[clef]+')',
+      enun:'¿Qué nota es esta escrita en clave de '+CLAVES_VF[clef]+'?',
+      resp:nombre,
+      spec:{type:'notes',clef:clef,items:[{key:key}],
+            marks:[{index:0,text:nombre,color:PINK}]},
+      pasos:[
+        'Identifico la clave: '+CLAVES_VF[clef]+', que me dice dónde está '+(clef==='treble'?'el Sol':(CLAVES_VF[clef].startsWith('Fa')?'el Fa':'el Do'))+'.',
+        'Cuento desde ahí por líneas y espacios hasta la nota.',
+        'La nota es <b>'+nombre+'</b>.'
+      ],
+      expl:'La clave fija una nota de referencia. En clave de '+CLAVES_VF[clef]+', contando desde esa referencia, esta nota es '+nombre+'.'
+    };
+  }
+  function genClaveB(){
+    const clef=pick(CLAVES_LIST);
+    const key=pick(CLAVE_NOTAS[clef]);
+    const nombre=keyANombre(key);
+    const esSol=(clef==='treble');
+    return {
+      titulo:'Elegir la clave correcta',
+      enun:'Quiero que esta nota se llame "'+nombre+'". ¿Qué clave debo poner?',
+      resp:'Clave de '+CLAVES_VF[clef],
+      spec:{type:'notes',clef:clef,items:[{key:key}],
+            clefMark:{color:PINK}, clefPink:PINK},
+      pasos:[
+        'Quiero que esa nota se llame '+nombre+'.',
+        esSol? 'La clave de Sol se reconoce a simple vista: con ella esa posición es '+nombre+'.'
+             : 'Voy contando notas hasta encontrar un Fa o un Do en una línea: eso me desbloquea la clave correcta.',
+        'La clave que lo consigue es la <b>clave de '+CLAVES_VF[clef]+'</b>.'
+      ]
+    };
+  }
+
+  /* ============================================================
+     3) GRADOS — un solo ejercicio, generador variado, respuesta señalada
+     ============================================================ */
+  const GR_NOMBRES={1:'Tónica',2:'Supertónica',3:'Mediante',4:'Subdominante',5:'Dominante',6:'Superdominante',7:(m)=> m==='m'?'Sensible':'Sensible'};
+  function genGrado(){
+    // tónicas naturales cómodas (sin alteración en el nombre, para que la armadura sea simple)
+    const TONS_OK=[{s:'C'},{s:'G'},{s:'D'},{s:'F'},{s:'A'},{s:'E'},{s:'B'}];
+    const modo=pick(['M','m']);
+    const t=pick(TONS_OK);
+    const tonStep=t.s;
+    const tonAlt=0;
+    // armadura correcta SEGÚN EL MODO (la menor usa la de su relativo mayor)
+    const fifths = (modo==='m') ? (MINOR_FIFTHS[tonStep]||0) : (MAJOR_FIFTHS[tonStep]||0);
+    const grado=randInt(2,7);
+    let o=4;
+    const it=STEPS.indexOf(tonStep);
+    // mapa de alteraciones de la armadura
+    const ksMap=(function(f){const SOST=['F','C','G','D','A','E','B'],BEM=['B','E','A','D','G','C','F'];const m={};if(f>0)for(let k=0;k<f;k++)m[SOST[k]]=1;else if(f<0)for(let k=0;k<-f;k++)m[BEM[k]]=-1;return m;})(fifths);
+    const notas=[];
+    for(let i=0;i<7;i++){
+      const idx=(it+i)%7, oc=o+Math.floor((it+i)/7), step=STEPS[idx];
+      let alter=ksMap[step]||0;
+      notas.push({step,octave:oc,alter,acc:false});
+    }
+    // grado pedido (índice grado-1)
+    let gi=grado-1;
+    let notaVII=null; // texto explicativo para sensible/subtónica
+    if(grado===7){
+      // distancia en semitonos del VII natural (según armadura) a la tónica (octava arriba)
+      const viiMidi = midiNota(notas[6].step, notas[6].octave, notas[6].alter);
+      const tonMidi = midiNota(tonStep, o+1, 0);
+      const distNatural = tonMidi - viiMidi; // semitonos hasta la tónica
+      // sorteo: pedir Sensible (a medio tono) o Subtónica (a un tono)
+      const pedirSensible = (modo==='M') ? true : (Math.random()<0.6);
+      if(pedirSensible){
+        // SENSIBLE: debe quedar a 1 semitono de la tónica
+        if(distNatural===2){ notas[6].alter+=1; notas[6].acc=true; }      // estaba a un tono → subo medio
+        notaVII={tipo:'Sensible', dist:'medio tono', alteramos:(distNatural===2)};
+      } else {
+        // SUBTÓNICA: debe quedar a 2 semitonos (un tono) de la tónica
+        if(distNatural===1){ notas[6].alter-=1; notas[6].acc=true; }      // estaba a medio tono → bajo medio
+        notaVII={tipo:'Subtónica', dist:'un tono', alteramos:(distNatural===1)};
+      }
+    }
+    const target=notas[gi];
+    const nombreGrado = (grado===7)? notaVII.tipo : GR_NOMBRES[grado];
+    const tonLabel=solfDe(tonStep,tonAlt)+' '+(modo==='m'?'m':'M');
+    const keysig=(fifths!==0)? KS_VF[String(fifths)] : null;
+    const notesSpec=notas.map((n,i)=>({key:keyDe(n.step,n.alter,n.octave), acc:n.acc}));
+    // 8ª opcional: la tónica una octava arriba, atenuada (como en la vista de alumno)
+    notesSpec.push({key:keyDe(tonStep, tonAlt, o+1), acc:false, dim:true});
+    const romano=['I','II','III','IV','V','VI','VII'][grado-1];
+    const pasos=[
+      'Pongo las cabezas desde la tónica ('+solfDe(tonStep,tonAlt)+').',
+      'Coloco la armadura'+(keysig?(' ('+(Math.abs(fifths))+(fifths>0?' sostenido(s))':' bemol(es))')):' (ninguna alteración)')+'.',
+      'Compruebo la armadura, cuento hasta el grado pedido ('+romano+') y lo señalo: <b>'+solfDe(target.step,target.alter)+'</b>.'
+    ];
+    if(grado===7){
+      pasos.push('La <b>'+notaVII.tipo+'</b> tiene que estar a <b>'+notaVII.dist+'</b> de la tónica'+
+        (notaVII.alteramos? ', así que la altero para dejarla a esa distancia.' : ': aquí ya queda a esa distancia, no hace falta alterarla.'));
+    }
+    const nombrePregunta = nombreGrado;
+    return {
+      titulo:'Señalar el grado pedido',
+      enun:'¿Cuál es '+articulo(nombrePregunta)+' '+nombrePregunta+' de '+tonLabel+'?',
+      resp:solfDe(target.step,target.alter),
+      spec:{type:'scale',clef:'treble',fifths,keysig,tonicLabel:tonLabel,notes:notesSpec,
+            marks:[{index:gi,text:solfDe(target.step,target.alter),color:PINK,dir:'up'}]},
+      pasos
+    };
+  }
+  function articulo(nombre){ return 'la'; }
+
+  /* ============================================================
+     4) ACORDES — identificar (señala el tipo) · construir (señala las notas)
+     ============================================================ */
+  const ACO_TIPOS=[
+    {cif:'PM',nom:'Perfecto Mayor',semis:[0,4,7],desc:'3ª Mayor + 5ª Justa', i3:'3M', i5:'5J'},
+    {cif:'Pm',nom:'Perfecto menor',semis:[0,3,7],desc:'3ª menor + 5ª Justa', i3:'3m', i5:'5J'},
+    {cif:'dis',nom:'disminuido',semis:[0,3,6],desc:'3ª menor + 5ª disminuida', i3:'3m', i5:'5D'},
+    {cif:'aum',nom:'aumentado',semis:[0,4,8],desc:'3ª Mayor + 5ª aumentada', i3:'3M', i5:'5A'},
+  ];
+  const ACO_7={cif:'7',nom:'7ª de dominante',semis:[0,4,7,10],desc:'PM + 7ª menor', i3:'3M', i5:'5J', i7:'7m'};
+  const ACO_BASES=[{s:'C',o:4},{s:'D',o:4},{s:'E',o:4},{s:'F',o:4},{s:'G',o:3},{s:'A',o:3},{s:'B',o:3}];
+  function acoNotas(base,semis){
+    const out=[]; const baseM=midiNota(base.s,base.o,0); const it=STEPS.indexOf(base.s);
+    const terceras=[0,2,4,6]; // grados por terceras
+    semis.forEach((sem,k)=>{
+      const gi=terceras[k];
+      const idx=(it+gi)%7, oc=base.o+Math.floor((it+gi)/7), step=STEPS[idx];
+      const alter=baseM+sem-midiNota(step,oc,0);
+      out.push({step,octave:oc,alter});
+    });
+    return out;
+  }
+  function genAcordeId(incluir7){
+    const tipo = (incluir7 && Math.random()<0.3)? ACO_7 : pick(ACO_TIPOS);
+    const base=pick(ACO_BASES);
+    const notas=acoNotas(base,tipo.semis);
+    const keys=notas.map(n=>keyDe(n.step,n.alter,n.octave));
+    const fund=solfDe(base.s,0);
+    return {
+      titulo:'Identificar un acorde',
+      enun:'Observa el acorde sobre '+fund+' e identifícalo.',
+      resp:fund+' '+tipo.nom,
+      spec:{type:'chord',clef:'treble',keys,
+            cifBajo:tipo.cif, cifBajoColor:PINK},
+      pasos:[
+        'Miro la fundamental (la nota más grave): '+fund+'.',
+        'Analizo la 3ª y la 5ª: '+tipo.desc+'.',
+        'Por tanto es <b>'+fund+' '+tipo.nom+'</b>.'
+      ]
+    };
+  }
+  function genAcordeConstr(incluir7){
+    const tipo = (incluir7 && Math.random()<0.3)? ACO_7 : pick(ACO_TIPOS);
+    const base=pick(ACO_BASES);
+    const notas=acoNotas(base,tipo.semis);
+    const keys=notas.map(n=>keyDe(n.step,n.alter,n.octave));
+    const fund=solfDe(base.s,0);
+    // notas añadidas (3ª, 5ª y 7ª) en rosa; índices 1,2,(3)
+    const pinkIdx=[]; for(let j=1;j<notas.length;j++) pinkIdx.push(j);
+    // llaves de intervalo desde la fundamental
+    const braces=[{toIdx:1, text:tipo.i3},{toIdx:2, text:tipo.i5}];
+    if(tipo.i7) braces.push({toIdx:3, text:tipo.i7});
+    return {
+      titulo:'Construir un acorde '+tipo.nom,
+      enun:'Te damos la fundamental '+fund+' y el tipo '+tipo.nom+'. Construye las notas que faltan.',
+      resp:notas.map(n=>solfDe(n.step,n.alter)).join(' – '),
+      spec:{type:'chord',clef:'treble',keys,
+            pinkIdx, pinkColor:PINK,
+            intBraces:{items:braces, color:PINK}},
+      pasos:[
+        'Parto de la fundamental '+fund+'.',
+        'Apilo la 3ª y la 5ª ('+tipo.desc+'): '+notas.map(n=>solfDe(n.step,n.alter)).join(' – ')+'.'
+      ]
+    };
+  }
+
+  /* ============================================================
+     5) COMPASES — usa el MISMO catálogo del ejercicio (COM_COMPASES)
+     ============================================================ */
+  const FIG_NOMVF={w:'redonda','h.':'blanca con puntillo',h:'blanca','q.':'negra con puntillo',q:'negra','8':'corchea','16':'semicorchea','w.':'redonda con puntillo'};
+  function genCompas(){
+    // SOLO estos compases en los ejemplos resueltos (criterio de Iago)
+    const PERMITIDOS=['2/4','3/4','4/4','6/8','9/8','2/2','3/2'];
+    // figura que llena el compás (criterio de Iago para los ejemplos)
+    const COMPAS_FIG={'2/4':'h','3/4':'h.','4/4':'w','6/8':'h.','9/8':'w.','2/2':'w','3/2':'w.'};
+    const keys=PERMITIDOS.filter(k=>COM_COMPASES[k]);
+    const key=pick(keys);
+    const c=COM_COMPASES[key];
+    const compasFig=COMPAS_FIG[key]||c.compasFig;
+    const compuesto=(c.sub==='ternaria');
+    const tipoCap=c.tipo.charAt(0).toUpperCase()+c.tipo.slice(1);
+    let pasos;
+    if(compuesto){
+      pasos=[
+        '¿Cuántos pulsos tiene? El '+key+' tiene <b>'+c.pulsos+' pulsos de '+FIG_NOMVF[c.pulsoFig]+'</b>, por eso es <b>'+tipoCap+'</b>.',
+        'Subdivisión: si cada pulso es una '+FIG_NOMVF[c.pulsoFig]+', su forma natural de dividirse da <b>3 '+FIG_NOMVF[c.subFig]+'s</b> → <b>subdivisión ternaria</b>.'
+      ];
+    } else {
+      const subPlural=FIG_NOMVF[c.subFig]+'s';
+      pasos=[
+        '¿Cuántos pulsos tiene? Hay <b>'+c.pulsos+' pulsos de '+FIG_NOMVF[c.pulsoFig]+'</b> → <b>'+tipoCap+'</b>.',
+        'Subdivisión: si cada pulso es una '+FIG_NOMVF[c.pulsoFig]+', su forma natural de dividirse es en <b>2 '+subPlural+'</b> → <b>subdivisión binaria</b>.'
+      ];
+    }
+    const sgrupo = compuesto ? '3corcheas' : (c.bloque==='blancas' ? '2negras' : (c.bloque==='binario'?'2corcheas':null));
+    return {
+      titulo:'Analizar un compás de '+key,
+      enun:'Analiza el compás de '+key+'.',
+      resp:tipoCap+' · subdivisión '+(compuesto?'ternaria (compuesto)':'binaria (simple)'),
+      spec:{type:'timesig',sig:key,w:200},
+      pasos,
+      _figs:{
+        pulso:c.pulsoFig, pulsoNom:FIG_NOMVF[c.pulsoFig],
+        sub:c.subFig, subNom:FIG_NOMVF[c.subFig],
+        compas:compasFig, compasNom:compasFig?FIG_NOMVF[compasFig]:null,
+        sgrupo, compuesto, pulsoFig:c.pulsoFig
+      }
+    };
+  }
+
+  /* ============================================================
+     6) ENARMONÍAS — escribe las DOS enarmonías; caso Sol#/Lab aparte
+     ============================================================ */
+  // por clase de altura: nombre principal + sus enarmónicos habituales
+  function genEnarmonia(){
+    // partidas que dan enarmonías interesantes (teclas negras + naturales E/F/B/C)
+    const PARTIDAS=[
+      {step:'C',alt:1},{step:'D',alt:-1},{step:'D',alt:1},{step:'E',alt:-1},
+      {step:'F',alt:1},{step:'G',alt:-1},{step:'G',alt:1},{step:'A',alt:-1},
+      {step:'A',alt:1},{step:'B',alt:-1},
+      {step:'E',alt:0},{step:'F',alt:0},{step:'B',alt:0},{step:'C',alt:0}
+    ];
+    const p=pick(PARTIDAS);
+    const nombreP=solfDe(p.step,p.alt);
+    const especial=(nombreP==='Sol♯'||nombreP==='La♭');
+    let ens=enarmoniasDe(p.step,p.alt);
+    ens.sort((a,b)=>Math.abs(a.alter)-Math.abs(b.alter));
+    const items=[{key:keyDe(p.step,p.alt,4)}];   // nota dada en negro, sin label
+    ens.forEach(e=>items.push({key:e.key, color:PINK}));  // enarmonías en rosa, sin label
+    let resp, pasoFinal;
+    if(especial){
+      const otra=nombreP==='Sol♯'?'La♭':'Sol♯';
+      resp=otra+'  (única habitual)';
+      pasoFinal='Es la excepción: su única enarmonía habitual es <b>'+otra+'</b>.';
+    } else {
+      const nombres=ens.map(e=>e.nom);
+      resp=nombres.join('   y   ');
+      pasoFinal='Sus dos enarmonías son <b>'+nombres.join('</b> y <b>')+'</b>.';
+    }
+    return {
+      titulo:'Enarmonías de '+nombreP,
+      enun:'Escribe las enarmonías de '+nombreP+'.',
+      resp,
+      spec:{type:'notes',clef:'treble',items},
+      pasos:[
+        'Identifico la nota: '+nombreP+'.',
+        'Busco las notas que suenan igual pero se escriben con otro nombre.',
+        pasoFinal
+      ]
+    };
+  }
+  // calcula las DOS enarmonías (notas de otro nombre que suenan igual), permitiendo dobles alteraciones
+  function enarmoniasDe(step,alter){
+    const midi=midiNota(step,4,alter);
+    const pc=((midi%12)+12)%12;
+    const it=STEPS.indexOf(step);
+    const cands=[];
+    // explorar vecinos a ±1 y ±2 letras
+    [-2,-1,1,2].forEach(d=>{
+      const idx=((it+d)%7+7)%7; const cand=STEPS[idx];
+      if(cand===step) return;
+      for(let oc=3;oc<=6;oc++){
+        const a=midi-midiNota(cand,oc,0);
+        if(a>=-2 && a<=2){
+          if(((midiNota(cand,oc,a))%12+12)%12 === pc){
+            const nom=solfDe(cand,a);
+            if(!cands.find(o=>o.nom===nom)) cands.push({key:keyDe(cand,a,oc),nom,alter:a,absAlt:Math.abs(a)});
+            break;
+          }
+        }
+      }
+    });
+    // preferir las de menor alteración (primero ♭/♯ simples, luego dobles)
+    cands.sort((a,b)=>a.absAlt-b.absAlt);
+    return cands.slice(0,2);
+  }
+
+  /* ============================================================
+     7) SEMITONOS — clasificar (escribe diat/crom en penta) · construir (señala nota)
+     ============================================================ */
+  function genSemitonoClasif(){
+    const crom = Math.random()<0.5;
+    let k1,k2,nom,n1,n2;
+    if(crom){
+      // CROMÁTICO: misma letra. Mezclamos casos: natural→#, y bemol→becuadro (1ª alterada)
+      const casos=[
+        {s:'C',a1:0,a2:1}, {s:'F',a1:0,a2:1}, {s:'G',a1:0,a2:1},
+        {s:'B',a1:-1,a2:0}, {s:'E',a1:-1,a2:0}, {s:'A',a1:-1,a2:0} // 1ª bemol → 2ª becuadro
+      ];
+      const c=pick(casos); const o=(['A','B'].includes(c.s))?3:4;
+      k1=keyDe(c.s,c.a1,o); k2=keyDe(c.s,c.a2,o);
+      n1=solfDe(c.s,c.a1); n2=solfDe(c.s,c.a2); nom='Cromático';
+    } else {
+      // DIATÓNICO: distinto nombre. Casos con 1ª alterada y naturales
+      const casos=[
+        {s1:'E',a1:0,s2:'F',a2:0}, {s1:'B',a1:0,s2:'C',a2:0},
+        {s1:'F',a1:1,s2:'G',a2:0}, {s1:'C',a1:1,s2:'D',a2:0}, {s1:'G',a1:1,s2:'A',a2:0}
+      ];
+      const c=pick(casos); const o=4;
+      const oc2=(STEPS.indexOf(c.s2)<STEPS.indexOf(c.s1))?o+1:o;
+      k1=keyDe(c.s1,c.a1,o); k2=keyDe(c.s2,c.a2,oc2);
+      n1=solfDe(c.s1,c.a1); n2=solfDe(c.s2,c.a2); nom='Diatónico';
+    }
+    // ¿la 2ª nota necesita becuadro? (misma letra que una 1ª alterada, ahora natural)
+    const accDe = (key)=>{ const m=key.split('/')[0]; return m.length>1? m.slice(1) : null; };
+    const mismaLetra = k1.split('/')[0][0]===k2.split('/')[0][0];
+    const segNatural = accDe(k2)===null;
+    const primAlt = accDe(k1)!==null;
+    const forceNat = (mismaLetra && segNatural && primAlt) ? [1] : [];
+    return {
+      titulo:'Clasificar un semitono',
+      enun:'¿El semitono '+n1+' → '+n2+' es cromático o diatónico?',
+      resp:nom,
+      spec:{type:'measures',clef:'treble',measures:[{keys:[k1,k2],labels:['',''],forceNat}],
+            pentaTexto:{t:nom, c:PINK}},
+      pasos: crom
+        ? ['Miro los nombres: '+n1+' y '+n2+' tienen el <b>mismo nombre</b>.',
+           'Dos notas del mismo nombre a medio tono → <b>cromático</b>.']
+        : ['Miro los nombres: '+n1+' y '+n2+' tienen <b>distinto nombre</b>.',
+           'Dos notas de distinto nombre a medio tono → <b>diatónico</b>.']
+    };
+  }
+  function genSemitonoConstr(){
+    const crom = Math.random()<0.5;
+    const BASES=[{s:'C',o:4},{s:'D',o:4},{s:'F',o:4},{s:'G',o:4},{s:'A',o:3},{s:'E',o:4}];
+    const b=pick(BASES);
+    let k1,k2,n2,nom;
+    if(crom){
+      k1=keyDe(b.s,0,b.o); k2=keyDe(b.s,1,b.o); n2=solfDe(b.s,1); nom='cromático';
+    } else {
+      const it=STEPS.indexOf(b.s); const next=STEPS[(it+1)%7];
+      const oc2=b.o+((it+1>=7)?1:0);
+      const mi1=midiNota(b.s,b.o,0); let alt2=0; let mi2=midiNota(next,oc2,0);
+      if(mi2-mi1===2){ alt2=-1; }
+      k1=keyDe(b.s,0,b.o); k2=keyDe(next,alt2,oc2); n2=solfDe(next,alt2); nom='diatónico';
+    }
+    return {
+      titulo:'Construir un semitono '+nom,
+      enun:'Construye un semitono '+nom+' ascendente desde '+solfDe(b.s,0)+'.',
+      resp:solfDe(b.s,0)+' → '+n2,
+      spec:{type:'measures',clef:'treble',measures:[{keys:[k1,k2],labels:['','']}],
+            marks:[{index:1,text:n2,color:PINK,dir:'down'}]},
+      pasos: crom
+        ? ['Mantengo el <b>mismo nombre</b> y subo medio tono.',
+           solfDe(b.s,0)+' → <b>'+n2+'</b> (mismo nombre = cromático).']
+        : ['Cambio al <b>nombre siguiente</b> y ajusto a medio tono.',
+           solfDe(b.s,0)+' → <b>'+n2+'</b> (distinto nombre = diatónico).']
+    };
+  }
+
+  /* ============================================================
+     8) TONALIDADES — A (armadura→tonalidad, respuesta en penta + flecha al último #/penúltimo b)
+                        B (tonalidad→armadura, armadura señalada)
+                        C (tonos vecinos)
+     ============================================================ */
+  function genTonArmTono(){
+    // incluye el caso SIN armadura (Do M / La m) y la excepción Fa M (1 bemol)
+    const f = pick([0, 1,2,3,4,5,6, -1,-2,-3,-4,-5,-6]);
+    const may=tonPorClave(f,'M'), men=tonPorClave(f,'m');
+    const keysig=KS_VF[String(f)];
+    const SOST=['Fa','Do','Sol','Re','La','Mi','Si'];
+    const BEM=['Si','Mi','La','Re','Sol','Do','Fa'];
+    let pasos, truco=null, pinkIdx=null;
+    if(f===0){
+      pasos=[
+        'No hay ninguna alteración: es la excepción que se reconoce a simple vista.',
+        'Sin alteraciones, la tonalidad Mayor es <b>Do Mayor</b> y su relativa menor <b>La menor</b>.'
+      ];
+    } else if(f>0){
+      const ultimo=SOST[f-1];
+      pinkIdx=[f-1];   // pinto el ÚLTIMO sostenido
+      pasos=[
+        'Me fijo en el ÚLTIMO sostenido (el de la derecha, en rosa): '+ultimo+'♯.',
+        'Subo un semitono: '+ultimo+'♯ → es <b>'+may.nom+'</b>.',
+        'Su relativa menor (una 3ª menor por debajo) es <b>'+men.nom+'</b>.'
+      ];
+      truco='el Mayor está un semitono por encima del último sostenido.';
+    } else if(f===-1){
+      // excepción: NO se pinta nada
+      pasos=[
+        'Solo hay 1 bemol: es la <b>excepción</b> que se memoriza.',
+        '1 bemol = <b>Fa Mayor</b>, y su relativa menor es <b>Re menor</b>.'
+      ];
+    } else {
+      const penultimo=BEM[(-f)-2];
+      pinkIdx=[(-f)-2];   // pinto el PENÚLTIMO bemol
+      pasos=[
+        'Me fijo en el PENÚLTIMO bemol (en rosa): '+penultimo+'♭.',
+        'Ese bemol nombra directamente el Mayor: <b>'+may.nom+'</b>.',
+        'Su relativa menor (una 3ª menor por debajo) es <b>'+men.nom+'</b>.'
+      ];
+      truco='con bemoles, el penúltimo bemol da el nombre del Mayor (excepto Fa M, con 1 bemol).';
+    }
+    const cuenta=Math.abs(f);
+    const enun = (f===0)? 'Esta armadura no tiene alteraciones. ¿Qué tonalidad Mayor y relativa menor es?'
+                        : 'Esta armadura tiene '+cuenta+' '+(f>0?'sostenido(s)':'bemol(es)')+'. ¿Qué tonalidad Mayor y relativa menor es?';
+    const spec={type:'keysig',clef:'treble',keysig,fifths:f,w:Math.max(240,150+cuenta*24),
+                pentaTexto:{t:may.nom+' / '+men.nom, c:PINK}};
+    if(pinkIdx){ spec.keysigPink=PINK; spec.keysigPinkIdx=pinkIdx; }
+    return {
+      titulo:'Armadura → tonalidad',
+      enun, resp:may.nom+' / '+men.nom, spec, pasos, truco
+    };
+  }
+  function genTonTonoArm(){
+    const modo=pick(['M','m']);
+    let f=pick([1,2,3,4,5,-1,-2,-3,-4,-5]);
+    const ton=tonPorClave(f,modo);
+    const keysig=KS_VF[String(f)];
+    const SOSTn=['Fa','Do','Sol','Re','La','Mi','Si'];
+    const BEMn=['Si','Mi','La','Re','Sol','Do','Fa'];
+    const cuenta=Math.abs(f); const conSost=f>0;
+    const listaAlt = (conSost?SOSTn:BEMn).slice(0,cuenta).map(x=>x+(conSost?'♯':'♭')).join(' ');
+    const may = (modo==='m')? tonPorClave(f,'M') : ton;
+    // pasos según el criterio de Iago
+    let pasos;
+    if(modo==='m'){
+      if(conSost){
+        const sensible=SOSTn[f-1];
+        pasos=[
+          'Es menor: primero la convierto en su relativo Mayor, '+may.nom+'.',
+          'Como '+may.nom+' lleva sostenidos, busco la <b>sensible</b> (la nota un semitono por debajo de la tónica): el último sostenido es '+sensible+'♯.',
+          'Escribo los '+cuenta+' sostenidos en orden: <b>'+listaAlt+'</b>.'
+        ];
+      } else {
+        pasos=[
+          'Es menor: primero la convierto en su relativo Mayor, '+may.nom+'.',
+          'Con bemoles, el Mayor es el penúltimo bemol; para llegar a '+may.nom+' hay que <b>contar un bemol más</b>.',
+          'Escribo los '+cuenta+' bemoles en orden: <b>'+listaAlt+'</b>.'
+        ];
+      }
+    } else {
+      if(conSost){
+        const sensible=SOSTn[f-1];
+        pasos=[
+          ton.nom+' lleva sostenidos: su <b>sensible</b> (semitono bajo la tónica) es '+sensible+'♯, que es el último sostenido.',
+          'Escribo los sostenidos en orden hasta él: <b>'+listaAlt+'</b>.'
+        ];
+      } else {
+        pasos=[
+          ton.nom+' lleva bemoles: el penúltimo bemol da el nombre del Mayor, así que para '+ton.nom+' <b>cuento un bemol más</b>.',
+          'Escribo los bemoles en orden: <b>'+listaAlt+'</b>.'
+        ];
+      }
+    }
+    return {
+      titulo:'Tonalidad → armadura',
+      enun:'Coloca la armadura de '+ton.nom+'.',
+      resp:cuenta+' '+(conSost?'sostenido(s)':'bemol(es)')+' ('+listaAlt+')',
+      spec:{type:'keysig',clef:'treble',keysig,fifths:f,w:Math.max(240,150+cuenta*24),
+            keysigPink:PINK, keysigPinkIdx:'all'},
+      truco:'orden de '+(conSost?'sostenidos: Fa Do Sol Re La Mi Si':'bemoles: Si Mi La Re Sol Do Fa')+'.',
+      pasos
+    };
+  }
+  function genTonVecinos(){
+    let f=pick([0,1,2,3,-1,-2,-3,4,-4]);
+    const may=tonPorClave(f,'M');
+    const rel=tonPorClave(f,'m');
+    const domF=f+1, subF=f-1;
+    const domM=tonPorClave(domF,'M'), domm=tonPorClave(domF,'m');
+    const subM=tonPorClave(subF,'M'), subm=tonPorClave(subF,'m');
+    const keysig=KS_VF[String(f)];
+    const lista=[rel,subM,subm,domM,domm].filter(Boolean).map(t=>t.nom).join(' · ');
+    return {
+      titulo:'Tonos vecinos de '+may.nom,
+      enun:'Indica las tonalidades vecinas de '+may.nom+'.',
+      resp:lista,
+      spec:{type:'keysig',clef:'treble',keysig,w:Math.max(240,140+Math.abs(f)*24)},
+      pasos:[
+        may.nom+' tiene '+Math.abs(f)+' '+(f>0?'sostenido(s)':(f<0?'bemol(es)':'alteraciones'))+'. Su relativo es <b>'+rel.nom+'</b>.',
+        'Una alteración menos ('+Math.abs(subF)+'): <b>'+subM.nom+'</b> y su relativo <b>'+subm.nom+'</b>.',
+        'Una alteración más ('+Math.abs(domF)+'): <b>'+domM.nom+'</b> y su relativo <b>'+domm.nom+'</b>.'
+      ],
+      truco: (f===0)?'si no hay alteraciones, las vecinas son 1♯ y 1♭ (más los relativos).'
+                    :'en total son 6 tonalidades, contando la del enunciado y todos los relativos.',
+      expl:'Vecinas = armaduras a ±1 alteración más el relativo de cada una. Comparten casi todas las notas, por eso suenan cercanas.'
+    };
+  }
+
+  /* ============================================================
+     9) ESCALAS — un ejemplo por familia (generadores)
+     ============================================================ */
+  const ESC_DESC={
+    'menor natural':{nick:'', alt:'no se altera ningún grado: es el patrón base del menor.'},
+    'menor armónica':{nick:'', alt:'se sube medio tono el 7º grado (la sensible).'},
+    'menor melódica':{nick:'', alt:'se suben medio tono el 6º y el 7º grado (al subir).'},
+    'menor dórica':{nick:'', alt:'se sube medio tono solo el 6º grado.'},
+    'Mayor tipo 1':{nick:'', alt:'la escala Mayor sin grados alterados.'},
+    'Mayor tipo 2':{nick:'', alt:'variante con el 6º descendido.'},
+    'Mayor tipo 3':{nick:'', alt:'variante con 6º y 7º descendidos.'},
+    'Mayor tipo 4':{nick:'', alt:'variante con el 7º descendido.'},
+  };
+  const ESC_TON_EJ=[{s:'D',o:4},{s:'E',o:4},{s:'A',o:3},{s:'G',o:3},{s:'C',o:4},{s:'B',o:3},{s:'F',o:4}];
+  function escAccFlags(tipo){
+    if(tipo==='menor natural')  return [0,0,0,0,0,0,0];
+    if(tipo==='menor armónica') return [0,0,0,0,0,0,1];
+    if(tipo==='menor melódica') return [0,0,0,0,0,1,1];
+    if(tipo==='menor dórica')   return [0,0,0,0,0,1,0];
+    if(tipo==='Mayor tipo 1')   return [0,0,0,0,0,0,0];
+    if(tipo==='Mayor tipo 2')   return [0,0,0,0,0,1,0];
+    if(tipo==='Mayor tipo 3')   return [0,0,0,0,0,1,1];
+    if(tipo==='Mayor tipo 4')   return [0,0,0,0,0,0,1];
+    return [0,0,0,0,0,0,0];
+  }
+  function escGenEjemplo(familia){
+    if(familia==='otras') return escGenOtra();
+    const ton=pick(ESC_TON_EJ);
+    let tipos,patrones,fifthsMap;
+    if(familia==='menor'){ tipos=ESC_TIPOS; patrones=ESC_PATRONES; fifthsMap=MINOR_FIFTHS; }
+    else { tipos=ESC_TIPOS_MAY; patrones=ESC_PATRONES_MAY; fifthsMap=MAJOR_FIFTHS; }
+    const tipo=pick(tipos);
+    const notas=escGenerarNotas(ton.s,ton.o,patrones[tipo]);
+    const flags=escAccFlags(tipo);
+    const fifths=fifthsMap[ton.s]||0;
+    const keysig=(fifths!==0)?KS_VF[String(fifths)]:null;
+    const notesSpec=notas.map((n,i)=>({key:keyDe(n.step,n.alter,n.octave),acc:!!flags[i]}));
+    // 8ª opcional: tónica una octava arriba, atenuada (como en la vista de alumno)
+    notesSpec.push({key:keyDe(ton.s, 0, ton.o+1), acc:false, dim:true});
+    const tonicLabel=solfDe(ton.s,0)+' '+(familia==='menor'?'m':'M');
+    const d=ESC_DESC[tipo]||{nick:'',alt:''};
+    // nombres naturales desde la tónica
+    const it=STEPS.indexOf(ton.s); const naturales=[];
+    for(let i=0;i<8;i++){ naturales.push(SOLF[(it+i)%7]); }
+    return {
+      titulo:'Escala '+tipo,
+      enun:'Construye la escala '+tipo+' de '+solfDe(ton.s,0)+' (una octava ascendente).',
+      resp:notas.map(n=>solfDe(n.step,n.alter)).join(' – '),
+      spec:{type:'scale',clef:'treble',fifths,keysig,tonicLabel,notes:notesSpec},
+      pasos:[
+        'Pongo las cabezas desde la tónica ('+solfDe(ton.s,0)+').',
+        'Coloco la armadura: '+(keysig?(Math.abs(fifths)+(fifths>0?' sostenido(s)':' bemol(es)')):'ninguna alteración')+'.',
+        'Compruebo la armadura para saber qué alteraciones aplicar y modifico la variante: '+d.alt
+      ]
+    };
+  }
+  function escGenOtra(){
+    const fam=pick(['pentatonica','hexatona','cromatica']);
+    const ton=pick(ESC_TON_EJ);
+    if(fam==='cromatica'){
+      const base=midiNota(ton.s,ton.o,0);
+      const NAMES=['Do','Do♯','Re','Re♯','Mi','Fa','Fa♯','Sol','Sol♯','La','La♯','Si'];
+      const KEYS=['c','c#','d','d#','e','f','f#','g','g#','a','a#','b'];
+      const names=[],specN=[];
+      for(let k=0;k<12;k++){
+        const m=base+k; const pc=((m%12)+12)%12; const oc=Math.floor(m/12)-1;
+        names.push(NAMES[pc]); specN.push({key:KEYS[pc]+'/'+oc,acc:KEYS[pc].length>1});
+      }
+      return {titulo:'Escala cromática',enun:'Construye la escala cromática ascendente desde '+solfDe(ton.s,0)+'.',
+        resp:names.join(' '),spec:{type:'scale',clef:'treble',fifths:0,keysig:null,tonicLabel:solfDe(ton.s,0),notes:specN},
+        pasos:[
+          'Parto de '+solfDe(ton.s,0)+' y subo de semitono en semitono hasta la octava.'
+        ]};
+    }
+    if(fam==='pentatonica'){
+      const mayor = Math.random()<0.5;
+      const subfam = mayor?'pentatonica_may':'pentatonica_men';
+      const notas=escVarNotas(subfam,ton.s,ton.o);
+      const fifths = mayor ? (MAJOR_FIFTHS[ton.s]||0) : (MINOR_FIFTHS[ton.s]||0);
+      const keysig = (fifths!==0)? KS_VF[String(fifths)] : null;
+      const ksMap=window.exKsAccMap(fifths);
+      const notesSpec=notas.map(n=>{
+        const k=keyDe(n.step,n.alter,n.octave);
+        const need=window.exNeedsAcc(k,ksMap);
+        return {key:k, acc:!!need};
+      });
+      const tonicLabel=solfDe(ton.s,0)+' '+(mayor?'M':'m');
+      const quitar = mayor ? 'el 4º y el 7º grado' : 'el 2º y el 6º grado';
+      return {titulo:'Escala pentatónica '+(mayor?'Mayor':'menor'),
+        enun:'Construye la pentatónica '+(mayor?'Mayor':'menor')+' de '+solfDe(ton.s,0)+'.',
+        resp:notas.map(n=>solfDe(n.step,n.alter)).join(' – '),
+        spec:{type:'scale',clef:'treble',fifths,keysig,tonicLabel,notes:notesSpec},
+        pasos:[
+          'Construyo la escala '+(mayor?'Mayor':'menor')+' de '+solfDe(ton.s,0)+' con su armadura.',
+          'Quito '+quitar+': quedan 5 notas → '+notas.map(n=>solfDe(n.step,n.alter)).join(' – ')+'.'
+        ]};
+    }
+    // hexátona
+    const notas=escVarNotas('hexatona',ton.s,ton.o);
+    const notesSpec=notas.map(n=>({key:keyDe(n.step,n.alter,n.octave),acc:(n.alter!==0)}));
+    return {titulo:'Escala hexátona (tonos enteros)',enun:'Construye la hexátona de '+solfDe(ton.s,0)+'.',
+      resp:notas.map(n=>solfDe(n.step,n.alter)).join(' – '),
+      spec:{type:'scale',clef:'treble',fifths:0,keysig:null,tonicLabel:solfDe(ton.s,0),notes:notesSpec},
+      pasos:[
+        'Parto de '+solfDe(ton.s,0)+' y avanzo siempre de tono en tono.',
+        'Seis notas a distancia de tono, sin semitonos.'
+      ]};
+  }
+
+  /* ============================================================
+     MAPA de generadores por clave de botón
+     ============================================================ */
+  const GENERADORES={
+    int_clasif: genIntervaloClasif,
+    int_constr: genIntervaloConstr,
+    cla_a: genClaveA,
+    cla_b: genClaveB,
+    gra_senalar: genGrado,
+    aco_id: ()=>genAcordeId(_aco7()),
+    aco_constr: ()=>genAcordeConstr(_aco7()),
+    com_clasif: genCompas,
+    ena_a: genEnarmonia,
+    sem_clasif: genSemitonoClasif,
+    sem_constr: genSemitonoConstr,
+    ton_arm_tono: genTonArmTono,
+    ton_tono_arm: genTonTonoArm,
+    ton_vecinos: genTonVecinos,
+  };
+  function _aco7(){ try{ return !!window.acoIncluir7 || (typeof aco7!=='undefined'&&aco7); }catch(e){ return false; } }
+
+  /* ============================================================
+     EXTRA bajo la partitura (pasos + truco + figuras de compases)
+     ============================================================ */
+  function exExtra(e){
+    const host=document.getElementById('exModalExtra'); host.innerHTML='';
+    if(e.pasos && e.pasos.length){
+      let h='<div class="ex-pasos">';
+      e.pasos.forEach((p,i)=>{ h+='<div class="ex-paso"><span class="num">'+(i+1)+'</span><span class="txt">'+p+'</span></div>'; });
+      // pasos de figuras para compases (3,4,5,6)
+      if(e._figs){
+        const f=e._figs; let num=e.pasos.length;
+        num++; h+='<div class="ex-paso"><span class="num">'+num+'</span><span class="txt">Figura de PULSO: '
+           +'<div class="ex-fig-wrap">'+window.exFigChip(f.pulsoNom, f.pulso)+'</div></span></div>';
+        num++; h+='<div class="ex-paso"><span class="num">'+num+'</span><span class="txt">Figura de SUBDIVISIÓN: '
+           +'<div class="ex-fig-wrap">'+window.exFigChip(f.subNom, f.sub)+'</div></span></div>';
+        if(f.compas){
+          num++; h+='<div class="ex-paso"><span class="num">'+num+'</span><span class="txt">Figura de COMPÁS: '
+             +'<div class="ex-fig-wrap">'+window.exFigChip(f.compasNom, f.compas)+'</div></span></div>';
+        }
+        // punto final: criterio "qué ocupa un pulso"
+        let ejemplos;
+        if(f.compuesto){
+          ejemplos=window.exFigChip('', f.pulsoFig)+window.exFigChip('', '3corcheas');
+        } else {
+          ejemplos=window.exFigChip('', f.pulsoFig)+(f.sgrupo?window.exFigChip('', f.sgrupo):'');
+        }
+        num++;
+        h+='<div class="ex-paso"><span class="num">'+num+'</span><span class="txt">¿Qué ocupa un pulso? Cualquier combinación que sume una '+f.pulsoNom+'. Por ejemplo:'
+           +'<div class="ex-fig-wrap">'+ejemplos+'</div><span style="font-size:12px;color:#5b6a92">(puede haber más combinaciones válidas)</span></span></div>';
+      }
+      h+='</div>';
+      host.insertAdjacentHTML('beforeend',h);
+    }
+    if(e.truco){ host.insertAdjacentHTML('beforeend','<div class="ex-truco">💡 <b>Truco:</b> '+e.truco+'</div>'); }
+  }
+
+  /* ============================================================
+     CONTROL DEL MODAL
+     ============================================================ */
+  let curGen=null;
+  function pinta(e){
+    document.getElementById('exModalTitle').textContent=e.titulo;
+    document.getElementById('exModalEnun').textContent=e.enun;
+    document.getElementById('exModalResp').textContent=e.resp;
+    // "Por qué" solo si NO hay pasos y hay explicación (evita redundancia)
+    const porque=document.getElementById('exModalPorque');
+    const tienePasos = e.pasos && e.pasos.length;
+    if(e.expl && !tienePasos){
+      document.getElementById('exModalExpl').innerHTML=e.expl;
+      if(porque) porque.style.display='';
+    } else {
+      if(porque) porque.style.display='none';
+    }
+    const tw=e.spec && (e.spec.type==='scale'||e.spec.type==='notes'||e.spec.type==='measures');
+    const box=document.getElementById('exModalBox'); if(box) box.classList.toggle('wide',!!tw);
+    window.exDraw(e.spec);
+    exExtra(e);
+  }
+  let _scrollY=0;
+  function _lockScroll(){
+    _scrollY=window.scrollY||window.pageYOffset||0;
+    document.body.style.position='fixed';
+    document.body.style.top=(-_scrollY)+'px';
+    document.body.style.left='0'; document.body.style.right='0';
+    document.body.style.width='100%';
+  }
+  function _unlockScroll(){
+    document.body.style.position='';
+    document.body.style.top=''; document.body.style.left=''; document.body.style.right=''; document.body.style.width='';
+    window.scrollTo(0,_scrollY);
+  }
+  function abrirEjemplo(clave){
+    const gen=GENERADORES[clave];
+    if(!gen){ console.warn('Sin generador para',clave); return; }
+    curGen=gen;
+    pinta(curGen());
+    document.getElementById('exModalOtro').style.display='inline-flex';
+    _lockScroll();
+    document.getElementById('exModal').classList.add('show');
+  }
+  function abrirEjemploEscala(familia){
+    curGen=()=>escGenEjemplo(familia);
+    pinta(curGen());
+    document.getElementById('exModalOtro').style.display='inline-flex';
+    _lockScroll();
+    document.getElementById('exModal').classList.add('show');
+  }
+  function otroEjemplo(){ if(curGen) pinta(curGen()); }
+  function cerrarEjemplo(){
+    document.getElementById('exModal').classList.remove('show');
+    _unlockScroll();
+  }
+  document.addEventListener('keydown',function(ev){ if(ev.key==='Escape') cerrarEjemplo(); });
+
+  window.abrirEjemplo=abrirEjemplo;
+  window.abrirEjemploEscala=abrirEjemploEscala;
+  window.otroEjemplo=otroEjemplo;
+  window.cerrarEjemplo=cerrarEjemplo;
+})();
+</script>
+
+
 </body>
 </html>
