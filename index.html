@@ -9802,6 +9802,171 @@ function __grados_marker__(){}
   window.comprobarVecinos = comprobarVecinos;
 })();
 
+
+/* ============================================================
+   TÉRMINOS (ficha) · ejercicio-tipo interactivo del motor de fichas
+   Versión simplificada:
+     A · clasificar 5 términos (uno de cada categoría) por arrastre/tap
+     B · significado de 2 términos (elegir entre 2 opciones)
+     C · ordenar 3 tempos de más lento a más rápido
+   Reutiliza los catálogos globales TER_CATS, TER_SIGNIF, TER_FRANJAS.
+   Contrato del motor de fichas (igual que vecinos):
+     genTerminosData()                     -> objeto _terminos
+     window.montarTerminos(host, ej, est)  (interactivo, alumno)
+     window.comprobarTerminos(ej, est)     -> {ok, pct, total, aciertos}
+     window.pintarTerminosLectura(host, ej, sol)  (previa profesor / solución)
+   estado = { A:{col:{term:cat}, pend}, B:{sel:[i,i]}, C:{orden:[...]}, _dirty }
+   ============================================================ */
+(function(){
+  'use strict';
+  function _pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+  function _shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function _pickN(a,n){ return _shuffle(a).slice(0,n); }
+  function _cats(){ return (typeof TER_CATS!=='undefined') ? TER_CATS : {}; }
+
+  /* -------- generación de datos (llamado por fichaBloque) -------- */
+  function genTerminosData(){
+    var CATS=_cats(); var KEYS=Object.keys(CATS);
+    var A = KEYS.map(function(k){ return { term:_pick(CATS[k].items), cat:k, label:CATS[k].label }; });
+    var SIG = (typeof TER_SIGNIF!=='undefined') ? TER_SIGNIF : [];
+    var B = _pickN(SIG, 2).map(function(e){
+      var mala=_pick(e.mal);
+      var ops = (Math.random()<0.5) ? [e.ok, mala] : [mala, e.ok];
+      return { t:e.t, ok:e.ok, ops:ops, corr:ops.indexOf(e.ok) };
+    });
+    var FR = (typeof TER_FRANJAS!=='undefined') ? TER_FRANJAS : [];
+    var idxs = _pickN(FR.map(function(_,i){ return i; }), Math.min(3, FR.length)).sort(function(a,b){ return a-b; });
+    var correcto = idxs.map(function(i){ return _pick(FR[i].items); });
+    return { A:A, B:B, C:{ correcto:correcto, barajado:_shuffle(correcto) } };
+  }
+
+  /* -------- helpers de estilo (inline, sin depender de clases) -------- */
+  var CAJA='border:1.5px solid var(--ficha-borde,#33406b);border-radius:12px;padding:10px 12px';
+  function _seccion(host, titulo){
+    var s=document.createElement('div'); s.style.cssText='margin:0 0 18px 0';
+    var h=document.createElement('div'); h.style.cssText='font-size:12.5px;font-weight:800;letter-spacing:.03em;color:var(--teoria,#ff5ccd);margin-bottom:8px;text-transform:uppercase';
+    h.textContent=titulo; s.appendChild(h); host.appendChild(s); return s;
+  }
+  function _chip(txt){ var c=document.createElement('button'); c.type='button'; c.textContent=txt;
+    c.style.cssText='border:1.5px solid #a974ff55;background:rgba(169,116,255,.14);color:#efeaff;border-radius:999px;padding:7px 14px;font-size:14px;font-weight:700;cursor:pointer;margin:3px'; return c; }
+
+  /* -------- montaje interactivo (modo alumno) -------- */
+  function montarTerminos(host, ej, est){
+    if(!host||!ej||!ej._terminos) return;
+    var D=ej._terminos, CATS=_cats();
+    est.A = est.A || { col:{}, pend:null };
+    est.B = est.B || { sel:[null, null] };
+    est.C = est.C || { orden:[] };
+    host.innerHTML='';
+    var wrap=document.createElement('div'); wrap.style.cssText='max-width:760px;width:100%;color:#e9e5ff'; host.appendChild(wrap);
+
+    /* ===== A: clasificar ===== */
+    var sa=_seccion(wrap,'A · Clasifica cada término');
+    var hint=document.createElement('div'); hint.style.cssText='font-size:12px;color:#9aa3c0;margin-bottom:8px';
+    hint.textContent='Toca un término y luego su categoría. Para sacarlo, tócalo de nuevo.'; sa.appendChild(hint);
+    var pool=document.createElement('div'); pool.style.cssText='display:flex;flex-wrap:wrap;gap:2px;margin-bottom:10px;min-height:38px'; sa.appendChild(pool);
+    var cats=document.createElement('div'); cats.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px'; sa.appendChild(cats);
+    function repintaA(){
+      pool.innerHTML=''; cats.innerHTML='';
+      D.A.forEach(function(f){
+        if(!est.A.col[f.term]){
+          var c=_chip(f.term);
+          if(est.A.pend===f.term){ c.style.outline='2px solid #ff5ccd'; c.style.outlineOffset='2px'; }
+          c.onclick=function(){ est.A.pend=(est.A.pend===f.term)?null:f.term; est._dirty=true; repintaA(); };
+          pool.appendChild(c);
+        }
+      });
+      Object.keys(CATS).forEach(function(k){
+        var box=document.createElement('div'); box.style.cssText=CAJA+';min-height:70px;cursor:pointer';
+        var t=document.createElement('div'); t.style.cssText='font-size:11.5px;font-weight:800;color:#b9c2e0;margin-bottom:6px;text-transform:uppercase'; t.textContent=CATS[k].label; box.appendChild(t);
+        D.A.forEach(function(f){ if(est.A.col[f.term]===k){
+          var ch=_chip(f.term); ch.style.background='rgba(91,208,255,.16)'; ch.style.borderColor='#5bd0ff66';
+          ch.onclick=function(ev){ ev.stopPropagation(); delete est.A.col[f.term]; est._dirty=true; repintaA(); };
+          box.appendChild(ch);
+        }});
+        box.onclick=function(){ if(est.A.pend){ est.A.col[est.A.pend]=k; est.A.pend=null; est._dirty=true; repintaA(); } };
+        cats.appendChild(box);
+      });
+    }
+    repintaA();
+
+    /* ===== B: significado ===== */
+    var sb=_seccion(wrap,'B · ¿Qué significa?');
+    D.B.forEach(function(q, i){
+      var row=document.createElement('div'); row.style.cssText=CAJA+';margin-bottom:8px;display:flex;flex-wrap:wrap;align-items:center;gap:10px';
+      var term=document.createElement('div'); term.style.cssText='font-size:16px;font-weight:800;font-style:italic;color:#dbe7ff;min-width:110px'; term.textContent=q.t; row.appendChild(term);
+      q.ops.forEach(function(op, j){
+        var b=document.createElement('button'); b.type='button'; b.textContent=op;
+        b.style.cssText='flex:1;min-width:130px;border:1.5px solid #33406b;background:rgba(255,255,255,.04);color:#e9e5ff;border-radius:10px;padding:9px 12px;font-size:13.5px;cursor:pointer';
+        if(est.B.sel[i]===j){ b.style.borderColor='#ff5ccd'; b.style.background='rgba(255,92,205,.16)'; b.style.fontWeight='800'; }
+        b.onclick=function(){ est.B.sel[i]=j; est._dirty=true; montarTerminos(host, ej, est); };
+        row.appendChild(b);
+      });
+      sb.appendChild(row);
+    });
+
+    /* ===== C: ordenar tempos ===== */
+    var sc=_seccion(wrap,'C · Ordena del más lento al más rápido');
+    var hintC=document.createElement('div'); hintC.style.cssText='font-size:12px;color:#9aa3c0;margin-bottom:8px'; hintC.textContent='Tócalos en orden: primero el más lento.'; sc.appendChild(hintC);
+    var lst=document.createElement('div'); lst.style.cssText='display:flex;flex-direction:column;gap:8px;max-width:420px'; sc.appendChild(lst);
+    D.C.barajado.forEach(function(tp){
+      var pos=est.C.orden.indexOf(tp);
+      var b=document.createElement('button'); b.type='button';
+      b.style.cssText='display:flex;align-items:center;gap:12px;border:1.5px solid #33406b;background:rgba(255,255,255,.04);color:#e9e5ff;border-radius:10px;padding:11px 14px;font-size:15px;font-weight:700;cursor:pointer;text-align:left';
+      var num=document.createElement('span'); num.style.cssText='flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;'+(pos>=0?'background:#a974ff;color:#160c2e':'background:rgba(255,255,255,.08);color:#8a93b5');
+      num.textContent=pos>=0?String(pos+1):'·'; b.appendChild(num);
+      var lab=document.createElement('span'); lab.textContent=tp; b.appendChild(lab);
+      b.onclick=function(){ var p=est.C.orden.indexOf(tp); if(p>=0) est.C.orden.splice(p,1); else est.C.orden.push(tp); est._dirty=true; montarTerminos(host, ej, est); };
+      lst.appendChild(b);
+    });
+    if(est.C.orden.length){
+      var reset=document.createElement('button'); reset.type='button'; reset.textContent='Reiniciar orden';
+      reset.style.cssText='margin-top:8px;background:none;border:1px solid #ffffff33;color:#c7bff0;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer';
+      reset.onclick=function(){ est.C.orden=[]; est._dirty=true; montarTerminos(host, ej, est); }; sc.appendChild(reset);
+    }
+  }
+
+  /* -------- corrección -> pct (llamado al enviar la ficha) -------- */
+  function comprobarTerminos(ej, est){
+    var D=ej._terminos||{A:[],B:[],C:{correcto:[]}};
+    var total=(D.A.length||0)+(D.B.length||0)+((D.C&&D.C.correcto.length)||0);
+    if(!est || !est._dirty) return { ok:false, pct:0, total:total, aciertos:0 };
+    var ac=0;
+    var col=(est.A&&est.A.col)||{};
+    D.A.forEach(function(f){ if(col[f.term]===f.cat) ac++; });
+    var sel=(est.B&&est.B.sel)||[];
+    D.B.forEach(function(q,i){ if(sel[i]===q.corr) ac++; });
+    var orden=(est.C&&est.C.orden)||[];
+    (D.C.correcto||[]).forEach(function(tp,p){ if(orden[p]===tp) ac++; });
+    var pct= total? Math.round((ac/total)*100) : 0;
+    return { ok: ac===total, pct:pct, total:total, aciertos:ac };
+  }
+
+  /* -------- lectura estática (previa del profesor / solución / PDF-texto) -------- */
+  function pintarTerminosLectura(host, ej, sol){
+    if(!host||!ej||!ej._terminos) return;
+    var D=ej._terminos, CATS=_cats();
+    var enSim = !!(host.closest && host.closest('#ppAlumnoSim'));
+    var cT = enSim ? '#e9e5ff' : '#16203a';
+    var cR = enSim ? '#ff9ad8' : '#c0392b';
+    var wrap=document.createElement('div'); wrap.style.cssText='max-width:760px;font-size:13.5px;line-height:1.9;color:'+cT; host.appendChild(wrap);
+    function linea(txt, resp){
+      var d=document.createElement('div');
+      d.innerHTML = txt + (sol&&resp!=null ? ' <b style="color:'+cR+'">'+resp+'</b>' : '');
+      wrap.appendChild(d);
+    }
+    linea('<b>A.</b> Clasifica: '+D.A.map(function(f){ return f.term; }).join(' · '), sol? ('→ '+D.A.map(function(f){ return f.term+' ('+CATS[f.cat].label+')'; }).join(' · ')) : null);
+    D.B.forEach(function(q){ linea('<b>B.</b> <i>'+q.t+'</i> = '+q.ops.join('  /  '), sol? ('→ '+q.ok) : null); });
+    linea('<b>C.</b> Ordena (lento→rápido): '+D.C.barajado.join(' · '), sol? ('→ '+D.C.correcto.join(' · ')) : null);
+  }
+
+  window.genTerminosData      = genTerminosData;
+  window.montarTerminos       = montarTerminos;
+  window.comprobarTerminos    = comprobarTerminos;
+  window.pintarTerminosLectura= pintarTerminosLectura;
+})();
+
+
 </script>
 
 
@@ -9815,6 +9980,9 @@ function __grados_marker__(){}
      'key' coincide con TEORIA_GEN.byKey salvo escalas (kind:'escala').
      ============================================================ */
   const PP_CAT = [
+    {grupo:'Términos', items:[
+      {key:'terminos',    label:'Términos (clasificar + significado + tempos)'},
+    ]},
     {grupo:'Intervalos', items:[
       {key:'int_clasif',  label:'Clasificar intervalo'},
       {key:'int_constr',  label:'Construir intervalo'},
@@ -9971,6 +10139,7 @@ function __grados_marker__(){}
     document.body.removeChild(d); return str;
   }
   const ENUN={
+    terminos:'Clasifica los términos, elige su significado y ordena los tempos.',
     int_clasif:'Clasifica los intervalos.',
     int_constr:'Coloca la 2ª nota de cada intervalo.',
     cla_a:'Nombra cada nota.',
@@ -10340,6 +10509,9 @@ function __grados_marker__(){}
       return { key, enun:ENUN.com_clasif, render:{kind:'spec', spec:ej.spec}, labelsTop:COM_PREGUNTAS.slice(), comAns, sig:ej.spec.sig, resp:ej.resp, _compas:true,
                _interactivo:'compas', _comSol:comSol, _comSpec:ej.spec };
     }
+    if(key==='terminos'){
+      return { key, enun:ENUN.terminos, _terminos:window.genTerminosData(), _interactivo:'terminos' };  // A/B/C interactivo, sin pentagrama
+    }
     if(key==='ton_vecinos'){
       return { key, enun:ENUN.ton_vecinos, _vecinos:genVecinos(), _interactivo:'vecinos' };   // tabla 3×2 interactiva
     }
@@ -10497,7 +10669,8 @@ function __grados_marker__(){}
         (item.ej._mixto==='acordes' && typeof window.montarAcordes==='function'));
       const esCompas = item.ej._interactivo==='compas' && item.ej._comSol && typeof window.montarCompas==='function';
       const esVecinos = item.ej._interactivo==='vecinos' && item.ej._vecinos && typeof window.montarVecinos==='function';
-      const interactivo = esEscala || esRuedas || esNotaB || esEnarm || esGrado || esMixto || esCompas || esVecinos;
+      const esTerminos = item.ej._interactivo==='terminos' && item.ej._terminos && typeof window.montarTerminos==='function';
+      const interactivo = esEscala || esRuedas || esNotaB || esEnarm || esGrado || esMixto || esCompas || esVecinos || esTerminos;
       const escPrecol = esEscala && item.ej._spec && item.ej._spec.precolocada===true;
       const pieFoot = esGrado
         ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Las cabezas ya están escritas. Pon la <b>armadura</b> y altera lo que corresponda (toca una nota y usa <b>♯ ♮ ♭</b>). Para <b>señalar el grado</b>: toca la nota para seleccionarla y tócala otra vez para rodearla.</div>'
@@ -10551,6 +10724,9 @@ function __grados_marker__(){}
       } else if(esVecinos){
         item._respuesta = item._respuesta || {};
         try{ window.montarVecinos(main.querySelector('#simScore'), item.ej, item._respuesta); }catch(e){}
+      } else if(esTerminos){
+        item._respuesta = item._respuesta || {};
+        try{ window.montarTerminos(main.querySelector('#simScore'), item.ej, item._respuesta); }catch(e){}
       } else {
         try{ pintarBloque(main.querySelector('#simScore'), item.ej, 'alumno'); }catch(e){}
       }
@@ -10595,6 +10771,7 @@ function __grados_marker__(){}
           (item.ej._mixto==='acordes' && typeof window.comprobarAcordes==='function'));
         const esCompas = item.ej._interactivo==='compas' && item.ej._comSol && typeof window.comprobarCompas==='function';
         const esVecinos = item.ej._interactivo==='vecinos' && item.ej._vecinos && typeof window.comprobarVecinos==='function';
+        const esTerminos = item.ej._interactivo==='terminos' && item.ej._terminos && typeof window.comprobarTerminos==='function';
         if(esEscala){
           const est = item._respuesta || { seq:[], arm:0 };
           try{ return window.comprobarEscalaInteractiva(item.ej._spec, est).pct; }catch(e){ return 0; }
@@ -10626,6 +10803,10 @@ function __grados_marker__(){}
         if(esVecinos){
           const est = item._respuesta || {};
           try{ return window.comprobarVecinos(item.ej, est).pct; }catch(e){ return 0; }
+        }
+        if(esTerminos){
+          const est = item._respuesta || {};
+          try{ return window.comprobarTerminos(item.ej, est).pct; }catch(e){ return 0; }
         }
         haySimulado=true;
         return Math.floor(Math.random()*101);
@@ -11066,6 +11247,11 @@ function __grados_marker__(){}
 
   function pintarBloque(score, ej, modo){
     const r=ej.render||{};
+    // términos: A/B/C en modo lectura (solución cuando modo==='sol')
+    if(ej._terminos){
+      try{ window.pintarTerminosLectura(score, ej, modo==='sol'); }catch(e){}
+      return;
+    }
     // tonos vecinos: tabla 3×2 (Subdominante / Tónica / Dominante + relativas menores)
     if(ej._vecinos){
       const {sol, given}=ej._vecinos;
@@ -11461,6 +11647,7 @@ function __grados_marker__(){}
         const solLabels=(esSolucion?(ej.solLabels||[]):[]).map(x=>x==null?'':pdfSafe(x));
         const esCompas=(item.key==='com_clasif');
         const esVecinos=!!ej._vecinos;
+        const esTerminos=!!ej._terminos;
         const hayEtq = labels.some(Boolean) || solLabels.some(Boolean);
         const boxTop=by+8+textH-3, boxBot=by+blockH-3-((esCompas||esVecinos)?0:(hayEtq?(solLabels.some(Boolean)?9:5):0));
         const boxH=Math.max(8, boxBot-boxTop), boxW=CW-12;
@@ -11468,6 +11655,21 @@ function __grados_marker__(){}
         if(esVecinos){
           // tabla 3×2 de tonos vecinos (dada en negro; respuestas en rojo solo en la solución)
           dibujarTablaVecinos(doc, ej._vecinos, M+6, boxTop, boxW, boxH, esSolucion);
+        } else if(esTerminos){
+          // términos: A/B/C en texto (sin pentagrama)
+          const T=ej._terminos||{A:[],B:[],C:{}};
+          doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(45,50,80);
+          let ty=boxTop+4;
+          const put=(s)=>{ const ls=doc.splitTextToSize(pdfSafe(s), boxW-4); doc.text(ls, M+8, ty); ty+=ls.length*4.2; };
+          put('A. Clasifica: '+(T.A||[]).map(f=>f.term).join(' / '));
+          (T.B||[]).forEach(q=> put('B. '+q.t+' = '+(q.ops||[]).join('  /  ')));
+          put('C. Ordena (lento a rapido): '+((T.C&&T.C.barajado)||[]).join(' / '));
+          if(esSolucion){
+            doc.setTextColor(192,57,43);
+            put('Sol A: '+(T.A||[]).map(f=>f.term+' ('+f.label+')').join(' / '));
+            (T.B||[]).forEach(q=> put('Sol B: '+q.t+' -> '+q.ok));
+            put('Sol C: '+((T.C&&T.C.correcto)||[]).join(' / '));
+          }
         } else if(esCompas){
           // pentagrama de la cifra a la IZQUIERDA + preguntas (y respuesta) a la derecha
           if(img && img.png){
@@ -11598,6 +11800,7 @@ function __grados_marker__(){}
           _comSol:      ej._comSol      || null,   // solución estructurada de compás
           _comSpec:     ej._comSpec     || null,   // spec del compás
           _vecinos:     ej._vecinos     || null,   // tabla 3×2 de tonalidades vecinas
+          _terminos:    ej._terminos    || null,   // términos: A/B/C (clasificar/significado/tempos)
           _compas:      ej._compas      || null,   // flag de bloque de compás (pintarBloque)
           sig:          ej.sig          || null,   // signatura (compás)
           layout:       ej.layout       || null    // layout del bloque (pintarBloque)
@@ -11750,6 +11953,7 @@ function __grados_marker__(){}
       _ruedas:m._ruedas||null, _notaB:m._notaB||null, _enarm:m._enarm||null,
       _mixto:m._mixto||null, _comSol:m._comSol||null, _comSpec:m._comSpec||null,
       _vecinos:m._vecinos||null, _compas:m._compas||null,
+      _terminos:m._terminos||null,
       sig:m.sig||null, layout:m.layout||null
     };
   }
