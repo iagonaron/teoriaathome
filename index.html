@@ -3858,6 +3858,9 @@ function panelProfesor(){
   // ---- opciones del PDF ----
   const evals=['Evaluación inicial','Primer trimestre','Segundo trimestre','Tercer trimestre','Evaluación extraordinaria'];
   html+='<div class="prof-sec"><h4>PDF para papel</h4>'+
+    '<label class="prof-opt" style="display:block;margin-bottom:8px">Nº de ficha (vacío = usar la semana): '+
+      '<input id="pdf_num" type="number" min="1" value="'+(window.__FICHA_NUMERO!=null?window.__FICHA_NUMERO:'')+'" '+
+      'style="width:80px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:6px 8px;color:#fff;font-size:14px"></label>'+
     '<label class="prof-opt"><input type="radio" name="pdfmodo" data-modo="semanal" '+(fichaCfg.pdf.modo==='semanal'?'checked':'')+'> Ficha semanal (semana actual)</label>'+
     '<label class="prof-opt"><input type="radio" name="pdfmodo" data-modo="examen" '+(fichaCfg.pdf.modo==='examen'?'checked':'')+'> Examen</label>'+
     '<div id="pdf_eval_wrap" style="margin-top:8px;'+(fichaCfg.pdf.modo==='examen'?'':'display:none')+'">'+
@@ -3890,6 +3893,8 @@ function panelProfesor(){
       document.getElementById('pdf_eval_wrap').style.display = (r.dataset.modo==='examen')?'block':'none';
     };
   });
+  const inpNum=document.getElementById('pdf_num');
+  if(inpNum) inpNum.oninput=()=>{ const v=inpNum.value.trim(); window.__FICHA_NUMERO = (v==='')?null:v; };
   const selEval=document.getElementById('pdf_eval');
   if(selEval) selEval.onchange=()=>{ fichaCfg.pdf.evaluacion=selEval.value; };
   document.getElementById('zp_save').onclick=()=>{ saveFichaCfg(fichaCfg); cerrarModal(); };
@@ -9948,16 +9953,31 @@ function __grados_marker__(){}
     var D=ej._terminos, CATS=_cats();
     var enSim = !!(host.closest && host.closest('#ppAlumnoSim'));
     var cT = enSim ? '#e9e5ff' : '#16203a';
-    var cR = enSim ? '#ff9ad8' : '#c0392b';
-    var wrap=document.createElement('div'); wrap.style.cssText='max-width:760px;font-size:13.5px;line-height:1.9;color:'+cT; host.appendChild(wrap);
-    function linea(txt, resp){
-      var d=document.createElement('div');
-      d.innerHTML = txt + (sol&&resp!=null ? ' <b style="color:'+cR+'">'+resp+'</b>' : '');
-      wrap.appendChild(d);
+    var cMut = enSim ? '#c7bff0' : '#5a6478';
+    var cR = enSim ? '#ff9ad8' : '#c0392b';   // color de respuesta correcta (igual que el resto del sistema)
+    var wrap=document.createElement('div'); wrap.style.cssText='max-width:760px;font-size:13.5px;line-height:2.05;color:'+cT; host.appendChild(wrap);
+    function row(html){ var d=document.createElement('div'); d.style.cssText='margin:3px 0'; d.innerHTML=html; wrap.appendChild(d); }
+    function head(t){ return '<b style="color:'+(enSim?'#ff9ad8':'#b0367a')+'">'+t+'</b> '; }
+    // A — en solución sale directo: término (Categoría)
+    if(sol){
+      row(head('A.')+D.A.map(function(f){ return '<b style="color:'+cR+'">'+f.term+'</b> <span style="color:'+cMut+'">('+CATS[f.cat].label+')</span>'; }).join(' · '));
+    } else {
+      row(head('A. Clasifica:')+D.A.map(function(f){ return f.term; }).join(' · '));
     }
-    linea('<b>A.</b> Clasifica: '+D.A.map(function(f){ return f.term; }).join(' · '), sol? ('→ '+D.A.map(function(f){ return f.term+' ('+CATS[f.cat].label+')'; }).join(' · ')) : null);
-    D.B.forEach(function(q){ linea('<b>B.</b> <i>'+q.t+'</i> = '+q.ops.join('  /  '), sol? ('→ '+q.ok) : null); });
-    linea('<b>C.</b> Ordena (lento→rápido): '+D.C.barajado.join(' · '), sol? ('→ '+D.C.correcto.join(' · ')) : null);
+    // B — opción correcta rodeada en solución
+    D.B.forEach(function(q){
+      var ops=q.ops.map(function(op){
+        if(sol && op===q.ok) return '<span style="border:1.6px solid '+cR+';border-radius:8px;padding:1px 8px;color:'+cR+';font-weight:800">'+op+'</span>';
+        return '<span style="color:'+cMut+'">'+op+'</span>';
+      }).join('&nbsp;&nbsp;&nbsp;');
+      row(head('B.')+'<i>'+q.t+'</i> — '+ops);
+    });
+    // C
+    if(sol){
+      row(head('C. Orden:')+D.C.correcto.map(function(t){ return '<b style="color:'+cR+'">'+t+'</b>'; }).join(' → '));
+    } else {
+      row(head('C. Ordena (lento→rápido):')+D.C.barajado.join(' · '));
+    }
   }
 
   window.genTerminosData      = genTerminosData;
@@ -10368,7 +10388,7 @@ function __grados_marker__(){}
     const host=document.getElementById('ppSelector');
     const lleno = sumaPesos()>=TOPE;
     let h='<div class="pp-h">Tipos de ejercicio · clic izquierdo para añadir · clic derecho para quitar</div>';
-    PP_CAT.forEach(g=>{
+    PP_CAT.slice().sort((a,b)=>a.grupo.localeCompare(b.grupo,'es',{sensitivity:'base'})).forEach(g=>{
       h+='<div class="pp-cat-grp"><h5>'+g.grupo+'</h5>';
       g.items.forEach(it=>{
         const p=pesoDe(it.key);
@@ -11656,20 +11676,25 @@ function __grados_marker__(){}
           // tabla 3×2 de tonos vecinos (dada en negro; respuestas en rojo solo en la solución)
           dibujarTablaVecinos(doc, ej._vecinos, M+6, boxTop, boxW, boxH, esSolucion);
         } else if(esTerminos){
-          // términos: A/B/C en texto (sin pentagrama)
+          // términos: A/B/C en texto (sin pentagrama). Enunciado en negro;
+          // solución en rojo mostrando directamente la respuesta correcta.
           const T=ej._terminos||{A:[],B:[],C:{}};
-          doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(45,50,80);
-          let ty=boxTop+4;
-          const put=(s)=>{ const ls=doc.splitTextToSize(pdfSafe(s), boxW-4); doc.text(ls, M+8, ty); ty+=ls.length*4.2; };
-          put('A. Clasifica: '+(T.A||[]).map(f=>f.term).join(' / '));
-          (T.B||[]).forEach(q=> put('B. '+q.t+' = '+(q.ops||[]).join('  /  ')));
-          put('C. Ordena (lento a rapido): '+((T.C&&T.C.barajado)||[]).join(' / '));
-          if(esSolucion){
-            doc.setTextColor(192,57,43);
-            put('Sol A: '+(T.A||[]).map(f=>f.term+' ('+f.label+')').join(' / '));
-            (T.B||[]).forEach(q=> put('Sol B: '+q.t+' -> '+q.ok));
-            put('Sol C: '+((T.C&&T.C.correcto)||[]).join(' / '));
-          }
+          const lx=M+8, maxW=boxW-6, RED=[192,57,43];
+          let ty=boxTop+4.5;
+          const line=(txt, bold, col)=>{
+            doc.setFont('helvetica', bold?'bold':'normal'); doc.setFontSize(9);
+            if(col) doc.setTextColor(col[0],col[1],col[2]); else doc.setTextColor(45,50,80);
+            const ls=doc.splitTextToSize(pdfSafe(txt), maxW);
+            doc.text(ls, lx, ty); ty+=ls.length*4.4+1.2;
+          };
+          if(esSolucion){ line('A  '+(T.A||[]).map(f=>f.term+' ('+f.label+')').join('    '), false, RED); }
+          else { line('A · Clasifica por categoria:', true); line((T.A||[]).map(f=>f.term).join('    ·    ')); }
+          (T.B||[]).forEach(q=>{
+            if(esSolucion){ line('B  '+q.t+'  =  '+q.ok, false, RED); }
+            else { line('B · '+q.t+'  =  '+(q.ops||[]).join('    /    ')); }
+          });
+          if(esSolucion){ line('C  Orden: '+((T.C&&T.C.correcto)||[]).join('  ->  '), false, RED); }
+          else { line('C · Ordena (lento a rapido): '+((T.C&&T.C.barajado)||[]).join('    ·    ')); }
         } else if(esCompas){
           // pentagrama de la cifra a la IZQUIERDA + preguntas (y respuesta) a la derecha
           if(img && img.png){
