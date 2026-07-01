@@ -11696,10 +11696,10 @@ function __grados_marker__(){}
           // tabla 3×2 de tonos vecinos (dada en negro; respuestas en rojo solo en la solución)
           dibujarTablaVecinos(doc, ej._vecinos, M+6, boxTop, boxW, boxH, esSolucion);
         } else if(esTerminos){
-          // términos en PAPEL: A unir · B rodear · C numerar. Solución en rojo.
+          // términos en PAPEL, dos columnas: A (unir) izquierda · B (rodear)+C (numerar) derecha.
           const T=ej._terminos||{A:[],B:[],C:{}};
-          const lx=M+8, INK=[45,50,80], RED=[192,57,43], GREY=[120,124,140];
-          let ty=boxTop+3.5;
+          const INK=[45,50,80], RED=[192,57,43], GREY=[120,124,140];
+          const colIzqX=M+8, colW=(boxW-10)/2, colDerX=M+8+(boxW-10)/2+8;
           const bold=(t,x,y)=>{ doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(INK[0],INK[1],INK[2]); doc.text(pdfSafe(t), x, y); };
           const norm=(t,x,y,c)=>{ doc.setFont('helvetica','normal'); doc.setFontSize(9); c=c||INK; doc.setTextColor(c[0],c[1],c[2]); doc.text(pdfSafe(t), x, y); };
           const ital=(t,x,y)=>{ doc.setFont('helvetica','italic'); doc.setFontSize(9); doc.setTextColor(INK[0],INK[1],INK[2]); doc.text(pdfSafe(t), x, y); };
@@ -11708,42 +11708,44 @@ function __grados_marker__(){}
           const boxN=(x,y)=>{ try{ doc.setDrawColor(GREY[0],GREY[1],GREY[2]); doc.setLineWidth(0.35); doc.roundedRect(x,y,5,4.8,1,1,'S'); }catch(e){} };
           const wOf=(t)=>doc.getTextWidth(pdfSafe(t));
 
-          // ===== A · unir término -> categoría (dos columnas) =====
-          bold('A - Une cada termino con su categoria:', lx, ty); ty+=5.5;
+          // ===== A (izquierda): unir término -> categoría =====
+          let ay=boxTop+2;
+          bold('A - Une cada termino con su categoria:', colIzqX, ay); ay+=6;
           const A=T.A||[];
-          const colL=lx+2, dotL=lx+boxW*0.40, dotR=lx+boxW*0.52, colR=lx+boxW*0.55;
-          const rowH=4.7, yA0=ty;
+          const tX=colIzqX+1, dotAx=colIzqX+colW*0.40, dotBx=colIzqX+colW*0.54, cX=colIzqX+colW*0.58;
+          const rowH=5.6, yA0=ay;
           const catsShuf=A.map(f=>f.label).slice().sort(()=>Math.random()-0.5);
-          A.forEach((f,i)=>{ const y=yA0+i*rowH; norm(f.term, colL, y); dot(dotL, y-1); });
-          catsShuf.forEach((c,i)=>{ const y=yA0+i*rowH; dot(dotR, y-1); norm(c, colR, y); });
+          A.forEach((f,i)=>{ const y=yA0+i*rowH; norm(f.term, tX, y); dot(dotAx, y-1); });
+          catsShuf.forEach((c,i)=>{ const y=yA0+i*rowH; dot(dotBx, y-1); norm(c, cX, y); });
           if(esSolucion){ doc.setDrawColor(RED[0],RED[1],RED[2]); doc.setLineWidth(0.4);
             A.forEach((f,i)=>{ const j=catsShuf.indexOf(f.label);
-              try{ doc.line(dotL, yA0+i*rowH-1, dotR, yA0+j*rowH-1); }catch(e){} }); }
-          ty=yA0+A.length*rowH+2.5;
+              try{ doc.line(dotAx, yA0+i*rowH-1, dotBx, yA0+j*rowH-1); }catch(e){} }); }
 
-          // ===== B · rodear la definición correcta =====
-          bold('B - Rodea la definicion correcta:', lx, ty); ty+=5.5;
+          // ===== B + C (derecha) =====
+          let dy=boxTop+2;
+          bold('B - Rodea la definicion correcta:', colDerX, dy); dy+=5.4;
           (T.B||[]).forEach(q=>{
-            ital(q.t, lx+2, ty);
-            let x=lx+2+wOf(q.t)+5;
+            ital(q.t, colDerX+1, dy); dy+=4.4;
+            let x=colDerX+3;
             (q.ops||[]).forEach(op=>{
-              const w=wOf(op); norm(op, x, ty);
-              if(esSolucion && op===q.ok) oval(x+w/2, ty-1, w/2+2.5, 3);
-              x+=w+8;
+              const w=wOf(op);
+              if(x+w>colDerX+colW && x>colDerX+3){ dy+=4.4; x=colDerX+3; }
+              norm(op, x, dy);
+              if(esSolucion && op===q.ok) oval(x+w/2, dy-1, w/2+2, 2.6);
+              x+=w+6;
             });
-            ty+=5.6;
+            dy+=5.2;
           });
-          ty+=0.5;
-
-          // ===== C · numerar de lento a rápido =====
-          bold('C - Numera del mas lento (1) al mas rapido:', lx, ty); ty+=5.5;
+          dy+=1;
+          bold('C - Numera del mas lento (1) al mas rapido:', colDerX, dy); dy+=5.4;
           const barj=(T.C&&T.C.barajado)||[], corr=(T.C&&T.C.correcto)||[];
-          let cx=lx+2;
+          let cx=colDerX+1;
           barj.forEach(tp=>{
-            boxN(cx, ty-3.6);
-            if(esSolucion){ doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(RED[0],RED[1],RED[2]); doc.text(String(corr.indexOf(tp)+1), cx+1.7, ty); }
-            norm(tp, cx+7, ty);
-            cx += 7 + wOf(tp) + 9;
+            if(cx+7+wOf(tp)>colDerX+colW && cx>colDerX+1){ dy+=6; cx=colDerX+1; }
+            boxN(cx, dy-3.6);
+            if(esSolucion){ doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(RED[0],RED[1],RED[2]); doc.text(String(corr.indexOf(tp)+1), cx+1.7, dy); }
+            norm(tp, cx+7, dy);
+            cx += 7 + wOf(tp) + 7;
           });
         } else if(esCompas){
           // pentagrama de la cifra a la IZQUIERDA + preguntas (y respuesta) a la derecha
