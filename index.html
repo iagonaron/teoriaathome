@@ -11800,6 +11800,7 @@ function __grados_marker__(){}
 
   // Arranque: abre la ficha, reconstruye PP.ficha y lanza el motor real.
   async function arrancarFichaAlumno(cuenta, fichaId, numFallback){
+    console.log('[ficha] arranque alumno · fichaId=%s cuenta=%s n=%s', fichaId, cuenta, numFallback);
     // fija ya el número (del ?n del portal) para que el título salga "Ficha N"
     // aunque suite_ficha_abrir no lo devuelva; si lo devuelve, se sobreescribe.
     if(numFallback!=null && String(numFallback)!=='' && /^\d+$/.test(String(numFallback))) window.__FICHA_NUMERO=numFallback;
@@ -11814,16 +11815,22 @@ function __grados_marker__(){}
       msg('Abriendo la ficha…');
       const { data, error } = await sb.rpc('suite_ficha_abrir', { p_cuenta_id:cuenta, p_ficha_id:fichaId });
       if(error) throw error;
+      console.log('[ficha] suite_ficha_abrir →', data);
       if(!data || data.ok===false){ const cod=(data&&data.error)||'no_abre'; const e=new Error(cod); e._cod=cod; throw e; }
       const pack=extraerPaqueteFicha(data);
-      if(!pack || !Array.isArray(pack.ejercicios) || !pack.ejercicios.length) throw new Error('ficha_vacia');
+      if(!pack || !Array.isArray(pack.ejercicios) || !pack.ejercicios.length){ const e=new Error('ficha_vacia'); e._cod='ficha_vacia'; throw e; }
+      console.log('[ficha] '+pack.ejercicios.length+' ejercicios · numero='+pack.numero);
       if(pack.numero!=null && String(pack.numero)!=='') window.__FICHA_NUMERO=pack.numero;
       // contexto de entrega para el final del motor
       window.__SUITE_ALUMNO={ cuenta:cuenta, ficha:fichaId, numero:(pack.numero!=null?pack.numero:(numFallback||null)) };
       PP.ficha=pack.ejercicios.map(e=>({ n:e.n, key:e.key, label:e.label, ej:rehidratarEj(e) }));
-      ov.remove();
+      // Lanzar el MOTOR. Se hace ANTES de quitar el overlay de carga: si peta,
+      // el error se muestra sobre un nodo aún visible (no sobre la landing muda).
       previsualizarAlumno();
+      // el motor ya montó su propio overlay por encima → ahora sí quitamos la carga
+      setTimeout(()=>{ try{ ov.remove(); }catch(e){} }, 0);
     }catch(err){
+      console.error('[ficha] fallo al abrir:', err);
       const cod=(err&&(err._cod||err.message))||'error';
       const mapa={
         sin_supabase:'No pude conectar. Revisa tu conexión a internet y vuelve a entrar desde la campana.',
@@ -11832,7 +11839,11 @@ function __grados_marker__(){}
         no_validado:'Tu cuenta aún no está validada. Habla con Iago.',
         ficha_no_encontrada:'No encuentro esta ficha. Puede que ya no esté disponible.'
       };
-      errorCargaAlumno(ov, 'No se pudo abrir la ficha', mapa[cod]||('Error: '+cod));
+      // ov puede seguir montado (fallo antes del motor) o no (fallo dentro del
+      // motor): si no está en el DOM, re-inyecta uno para no dejar la landing muda.
+      let cont=ov;
+      if(!document.body.contains(ov)){ cont=pantallaCargaAlumno(); }
+      errorCargaAlumno(cont, 'No se pudo abrir la ficha', mapa[cod]||('Error: '+cod));
     }
   }
 
