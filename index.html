@@ -3905,6 +3905,7 @@ function panelProfesor(){
 function tituloFichaPDF(){
   const p=fichaCfg.pdf||{modo:'semanal'};
   if(p.modo==='examen'){ return 'Examen · '+(p.evaluacion||'Primer trimestre'); }
+  if(window.__FICHA_NUMERO!=null && String(window.__FICHA_NUMERO)!=='') return 'Ficha '+window.__FICHA_NUMERO;
   // semana actual (lunes a domingo) del mes corriente
   const hoy=new Date();
   const dia=(hoy.getDay()+6)%7; // 0=lunes
@@ -11292,6 +11293,7 @@ function __grados_marker__(){}
   function tituloFicha(tipo){
     const t = tipo || PP.tipoFicha || 'semanal';
     if(t!=='semanal' && TIT_EXAMEN[t]) return TIT_EXAMEN[t];
+    if(window.__FICHA_NUMERO!=null && String(window.__FICHA_NUMERO)!=='') return 'Ficha '+window.__FICHA_NUMERO;
     const lun=lunesDe(new Date());
     return 'Ficha · semana del '+lun.getDate()+' de '+MESES[lun.getMonth()];
   }
@@ -11667,6 +11669,8 @@ function __grados_marker__(){}
       const hash=location.hash.replace('#','');
       // FASE 6.1c: token de envío creado por el Diario (un solo uso, vida 45 min)
       const envioTok=qs.get('envio'); if(envioTok){ window.__SUITE_ENVIO_TOKEN=envioTok; window.__SUITE_ENVIO_FICHA=qs.get('ficha')||null; }
+      // Número de ficha para el título "Ficha N" (el Diario pasa ?ficha=N numérico).
+      { const _fq=qs.get('ficha'); if(_fq && /^\d+$/.test(_fq)) window.__FICHA_NUMERO=_fq; }
       if(qs.get('panel')==='profesor' || hash==='profesor'){ abrirPanelProfesor(); return; }
       // práctica dirigida: abre la vista y genera SOLO ese sub-apartado
       const pk=qs.get('practice');
