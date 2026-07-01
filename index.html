@@ -527,6 +527,8 @@
   @keyframes accTintin{0%,100%{background:transparent;color:var(--muted)}50%{background:rgba(232,67,147,.35);color:var(--ink)}}
   .acc-tintin{animation:accTintin 1.4s ease-in-out infinite}
   .foot{text-align:center;margin-top:30px;font-size:12px;color:var(--muted2)}
+  .foot-prof{display:inline-block;margin-top:6px;font-size:12.5px;letter-spacing:.03em;opacity:.62;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:2px;transition:opacity .15s ease,color .15s ease}
+  .foot-prof:hover{opacity:1;color:#ffd7f2}
 
   /* ===== FICHA DEL ALUMNO: módulo oscuro azulado; solo el pentagrama va en blanco ===== */
   /* el contenedor de interacción es un módulo oscuro degradado */
@@ -711,21 +713,21 @@
     </div>
     <p class="appname-sub" style="text-align:center">Ejercicios interactivos de teoría de Lenguaje Musical.</p>
 
-    <div class="ficha-card" id="fichaCard" onclick="abrirFichaAlumno(event)">
-      <div class="fc-locktag">Solo para alumnos verificados</div>
-      <div class="fc-kick">Tarea de la semana</div>
-      <div class="fc-title"><b>FICHA</b> <span class="fc-thin">DE TEORÍA SEMANAL</span></div>
-      <div class="fc-sub">Diez ejercicios para practicar y entregar. Pon tu nombre y empieza.</div>
-      <button class="fc-cta">Hacer mi ficha →</button>
-      <div class="fc-prof" onclick="event.stopPropagation();abrirZonaProfesor()">Zona profesor</div>
-    </div>
+    <!-- FASE 6.1c (Iago 2026-07-01): la tarjeta "FICHA DE TEORÍA SEMANAL" del
+         alumno se retira del home. Los alumnos verificados llegan a sus fichas
+         por el portal de notificaciones; los no-alumnos no la necesitan. El
+         acceso profesor pasa a un enlace discreto en el pie (abrirZonaProfesor).
+         Las funciones abrirFichaAlumno / aplicarBloqueoFicha quedan sin uso
+         (protegidas con if(!card)return, no dan error). -->
 
     <div class="sueltos-row">
       <div class="sueltos-aviso">Es posible que haya ejercicios que <span class="rosa">no te han explicado todavía</span>. ¡Ya llegará el momento! Practica lo que sabes hacer.</div>
     </div>
     <div class="pad-grid" id="padGrid"></div>
 
-    <div class="foot">TEORÍA at home · by Iago González Alonso</div>
+    <div class="foot">TEORÍA at home · by Iago González Alonso
+      <br><span class="foot-prof" onclick="abrirZonaProfesor()">Generador de fichas</span>
+    </div>
   </section>
 
   <!-- ============ VISTA INTERVALOS ============ -->
@@ -1107,7 +1109,7 @@
   <!-- ============ VISTA: PANEL DEL PROFESOR ============ -->
   <section class="view" id="view-profesor">
     <div class="iv-head">
-      <div class="iv-title"><span class="post">PANEL DEL </span>PROFESOR</div>
+      <div class="iv-title"><span class="post">GENERADOR DE </span>FICHAS</div>
     </div>
     <p class="iv-sub">Configura la ficha de la semana, revísala con un clic y prepárala para enviar.</p>
     <div id="profRoot"></div>
