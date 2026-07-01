@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.3/build/cjs/vexflow.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#0a1028; --panel:#0d142e; --panel2:#111b3d; --line:#1e2a52;
@@ -11538,39 +11539,80 @@ function __grados_marker__(){}
     };
   }
 
+  /* ---- cliente Supabase (perezoso). El generador es PÚBLICO: usa la anon key
+     y se autoriza en el backend por el TOKEN de un solo uso. ------------------ */
+  const SUITE_SB_URL='https://woiptkyrxkbpnvioypit.supabase.co';
+  const SUITE_SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvaXB0a3lyeGticG52aW95cGl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NzI2ODYsImV4cCI6MjA5MjA0ODY4Nn0.B2nKgj5rD0rkdLeMIrd9KgD8lUPWsBT4Y7aCtmnvbjA';
+  function suiteSb(){
+    if(window.SUITE_SB) return window.SUITE_SB;
+    if(window.supabase && window.supabase.createClient){
+      window.SUITE_SB=window.supabase.createClient(SUITE_SB_URL, SUITE_SB_ANON);
+      return window.SUITE_SB;
+    }
+    return null;
+  }
+
+  /* FASE 6.1c · Envío REAL a alumnos.
+     - Con token (llegaste desde el botón del Diario): materializa los ejercicios
+       y llama a suite_ficha_enviar_con_token(token, payload) -> activa la ficha y
+       notifica a los alumnos validados de los grupos. Token de un solo uso.
+     - Sin token (abriste el panel a mano): el generador NO puede enviar (es
+       público, no lleva secreto); se ofrece revisar + PDF. */
   function abrirEnvio(){
-    const payload=construirPayload([{grupo:'(definir grupo)'}], null);
-    const json=JSON.stringify(payload, null, 2);
-    const resumen=
-      '<b>'+payload.ejercicios.length+'</b> ejercicios · título: <b>'+esc(payload.titulo)+'</b><br>'+
-      'Esto es una <b>simulación</b>: el payload de abajo es lo que se insertaría en Supabase como “tarea asignada”. '+
-      'No se envía a ningún backend todavía. Edita los destinatarios antes de integrar el envío real.';
-    const inner=
-      '<h3>Preparar envío a alumnos (simulado)</h3>'+
-      '<div class="mc-sub">Modelo de datos listo para el futuro portal del alumno.</div>'+
-      '<div class="pp-summary">'+resumen+'</div>'+
-      '<textarea class="pp-json" id="ppJson" readonly>'+esc(json)+'</textarea>'+
+    const token = window.__SUITE_ENVIO_TOKEN || null;
+    if(!token){
+      modalShell(
+        '<h3>Enviar a alumnos</h3>'+
+        '<div class="mc-sub">Este envío hay que iniciarlo desde el <b>Diario del Profesor</b> '+
+        '(el botón &laquo;Ficha Teoría&raquo; crea el enlace de envío). Aquí puedes revisar la '+
+        'ficha y generar el PDF de alumno + solución.</div>'+
+        '<div class="mc-row">'+
+          '<button class="mc-btn" onclick="cerrarModal()">Cerrar</button>'+
+          '<button class="mc-btn primary" id="ppEnvPdf">Generar PDF</button>'+
+        '</div>'
+      );
+      const b=document.getElementById('ppEnvPdf');
+      if(b) b.onclick=()=>{ cerrarModal(); try{ elegirTipoYGenerarPDF(); }catch(e){} };
+      return;
+    }
+
+    const payload=construirPayload([{via:'diario_token'}], null);
+    const nFicha = window.__SUITE_ENVIO_FICHA;
+    const cab = nFicha ? ('Ficha '+esc(nFicha)) : esc(payload.titulo);
+    modalShell(
+      '<h3>Preparar envío a alumnos</h3>'+
+      '<div class="mc-sub">Se enviará a los grupos que fijaste en el Diario. Los alumnos la '+
+      'verán el <b>lunes de activación</b> (no antes).</div>'+
+      '<div class="pp-summary">'+cab+' · <b>'+payload.ejercicios.length+'</b> ejercicios</div>'+
+      '<div class="mc-err" id="ppEnvErr"></div>'+
       '<div class="mc-row">'+
-        '<button class="mc-btn" onclick="cerrarModal()">Cerrar</button>'+
-        '<button class="mc-btn" id="ppCopy">Copiar JSON</button>'+
-        '<button class="mc-btn" id="ppDownload">Descargar .json</button>'+
-        '<button class="mc-btn primary" id="ppSimEnviar">Simular envío</button>'+
-      '</div>';
-    modalShell(inner);
-    document.getElementById('ppCopy').onclick=()=>{ try{ navigator.clipboard.writeText(json); }catch(e){} };
-    document.getElementById('ppDownload').onclick=()=>{
-      const blob=new Blob([json],{type:'application/json'}); const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob); a.download='tarea_'+payload.id.slice(0,8)+'.json'; a.click();
-      setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-    };
-    document.getElementById('ppSimEnviar').onclick=()=>{
-      console.log('[TEORÍA at home] payload de tarea asignada (simulado):', payload);
-      // puerta abierta para el Diario del Profesor: si vivimos incrustados, avisamos al contenedor
-      try{ if(window.parent && window.parent!==window){ window.parent.postMessage({type:'teoria_ficha_asignada', payload}, '*'); } }catch(e){}
-      // callback opcional registrado por el contenedor
-      try{ if(typeof window.PanelProfesor._onEnviar==='function') window.PanelProfesor._onEnviar(payload); }catch(e){}
-      cerrarModal();
-      alert('Envío simulado. El payload se ha registrado en la consola'+((window.parent&&window.parent!==window)?' y enviado al contenedor (postMessage).':'.'));
+        '<button class="mc-btn" onclick="cerrarModal()">Cancelar</button>'+
+        '<button class="mc-btn primary" id="ppEnvOk">Enviar a alumnos</button>'+
+      '</div>'
+    );
+    const ok=document.getElementById('ppEnvOk');
+    const err=document.getElementById('ppEnvErr');
+    ok.onclick=async ()=>{
+      const sb=suiteSb();
+      if(!sb){ err.textContent='No se pudo cargar Supabase. Revisa la conexión y reintenta.'; return; }
+      ok.disabled=true; const prev=ok.textContent; ok.textContent='Enviando…'; err.textContent='';
+      try{
+        const { data, error } = await sb.rpc('suite_ficha_enviar_con_token', { p_token: token, p_ejercicios: payload });
+        if(error) throw error;
+        if(!data || data.ok!==true){
+          const cod=data && data.error;
+          const msg = cod==='token_caducado' ? 'El enlace de envío ha caducado (dura 45 min). Vuelve al Diario y pulsa otra vez el botón.'
+                    : cod==='token_invalido' ? 'El enlace de envío no es válido o ya se usó. Crea uno nuevo desde el Diario.'
+                    : ('No se pudo enviar'+(cod?(': '+cod):'.'));
+          throw new Error(msg);
+        }
+        window.__SUITE_ENVIO_TOKEN=null;   // consumido: un solo uso
+        cerrarModal();
+        alert('\u2713 Ficha '+data.numero+' enviada.\nAlumnos notificados: '+data.notificados+'.\nLa verán el lunes de activación.');
+      }catch(e){
+        ok.disabled=false; ok.textContent=prev;
+        err.textContent = (e && e.message) ? e.message : 'Error de red al enviar. Reintenta.';
+      }
     };
   }
 
@@ -11623,6 +11665,8 @@ function __grados_marker__(){}
     try{
       const qs=new URLSearchParams(location.search);
       const hash=location.hash.replace('#','');
+      // FASE 6.1c: token de envío creado por el Diario (un solo uso, vida 45 min)
+      const envioTok=qs.get('envio'); if(envioTok){ window.__SUITE_ENVIO_TOKEN=envioTok; window.__SUITE_ENVIO_FICHA=qs.get('ficha')||null; }
       if(qs.get('panel')==='profesor' || hash==='profesor'){ abrirPanelProfesor(); return; }
       // práctica dirigida: abre la vista y genera SOLO ese sub-apartado
       const pk=qs.get('practice');
