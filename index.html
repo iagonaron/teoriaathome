@@ -10977,11 +10977,17 @@ function __grados_marker__(){}
   /* dibuja la notación de un bloque y superpone etiquetas posicionadas bajo cada compás.
      modo: 'alumno' (en blanco + etiquetas de pregunta) | 'sol' (solución roja + pregunta + respuesta) */
   function dibujarCompasStave(host, sig){       // cifra de compás en pentagrama (clave a tamaño uniforme, bien proporcionado)
-    const VFx=Vex.Flow; const W=760,H=104;
+    const VFx=Vex.Flow; const W=760,H=120;
     const r=new VFx.Renderer(host, VFx.Renderer.Backends.SVG); r.resize(W,H);
     const ctx=r.getContext(); ctx.setFillStyle('#16203a'); ctx.setStrokeStyle('#16203a');
     const st=new VFx.Stave(10,28,W-22); st.addClef('treble'); if(sig) st.addTimeSignature(sig); st.setContext(ctx).draw();
-    const svg=host.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.setAttribute('viewBox','0 14 '+W+' 68'); svg.removeAttribute('width'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.width='100%'; svg.style.height='auto'; svg.style.display='block'; }
+    const svg=host.querySelector('svg');
+    if(svg){
+      svg.classList.add('penta');
+      try{ fitSvgToContent(host, W); }catch(e){ svg.setAttribute('viewBox','0 14 '+W+' 68'); }   // recorta al contenido real (sin hueco ni deslizamiento)
+      svg.removeAttribute('width'); svg.removeAttribute('height');
+      svg.style.maxWidth='100%'; svg.style.width='100%'; svg.style.height='auto'; svg.style.maxHeight='120px'; svg.style.display='block';
+    }
   }
   function figRoja(code){ try{ return (window.exFigSVG(code)||'').replace(/#16203a/gi,PP_RED); }catch(e){ return ''; } }
   function figClara(code){ try{ return (window.exFigSVG(code)||'').replace(/#16203a/gi,'#ff9ad8'); }catch(e){ return ''; } }
@@ -11135,18 +11141,23 @@ function __grados_marker__(){}
     const stave=new VFx.Stave(10,24,W-22); stave.addClef('treble');
     if(opts.fifths && KS_VF[String(opts.fifths)]) stave.addKeySignature(KS_VF[String(opts.fifths)]);
     stave.setEndBarType(VFx.Barline.type.DOUBLE); stave.setContext(ctx).draw();
+    const dadas = opts.dadas || 0;    // nº de cabezas dadas por el ejercicio: van en NEGRO, sin verde/rojo/azul
     // emparejar por ALTURA (orden): comparamos posición a posición
     const N=Math.max(sol.length, alumno.length);
     const tick=[]; const colores=[];
     for(let i=0;i<N;i++){
       const s=sol[i], u=alumno[i];
+      if(i<dadas){                                   // nota dada -> negra, no cuenta como acierto ni error
+        const nb=u||s; if(nb) tick.push(mkCorNote(VFx,nb, COR_NEG));
+        continue;
+      }
       if(u){ const ok = s && u.step===s.step && u.octave===s.octave && (u.alter||0)===(s.alter||0);
         tick.push(mkCorNote(VFx,u, ok?COR_OK:COR_BAD)); }
       else if(s){ tick.push(mkCorNote(VFx,s, COR_SOL)); }   // faltó: correcta en azul
     }
-    // notas correctas que el alumno puso mal -> añadir la correcta en azul al lado
+    // notas correctas que el alumno puso mal -> añadir la correcta en azul al lado (nunca para las dadas)
     const extra=[];
-    for(let i=0;i<N;i++){ const s=sol[i], u=alumno[i]; if(u && s){ const ok=u.step===s.step&&u.octave===s.octave&&(u.alter||0)===(s.alter||0); if(!ok) extra.push(mkCorNote(VFx,s,COR_SOL)); } }
+    for(let i=0;i<N;i++){ if(i<dadas) continue; const s=sol[i], u=alumno[i]; if(u && s){ const ok=u.step===s.step&&u.octave===s.octave&&(u.alter||0)===(s.alter||0); if(!ok) extra.push(mkCorNote(VFx,s,COR_SOL)); } }
     const all=tick.concat(extra);
     try{ const voice=new VFx.Voice({num_beats:all.length*4,beat_value:4}).setStrict(false); voice.addTickables(all);
       new VFx.Formatter().joinVoices([voice]).format([voice], W-100); voice.draw(ctx, stave);
@@ -11161,14 +11172,14 @@ function __grados_marker__(){}
     const spec=ej._spec; if(!spec||!spec.notes) return false;
     const sol=spec.notes.filter(nt=>!nt.dim).map(nt=>corKeyToNota(nt.key)).filter(Boolean);
     const alumno=((resp&&resp.seq)||[]).map(n=>({step:n.step,octave:n.octave,alter:n.alter||0}));
-    return dibujarPentaCorr(host, sol, alumno, { fifths: 0 });   // armadura ya va escrita por el alumno como alteraciones
+    return dibujarPentaCorr(host, sol, alumno, { fifths: 0, dadas: 1 });   // la cabeza (tónica) viene dada -> negra
   }
   // GRADOS: igual que escala + marca. Coloreamos las notas y añadimos la flecha en la correcta.
   function corregirGrado(host, ej, resp){
     const spec=ej._spec; if(!spec||!spec.notes) return false;
     const sol=spec.notes.filter(nt=>!nt.dim).map(nt=>corKeyToNota(nt.key)).filter(Boolean);
     const alumno=((resp&&resp.seq)||[]).map(n=>({step:n.step,octave:n.octave,alter:n.alter||0}));
-    return dibujarPentaCorr(host, sol, alumno, { fifths: 0 });
+    return dibujarPentaCorr(host, sol, alumno, { fifths: 0, dadas: 1 });   // la cabeza (tónica) viene dada -> negra
   }
 
   // Desglose textual (claves, armaduras, tonalidades, vecinos, semitonos-id, acordes-id):
@@ -11649,8 +11660,6 @@ function __grados_marker__(){}
       doc.setDrawColor(232,67,147); doc.setLineWidth(0.6); doc.line(M,19,W-M,19);
       doc.setTextColor(40,40,60); doc.setFontSize(9.5);
       doc.text('Nombre: ______________________________', M, 25);
-      doc.setTextColor(160,160,175); doc.setFontSize(8.5);
-      doc.text('Carilla '+page+' de '+nPaginas, W-M, 25, {align:'right'});
     }
 
     // pre-render de imágenes con el motor real de cada apartado
