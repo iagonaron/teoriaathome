@@ -11560,7 +11560,11 @@ function __grados_marker__(){}
     const card=document.createElement('div');
     card.style.cssText='background:#fff;border-radius:18px;max-width:440px;width:100%;padding:26px 28px;box-shadow:0 24px 70px #00000050';
     let html='<div style="font-size:18px;font-weight:800;color:#16203a;margin-bottom:4px">¿Qué tipo de ficha?</div>'+
-      '<div style="font-size:13px;color:#8a93a8;margin-bottom:16px">La semanal lleva la fecha en el título. Los exámenes llevan un título fijo.</div>'+
+      '<div style="font-size:13px;color:#8a93a8;margin-bottom:16px">Pon el Nº de ficha para el título (p. ej. «Ficha 2»). Si lo dejas vacío, la semanal usa la fecha; los exámenes llevan título fijo.</div>'+
+      '<div style="margin-bottom:16px">'+
+        '<label style="display:block;font-size:13px;font-weight:700;color:#16203a;margin-bottom:6px">Nº de ficha</label>'+
+        '<input id="tfNum" type="number" min="1" value="'+(window.__FICHA_NUMERO!=null?esc(String(window.__FICHA_NUMERO)):'')+'" placeholder="vacío = fecha de la semana" style="width:100%;box-sizing:border-box;border:1.5px solid #e6ebf5;border-radius:11px;padding:10px 13px;font-size:15px;color:#16203a">'+
+      '</div>'+
       '<div style="display:flex;flex-direction:column;gap:8px">';
     TIPOS_FICHA.forEach(t=>{
       const checked = (PP.tipoFicha===t.id)?'checked':'';
@@ -11582,6 +11586,8 @@ function __grados_marker__(){}
     card.querySelector('#tfOk').onclick=()=>{
       const sel=card.querySelector('input[name=tipoFicha]:checked');
       PP.tipoFicha = sel? sel.value : 'semanal';
+      const num=card.querySelector('#tfNum'); const nv=num?String(num.value).trim():'';
+      window.__FICHA_NUMERO = (nv==='')?null:nv;   // fija el título "Ficha N" (o fecha si vacío)
       cerrar(); generarPDF();
     };
   }
