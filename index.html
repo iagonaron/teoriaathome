@@ -11560,34 +11560,48 @@ function __grados_marker__(){}
     const card=document.createElement('div');
     card.style.cssText='background:#fff;border-radius:18px;max-width:440px;width:100%;padding:26px 28px;box-shadow:0 24px 70px #00000050';
     let html='<div style="font-size:18px;font-weight:800;color:#16203a;margin-bottom:4px">¿Qué tipo de ficha?</div>'+
-      '<div style="font-size:13px;color:#8a93a8;margin-bottom:16px">Pon el Nº de ficha para el título (p. ej. «Ficha 2»). Si lo dejas vacío, la semanal usa la fecha; los exámenes llevan título fijo.</div>'+
-      '<div style="margin-bottom:16px">'+
-        '<label style="display:block;font-size:13px;font-weight:700;color:#16203a;margin-bottom:6px">Nº de ficha</label>'+
-        '<input id="tfNum" type="number" min="1" value="'+(window.__FICHA_NUMERO!=null?esc(String(window.__FICHA_NUMERO)):'')+'" placeholder="vacío = fecha de la semana" style="width:100%;box-sizing:border-box;border:1.5px solid #e6ebf5;border-radius:11px;padding:10px 13px;font-size:15px;color:#16203a">'+
-      '</div>'+
+      '<div style="font-size:13px;color:#8a93a8;margin-bottom:16px">La ficha semanal necesita un Nº para el título (p. ej. «Ficha 2»). Los exámenes llevan título fijo.</div>'+
       '<div style="display:flex;flex-direction:column;gap:8px">';
     TIPOS_FICHA.forEach(t=>{
       const checked = (PP.tipoFicha===t.id)?'checked':'';
+      const etq = (t.id==='semanal') ? 'Ficha semanal' : t.label;
+      const extra = (t.id==='semanal')
+        ? '<input id="tfNum" type="number" min="1" placeholder="Nº" value="'+(window.__FICHA_NUMERO!=null?esc(String(window.__FICHA_NUMERO)):'')+'" onclick="event.stopPropagation()" style="margin-left:auto;width:92px;box-sizing:border-box;border:1.5px solid #d5deee;border-radius:8px;padding:7px 10px;font-size:14px;color:#16203a">'
+        : '';
       html+='<label style="display:flex;align-items:center;gap:10px;padding:11px 13px;border:1.5px solid #e6ebf5;border-radius:11px;cursor:pointer;font-size:14px;font-weight:600;color:#16203a">'+
-            '<input type="radio" name="tipoFicha" value="'+t.id+'" '+checked+' style="accent-color:#1f6df6;width:17px;height:17px">'+esc(t.label)+'</label>';
+            '<input type="radio" name="tipoFicha" value="'+t.id+'" '+checked+' style="accent-color:#1f6df6;width:17px;height:17px">'+esc(etq)+extra+'</label>';
     });
     html+='</div>'+
-      '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">'+
+      '<div id="tfWarn" style="color:#e03131;font-size:13px;font-weight:700;text-align:right;margin-top:12px"></div>'+
+      '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px">'+
       '<button id="tfCancel" style="border:0;background:#eef1f7;color:#16203a;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer">Cancelar</button>'+
       '<button id="tfOk" style="border:0;background:#1f6df6;color:#fff;border-radius:9px;padding:10px 18px;font-weight:700;cursor:pointer">Generar PDF</button>'+
       '</div>';
     card.innerHTML=html; ov.appendChild(card); document.body.appendChild(ov);
-    // resaltado de la opción marcada
-    function pinta(){ card.querySelectorAll('label').forEach(l=>{ const r=l.querySelector('input'); l.style.borderColor=r.checked?'#1f6df6':'#e6ebf5'; l.style.background=r.checked?'#f3f7ff':'#fff'; }); }
+    // resaltado de la opción marcada + habilita el Nº solo en semanal
+    function pinta(){
+      const selVal=(card.querySelector('input[name=tipoFicha]:checked')||{}).value;
+      card.querySelectorAll('label').forEach(l=>{ const r=l.querySelector('input[name=tipoFicha]'); if(!r) return; l.style.borderColor=r.checked?'#1f6df6':'#e6ebf5'; l.style.background=r.checked?'#f3f7ff':'#fff'; });
+      const num=card.querySelector('#tfNum');
+      if(num){ const on=(selVal==='semanal'); num.disabled=!on; num.style.opacity=on?'1':'.4'; }
+      const warn=card.querySelector('#tfWarn'); if(warn) warn.textContent='';
+    }
     card.querySelectorAll('input[name=tipoFicha]').forEach(r=>r.onchange=pinta); pinta();
     const cerrar=()=>{ try{ document.body.removeChild(ov); }catch(e){} };
     card.querySelector('#tfCancel').onclick=cerrar;
     ov.addEventListener('click',(e)=>{ if(e.target===ov) cerrar(); });
     card.querySelector('#tfOk').onclick=()=>{
       const sel=card.querySelector('input[name=tipoFicha]:checked');
-      PP.tipoFicha = sel? sel.value : 'semanal';
+      const tipo = sel? sel.value : 'semanal';
       const num=card.querySelector('#tfNum'); const nv=num?String(num.value).trim():'';
-      window.__FICHA_NUMERO = (nv==='')?null:nv;   // fija el título "Ficha N" (o fecha si vacío)
+      const warn=card.querySelector('#tfWarn');
+      if(tipo==='semanal' && nv===''){
+        if(warn) warn.textContent='Tienes que poner un número de ficha.';
+        if(num){ num.style.borderColor='#e03131'; num.focus(); }
+        return;   // no genera sin número
+      }
+      PP.tipoFicha = tipo;
+      window.__FICHA_NUMERO = (tipo==='semanal') ? nv : null;   // el Nº solo aplica a la semanal
       cerrar(); generarPDF();
     };
   }
@@ -11682,25 +11696,55 @@ function __grados_marker__(){}
           // tabla 3×2 de tonos vecinos (dada en negro; respuestas en rojo solo en la solución)
           dibujarTablaVecinos(doc, ej._vecinos, M+6, boxTop, boxW, boxH, esSolucion);
         } else if(esTerminos){
-          // términos: A/B/C en texto (sin pentagrama). Enunciado en negro;
-          // solución en rojo mostrando directamente la respuesta correcta.
+          // términos en PAPEL: A unir · B rodear · C numerar. Solución en rojo.
           const T=ej._terminos||{A:[],B:[],C:{}};
-          const lx=M+8, maxW=boxW-6, RED=[192,57,43];
-          let ty=boxTop+4.5;
-          const line=(txt, bold, col)=>{
-            doc.setFont('helvetica', bold?'bold':'normal'); doc.setFontSize(9);
-            if(col) doc.setTextColor(col[0],col[1],col[2]); else doc.setTextColor(45,50,80);
-            const ls=doc.splitTextToSize(pdfSafe(txt), maxW);
-            doc.text(ls, lx, ty); ty+=ls.length*4.4+1.2;
-          };
-          if(esSolucion){ line('A  '+(T.A||[]).map(f=>f.term+' ('+f.label+')').join('    '), false, RED); }
-          else { line('A · Clasifica por categoria:', true); line((T.A||[]).map(f=>f.term).join('    ·    ')); }
+          const lx=M+8, INK=[45,50,80], RED=[192,57,43], GREY=[120,124,140];
+          let ty=boxTop+3.5;
+          const bold=(t,x,y)=>{ doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(INK[0],INK[1],INK[2]); doc.text(pdfSafe(t), x, y); };
+          const norm=(t,x,y,c)=>{ doc.setFont('helvetica','normal'); doc.setFontSize(9); c=c||INK; doc.setTextColor(c[0],c[1],c[2]); doc.text(pdfSafe(t), x, y); };
+          const ital=(t,x,y)=>{ doc.setFont('helvetica','italic'); doc.setFontSize(9); doc.setTextColor(INK[0],INK[1],INK[2]); doc.text(pdfSafe(t), x, y); };
+          const dot=(x,y)=>{ try{ doc.setFillColor(120,120,120); doc.circle(x,y,0.6,'F'); }catch(e){} };
+          const oval=(x,y,rx,ry)=>{ try{ doc.setDrawColor(RED[0],RED[1],RED[2]); doc.setLineWidth(0.6); doc.ellipse(x,y,rx,ry,'S'); }catch(e){} };
+          const boxN=(x,y)=>{ try{ doc.setDrawColor(GREY[0],GREY[1],GREY[2]); doc.setLineWidth(0.35); doc.roundedRect(x,y,5,4.8,1,1,'S'); }catch(e){} };
+          const wOf=(t)=>doc.getTextWidth(pdfSafe(t));
+
+          // ===== A · unir término -> categoría (dos columnas) =====
+          bold('A - Une cada termino con su categoria:', lx, ty); ty+=5.5;
+          const A=T.A||[];
+          const colL=lx+2, dotL=lx+boxW*0.40, dotR=lx+boxW*0.52, colR=lx+boxW*0.55;
+          const rowH=4.7, yA0=ty;
+          const catsShuf=A.map(f=>f.label).slice().sort(()=>Math.random()-0.5);
+          A.forEach((f,i)=>{ const y=yA0+i*rowH; norm(f.term, colL, y); dot(dotL, y-1); });
+          catsShuf.forEach((c,i)=>{ const y=yA0+i*rowH; dot(dotR, y-1); norm(c, colR, y); });
+          if(esSolucion){ doc.setDrawColor(RED[0],RED[1],RED[2]); doc.setLineWidth(0.4);
+            A.forEach((f,i)=>{ const j=catsShuf.indexOf(f.label);
+              try{ doc.line(dotL, yA0+i*rowH-1, dotR, yA0+j*rowH-1); }catch(e){} }); }
+          ty=yA0+A.length*rowH+2.5;
+
+          // ===== B · rodear la definición correcta =====
+          bold('B - Rodea la definicion correcta:', lx, ty); ty+=5.5;
           (T.B||[]).forEach(q=>{
-            if(esSolucion){ line('B  '+q.t+'  =  '+q.ok, false, RED); }
-            else { line('B · '+q.t+'  =  '+(q.ops||[]).join('    /    ')); }
+            ital(q.t, lx+2, ty);
+            let x=lx+2+wOf(q.t)+5;
+            (q.ops||[]).forEach(op=>{
+              const w=wOf(op); norm(op, x, ty);
+              if(esSolucion && op===q.ok) oval(x+w/2, ty-1, w/2+2.5, 3);
+              x+=w+8;
+            });
+            ty+=5.6;
           });
-          if(esSolucion){ line('C  Orden: '+((T.C&&T.C.correcto)||[]).join('  ->  '), false, RED); }
-          else { line('C · Ordena (lento a rapido): '+((T.C&&T.C.barajado)||[]).join('    ·    ')); }
+          ty+=0.5;
+
+          // ===== C · numerar de lento a rápido =====
+          bold('C - Numera del mas lento (1) al mas rapido:', lx, ty); ty+=5.5;
+          const barj=(T.C&&T.C.barajado)||[], corr=(T.C&&T.C.correcto)||[];
+          let cx=lx+2;
+          barj.forEach(tp=>{
+            boxN(cx, ty-3.6);
+            if(esSolucion){ doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(RED[0],RED[1],RED[2]); doc.text(String(corr.indexOf(tp)+1), cx+1.7, ty); }
+            norm(tp, cx+7, ty);
+            cx += 7 + wOf(tp) + 9;
+          });
         } else if(esCompas){
           // pentagrama de la cifra a la IZQUIERDA + preguntas (y respuesta) a la derecha
           if(img && img.png){
