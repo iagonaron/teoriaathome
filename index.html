@@ -8059,11 +8059,9 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     const got = (estado.seq||[]).slice();
     const precol = spec.precolocada===true;
 
-    // Si el alumno no ha introducido NADA, no puntúa (las cabezas dadas no cuentan por sí solas).
-    if(!estado._dirty){ return { ok:false, pct:0, total: precol?2:(sol.length+(spec.conArmadura?1:0)), aciertos:0 }; }
-
     if(precol){
-      // PRECOLOCADA (menores/mayores): todo-o-nada. 50% armadura + 50% grafía completa de las cabezas.
+      // PRECOLOCADA (menores/mayores): 50% armadura + 50% grafía completa. No tocar nada es
+      // válido si la escala no lleva alteraciones (p.ej. Do M: arm 0 y cabezas naturales = 100%).
       const armOk = ((estado.arm||0)===(spec.fifths||0));
       let notasOk = (got.length===sol.length);
       if(notasOk){ for(let k=0;k<sol.length;k++){ if(!(got[k] && got[k].step===sol[k].step && got[k].octave===sol[k].octave && (got[k].alter||0)===(sol[k].alter||0))){ notasOk=false; break; } } }
@@ -8072,6 +8070,8 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     }
 
     // VARIABLE (pentatónica/hexátona/cromática): el alumno escribe cada cabeza -> puntúa lo que escribe.
+    // Aquí sí exigimos que haya escrito algo (las cabezas no vienen dadas).
+    if(!estado._dirty){ return { ok:false, pct:0, total:(sol.length+(spec.conArmadura?1:0)), aciertos:0 }; }
     const total = sol.length + (spec.conArmadura?1:0);
     let aciertos = 0;
     if(spec.porAltura){
@@ -11151,13 +11151,11 @@ function __grados_marker__(){}
         continue;
       }
       if(u){ const ok = s && u.step===s.step && u.octave===s.octave && (u.alter||0)===(s.alter||0);
-        tick.push(mkCorNote(VFx,u, ok?COR_OK:COR_BAD)); }
-      else if(s){ tick.push(mkCorNote(VFx,s, COR_SOL)); }   // faltó: correcta en azul
+        tick.push(mkCorNote(VFx,u, ok?COR_OK:COR_BAD));
+        if(!ok && s) tick.push(mkCorNote(VFx,s, COR_SOL)); }   // correcta AZUL pegada a la roja
+      else if(s){ tick.push(mkCorNote(VFx,s, COR_SOL)); }       // faltó: correcta en azul
     }
-    // notas correctas que el alumno puso mal -> añadir la correcta en azul al lado (nunca para las dadas)
-    const extra=[];
-    for(let i=0;i<N;i++){ if(i<dadas) continue; const s=sol[i], u=alumno[i]; if(u && s){ const ok=u.step===s.step&&u.octave===s.octave&&(u.alter||0)===(s.alter||0); if(!ok) extra.push(mkCorNote(VFx,s,COR_SOL)); } }
-    const all=tick.concat(extra);
+    const all=tick;
     try{ const voice=new VFx.Voice({num_beats:all.length*4,beat_value:4}).setStrict(false); voice.addTickables(all);
       new VFx.Formatter().joinVoices([voice]).format([voice], W-100); voice.draw(ctx, stave);
     }catch(e){}
@@ -11186,22 +11184,39 @@ function __grados_marker__(){}
       catch(e){ try{ stave.addKeySignature(KS_VF[String(fifths)]); }catch(_){} }
     }
     stave.setEndBarType(VFx.Barline.type.DOUBLE); stave.setContext(ctx).draw();
-    const tick=[], extra=[];
+    const markIdx = (opts.markIdx!=null) ? opts.markIdx : -1;
+    const tick=[]; let markNote=null;
     for(let i=0;i<sol.length;i++){
       const s=sol[i]; if(!s) continue; const u=alumno[i];
       const armA=armAlterFor(s.step, fifths);
       const esAccidental=((s.alter||0)!==armA);
-      if(!esAccidental){ tick.push(mkCorNoteArm(VFx,s,COR_NEG,armA)); continue; }   // cubierta por armadura -> negra
-      const acerto = u && u.step===s.step && u.octave===s.octave && (u.alter||0)===(s.alter||0);
-      if(acerto){ tick.push(mkCorNoteArm(VFx,s,COR_OK,armA)); }                     // accidental correcto -> verde
-      else if(u){ tick.push(mkCorNoteArm(VFx,u,COR_BAD,armAlterFor(u.step,fifths))); extra.push(mkCorNoteArm(VFx,s,COR_SOL,armA)); }  // alumno rojo + correcta azul
-      else { tick.push(mkCorNoteArm(VFx,s,COR_SOL,armA)); }                         // faltó -> correcta azul
+      let ref=null;
+      if(!esAccidental){ ref=mkCorNoteArm(VFx,s,COR_NEG,armA); tick.push(ref); }   // cubierta por armadura -> negra
+      else {
+        const acerto = u && u.step===s.step && u.octave===s.octave && (u.alter||0)===(s.alter||0);
+        if(acerto){ ref=mkCorNoteArm(VFx,s,COR_NEG,armA); tick.push(ref); }                    // acertado -> NEGRO (cabeza dada)
+        else if(u){ tick.push(mkCorNoteArm(VFx,u,COR_BAD,armAlterFor(u.step,fifths))); ref=mkCorNoteArm(VFx,s,COR_SOL,armA); tick.push(ref); }  // alumno ROJO + correcta AZUL pegada
+        else { ref=mkCorNoteArm(VFx,s,COR_SOL,armA); tick.push(ref); }                          // faltó -> correcta azul
+      }
+      if(i===markIdx) markNote=ref;   // nota del grado a señalar
     }
-    const all=tick.concat(extra);
+    const all=tick;
     try{ const voice=new VFx.Voice({num_beats:all.length*4,beat_value:4}).setStrict(false); voice.addTickables(all);
       new VFx.Formatter().joinVoices([voice]).format([voice], W-100); voice.draw(ctx, stave);
     }catch(e){}
     const svg=host.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.removeAttribute('width'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.width='100%'; svg.style.height='auto'; }
+    // flecha + nombre sobre la nota señalada (GRADOS)
+    if(markNote && svg){
+      try{
+        const NS='http://www.w3.org/2000/svg';
+        const x=markNote.getAbsoluteX()+6.5;
+        let yBase=112; try{ yBase=stave.getYForLine(4)+24; }catch(e){}
+        const yTip=yBase-12, yTail=yBase+10;
+        const d='M '+x+' '+yTip+' L '+(x-6)+' '+(yTip+9)+' L '+(x-2.4)+' '+(yTip+9)+' L '+(x-2.4)+' '+yTail+' L '+(x+2.4)+' '+yTail+' L '+(x+2.4)+' '+(yTip+9)+' L '+(x+6)+' '+(yTip+9)+' Z';
+        const p=document.createElementNS(NS,'path'); p.setAttribute('d',d); p.setAttribute('fill','#e84393'); svg.appendChild(p);
+        if(opts.markLabel){ const t=document.createElementNS(NS,'text'); t.setAttribute('x',x+10); t.setAttribute('y',yTail+2); t.setAttribute('fill','#e84393'); t.setAttribute('font-size','16'); t.setAttribute('font-weight','800'); t.setAttribute('font-family','system-ui,-apple-system,sans-serif'); t.textContent=opts.markLabel; svg.appendChild(t); }
+      }catch(e){}
+    }
     // feedback de armadura
     const fmt=f=> f===0?'sin alteraciones':(Math.abs(f)+(f>0?' ♯':' ♭'));
     const arm=document.createElement('div'); arm.style.cssText='margin-top:8px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap';
@@ -11224,12 +11239,20 @@ function __grados_marker__(){}
     // esc_otras (pentatónica/cromática/hexátona): sin armadura -> nota a nota, cabeza (tónica) en negro
     return dibujarPentaCorr(host, sol, alumno, { fifths: 0, dadas: 1 });
   }
-  // GRADOS: igual que escala + marca. Coloreamos las notas y añadimos la flecha en la correcta.
+  // GRADOS: la escala se construye CON armadura -> mismo modelo que mayores/menores + flecha y nombre en el grado.
   function corregirGrado(host, ej, resp){
     const spec=ej._spec; if(!spec||!spec.notes) return false;
     const sol=spec.notes.filter(nt=>!nt.dim).map(nt=>corKeyToNota(nt.key)).filter(Boolean);
     const alumno=((resp&&resp.seq)||[]).map(n=>({step:n.step,octave:n.octave,alter:n.alter||0}));
-    return dibujarPentaCorr(host, sol, alumno, { fifths: 0, dadas: 1 });   // la cabeza (tónica) viene dada -> negra
+    const mkIdx=(spec.marks && spec.marks[0] && spec.marks[0].index!=null) ? spec.marks[0].index : -1;
+    const ES={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
+    const nom=n=> n ? (ES[n.step]+(n.alter===1?'♯':n.alter===-1?'♭':n.alter===2?'𝄪':n.alter===-2?'𝄫':'')) : '';
+    const mkLabel=(mkIdx>=0 && sol[mkIdx]) ? nom(sol[mkIdx]) : '';
+    return dibujarEscalaCorrArm(host, sol, alumno, {
+      fifths: spec.fifths||0,
+      alumnoArm: (resp&&resp.arm!=null)?resp.arm:0,
+      markIdx: mkIdx, markLabel: mkLabel
+    });
   }
 
   // Desglose textual (claves, armaduras, tonalidades, vecinos, semitonos-id, acordes-id):
