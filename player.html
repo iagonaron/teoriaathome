@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ficha de teoría · TEORÍA at home</title>
+<style>
+  :root{
+    --bg:#0e1116; --card:#161b22; --ink:#eef2f7; --muted:#9aa7b8; --muted2:#6b7787;
+    --teoria:#2dd4bf; --teoria-d:#0f766e; --ok:#22c55e; --err:#ef4444; --sol:#38bdf8;
+    --line:rgba(255,255,255,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-text-size-adjust:100%;}
+  .wrap{max-width:720px;margin:0 auto;padding:18px 16px 60px;}
+  header.h{display:flex;align-items:center;gap:10px;margin:6px 0 16px;}
+  .badge{font-size:12px;font-weight:700;color:var(--teoria);letter-spacing:.5px;text-transform:uppercase;}
+  h1{font-size:22px;margin:2px 0 0;font-weight:800;}
+  .sub{color:var(--muted);font-size:14px;margin-top:4px;line-height:1.5;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0;}
+  .ej-head{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;}
+  .ej-n{font-weight:800;color:var(--teoria);font-size:15px;}
+  .ej-label{color:var(--muted);font-size:13px;}
+  .ej-enun{font-size:15px;line-height:1.5;margin:2px 0 10px;}
+  .ej-svg{background:#fff;border-radius:10px;padding:6px;margin:6px 0 12px;overflow:auto;}
+  .ej-svg svg{max-width:100%;height:auto;display:block;}
+  input.resp{width:100%;font-size:16px;padding:11px 12px;border-radius:10px;
+    border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);}
+  input.resp:focus{outline:none;border-color:var(--teoria);}
+  .fb{margin-top:10px;font-size:14px;font-weight:600;display:none;}
+  .fb.show{display:block;}
+  .fb.ok{color:var(--ok);} .fb.err{color:var(--err);}
+  .fb-sol{color:var(--sol);font-weight:600;margin-top:4px;}
+  .fb-sol-svg{background:#fff;border-radius:10px;padding:6px;margin-top:6px;}
+  .fb-sol-svg svg{max-width:100%;height:auto;display:block;}
+  .btn{display:inline-block;width:100%;text-align:center;font-size:16px;font-weight:700;
+    padding:14px;border-radius:12px;border:0;cursor:pointer;
+    background:var(--teoria);color:#062b26;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.ghost{background:transparent;color:var(--teoria);border:1px solid var(--teoria-d);}
+  .plazo{font-size:13px;color:var(--muted);margin-top:6px;}
+  .plazo.gracia{color:#f59e0b;font-weight:600;}
+  .msg{padding:14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    color:var(--muted);font-size:14px;line-height:1.5;}
+  .err-box{border-color:rgba(239,68,68,.4);color:#fca5a5;}
+  .ficha-item{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:14px;border:1px solid var(--line);border-radius:12px;margin:8px 0;cursor:pointer;}
+  .ficha-item:active{border-color:var(--teoria);}
+  .score-num{font-size:52px;font-weight:900;color:var(--teoria);text-align:center;line-height:1.1;}
+  .score-sub{text-align:center;color:var(--muted);font-size:14px;margin-top:2px;}
+  .weak{font-size:14px;line-height:1.6;margin-top:10px;}
+  .test-row{display:flex;gap:8px;margin-top:10px;}
+  .test-row input{flex:1;font-size:14px;padding:10px;border-radius:10px;border:1px solid var(--line);
+    background:rgba(255,255,255,.05);color:var(--ink);}
+  a.link{color:var(--teoria);}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header class="h">
+    <div>
+      <div class="badge">TEORÍA at home</div>
+      <h1 id="titulo">Ficha de teoría</h1>
+      <div class="sub" id="sub">Cargando…</div>
+    </div>
+  </header>
+  <div id="main"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  'use strict';
+
+  // ---- Config (mismo proyecto/anon que el generador) ----
+  var SB_URL  = 'https://woiptkyrxkbpnvioypit.supabase.co';
+  var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvaXB0a3lyeGticG52aW95cGl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NzI2ODYsImV4cCI6MjA5MjA0ODY4Nn0.B2nKgj5rD0rkdLeMIrd9KgD8lUPWsBT4Y7aCtmnvbjA';
+  var sb = window.supabase.createClient(SB_URL, SB_ANON);
+
+  var $main = document.getElementById('main');
+  var $sub  = document.getElementById('sub');
+  var $tit  = document.getElementById('titulo');
+
+  var qs   = new URLSearchParams(location.search);
+  // El portal (mismo origen: iagonaron.github.io) deja la sesión en localStorage.
+  function sesCuenta(){
+    try{ var s=JSON.parse(localStorage.getItem('lmeav_session')||'null');
+      return (s && s.id && s.estado==='validado') ? s.id : null; }catch(e){ return null; }
+  }
+  var CUENTA = sesCuenta() || qs.get('cuenta');   // sesión primero; ?cuenta solo para pruebas
+  var FICHA  = qs.get('ficha');
+
+  // Estado de la ficha abierta
+  var abierta = null;   // { ficha_id, numero, ejercicios:[], fin_normal, fin_gracia, ... }
+
+  // ---------- utilidades ----------
+  function esc(s){ return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function fmt(iso){ if(!iso) return ''; var d=new Date(iso); if(isNaN(d)) return '';
+    return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
+  // Normaliza para comparar respuestas (minúsculas, sin acentos, sin separadores).
+  function norm(s){ return String(s==null?'':s)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .replace(/[–—\-,;/|]+/g,' ')
+    .replace(/[^a-z0-9ñ\s]/g,'')
+    .replace(/\s+/g,' ').trim(); }
+  function acierta(resp, dada){
+    var r=norm(resp), d=norm(dada);
+    if(!r) return null;          // sin solución → no autocorregible
+    if(!d) return false;
+    return r===d;
+  }
+  function svgBox(svgStr, cls){
+    if(!svgStr) return '';
+    return '<div class="'+(cls||'ej-svg')+'">'+svgStr+'</div>';
+  }
+
+  // ---------- render de estados ----------
+  function pintarMsg(html, err){
+    $main.innerHTML = '<div class="msg'+(err?' err-box':'')+'">'+html+'</div>';
+  }
+
+  function pedirCuentaPrueba(){
+    $sub.textContent = 'Modo de prueba';
+    $main.innerHTML =
+      '<div class="msg">No me han dicho quién eres. Normalmente entrarás aquí desde la Suite (ya identificado). '+
+      'Para probar, pega tu <b>cuenta_id</b> y, si quieres, el <b>ficha_id</b>:</div>'+
+      '<div class="test-row"><input id="t_cuenta" placeholder="cuenta_id (uuid)"></div>'+
+      '<div class="test-row"><input id="t_ficha" placeholder="ficha_id (uuid, opcional)"></div>'+
+      '<div style="margin-top:12px"><button class="btn" id="t_go">Entrar</button></div>';
+    document.getElementById('t_go').onclick=function(){
+      CUENTA=(document.getElementById('t_cuenta').value||'').trim();
+      FICHA =(document.getElementById('t_ficha').value||'').trim()||null;
+      if(!CUENTA){ return; }
+      arrancar();
+    };
+  }
+
+  async function arrancar(){
+    $sub.textContent='Cargando…';
+    if(FICHA){ return abrirFicha(FICHA); }
+    // Sin ficha concreta: listar las activas del alumno
+    var r;
+    try{ var res=await sb.rpc('suite_alumno_notif_listar',{p_cuenta_id:CUENTA,p_limit:30}); r=res.data; if(res.error) throw res.error; }
+    catch(e){ return pintarMsg('No pude cargar tus notificaciones. '+esc(e.message||e), true); }
+    if(!r || r.ok!==true){
+      var er=(r&&r.error)||'desconocido';
+      if(er==='no_validado') return pintarMsg('Tu cuenta todavía no está validada por el profesor. Cuando te valide, aquí verás tus fichas.');
+      return pintarMsg('No pude cargar tus fichas ('+esc(er)+').', true);
+    }
+    var fichas=(r.notificaciones||[]).filter(function(n){
+      return n && n.payload_json && n.payload_json.ficha_id; });
+    if(!fichas.length){
+      $sub.textContent='';
+      return pintarMsg('No tienes ninguna ficha de teoría activa ahora mismo. '+
+        'Cuando el profesor te envíe una, aparecerá aquí el lunes de activación.');
+    }
+    $sub.textContent = fichas.length===1 ? 'Tienes 1 ficha activa' : ('Tienes '+fichas.length+' fichas activas');
+    $main.innerHTML = fichas.map(function(n){
+      var p=n.payload_json;
+      return '<div class="ficha-item" data-fid="'+esc(p.ficha_id)+'">'+
+        '<div><div style="font-weight:700">'+esc(p.titulo||('Ficha '+p.numero))+'</div>'+
+        '<div class="plazo">entrega hasta el '+fmt(p.fin_normal)+' · gracia hasta el '+fmt(p.fin_gracia)+'</div></div>'+
+        '<div style="color:var(--teoria);font-weight:800">Hacer →</div></div>';
+    }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('.ficha-item'),function(el){
+      el.onclick=function(){ abrirFicha(el.getAttribute('data-fid')); };
+    });
+  }
+
+  async function abrirFicha(fichaId){
+    $sub.textContent='Abriendo la ficha…';
+    $main.innerHTML='<div class="msg">Cargando ejercicios…</div>';
+    var r;
+    try{ var res=await sb.rpc('suite_ficha_abrir',{p_cuenta_id:CUENTA,p_ficha_id:fichaId}); r=res.data; if(res.error) throw res.error; }
+    catch(e){ return pintarMsg('No pude abrir la ficha. '+esc(e.message||e), true); }
+    if(!r || r.ok!==true){
+      var er=(r&&r.error)||'desconocido';
+      var txt = er==='fuera_de_plazo' ? 'Esta ficha ya está fuera de plazo (venció la semana de gracia).'
+              : er==='aun_no_activa'  ? 'Esta ficha todavía no está activa. Estará disponible el lunes de activación.'
+              : er==='ficha_no_asignada_a_tu_grupo' ? 'Esta ficha no es de tu grupo.'
+              : er==='cuenta_no_validada' ? 'Tu cuenta aún no está validada por el profesor.'
+              : 'No pude abrir la ficha ('+esc(er)+').';
+      return pintarMsg(txt, er!=='aun_no_activa');
+    }
+    var payload = r.ejercicios_json || {};
+    var ejs = Array.isArray(payload.ejercicios) ? payload.ejercicios : [];
+    abierta = { ficha_id:r.ficha_id, numero:r.numero, titulo:r.titulo,
+                fin_normal:r.fin_normal, fin_gracia:r.fin_gracia,
+                payload:payload, ejercicios:ejs };
+    pintarFicha();
+  }
+
+  function pintarFicha(){
+    var a=abierta;
+    $tit.textContent = a.titulo || ('Ficha '+a.numero);
+    if(!a.ejercicios.length){
+      $sub.textContent='';
+      return pintarMsg('Esta ficha no tiene ejercicios. Probablemente se creó como borrador '+
+        'pero no se llegó a enviar desde el generador (que es quien materializa los ejercicios). '+
+        'Envíala de verdad y vuelve a intentarlo.', true);
+    }
+    $sub.textContent = a.ejercicios.length+' ejercicios · no verás si aciertas hasta enviar';
+
+    var enGracia = a.fin_normal && (new Date() > new Date(a.fin_normal));
+    var plazo = enGracia
+      ? '<div class="plazo gracia">⚠ Estás en la semana de gracia (venció el '+fmt(a.fin_normal)+'). Entrega antes del '+fmt(a.fin_gracia)+'.</div>'
+      : '<div class="plazo">Entrega hasta el '+fmt(a.fin_normal)+'.</div>';
+
+    var html = plazo;
+    a.ejercicios.forEach(function(ej,i){
+      var svg = (ej.render && ej.render.svg) ? ej.render.svg : '';
+      html += '<div class="card" data-ej="'+i+'">'+
+        '<div class="ej-head"><span class="ej-n">'+(i+1)+'</span>'+
+          '<span class="ej-label">'+esc(ej.label||'')+'</span></div>'+
+        '<div class="ej-enun">'+esc(ej.enun||'')+'</div>'+
+        svgBox(svg)+
+        '<input class="resp" type="text" autocomplete="off" autocapitalize="off" '+
+          'spellcheck="false" data-i="'+i+'" placeholder="Tu respuesta">'+
+        '<div class="fb" data-fb="'+i+'"></div>'+
+      '</div>';
+    });
+    html += '<div style="margin-top:14px"><button class="btn" id="enviar">Enviar a profesor y ver puntuación</button></div>';
+    $main.innerHTML = html;
+    document.getElementById('enviar').onclick = enviar;
+  }
+
+  async function enviar(){
+    var a=abierta;
+    var inputs = Array.prototype.slice.call(document.querySelectorAll('input.resp'));
+    var respuestas = a.ejercicios.map(function(ej,i){
+      var el = inputs.find(function(x){ return +x.getAttribute('data-i')===i; });
+      return el ? el.value.trim() : '';
+    });
+    // Corrección (aciertos ∈ {1,0}; null = no autocorregible → cuenta como 0 pero se marca aparte)
+    var aciertos = a.ejercicios.map(function(ej,i){
+      var ok = acierta(ej.resp, respuestas[i]);
+      return ok===true ? 1 : 0;
+    });
+    var noAuto = a.ejercicios.map(function(ej){ return acierta(ej.resp,'')===null; });
+    var total = a.ejercicios.length || 1;
+    var suma = aciertos.reduce(function(s,x){ return s+x; },0);
+    var nota = Math.round((suma/total)*10*100)/100;
+
+    // Payload verbatim + trabajo del alumno
+    var payload = a.payload || {};
+    payload.entrega = {
+      respuestas: respuestas,
+      aciertos: aciertos,
+      no_autocorregibles: noAuto,
+      correctos: suma, total: total,
+      nota: nota,
+      entregada_en: new Date().toISOString()
+    };
+
+    var btn=document.getElementById('enviar');
+    btn.disabled=true; btn.textContent='Enviando…';
+    var r;
+    try{
+      var res=await sb.rpc('suite_ficha_entregar',{
+        p_cuenta_id:CUENTA, p_ficha_id:a.ficha_id, p_nota:nota, p_payload:payload });
+      r=res.data; if(res.error) throw res.error;
+    }catch(e){
+      btn.disabled=false; btn.textContent='Enviar a profesor y ver puntuación';
+      return alert('No se pudo entregar: '+(e.message||e));
+    }
+    if(!r || r.ok!==true){
+      btn.disabled=false; btn.textContent='Enviar a profesor y ver puntuación';
+      return alert('No se pudo entregar: '+((r&&r.error)||'desconocido'));
+    }
+    pintarResultado(nota, suma, total, respuestas, aciertos, noAuto);
+  }
+
+  function pintarResultado(nota, suma, total, respuestas, aciertos, noAuto){
+    var a=abierta;
+    $sub.textContent='Ficha entregada · enviada al profesor';
+    var fallos=[];
+    a.ejercicios.forEach(function(ej,i){
+      if(aciertos[i]!==1){
+        fallos.push('<div class="card">'+
+          '<div class="ej-head"><span class="ej-n">'+(i+1)+'</span>'+
+            '<span class="ej-label">'+esc(ej.label||'')+'</span></div>'+
+          '<div class="ej-enun">'+esc(ej.enun||'')+'</div>'+
+          '<div class="fb err show">Tu respuesta: '+esc(respuestas[i]||'(en blanco)')+'</div>'+
+          '<div class="fb-sol">Solución: '+esc(ej.resp||'—')+'</div>'+
+          (ej.solucion_svg ? svgBox(ej.solucion_svg,'fb-sol-svg') : '')+
+        '</div>');
+      }
+    });
+    var html =
+      '<div class="card">'+
+        '<div class="score-num">'+String(nota).replace('.',',')+'</div>'+
+        '<div class="score-sub">'+suma+' de '+total+' correctos · nota sobre 10</div>'+
+      '</div>';
+    if(fallos.length){
+      html += '<div class="sub" style="margin:14px 2px 2px">Repasa estos:</div>'+fallos.join('');
+    }else{
+      html += '<div class="msg">¡Todo correcto! 🎉</div>';
+    }
+    html += '<div style="margin-top:14px"><button class="btn ghost" id="volver">Volver a mis fichas</button></div>';
+    $main.innerHTML = html;
+    document.getElementById('volver').onclick=function(){ FICHA=null; abierta=null; arrancar(); };
+    window.scrollTo(0,0);
+  }
+
+  // ---------- init ----------
+  if(!window.supabase || !window.supabase.createClient){
+    pintarMsg('No se pudo cargar Supabase (revisa la conexión).', true);
+  } else if(!CUENTA){
+    pedirCuentaPrueba();
+  } else {
+    arrancar();
+  }
+})();
+</script>
+</body>
+</html>
