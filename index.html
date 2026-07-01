@@ -10976,21 +10976,17 @@ function __grados_marker__(){}
 
   /* dibuja la notación de un bloque y superpone etiquetas posicionadas bajo cada compás.
      modo: 'alumno' (en blanco + etiquetas de pregunta) | 'sol' (solución roja + pregunta + respuesta) */
-  function dibujarCompasStave(host, sig){       // cifra de compás en pentagrama (clave a tamaño uniforme, bien proporcionado)
-    const VFx=Vex.Flow; const W=760,H=120;
-    const r=new VFx.Renderer(host, VFx.Renderer.Backends.SVG); r.resize(W,H);
-    const ctx=r.getContext(); ctx.setFillStyle('#16203a'); ctx.setStrokeStyle('#16203a');
-    const st=new VFx.Stave(10,28,W-22); st.addClef('treble'); if(sig) st.addTimeSignature(sig); st.setContext(ctx).draw();
-    const svg=host.querySelector('svg');
-    if(svg){
-      svg.classList.add('penta');
-      let vb=null;
-      // recorta al contenido real SOLO si getBBox es fiable (host visible); si no, respaldo garantizado
-      try{ const bb=svg.getBBox(); if(bb && bb.width>2 && bb.height>2){ const pad=6; vb=(Math.max(0,bb.x-pad))+' '+(Math.max(0,bb.y-pad))+' '+(bb.width+pad*2)+' '+(bb.height+pad*2); } }catch(e){}
-      svg.setAttribute('viewBox', vb || ('0 16 '+W+' 70'));
-      svg.removeAttribute('width'); svg.removeAttribute('height');
-      svg.style.maxWidth='100%'; svg.style.width='100%'; svg.style.height='auto'; svg.style.maxHeight='120px'; svg.style.display='block';
-    }
+  function dibujarCompasStave(host, sig){       // cifra de compás LIMPIA: numerador sobre denominador (sin clave ni pentagrama)
+    sig=String(sig||''); const mm=sig.split('/');
+    const num=(mm[0]||sig||'').trim(), den=(mm[1]||'').trim();
+    const enSim = !!(host.closest && host.closest('#ppAlumnoSim'));
+    const col = enSim ? '#e9e5ff' : '#16203a';
+    host.innerHTML='';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='display:inline-flex;flex-direction:column;align-items:center;justify-content:center;line-height:.8;font-weight:800;font-size:42px;color:'+col+';font-family:Georgia,"Times New Roman",serif;padding:6px 2px;min-width:34px';
+    const a=document.createElement('div'); a.textContent=num; wrap.appendChild(a);
+    if(den){ const b=document.createElement('div'); b.textContent=den; wrap.appendChild(b); }
+    host.appendChild(wrap);
   }
   function figRoja(code){ try{ return (window.exFigSVG(code)||'').replace(/#16203a/gi,PP_RED); }catch(e){ return ''; } }
   function figClara(code){ try{ return (window.exFigSVG(code)||'').replace(/#16203a/gi,'#ff9ad8'); }catch(e){ return ''; } }
@@ -11184,7 +11180,11 @@ function __grados_marker__(){}
     const r=new VFx.Renderer(host, VFx.Renderer.Backends.SVG); r.resize(W,H);
     const ctx=r.getContext();
     const stave=new VFx.Stave(10,24,W-22); stave.addClef('treble');
-    if(fifths!==0 && KS_VF[String(fifths)]) stave.addKeySignature(KS_VF[String(fifths)]);   // armadura CORRECTA
+    const armCol = armOk ? COR_OK : COR_SOL;   // verde si el alumno la acertó · azul si se revela como respuesta
+    if(fifths!==0 && KS_VF[String(fifths)]){
+      try{ const ksig=new VFx.KeySignature(KS_VF[String(fifths)]); if(ksig.setStyle) ksig.setStyle({fillStyle:armCol,strokeStyle:armCol}); stave.addModifier(ksig); }
+      catch(e){ try{ stave.addKeySignature(KS_VF[String(fifths)]); }catch(_){} }
+    }
     stave.setEndBarType(VFx.Barline.type.DOUBLE); stave.setContext(ctx).draw();
     const tick=[], extra=[];
     for(let i=0;i<sol.length;i++){
