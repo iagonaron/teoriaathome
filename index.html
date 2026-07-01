@@ -10632,6 +10632,8 @@ function __grados_marker__(){}
       });
       const media=Math.round(scores.reduce((a,b)=>a+b,0)/Math.max(1,scores.length));
       const nota=(media/10).toFixed(1).replace('.',',');
+      const notaNum=Math.round((media/10)*100)/100;       // nota sobre 10 (numérica) para el Diario
+      const esAlumno=!!window.__SUITE_ALUMNO;              // FASE 6.5: entrada por ?fichaId
       const cuerpo=PP.ficha.map((item,k)=>{
         const sc=scores[k]; const ok=sc>=50;
         const col=ok?'#5bf0c0':'#ff8aa6'; const bg=ok?'rgba(52,211,153,.16)':'rgba(255,92,128,.16)';
@@ -10663,6 +10665,7 @@ function __grados_marker__(){}
               '<span style="color:#2f6df6">● la respuesta correcta</span>'+
             '</div>'+
             notaSimulada+
+            (esAlumno?'<div id="simEntregaEstado" style="margin-top:14px;font-size:13px;font-weight:700"></div>':'')+
           '</div>'+
           '<div style="margin-top:14px">'+cuerpo+'</div>'+
         '</div>';
@@ -10686,6 +10689,44 @@ function __grados_marker__(){}
       foot.innerHTML = btn('simCerrar','Cerrar', true);
       ov.querySelector('#simCerrar').onclick=cerrar;
       main.scrollTop=0;
+      // FASE 6.5 · ENTREGA REAL: solo en modo alumno (entrada por ?fichaId).
+      // La previsualización del profesor NUNCA envía.
+      if(esAlumno){ entregarAlProfesor(); }
+
+      async function entregarAlProfesor(){
+        const ctx=window.__SUITE_ALUMNO; if(!ctx) return;
+        const est=main.querySelector('#simEntregaEstado');
+        const pinta=(txt,col)=>{ if(est){ est.textContent=txt; est.style.color=col||'#c7bff0'; } };
+        pinta('Enviando tu nota a Iago…','#c7bff0');
+        const sb=suiteSb();
+        if(!sb){ pinta('⚠ No pude enviar la nota (sin conexión). Tu ficha se ha corregido igualmente.','#ffb4c8'); return; }
+        const payload={
+          origin:'teoria_at_home',
+          ficha_id:ctx.ficha, numero:ctx.numero,
+          nota:notaNum, porcentaje:media,
+          entregada_en:new Date().toISOString(),
+          ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k] }))
+        };
+        try{
+          // p_nota va sobre 10 (escala:10 en construirPayload). Si el Diario
+          // esperara 0–100, cambiar notaNum por `media` en esta única línea.
+          const { data, error } = await sb.rpc('suite_ficha_entregar', {
+            p_cuenta_id:ctx.cuenta, p_ficha_id:ctx.ficha, p_nota:notaNum, p_payload:payload
+          });
+          if(error) throw error;
+          if(data && data.ok===false){ const c=data.error||'error'; throw new Error(c); }
+          pinta('✓ Nota enviada a Iago. Ya puedes cerrar.','#7ef0c0');
+          window.__SUITE_ALUMNO=null;   // evita doble envío si re-renderiza
+        }catch(e){
+          const c=(e&&e.message)||'red';
+          const mp={ ya_entregada:'Esta ficha ya la habías entregado. No se ha vuelto a enviar.',
+                     fuera_de_plazo:'El plazo venció; la nota puede no contar.',
+                     no_validado:'Tu cuenta no está validada; la nota no se ha guardado.' };
+          pinta((mp[c]?('ⓘ '+mp[c]):('⚠ No pude enviar la nota ('+c+'). Habla con Iago.')),
+                (c==='ya_entregada'?'#c7bff0':'#ffb4c8'));
+          if(c==='ya_entregada') window.__SUITE_ALUMNO=null;
+        }
+      }
     }
     const onKey=(e)=>{ if(e.key==='Escape') cerrar();
       else if(!enviado && e.key==='ArrowRight'){ if(i<n-1){ const it=PP.ficha[i]; if(it.ej._interactivo==='grado' && !(it._respuesta && it._respuesta.marca!=null)){ mostrarBannerSim('Tienes que señalar el grado: toca la nota que crees que es la respuesta para rodearla.'); return; } i++; mostrar(); } }
@@ -11527,17 +11568,39 @@ function __grados_marker__(){}
       // --- config reproducible (para regenerar variantes en el futuro) ---
       config:{ items:PP.config.items.map(i=>({key:i.key, peso:i.peso})), total:total, opciones:{...PP.config.opciones} },
       // --- ejercicios MATERIALIZADOS (fuente de verdad robusta para el portal del alumno) ---
-      ejercicios: PP.ficha.map(it=>({
+      ejercicios: PP.ficha.map(it=>{
+        const ej=it.ej||{};
+        return {
         n:it.n, key:it.key, label:it.label,
         area:AREA_DE[it.key]||null,                            // para el enlace "practica X"
         practica_url:VIEW_DE[AREA_DE[it.key]] ? ('?view='+VIEW_DE[AREA_DE[it.key]]) : null,
         unidad:1,                                              // 1 ejercicio = 1 unidad en la media
-        enun:it.ej.enun||'', resp:it.ej.resp||'',
-        labels:it.ej.labelsTop||[], sol_labels:it.ej.solLabels||[], com_ans:it.ej.comAns||null,
+        enun:ej.enun||'', resp:ej.resp||'',
+        labels:ej.labelsTop||[], sol_labels:ej.solLabels||[], com_ans:ej.comAns||null,
         // render del bloque (svg capturado del motor real | spec | pentagrama en blanco)
-        render:it.ej.render||null,
-        solucion_svg:it.ej._solSvg||null
-      }))
+        render:ej.render||null,
+        solucion_svg:ej._solSvg||null,
+        // --- FASE 6.5 · MOTOR INTERACTIVO (para corrección REAL en el alumno) ---
+        // Todos estos campos son datos planos (specs, soluciones estructuradas,
+        // strings de tipo). Sin ellos, el alumno recibe el pentagrama pintado
+        // pero NO el ejercicio interactivo, y la nota saldría simulada.
+        motor:{
+          _interactivo: ej._interactivo || null,   // 'escala'|'grado'|'ruedas'|'notaB'|'enarm'|'mixto'|'compas'|'vecinos'
+          _spec:        ej._spec        || null,   // escala / grado
+          _solData:     ej._solData     || null,   // ruedas / notaB / enarm / semitonos / acordes
+          _ruedas:      ej._ruedas      || null,   // clave de ruedas (string)
+          _notaB:       ej._notaB       || null,   // clave notaB (string)
+          _enarm:       ej._enarm       || null,   // clave enarmonías (string)
+          _mixto:       ej._mixto       || null,   // 'acordes' | 'semitonos'
+          _comSol:      ej._comSol      || null,   // solución estructurada de compás
+          _comSpec:     ej._comSpec     || null,   // spec del compás
+          _vecinos:     ej._vecinos     || null,   // tabla 3×2 de tonalidades vecinas
+          _compas:      ej._compas      || null,   // flag de bloque de compás (pintarBloque)
+          sig:          ej.sig          || null,   // signatura (compás)
+          layout:       ej.layout       || null    // layout del bloque (pintarBloque)
+        }
+        };
+      })
     };
   }
 
@@ -11662,11 +11725,126 @@ function __grados_marker__(){}
     semitonos:   { view:'view-semitonos',   gen:()=>{ try{ window.nuevoSEM && window.nuevoSEM(); }catch(e){} } },
   };
 
+  /* ============================================================
+     FASE 6.5 · FLUJO DEL ALUMNO
+     Entrada por ?fichaId=<uuid>&cuenta=<uuid> (distinto del ?ficha=N
+     del profesor). Abre la ficha ENVIADA en el MOTOR REAL de corrección
+     (previsualizarAlumno) y, al terminar, entrega la nota al Diario.
+     ============================================================ */
+
+  // Reconstruye un objeto `ej` (como el de fichaBloque) desde un ejercicio
+  // materializado en ejercicios_json. Reengancha los nombres públicos del
+  // payload (labels/sol_labels/com_ans/solucion_svg) a los internos del motor
+  // (labelsTop/solLabels/comAns/_solSvg) y despliega el bag `motor`.
+  function rehidratarEj(e){
+    const m=(e&&e.motor)||{};
+    return {
+      enun:e.enun||'', resp:e.resp||'', n:e.n,
+      render:e.render||null, _solSvg:e.solucion_svg||null,
+      labelsTop:e.labels||[], solLabels:e.sol_labels||[], comAns:e.com_ans||null,
+      _interactivo:m._interactivo||null,
+      _spec:m._spec||null, _solData:m._solData||null,
+      _ruedas:m._ruedas||null, _notaB:m._notaB||null, _enarm:m._enarm||null,
+      _mixto:m._mixto||null, _comSol:m._comSol||null, _comSpec:m._comSpec||null,
+      _vecinos:m._vecinos||null, _compas:m._compas||null,
+      sig:m.sig||null, layout:m.layout||null
+    };
+  }
+
+  // Localiza, sea cual sea la forma exacta que devuelva suite_ficha_abrir,
+  // el array de ejercicios y el número de ficha. (El SQL de abrir/entregar
+  // vive en fase6_2/6_3; aquí se busca en los sitios plausibles.)
+  function extraerPaqueteFicha(data){
+    if(!data) return null;
+    const cand=[ data.ejercicios_json, data.payload, data.ficha_json,
+                 (data.ficha&&data.ficha.ejercicios_json), data ];
+    for(const c of cand){
+      if(c && Array.isArray(c.ejercicios) && c.ejercicios.length){
+        const num=(c.numero!=null)?c.numero:(data.numero!=null?data.numero:null);
+        return { ejercicios:c.ejercicios, numero:num, payload:c };
+      }
+    }
+    if(Array.isArray(data.ejercicios) && data.ejercicios.length){
+      return { ejercicios:data.ejercicios, numero:(data.numero!=null?data.numero:null), payload:data };
+    }
+    return null;
+  }
+
+  // Overlay a pantalla completa con la estética nebulosa (evita el flash del
+  // UI del generador mientras carga). Devuelve el nodo para reemplazar/quitar.
+  function pantallaCargaAlumno(){
+    const ov=document.createElement('div'); ov.id='ppAluCarga';
+    ov.style.cssText='position:fixed;inset:0;z-index:100000;background:linear-gradient(160deg,#241a52 0%,#180f3c 38%,#0e0a2c 72%,#080518 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;color:#fff;font-family:\'Helvetica Neue\',Arial,sans-serif;text-align:center;padding:24px';
+    ov.innerHTML=
+      '<div style="width:52px;height:52px;border-radius:50%;border:4px solid #ffffff26;border-top-color:#a974ff;animation:aluSpin .9s linear infinite"></div>'+
+      '<div id="ppAluMsg" style="font-size:16px;font-weight:700;opacity:.92">Cargando tu ficha…</div>';
+    if(!document.getElementById('ppAluSpinCSS')){
+      const st=document.createElement('style'); st.id='ppAluSpinCSS';
+      st.textContent='@keyframes aluSpin{to{transform:rotate(360deg)}}';
+      document.head.appendChild(st);
+    }
+    document.body.appendChild(ov);
+    return ov;
+  }
+  function errorCargaAlumno(ov, titulo, detalle){
+    ov.innerHTML=
+      '<div style="max-width:420px">'+
+        '<div style="font-size:40px;margin-bottom:8px">🙃</div>'+
+        '<div style="font-size:19px;font-weight:800;margin-bottom:8px">'+esc(titulo)+'</div>'+
+        '<div style="font-size:14px;line-height:1.55;color:#c7bff0">'+esc(detalle||'')+'</div>'+
+        '<button id="ppAluVolver" style="margin-top:22px;background:#a974ff;color:#160c2e;border:0;border-radius:10px;padding:11px 20px;font-weight:800;cursor:pointer">Volver</button>'+
+      '</div>';
+    const b=ov.querySelector('#ppAluVolver');
+    if(b) b.onclick=()=>{ try{ history.length>1?history.back():(location.href='https://iagonaron.github.io/'); }catch(e){ location.href='https://iagonaron.github.io/'; } };
+  }
+
+  // Arranque: abre la ficha, reconstruye PP.ficha y lanza el motor real.
+  async function arrancarFichaAlumno(cuenta, fichaId, numFallback){
+    // fija ya el número (del ?n del portal) para que el título salga "Ficha N"
+    // aunque suite_ficha_abrir no lo devuelva; si lo devuelve, se sobreescribe.
+    if(numFallback!=null && String(numFallback)!=='' && /^\d+$/.test(String(numFallback))) window.__FICHA_NUMERO=numFallback;
+    const ov=pantallaCargaAlumno();
+    const msg=(t)=>{ const el=ov.querySelector('#ppAluMsg'); if(el) el.textContent=t; };
+    try{
+      // esperar a supabase-js del CDN (autoApertura corre en DOMContentLoaded)
+      let intentos=0;
+      while(!(window.supabase && window.supabase.createClient) && intentos<60){ await new Promise(r=>setTimeout(r,100)); intentos++; }
+      const sb=suiteSb();
+      if(!sb) throw new Error('sin_supabase');
+      msg('Abriendo la ficha…');
+      const { data, error } = await sb.rpc('suite_ficha_abrir', { p_cuenta_id:cuenta, p_ficha_id:fichaId });
+      if(error) throw error;
+      if(!data || data.ok===false){ const cod=(data&&data.error)||'no_abre'; const e=new Error(cod); e._cod=cod; throw e; }
+      const pack=extraerPaqueteFicha(data);
+      if(!pack || !Array.isArray(pack.ejercicios) || !pack.ejercicios.length) throw new Error('ficha_vacia');
+      if(pack.numero!=null && String(pack.numero)!=='') window.__FICHA_NUMERO=pack.numero;
+      // contexto de entrega para el final del motor
+      window.__SUITE_ALUMNO={ cuenta:cuenta, ficha:fichaId, numero:(pack.numero!=null?pack.numero:(numFallback||null)) };
+      PP.ficha=pack.ejercicios.map(e=>({ n:e.n, key:e.key, label:e.label, ej:rehidratarEj(e) }));
+      ov.remove();
+      previsualizarAlumno();
+    }catch(err){
+      const cod=(err&&(err._cod||err.message))||'error';
+      const mapa={
+        sin_supabase:'No pude conectar. Revisa tu conexión a internet y vuelve a entrar desde la campana.',
+        ficha_vacia:'Esta ficha no trae ejercicios. Avisa a Iago.',
+        fuera_de_plazo:'El plazo de esta ficha ya venció.',
+        no_validado:'Tu cuenta aún no está validada. Habla con Iago.',
+        ficha_no_encontrada:'No encuentro esta ficha. Puede que ya no esté disponible.'
+      };
+      errorCargaAlumno(ov, 'No se pudo abrir la ficha', mapa[cod]||('Error: '+cod));
+    }
+  }
+
   // auto-apertura por URL: ?panel=profesor | ?practice=<clave> | ?view=<area> | #profesor
   function autoApertura(){
     try{
       const qs=new URLSearchParams(location.search);
       const hash=location.hash.replace('#','');
+      // FASE 6.5: flujo del ALUMNO — abrir la ficha ENVIADA en el motor real.
+      // ?fichaId=<uuid>&cuenta=<uuid> (distinto del ?ficha=N del profesor).
+      const fichaIdAl=qs.get('fichaId'), cuentaAl=qs.get('cuenta');
+      if(fichaIdAl && cuentaAl){ arrancarFichaAlumno(cuentaAl, fichaIdAl, qs.get('n')||null); return; }
       // FASE 6.1c: token de envío creado por el Diario (un solo uso, vida 45 min)
       const envioTok=qs.get('envio'); if(envioTok){ window.__SUITE_ENVIO_TOKEN=envioTok; window.__SUITE_ENVIO_FICHA=qs.get('ficha')||null; }
       // Número de ficha para el título "Ficha N" (el Diario pasa ?ficha=N numérico).
