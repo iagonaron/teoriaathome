@@ -10984,7 +10984,10 @@ function __grados_marker__(){}
     const svg=host.querySelector('svg');
     if(svg){
       svg.classList.add('penta');
-      try{ fitSvgToContent(host, W); }catch(e){ svg.setAttribute('viewBox','0 14 '+W+' 68'); }   // recorta al contenido real (sin hueco ni deslizamiento)
+      let vb=null;
+      // recorta al contenido real SOLO si getBBox es fiable (host visible); si no, respaldo garantizado
+      try{ const bb=svg.getBBox(); if(bb && bb.width>2 && bb.height>2){ const pad=6; vb=(Math.max(0,bb.x-pad))+' '+(Math.max(0,bb.y-pad))+' '+(bb.width+pad*2)+' '+(bb.height+pad*2); } }catch(e){}
+      svg.setAttribute('viewBox', vb || ('0 16 '+W+' 70'));
       svg.removeAttribute('width'); svg.removeAttribute('height');
       svg.style.maxWidth='100%'; svg.style.width='100%'; svg.style.height='auto'; svg.style.maxHeight='120px'; svg.style.display='block';
     }
@@ -11166,13 +11169,60 @@ function __grados_marker__(){}
     return true;
   }
   function mkCorNote(VFx,nb,col){ const sn=new VFx.StaveNote({keys:[nbKey(nb)],duration:'w',clef:'treble'}); if(nb.alter) sn.addModifier(new VFx.Accidental(nbAcc(nb.alter)),0); sn.setStyle({fillStyle:col,strokeStyle:col}); return sn; }
+  // como mkCorNote pero SOLO dibuja el accidental si difiere de la armadura (armA); si la armadura ya lo cubre, sin símbolo
+  function mkCorNoteArm(VFx,nb,col,armA){ const sn=new VFx.StaveNote({keys:[nbKey(nb)],duration:'w',clef:'treble'}); const a=nb.alter||0; if(a!==(armA||0)) sn.addModifier(new VFx.Accidental(nbAcc(a)),0); sn.setStyle({fillStyle:col,strokeStyle:col}); return sn; }
 
-  // ESCALAS: solución = spec.notes; alumno = resp.seq. Coloreado por posición.
+  /* CORRECCIÓN DE ESCALA CON ARMADURA (mayores/menores):
+     - armadura correcta dibujada en el pentagrama; su acierto/fallo va en el texto de abajo
+     - notas cubiertas por la armadura (o naturales) -> NEGRAS, sin mérito
+     - alteraciones accidentales: acierto verde · fallo rojo + correcta azul · ausente azul */
+  function dibujarEscalaCorrArm(host, sol, alumno, opts){
+    const VFx=(typeof VF!=='undefined')?VF:(window.Vex?window.Vex.Flow:null); if(!VFx) return false;
+    host.innerHTML='';
+    const fifths=opts.fifths||0, alumnoArm=opts.alumnoArm||0, armOk=(alumnoArm===fifths);
+    const W=Math.max(host.clientWidth||0, 760), H=150;
+    const r=new VFx.Renderer(host, VFx.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const stave=new VFx.Stave(10,24,W-22); stave.addClef('treble');
+    if(fifths!==0 && KS_VF[String(fifths)]) stave.addKeySignature(KS_VF[String(fifths)]);   // armadura CORRECTA
+    stave.setEndBarType(VFx.Barline.type.DOUBLE); stave.setContext(ctx).draw();
+    const tick=[], extra=[];
+    for(let i=0;i<sol.length;i++){
+      const s=sol[i]; if(!s) continue; const u=alumno[i];
+      const armA=armAlterFor(s.step, fifths);
+      const esAccidental=((s.alter||0)!==armA);
+      if(!esAccidental){ tick.push(mkCorNoteArm(VFx,s,COR_NEG,armA)); continue; }   // cubierta por armadura -> negra
+      const acerto = u && u.step===s.step && u.octave===s.octave && (u.alter||0)===(s.alter||0);
+      if(acerto){ tick.push(mkCorNoteArm(VFx,s,COR_OK,armA)); }                     // accidental correcto -> verde
+      else if(u){ tick.push(mkCorNoteArm(VFx,u,COR_BAD,armAlterFor(u.step,fifths))); extra.push(mkCorNoteArm(VFx,s,COR_SOL,armA)); }  // alumno rojo + correcta azul
+      else { tick.push(mkCorNoteArm(VFx,s,COR_SOL,armA)); }                         // faltó -> correcta azul
+    }
+    const all=tick.concat(extra);
+    try{ const voice=new VFx.Voice({num_beats:all.length*4,beat_value:4}).setStrict(false); voice.addTickables(all);
+      new VFx.Formatter().joinVoices([voice]).format([voice], W-100); voice.draw(ctx, stave);
+    }catch(e){}
+    const svg=host.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.removeAttribute('width'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.width='100%'; svg.style.height='auto'; }
+    // feedback de armadura
+    const fmt=f=> f===0?'sin alteraciones':(Math.abs(f)+(f>0?' ♯':' ♭'));
+    const arm=document.createElement('div'); arm.style.cssText='margin-top:8px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap';
+    const et=document.createElement('span'); et.textContent='Armadura:'; et.style.color='#e9e5ff'; arm.appendChild(et);
+    if(armOk){ const s=document.createElement('span'); s.textContent='✓ '+fmt(fifths); s.style.color=COR_OK; arm.appendChild(s); }
+    else if(alumnoArm===0){ const c=document.createElement('span'); c.textContent=fmt(fifths); c.style.color=COR_AZUL_TXT; arm.appendChild(c); const n=document.createElement('span'); n.textContent='(faltaba)'; n.style.cssText='color:#b8c0e0;font-weight:600'; arm.appendChild(n); }
+    else { const t=document.createElement('span'); t.textContent='✗ '+fmt(alumnoArm); t.style.color=COR_BAD; arm.appendChild(t); const ar=document.createElement('span'); ar.textContent='→'; ar.style.color='#b8c0e0'; arm.appendChild(ar); const c=document.createElement('span'); c.textContent=fmt(fifths); c.style.color=COR_AZUL_TXT; arm.appendChild(c); }
+    host.appendChild(arm);
+    return true;
+  }
+
+  // ESCALAS: solución = spec.notes; alumno = resp.seq. Con armadura (mayores/menores) razona la armadura.
   function corregirEscala(host, ej, resp){
     const spec=ej._spec; if(!spec||!spec.notes) return false;
     const sol=spec.notes.filter(nt=>!nt.dim).map(nt=>corKeyToNota(nt.key)).filter(Boolean);
     const alumno=((resp&&resp.seq)||[]).map(n=>({step:n.step,octave:n.octave,alter:n.alter||0}));
-    return dibujarPentaCorr(host, sol, alumno, { fifths: 0, dadas: 1 });   // la cabeza (tónica) viene dada -> negra
+    if(spec.precolocada===true || spec.conArmadura===true){
+      return dibujarEscalaCorrArm(host, sol, alumno, { fifths: spec.fifths||0, alumnoArm: (resp&&resp.arm!=null)?resp.arm:0 });
+    }
+    // esc_otras (pentatónica/cromática/hexátona): sin armadura -> nota a nota, cabeza (tónica) en negro
+    return dibujarPentaCorr(host, sol, alumno, { fifths: 0, dadas: 1 });
   }
   // GRADOS: igual que escala + marca. Coloreamos las notas y añadimos la flecha en la correcta.
   function corregirGrado(host, ej, resp){
