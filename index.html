@@ -8181,11 +8181,11 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
         espApi.setItems(esps,true);
         const gi=idxGuion(esps); espApi.setIndex(gi,true);
         estado.sel[i].esp=esps[gi]; estado._dirty=true;
-      }, true);
+      }, false);
       const espInit = (prev && prev.num!=null) ? especiesParaNumero(prev.num,false) : especiesParaNumero(null,false);
       let espIdx = idxGuion(espInit);
       if(prev && prev.esp && prev.esp!=='—'){ const j=espInit.indexOf(prev.esp); if(j>=0) espIdx=j; }
-      espApi=makeWheel(wEsp, espInit, espIdx, ()=>{ estado.sel[i].esp=espApi.getValue(); estado._dirty=true; }, true);
+      espApi=makeWheel(wEsp, espInit, espIdx, ()=>{ estado.sel[i].esp=espApi.getValue(); estado._dirty=true; }, false);
       if(!(prev && prev.esp && prev.esp!=='—')) estado.sel[i].esp = espInit[espIdx];
     }
   }
@@ -10780,7 +10780,7 @@ function __grados_marker__(){}
     const r=new VFx.Renderer(host, VFx.Renderer.Backends.SVG); r.resize(W,H);
     const ctx=r.getContext(); ctx.setFillStyle('#16203a'); ctx.setStrokeStyle('#16203a');
     const st=new VFx.Stave(10,28,W-22); st.addClef('treble'); if(sig) st.addTimeSignature(sig); st.setContext(ctx).draw();
-    const svg=host.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.removeAttribute('width'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.width='100%'; svg.style.height='auto'; svg.style.display='block'; }
+    const svg=host.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.setAttribute('viewBox','0 14 '+W+' 68'); svg.removeAttribute('width'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.width='100%'; svg.style.height='auto'; svg.style.display='block'; }
   }
   function figRoja(code){ try{ return (window.exFigSVG(code)||'').replace(/#16203a/gi,PP_RED); }catch(e){ return ''; } }
   function figClara(code){ try{ return (window.exFigSVG(code)||'').replace(/#16203a/gi,'#ff9ad8'); }catch(e){ return ''; } }
@@ -11031,7 +11031,10 @@ function __grados_marker__(){}
   // CORRECCIÓN de mixtos (semitonos / acordes): SVG del enunciado + filas de feedback
   function corregirMixto(host, ej, resp){
     host.innerHTML='';
-    if(ej.render && ej.render.svg){ const sc=document.createElement('div'); sc.innerHTML=ej.render.svg; const svg=sc.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.height='auto'; } host.appendChild(sc); }
+    // Pentagrama superior: preferir el SVG de SOLUCIÓN (trae dibujadas las notas
+    // de los compases a construir, coloreadas); si no lo hubiera, cae al del alumno.
+    const _topSvg = (ej._solSvg && ej._solSvg.trim()) ? ej._solSvg : ((ej.render && ej.render.svg) || '');
+    if(_topSvg){ const sc=document.createElement('div'); sc.innerHTML=_topSvg; const svg=sc.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.height='auto'; } host.appendChild(sc); }
     const d=ej._solData||[]; const ES={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
     const nN=nb=>nb? (ES[nb.step]+(nb.alter===1?'♯':nb.alter===-1?'♭':nb.alter===2?'𝄪':nb.alter===-2?'𝄫':'')) : '';
     const ul=document.createElement('div'); ul.style.cssText='margin-top:10px;font-size:14px;line-height:1.6';
