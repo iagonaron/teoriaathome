@@ -7675,20 +7675,43 @@ window.FichaGhost = (function(){
       host.appendChild(g); }
     return g;
   }
-  function show(host, svg, x, y){
+  // Iago 2026-07-02: el ghost ahora pinta sus LÍNEAS ADICIONALES cuando la
+  // posición cae fuera del pentagrama (antes la cabeza "flotaba" sin
+  // referencia; visto en Semitonos construir). led={yTop, esp} en coords del
+  // viewBox del SVG: yTop = línea superior (getYForLine(0)), esp = distancia
+  // entre líneas. Cada motor lo aporta desde su buildYMap (geom.led).
+  function show(host, svg, x, y, led){
     if(!host||!svg||x==null||y==null) return;
     try{
-      // convertir coords SVG -> px relativos al host
+      const ctm=svg.getScreenCTM();
       const pt=svg.createSVGPoint(); pt.x=x; pt.y=y;
-      const scr=pt.matrixTransform(svg.getScreenCTM());     // a coords de pantalla
+      const scr=pt.matrixTransform(ctm);     // a coords de pantalla
       const hb=host.getBoundingClientRect();
       const g=ensure(host);
       g.style.left=(scr.x-hb.left)+'px';
       g.style.top=(scr.y-hb.top)+'px';
       g.style.display='block';
+      host.querySelectorAll(':scope > .ficha-ghost-ledger').forEach(el=>el.remove());
+      if(led && led.yTop!=null && led.esp){
+        const yBot=led.yTop+4*led.esp, tol=led.esp*0.26, ys=[];
+        for(let ly=led.yTop-led.esp, k=0; ly>=y-tol && k<6; ly-=led.esp, k++) ys.push(ly); // por arriba
+        for(let ly=yBot+led.esp, k=0; ly<=y+tol && k<6; ly+=led.esp, k++) ys.push(ly);     // por abajo
+        ys.forEach(ly=>{
+          const p2=svg.createSVGPoint(); p2.x=x; p2.y=ly;
+          const s2=p2.matrixTransform(ctm);
+          const ln=document.createElement('div'); ln.className='ficha-ghost-ledger';
+          ln.style.cssText='position:absolute;pointer-events:none;z-index:6;width:24px;height:2px;background:rgba(232,67,147,.55);border-radius:1px;transform:translate(-50%,-50%)';
+          ln.style.left=(s2.x-hb.left)+'px';
+          ln.style.top=(s2.y-hb.top)+'px';
+          host.appendChild(ln);
+        });
+      }
     }catch(e){}
   }
-  function hide(host){ if(!host) return; const g=host.querySelector(':scope > .ficha-ghost'); if(g) g.style.display='none'; }
+  function hide(host){ if(!host) return;
+    const g=host.querySelector(':scope > .ficha-ghost'); if(g) g.style.display='none';
+    host.querySelectorAll(':scope > .ficha-ghost-ledger').forEach(el=>el.remove());
+  }
   return { show, hide };
 })();
 
@@ -8568,7 +8591,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       if(!stave) return;
       try{
         const yTop=stave.getYForLine(0), yL1=stave.getYForLine(1);
-        const half=(yL1-yTop)/2;
+        const half=(yL1-yTop)/2; geom.led={yTop:yTop, esp:half*2};
         const refMidi=midiNota('F',5,0); const refStep=diatonicStep(refMidi);
         for(let oct=3;oct<=6;oct++) for(const st of STEPS){
           const m=midiNota(st,oct,0); if(m<53||m>86) continue;
@@ -8592,7 +8615,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
         const i=slotUnderX(p.x, wC, x0); const nat=nearestY(p.y);
         if(i<0||!nat){ window.FichaGhost.hide(sc); return; }
         const gx=geom.slots[i] ? geom.slots[i].x : null; const gy=geom.yMap[nat.step+nat.octave]?geom.yMap[nat.step+nat.octave].y:null;
-        window.FichaGhost.show(sc, svg, gx, gy);
+        window.FichaGhost.show(sc, svg, gx, gy, geom.led);
       });
       svg.addEventListener('mouseleave',()=>window.FichaGhost.hide(sc));
       svg.addEventListener('click',(ev)=>{
@@ -8767,7 +8790,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       geom.yMap={}; if(!stave) return;
       try{
         const yTop=stave.getYForLine(0), yBot=stave.getYForLine(4);
-        const half=(yBot-yTop)/8;
+        const half=(yBot-yTop)/8; geom.led={yTop:yTop, esp:half*2};
         const refStep=diatonicStep(midiNota('F',5,0));
         for(let oct=3;oct<=6;oct++) for(const st of STEPS){
           const m=midiNota(st,oct,0); if(m<53||m>86) continue;
@@ -8803,7 +8826,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
         if(i<0||!sd || estado.resp[i].length>=sd.sols.length){ window.FichaGhost.hide(sc); return; }
         const nat=nearestY(p.y); if(!nat){ window.FichaGhost.hide(sc); return; }
         const gy=geom.yMap[nat.step+nat.octave]?geom.yMap[nat.step+nat.octave].y:null;
-        window.FichaGhost.show(sc, svg, p.x, gy);
+        window.FichaGhost.show(sc, svg, p.x, gy, geom.led);
       });
       svg.addEventListener('mouseleave',()=>window.FichaGhost.hide(sc));
       svg.addEventListener('click',(ev)=>{
@@ -9223,7 +9246,7 @@ function __grados_marker__(){}
     }
 
     function buildYMap(stave){ geom.yMap={}; if(!stave) return;
-      try{ const yTop=stave.getYForLine(0), yBot=stave.getYForLine(4); const half=(yBot-yTop)/8; const refStep=diatonicStep(midiNota('F',5,0));
+      try{ const yTop=stave.getYForLine(0), yBot=stave.getYForLine(4); const half=(yBot-yTop)/8; geom.led={yTop:yTop, esp:half*2}; const refStep=diatonicStep(midiNota('F',5,0));
         for(let oct=3;oct<=6;oct++) for(const st of STEPS){ const m=midiNota(st,oct,0); if(m<53||m>86) continue; const ds=diatonicStep(m); geom.yMap[st+oct]={step:st,octave:oct,y:yTop+(refStep-ds)*half}; }
       }catch(e){}
     }
@@ -9247,7 +9270,7 @@ function __grados_marker__(){}
         if(i<0 || geom.comp[i].modo!=='build' || estado.resp[i]!=null){ window.FichaGhost.hide(sc); return; }
         const nat=nearestY(p.y); if(!nat){ window.FichaGhost.hide(sc); return; }
         const gx=geom.comp[i].x2, gy=geom.yMap[nat.step+nat.octave]?geom.yMap[nat.step+nat.octave].y:null;
-        window.FichaGhost.show(sc, svg, gx, gy);
+        window.FichaGhost.show(sc, svg, gx, gy, geom.led);
       });
       svg.addEventListener('mouseleave',()=>window.FichaGhost.hide(sc));
       svg.addEventListener('click',(ev)=>{ const p=pt(svg,ev); if(!p) return; window.FichaGhost.hide(sc);
@@ -9442,7 +9465,7 @@ function __grados_marker__(){}
     }
 
     function buildYMap(stave){ geom.yMap={}; if(!stave) return;
-      try{ const yTop=stave.getYForLine(0), yBot=stave.getYForLine(4); const half=(yBot-yTop)/8; const refStep=diatonicStep(midiNota('F',5,0));
+      try{ const yTop=stave.getYForLine(0), yBot=stave.getYForLine(4); const half=(yBot-yTop)/8; geom.led={yTop:yTop, esp:half*2}; const refStep=diatonicStep(midiNota('F',5,0));
         for(let oct=3;oct<=6;oct++) for(const st of STEPS){ const m=midiNota(st,oct,0); if(m<53||m>86) continue; const ds=diatonicStep(m); geom.yMap[st+oct]={step:st,octave:oct,y:yTop+(refStep-ds)*half}; }
       }catch(e){}
     }
@@ -9466,7 +9489,7 @@ function __grados_marker__(){}
         if(i<0 || !sd || geom.comp[i].modo!=='build' || estado.resp[i].length>=sd.objetivo.length){ window.FichaGhost.hide(sc); return; }
         const nat=nearestY(p.y); if(!nat){ window.FichaGhost.hide(sc); return; }
         const gx=geom.comp[i].baseX, gy=geom.yMap[nat.step+nat.octave]?geom.yMap[nat.step+nat.octave].y:null;
-        window.FichaGhost.show(sc, svg, gx, gy);
+        window.FichaGhost.show(sc, svg, gx, gy, geom.led);
       });
       svg.addEventListener('mouseleave',()=>window.FichaGhost.hide(sc));
       svg.addEventListener('click',(ev)=>{ const p=pt(svg,ev); if(!p) return; window.FichaGhost.hide(sc);
@@ -9552,9 +9575,13 @@ function __grados_marker__(){}
         chips.appendChild(chip);
       }
       cell.appendChild(chips);
-      const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:5px;justify-content:center';
-      [['-1','♭'],['0','♮'],['1','♯']].forEach(([a,sym])=>{
-        const b=document.createElement('button'); b.className='acc-btn'; b.style.cssText='min-width:38px;height:34px;font-size:16px;padding:0'; b.textContent=sym;
+      const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:5px;justify-content:center;flex-wrap:wrap';
+      // Iago 2026-07-02: paleta con DOBLES alteraciones (𝄫/𝄪). Sin ellas los
+      // acordes aumentados/disminuidos sobre fundamentales alteradas no se
+      // podían construir bien (p. ej. Sol♯ aum necesita Re𝄪). El resto del
+      // pipeline ya soportaba alter=±2 (nName, acc→'##'/'bb', corrección).
+      [['-2','𝄫'],['-1','♭'],['0','♮'],['1','♯'],['2','𝄪']].forEach(([a,sym])=>{
+        const b=document.createElement('button'); b.className='acc-btn'; b.style.cssText='min-width:36px;height:34px;font-size:16px;padding:0'; b.textContent=sym;
         const selAqui = estado.foco===i && estado.fsel!=null && estado.resp[i][estado.fsel];
         if(!selAqui) b.disabled=true;
         if(selAqui && (estado.resp[i][estado.fsel].alter||0)===parseInt(a,10)) b.classList.add('on');
@@ -9763,6 +9790,13 @@ function __grados_marker__(){}
 
     function montarCeldaVecino(cell, estado, k){
       const sel=estado.sel[k];
+      // Iago 2026-07-02: casilla RESUMEN de la respuesta configurada, para
+      // ver de un vistazo la tonalidad que llevas puesta ("Mi♭ M"). Con el
+      // mismo formato que la celda dada; en gris punteado mientras esté
+      // incompleta y resaltada en rosa cuando nombre+modo están elegidos.
+      const resum=document.createElement('div');
+      resum.style.cssText='min-height:28px;display:flex;align-items:center;justify-content:center;font-size:16.5px;font-weight:900;letter-spacing:.01em;border-radius:9px;padding:2px 14px;box-sizing:border-box;transition:background .15s,border-color .15s';
+      cell.appendChild(resum);
       const wN=document.createElement('div'); wN.className='wheel'; wN.style.cssText='height:64px;width:56px';
       const row=document.createElement('div'); row.style.cssText='display:flex;gap:5px;align-items:center;justify-content:center;flex-wrap:wrap';
       // ♯/♭
@@ -9778,9 +9812,22 @@ function __grados_marker__(){}
       const curIdx = sel.nota? NOTAS.indexOf(sel.nota) : null;
       const wheel = window.FichaWheel(wN, NOTAS, NOTAS, curIdx, (idx)=>{ sel.nota=(idx==null)?null:NOTAS[idx]; sel.alt=''; estado._dirty=true; repintaN(); });
       function lblsConAcc(){ const acc=sel.alt==='#'?'♯':sel.alt==='b'?'♭':''; return NOTAS.map(x=> x===sel.nota?(x+acc):x); }
+      function pintarResumen(){
+        const acc=sel.alt==='#'?'♯':sel.alt==='b'?'♭':'';
+        if(sel.nota && sel.modo){
+          resum.textContent=sel.nota+acc+' '+sel.modo;
+          resum.style.background='rgba(232,67,147,.20)'; resum.style.border='1.5px solid #e84393'; resum.style.color='#ffd7ea';
+        } else if(sel.nota){
+          resum.textContent=sel.nota+acc+' …';
+          resum.style.background='rgba(255,255,255,.05)'; resum.style.border='1.5px dashed #33406b'; resum.style.color='#9aa3c0';
+        } else {
+          resum.textContent='—';
+          resum.style.background='rgba(255,255,255,.03)'; resum.style.border='1.5px dashed #33406b'; resum.style.color='#5e6a98';
+        }
+      }
       function repintaN(){ wheel.setCurrent(sel.nota? NOTAS.indexOf(sel.nota):null, lblsConAcc());
-        row.querySelectorAll('.acc-btn').forEach(x=>x.classList.toggle('on', x.dataset.a===sel.alt && sel.alt!=='')); }
-      function pintarModo(){ mRow.querySelectorAll('.acc-btn').forEach(x=>x.classList.toggle('on', x.dataset.m===sel.modo)); }
+        row.querySelectorAll('.acc-btn').forEach(x=>x.classList.toggle('on', x.dataset.a===sel.alt && sel.alt!=='')); pintarResumen(); }
+      function pintarModo(){ mRow.querySelectorAll('.acc-btn').forEach(x=>x.classList.toggle('on', x.dataset.m===sel.modo)); pintarResumen(); }
       repintaN(); pintarModo();
     }
   }
@@ -9865,28 +9912,70 @@ function __grados_marker__(){}
     host.innerHTML='';
     var wrap=document.createElement('div'); wrap.style.cssText='max-width:760px;width:100%;color:#e9e5ff'; host.appendChild(wrap);
 
-    /* ===== A: clasificar ===== */
+    /* ===== A: clasificar (ARRASTRE como en el motor + tap como alternativa) =====
+       Iago 2026-07-02: los términos se arrastran a su categoría con pointer
+       events (táctil + ratón), igual que en el motor del apartado. El tap
+       (término → categoría) sigue funcionando como vía alternativa. */
     var sa=_seccion(wrap,'A · Clasifica cada término');
     var hint=document.createElement('div'); hint.style.cssText='font-size:12px;color:#9aa3c0;margin-bottom:8px';
-    hint.textContent='Toca un término y luego su categoría. Para sacarlo, tócalo de nuevo.'; sa.appendChild(hint);
-    var pool=document.createElement('div'); pool.style.cssText='display:flex;flex-wrap:wrap;gap:2px;margin-bottom:10px;min-height:38px'; sa.appendChild(pool);
+    hint.textContent='Arrastra cada término a su categoría (o toca el término y luego la categoría). Para sacarlo, arrástralo fuera o tócalo.'; sa.appendChild(hint);
+    var pool=document.createElement('div'); pool.className='ter-fd-pool'; pool.style.cssText='display:flex;flex-wrap:wrap;gap:2px;margin-bottom:10px;min-height:38px'; sa.appendChild(pool);
     var cats=document.createElement('div'); cats.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px'; sa.appendChild(cats);
+    function limpiarDropsA(){ cats.querySelectorAll('[data-fdcat]').forEach(function(d){ d.style.outline=''; d.style.outlineOffset=''; }); }
+    function marcarDropA(x,y){ limpiarDropsA(); var el=document.elementFromPoint(x,y);
+      var d=el&&el.closest&&el.closest('[data-fdcat]'); if(d){ d.style.outline='2px solid #5bd0ff'; d.style.outlineOffset='2px'; } }
+    function dragChipA(chipEl, term, desdeBox){
+      chipEl.style.touchAction='none';
+      chipEl.onpointerdown=function(ev){
+        ev.preventDefault();
+        var sx=ev.clientX, sy=ev.clientY, movido=false, ghost=null;
+        function mv(e){
+          if(!movido && Math.hypot(e.clientX-sx, e.clientY-sy)>6){
+            movido=true;
+            ghost=chipEl.cloneNode(true);
+            ghost.style.cssText='position:fixed;z-index:9999;pointer-events:none;opacity:.92;box-shadow:0 6px 16px rgba(0,0,0,.45);left:0;top:0';
+            document.body.appendChild(ghost);
+            chipEl.style.opacity='.35';
+          }
+          if(movido){ ghost.style.left=(e.clientX-30)+'px'; ghost.style.top=(e.clientY-16)+'px'; marcarDropA(e.clientX,e.clientY); }
+        }
+        function up(e){
+          window.removeEventListener('pointermove',mv); window.removeEventListener('pointerup',up);
+          if(ghost) ghost.remove(); chipEl.style.opacity=''; limpiarDropsA();
+          if(!movido){
+            // TAP: mismo comportamiento de siempre
+            if(desdeBox){ delete est.A.col[term]; } else { est.A.pend=(est.A.pend===term)?null:term; }
+            est._dirty=true; repintaA(); return;
+          }
+          var el=document.elementFromPoint(e.clientX,e.clientY);
+          var drop=el&&el.closest&&el.closest('[data-fdcat]');
+          var alPool=el&&el.closest&&el.closest('.ter-fd-pool');
+          if(drop){ est.A.col[term]=drop.getAttribute('data-fdcat'); est.A.pend=null; est._dirty=true; repintaA(); }
+          else if(desdeBox){ if(alPool || !el || !el.closest('[data-fdcat]')){ delete est.A.col[term]; est._dirty=true; repintaA(); } }
+          else { repintaA(); }
+        }
+        window.addEventListener('pointermove',mv);
+        window.addEventListener('pointerup',up);
+      };
+    }
     function repintaA(){
       pool.innerHTML=''; cats.innerHTML='';
       D.A.forEach(function(f){
         if(!est.A.col[f.term]){
           var c=_chip(f.term);
           if(est.A.pend===f.term){ c.style.outline='2px solid #ff5ccd'; c.style.outlineOffset='2px'; }
-          c.onclick=function(){ est.A.pend=(est.A.pend===f.term)?null:f.term; est._dirty=true; repintaA(); };
+          c.style.cursor='grab';
+          dragChipA(c, f.term, false);
           pool.appendChild(c);
         }
       });
       Object.keys(CATS).forEach(function(k){
         var box=document.createElement('div'); box.style.cssText=CAJA+';min-height:70px;cursor:pointer';
+        box.setAttribute('data-fdcat', k);
         var t=document.createElement('div'); t.style.cssText='font-size:11.5px;font-weight:800;color:#b9c2e0;margin-bottom:6px;text-transform:uppercase'; t.textContent=CATS[k].label; box.appendChild(t);
         D.A.forEach(function(f){ if(est.A.col[f.term]===k){
-          var ch=_chip(f.term); ch.style.background='rgba(91,208,255,.16)'; ch.style.borderColor='#5bd0ff66';
-          ch.onclick=function(ev){ ev.stopPropagation(); delete est.A.col[f.term]; est._dirty=true; repintaA(); };
+          var ch=_chip(f.term); ch.style.background='rgba(91,208,255,.16)'; ch.style.borderColor='#5bd0ff66'; ch.style.cursor='grab';
+          dragChipA(ch, f.term, true);
           box.appendChild(ch);
         }});
         box.onclick=function(){ if(est.A.pend){ est.A.col[est.A.pend]=k; est.A.pend=null; est._dirty=true; repintaA(); } };
@@ -9910,21 +9999,74 @@ function __grados_marker__(){}
       sb.appendChild(row);
     });
 
-    /* ===== C: ordenar tempos ===== */
+    /* ===== C: ordenar tempos (ARRASTRE para reordenar, como en el motor) =====
+       Iago 2026-07-02: en vez de tocarlos en orden, la lista completa se
+       reordena arrastrando tarjetas (pointer events, táctil + ratón), con
+       indicador de inserción. est.C.orden queda vacío hasta el primer
+       arrastre (sin tocar = 0 en la corrección, como antes); después guarda
+       SIEMPRE la disposición completa (compatible con comprobarTerminos). */
     var sc=_seccion(wrap,'C · Ordena del más lento al más rápido');
-    var hintC=document.createElement('div'); hintC.style.cssText='font-size:12px;color:#9aa3c0;margin-bottom:8px'; hintC.textContent='Tócalos en orden: primero el más lento.'; sc.appendChild(hintC);
-    var lst=document.createElement('div'); lst.style.cssText='display:flex;flex-direction:column;gap:8px;max-width:420px'; sc.appendChild(lst);
-    D.C.barajado.forEach(function(tp){
-      var pos=est.C.orden.indexOf(tp);
-      var b=document.createElement('button'); b.type='button';
-      b.style.cssText='display:flex;align-items:center;gap:12px;border:1.5px solid #33406b;background:rgba(255,255,255,.04);color:#e9e5ff;border-radius:10px;padding:11px 14px;font-size:15px;font-weight:700;cursor:pointer;text-align:left';
-      var num=document.createElement('span'); num.style.cssText='flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;'+(pos>=0?'background:#a974ff;color:#160c2e':'background:rgba(255,255,255,.08);color:#8a93b5');
-      num.textContent=pos>=0?String(pos+1):'·'; b.appendChild(num);
-      var lab=document.createElement('span'); lab.textContent=tp; b.appendChild(lab);
-      b.onclick=function(){ var p=est.C.orden.indexOf(tp); if(p>=0) est.C.orden.splice(p,1); else est.C.orden.push(tp); est._dirty=true; montarTerminos(host, ej, est); };
-      lst.appendChild(b);
-    });
-    if(est.C.orden.length){
+    var hintC=document.createElement('div'); hintC.style.cssText='font-size:12px;color:#9aa3c0;margin-bottom:8px'; hintC.textContent='Arrastra las tarjetas para ordenarlas: arriba el más lento, abajo el más rápido.'; sc.appendChild(hintC);
+    var filaC=document.createElement('div'); filaC.style.cssText='display:flex;gap:14px;align-items:stretch;max-width:520px'; sc.appendChild(filaC);
+    var lst=document.createElement('div'); lst.style.cssText='display:flex;flex-direction:column;gap:8px;flex:1'; filaC.appendChild(lst);
+    var eje=document.createElement('div'); eje.style.cssText='display:flex;flex-direction:column;justify-content:space-between;align-items:center;font-size:11px;color:#8a93b5;padding:4px 0';
+    eje.innerHTML='<span>más lento ▲</span><span style="flex:1;width:2px;background:linear-gradient(180deg,#5bd0ff55,#ff5ccd55);margin:6px 0;border-radius:2px"></span><span>▼ más rápido</span>';
+    filaC.appendChild(eje);
+    // disposición de trabajo: la guardada si es completa; si no, el barajado
+    var baseC=(est.C.orden && est.C.orden.length===D.C.barajado.length)? est.C.orden.slice() : D.C.barajado.slice();
+    var tocadoC=!!(est.C.orden && est.C.orden.length===D.C.barajado.length);
+    function pintaC(){
+      lst.innerHTML='';
+      baseC.forEach(function(tp, idx){
+        var card=document.createElement('div');
+        card.style.cssText='display:flex;align-items:center;gap:12px;border:1.5px solid #33406b;background:rgba(255,255,255,.05);color:#e9e5ff;border-radius:10px;padding:11px 14px;font-size:15px;font-weight:700;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none';
+        var num=document.createElement('span'); num.style.cssText='flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;'+(tocadoC?'background:#a974ff;color:#160c2e':'background:rgba(255,255,255,.08);color:#8a93b5');
+        num.textContent=String(idx+1); card.appendChild(num);
+        var lab=document.createElement('span'); lab.textContent=tp; lab.style.flex='1'; card.appendChild(lab);
+        var grip=document.createElement('span'); grip.textContent='⠿'; grip.style.cssText='color:#5e6a98;font-size:15px'; card.appendChild(grip);
+        wireCardC(card, idx);
+        lst.appendChild(card);
+      });
+    }
+    function limpiaMarcasC(){ [].slice.call(lst.children).forEach(function(c){ c.style.boxShadow=''; }); }
+    function wireCardC(card, idx){
+      card.onpointerdown=function(ev){
+        ev.preventDefault();
+        var ghost=card.cloneNode(true);
+        ghost.style.cssText='position:fixed;z-index:9999;pointer-events:none;opacity:.92;width:'+card.offsetWidth+'px;box-shadow:0 8px 20px rgba(0,0,0,.5);display:flex;align-items:center;gap:12px;border:1.5px solid #a974ff;background:#241a52;color:#e9e5ff;border-radius:10px;padding:11px 14px;font-size:15px;font-weight:700';
+        document.body.appendChild(ghost);
+        card.style.opacity='.35';
+        var marca=null;
+        function pos(e){ ghost.style.left=(e.clientX-ghost.offsetWidth/2)+'px'; ghost.style.top=(e.clientY-20)+'px'; }
+        pos(ev);
+        function mv(e){ pos(e);
+          var cardsL=[].slice.call(lst.children); limpiaMarcasC(); marca=null;
+          for(var i2=0;i2<cardsL.length;i2++){ var r=cardsL[i2].getBoundingClientRect();
+            if(e.clientY<=r.bottom){
+              if(e.clientY < r.top + r.height/2){ cardsL[i2].style.boxShadow='0 -3px 0 0 #ff5ccd'; marca=i2; }
+              else { cardsL[i2].style.boxShadow='0 3px 0 0 #ff5ccd'; marca=i2+1; }
+              return;
+            } }
+          if(cardsL.length){ cardsL[cardsL.length-1].style.boxShadow='0 3px 0 0 #ff5ccd'; marca=cardsL.length; }
+        }
+        function up(e){
+          window.removeEventListener('pointermove',mv); window.removeEventListener('pointerup',up);
+          ghost.remove(); card.style.opacity=''; limpiaMarcasC();
+          if(marca==null) return;
+          var to=marca, from=idx;
+          var it=baseC.splice(from,1)[0];
+          if(to>from) to--;
+          baseC.splice(to,0,it);
+          tocadoC=true;
+          est.C.orden=baseC.slice(); est._dirty=true;
+          pintaC();
+        }
+        window.addEventListener('pointermove',mv);
+        window.addEventListener('pointerup',up);
+      };
+    }
+    pintaC();
+    if(tocadoC){
       var reset=document.createElement('button'); reset.type='button'; reset.textContent='Reiniciar orden';
       reset.style.cssText='margin-top:8px;background:none;border:1px solid #ffffff33;color:#c7bff0;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer';
       reset.onclick=function(){ est.C.orden=[]; est._dirty=true; montarTerminos(host, ej, est); }; sc.appendChild(reset);
@@ -10800,7 +10942,7 @@ function __grados_marker__(){}
       clearTimeout(bn._t); bn._t=setTimeout(()=>{ bn.style.opacity='0'; bn.style.top='74px'; }, 3200);
     }
     function pantallaFinal(){
-      bar.style.width='100%'; head.textContent=tituloFicha()+' · enviada';
+      bar.style.width='100%'; head.textContent=tituloFicha()+' · corregida';
       // puntuación: REAL para ejercicios interactivos; SIMULADA para los que aún no lo son
       let haySimulado=false;
       const scores=PP.ficha.map((item)=>{
@@ -10880,7 +11022,7 @@ function __grados_marker__(){}
         : 'background:linear-gradient(120deg,#ff5ccd,#a974ff);color:#2a0b2e';
       main.innerHTML='<div class="sim-card sim-enter" style="max-width:880px;width:100%;align-self:flex-start">'+
           '<div style="text-align:center;margin-bottom:8px">'+
-            '<div style="font-size:30px;font-weight:900;color:#f6f3ff">¡Ficha enviada! ✨</div>'+
+            '<div style="font-size:30px;font-weight:900;color:#f6f3ff">¡Ficha terminada! ✨</div>'+
             '<div style="margin-top:14px;display:inline-block;'+aproboBadge+';font-weight:900;font-size:20px;padding:12px 28px;border-radius:99px;box-shadow:0 12px 30px rgba(169,116,255,.4)">Puntuación: '+nota+' / 10 · '+media+'%</div>'+
             '<div style="margin-top:12px;color:#c7bff0;font-size:13.5px">Resumen de tus respuestas. Los ejercicios con menos del 50% tienen un enlace para practicar.</div>'+
             '<div style="margin-top:10px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:12.5px;font-weight:700">'+
@@ -10889,7 +11031,7 @@ function __grados_marker__(){}
               '<span style="color:#2f6df6">● la respuesta correcta</span>'+
             '</div>'+
             notaSimulada+
-            (esAlumno?'<div id="simEntregaEstado" style="margin-top:14px;font-size:13px;font-weight:700"></div>':'')+
+            (esAlumno?'<div id="simEntregaEstado" style="margin:16px auto 0;max-width:560px;font-size:14.5px;font-weight:800;padding:12px 20px;border-radius:14px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.18);color:#c7bff0"></div>'+'<button id="simReintentar" type="button" style="display:none;margin:10px auto 0;background:linear-gradient(90deg,#a974ff,#5bd0ff);color:#12082e;border:0;border-radius:10px;padding:10px 18px;font-weight:800;font-size:13.5px;cursor:pointer">↻ Reintentar envío</button>':'')+
           '</div>'+
           '<div style="margin-top:14px">'+cuerpo+'</div>'+
         '</div>';
@@ -10920,10 +11062,18 @@ function __grados_marker__(){}
       async function entregarAlProfesor(){
         const ctx=window.__SUITE_ALUMNO; if(!ctx) return;
         const est=main.querySelector('#simEntregaEstado');
-        const pinta=(txt,col)=>{ if(est){ est.textContent=txt; est.style.color=col||'#c7bff0'; } };
+        const btnRe=main.querySelector('#simReintentar');
+        // Iago 2026-07-02: el estado del envío ahora es un BANNER prominente
+        // (antes el título decía "¡Ficha enviada!" siempre y confundía). El
+        // color de fondo acompaña: gris=enviando, verde=OK, rosa=fallo.
+        const pinta=(txt,col,bg,bd)=>{ if(est){ est.textContent=txt; est.style.color=col||'#c7bff0';
+          est.style.background=bg||'rgba(255,255,255,.06)'; est.style.borderColor=bd||'rgba(255,255,255,.18)'; } };
+        const reintento=(on)=>{ if(!btnRe) return; btnRe.style.display=on?'block':'none';
+          if(on && !btnRe._wired){ btnRe._wired=true; btnRe.onclick=()=>{ btnRe.style.display='none'; entregarAlProfesor(); }; } };
+        reintento(false);
         pinta('Enviando tu nota a Iago…','#c7bff0');
         const sb=suiteSb();
-        if(!sb){ pinta('⚠ No pude enviar la nota (sin conexión). Tu ficha se ha corregido igualmente.','#ffb4c8'); return; }
+        if(!sb){ pinta('⚠ NO se pudo enviar la nota (sin conexión). Tu ficha está corregida, pero Iago AÚN NO la tiene.','#ffb4c8','rgba(255,92,128,.14)','rgba(255,92,128,.5)'); reintento(true); return; }
         const payload={
           origin:'teoria_at_home',
           ficha_id:ctx.ficha, numero:ctx.numero,
@@ -10939,7 +11089,7 @@ function __grados_marker__(){}
           });
           if(error) throw error;
           if(data && data.ok===false){ const c=data.error||'error'; throw new Error(c); }
-          pinta('✓ Nota enviada a Iago. Ya puedes cerrar.','#7ef0c0');
+          pinta('✓ Nota enviada a Iago. Ya puedes cerrar.','#7ef0c0','rgba(52,211,153,.16)','rgba(52,211,153,.55)');
           // FASE 6.7 · entrega completada → el progreso guardado ya no hace
           // falta (la campana del portal deja de avisar "ficha a medias").
           try{ progMarcarEntregada(ctx.cuenta, ctx.ficha); }catch(e){}
@@ -10949,8 +11099,15 @@ function __grados_marker__(){}
           const mp={ ya_entregada:'Esta ficha ya la habías entregado. No se ha vuelto a enviar.',
                      fuera_de_plazo:'El plazo venció; la nota puede no contar.',
                      no_validado:'Tu cuenta no está validada; la nota no se ha guardado.' };
-          pinta((mp[c]?('ⓘ '+mp[c]):('⚠ No pude enviar la nota ('+c+'). Habla con Iago.')),
-                (c==='ya_entregada'?'#c7bff0':'#ffb4c8'));
+          const esInfo=(c==='ya_entregada');
+          pinta((mp[c]?('ⓘ '+mp[c]):('⚠ NO se pudo enviar la nota ('+c+'). Tu ficha está corregida, pero Iago AÚN NO la tiene.')),
+                (esInfo?'#c7bff0':'#ffb4c8'),
+                (esInfo?'rgba(255,255,255,.06)':'rgba(255,92,128,.14)'),
+                (esInfo?'rgba(255,255,255,.18)':'rgba(255,92,128,.5)'));
+          console.warn('[ficha] suite_ficha_entregar falló:', c, e);
+          // Reintento solo para fallos recuperables (red/errores genéricos);
+          // ya_entregada/no_validado/fuera_de_plazo no cambian al reintentar.
+          if(!mp[c]) reintento(true);
           if(c==='ya_entregada'){ try{ progMarcarEntregada(ctx.cuenta, ctx.ficha); }catch(e2){} window.__SUITE_ALUMNO=null; }
         }
       }
@@ -12324,7 +12481,13 @@ function __grados_marker__(){}
            && (prog.total|0)===PP.ficha.length){
           prog.respuestas.forEach((r,k)=>{
             if(r && typeof r==='object' && PP.ficha[k]){
-              if('sel' in r) r.sel=null;   // deseleccionar al rehidratar (referencias rotas)
+              // BUG 2-jul (Iago): 'sel' solo es un PUNTERO de selección en
+              // escalas/grados (referencia a un objeto de seq que el JSON
+              // rompe) → ahí se anula al rehidratar. En ruedas/semitonos-id/
+              // vecinos 'sel' CONTIENE las respuestas y NO debe tocarse
+              // (antes se borraban: int_clasif volvía "en blanco").
+              const tipoInt = PP.ficha[k].ej && PP.ficha[k].ej._interactivo;
+              if((tipoInt==='escala' || tipoInt==='grado') && ('sel' in r)) r.sel=null;
               PP.ficha[k]._respuesta=r;
             }
           });
