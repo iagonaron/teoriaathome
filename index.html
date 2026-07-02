@@ -10125,6 +10125,70 @@ function __grados_marker__(){}
   }
 
   window.genTerminosData      = genTerminosData;
+  // Corrección DETALLADA para el resumen del alumno (Iago 2-jul: "quiero
+  // saber en qué me equivoqué"). Verde=acierto · rojo=tu fallo · azul=lo
+  // correcto. Sustituye a la lectura de solución genérica en la pantalla final.
+  function corregirTerminosResumen(host, ej, est){
+    if(!host||!ej||!ej._terminos) return false;
+    var D=ej._terminos, CATS=_cats();
+    var V='#4ade80', R='#ff8aa6', AZ='#8ab6ff', MUT='#c7bff0';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='max-width:760px;font-size:14px;line-height:1.9;color:#e9e5ff;margin-top:4px';
+    host.appendChild(wrap);
+    function fila(html){ var d=document.createElement('div'); d.style.margin='3px 0'; d.innerHTML=html; wrap.appendChild(d); }
+    function cab(t){ return '<b style="color:#ff9ad8">'+t+'</b> '; }
+    var e=function(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+
+    // ---- A · clasificar ----
+    var col=(est&&est.A&&est.A.col)||{};
+    var filasA=D.A.map(function(f){
+      var puso=col[f.term];
+      if(puso===f.cat){
+        return '<span style="color:'+V+'">✓ <b>'+e(f.term)+'</b> <span style="opacity:.85">('+e(CATS[f.cat].label)+')</span></span>';
+      }
+      var tuTxt = puso ? ('pusiste '+e(CATS[puso]?CATS[puso].label:puso)) : 'sin clasificar';
+      return '<span style="color:'+R+'">✗ <b>'+e(f.term)+'</b> <span style="opacity:.9">('+tuTxt+')</span></span>'
+           + ' <span style="color:'+MUT+'">→</span> <span style="color:'+AZ+';font-weight:800">'+e(CATS[f.cat].label)+'</span>';
+    });
+    fila(cab('A · Clasificar:')+filasA.join('<span style="color:#5e6a98"> · </span>'));
+
+    // ---- B · significado ----
+    var sel=(est&&est.B&&est.B.sel)||[];
+    D.B.forEach(function(q,i){
+      var j=sel[i];
+      var partes=q.ops.map(function(op,k){
+        var esCorr=(k===q.corr), esTuya=(j===k);
+        if(esCorr && esTuya) return '<span style="border:1.6px solid '+V+';border-radius:8px;padding:1px 9px;color:'+V+';font-weight:800">✓ '+e(op)+'</span>';
+        if(esCorr)           return '<span style="border:1.6px dashed '+AZ+';border-radius:8px;padding:1px 9px;color:'+AZ+';font-weight:800">'+e(op)+'</span>';
+        if(esTuya)           return '<span style="border:1.6px solid '+R+';border-radius:8px;padding:1px 9px;color:'+R+'">✗ '+e(op)+'</span>';
+        return '<span style="color:'+MUT+'">'+e(op)+'</span>';
+      });
+      var extra=(j==null)?' <span style="color:'+R+';font-size:12.5px">(sin responder)</span>':'';
+      fila(cab('B ·')+'<i style="color:#dbe7ff;font-weight:700">'+e(q.t)+'</i> — '+partes.join(' &nbsp; ')+extra);
+    });
+
+    // ---- C · orden de tempos ----
+    var orden=(est&&est.C&&est.C.orden)||[];
+    var corr=D.C.correcto||[];
+    if(!orden.length){
+      fila(cab('C · Orden:')+'<span style="color:'+R+'">✗ sin ordenar</span> <span style="color:'+MUT+'">→</span> '
+        + corr.map(function(t){ return '<span style="color:'+AZ+';font-weight:800">'+e(t)+'</span>'; }).join(' <span style="color:'+MUT+'">→</span> '));
+    } else {
+      var todoBien=true;
+      var tuyo=orden.map(function(t,p){
+        var ok=(corr[p]===t); if(!ok) todoBien=false;
+        return '<span style="color:'+(ok?V:R)+';font-weight:800">'+(ok?'✓':'✗')+' '+e(t)+'</span>';
+      }).join(' <span style="color:'+MUT+'">→</span> ');
+      fila(cab('C · Tu orden (lento → rápido):')+tuyo);
+      if(!todoBien){
+        fila('<span style="color:'+MUT+';font-size:12.5px">El orden correcto:</span> '
+          + corr.map(function(t){ return '<span style="color:'+AZ+';font-weight:800">'+e(t)+'</span>'; }).join(' <span style="color:'+MUT+'">→</span> '));
+      }
+    }
+    return true;
+  }
+  window.corregirTerminosResumen = corregirTerminosResumen;
+
   window.montarTerminos       = montarTerminos;
   window.comprobarTerminos    = comprobarTerminos;
   window.pintarTerminosLectura= pintarTerminosLectura;
@@ -11049,6 +11113,7 @@ function __grados_marker__(){}
           else if(it.ej._interactivo==='ruedas' && it.ej._solData){ hecho=corregirRuedas(hostEl, it.ej, it._respuesta||{}); }
           else if(it.ej._interactivo==='mixto' && it.ej._solData){ hecho=corregirMixto(hostEl, it.ej, it._respuesta||{}); }
           else if(it.ej._interactivo==='vecinos' && it.ej._vecinos){ hecho=corregirVecinos(hostEl, it.ej, it._respuesta||{}); }
+          else if(it.ej._interactivo==='terminos' && it.ej._terminos && typeof window.corregirTerminosResumen==='function'){ hecho=window.corregirTerminosResumen(hostEl, it.ej, it._respuesta||{}); }
         }catch(e){}
         if(!hecho){ try{ pintarBloque(hostEl, it.ej, 'sol'); }catch(e){} }
         try{ vigilarPentagramas(hostEl); }catch(e){}
@@ -11599,14 +11664,76 @@ function __grados_marker__(){}
     return true;
   }
 
+  // ACORDES: pentagrama del resumen re-renderizado coloreando POR NOTA
+  // (Iago 2-jul: los acordes bien construidos deben verse VERDES; antes se
+  // usaba el SVG de solución con rojo fijo). id: acorde dado en negro ·
+  // build: acorde con fundamental negra + cada nota del alumno verde/roja;
+  // si falta algo o hay fallos, al lado el acorde correcto completo en azul.
+  function acStaffCorr(host, ej, resp, VFx){
+    const d=ej._solData||[]; const n=d.length; if(!n) return false;
+    const wrap=document.createElement('div'); host.appendChild(wrap);
+    const W=Math.max(host.clientWidth||0, 700), H=150;
+    const r=new VFx.Renderer(wrap, VFx.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const GAP=26, x0=10, usable=W-20-GAP, wC=usable/n;
+    const rsp=(resp&&resp.resp)||[];
+    const midiDe=nb=>{ const B={C:0,D:2,E:4,F:5,G:7,A:9,B:11}; return (nb.octave+1)*12+B[nb.step]+(nb.alter||0); };
+    // acorde como UNA StaveNote con varias keys (ascendentes) y color por nota
+    const mkAcorde=(notas)=>{ // notas: [{nb, col}]
+      const orden=notas.slice().sort((a,b)=>midiDe(a.nb)-midiDe(b.nb));
+      const sn=new VFx.StaveNote({keys:orden.map(o=>nbKey(o.nb)),duration:'w',clef:'treble'});
+      orden.forEach((o,k)=>{
+        if(o.nb.alter) sn.addModifier(new VFx.Accidental(nbAcc(o.nb.alter)), k);
+        sn.setKeyStyle(k, {fillStyle:o.col, strokeStyle:o.col});
+      });
+      return sn;
+    };
+    for(let i=0;i<n;i++){
+      const sd=d[i];
+      const gx=x0+i*wC+(i>=2?GAP:0);
+      const stave=new VFx.Stave(gx,18,wC);
+      if(i===0) stave.addClef('treble');
+      if(i===1) stave.setEndBarType(VFx.Barline.type.DOUBLE);
+      if(i===2) stave.setBegBarType(VFx.Barline.type.DOUBLE);
+      if(i===n-1) stave.setEndBarType(VFx.Barline.type.DOUBLE);
+      stave.setContext(ctx).draw();
+      const tick=[];
+      if(sd.modo==='id'){
+        tick.push(mkAcorde((sd.notas||[]).map(nb=>({nb:nb, col:COR_NEG}))));
+      } else {
+        const arr=(rsp[i]||[]).filter(Boolean); const obj=sd.objetivo||[];
+        const usadas=[];
+        const notas=[{nb:sd.fund, col:COR_NEG}];
+        arr.forEach(u=>{ const k=obj.findIndex((o,oi)=>!usadas.includes(oi)&&o.step===u.step&&o.octave===u.octave&&(o.alter||0)===(u.alter||0));
+          if(k>=0) usadas.push(k);
+          notas.push({nb:u, col:(k>=0)?COR_OK:COR_BAD});
+        });
+        tick.push(mkAcorde(notas));
+        const completo = usadas.length===obj.length && arr.length===obj.length;
+        if(!completo){ // acorde correcto entero en azul al lado
+          tick.push(mkAcorde([{nb:sd.fund, col:COR_SOL}].concat(obj.map(o=>({nb:o, col:COR_SOL})))));
+        }
+      }
+      try{
+        const voice=new VFx.Voice({num_beats:tick.length*4,beat_value:4}).setStrict(false);
+        voice.addTickables(tick);
+        new VFx.Formatter().joinVoices([voice]).format([voice], wC-(i===0?44:24));
+        voice.draw(ctx, stave);
+      }catch(e){}
+    }
+    const svg=wrap.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.height='auto'; }
+    return true;
+  }
+
   function corregirMixto(host, ej, resp){
     host.innerHTML='';
     // Pentagrama superior: en SEMITONOS se re-renderiza coloreado por acierto;
     // en el resto (acordes) se usa el SVG de SOLUCIÓN; fallback al del alumno.
     let topHecho=false;
-    if(ej._mixto==='semitonos'){
+    {
       const VFm=(typeof VF!=='undefined')?VF:(window.Vex?window.Vex.Flow:null);
-      if(VFm){ try{ topHecho=semStaffCorr(host, ej, resp, VFm); }catch(e){ topHecho=false; } }
+      if(VFm && ej._mixto==='semitonos'){ try{ topHecho=semStaffCorr(host, ej, resp, VFm); }catch(e){ topHecho=false; } }
+      else if(VFm && ej._mixto==='acordes'){ try{ topHecho=acStaffCorr(host, ej, resp, VFm); }catch(e){ topHecho=false; } }
     }
     if(!topHecho){
       const _topSvg = (ej._solSvg && ej._solSvg.trim()) ? ej._solSvg : ((ej.render && ej.render.svg) || '');
