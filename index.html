@@ -10638,6 +10638,16 @@ function __grados_marker__(){}
   function previsualizarAlumno(){
     if(!PP.ficha || !PP.ficha.length){ if(!generarFicha()) return; }
     const n=PP.ficha.length; let i=0; let enviado=false;
+    // FASE 6.7 · puntos de guardado (solo modo alumno; el profe nunca guarda)
+    const esAlumnoProg = !!window.__SUITE_ALUMNO;
+    let maxAvance=0;           // ejercicios COMPLETADOS (índice máximo alcanzado)
+    let reanudado=null;
+    if(esAlumnoProg && window.__SUITE_REANUDAR){
+      const r=window.__SUITE_REANUDAR; window.__SUITE_REANUDAR=null;
+      i=Math.min(Math.max(r.i|0,0), n-1);
+      maxAvance=Math.max(i, Math.min(r.hechos|0, n));
+      reanudado={ i:i, hechos:maxAvance };
+    }
     const ov=document.createElement('div'); ov.id='ppAlumnoSim';
     ov.style.cssText='position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#241a52 0%,#180f3c 38%,#0e0a2c 72%,#080518 100%);display:flex;flex-direction:column;font-family:\'Helvetica Neue\',Arial,sans-serif;overflow:hidden';
     document.body.appendChild(ov);
@@ -10660,7 +10670,12 @@ function __grados_marker__(){}
       '<div id="simMain" style="position:relative;z-index:2;flex:1;overflow:auto;display:flex;justify-content:center;padding:20px"></div>'+
       '<div id="simFoot" style="position:relative;z-index:2;padding:14px 22px;display:flex;justify-content:space-between;gap:12px"></div>';
     const main=ov.querySelector('#simMain'), foot=ov.querySelector('#simFoot'), bar=ov.querySelector('#simBar'), head=ov.querySelector('#simHead');
-    ov.querySelector('#simSalir').onclick=cerrar;
+    // FASE 6.7 · "✕ Salir" a mitad de ficha: guarda el punto actual antes de
+    // cerrar (el alumno podrá CONTINUAR desde la campana del portal).
+    ov.querySelector('#simSalir').onclick=()=>{
+      if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e){} }
+      cerrar();
+    };
     const btn=(id,txt,primary)=> '<button id="'+id+'" class="'+(primary?'sim-btn-primary':'sim-btn-ghost')+'">'+txt+'</button>';
 
     // --- sonido de refuerzo positivo (WebAudio, sin ficheros) ---
@@ -10755,14 +10770,22 @@ function __grados_marker__(){}
       const liveBtn=main.querySelector('.simPracticaLive');
       if(liveBtn){ liveBtn.onclick=()=>{ modalPracticar(liveBtn.dataset.key); }; }
       foot.innerHTML = btn('simPrev','‹ Anterior') + btn('simNext', i===n-1?'Enviar y ver puntuación ✓':'Siguiente ›', true);
-      const p=ov.querySelector('#simPrev'); p.style.visibility=(i===0?'hidden':'visible'); p.onclick=()=>{ if(i>0){ i--; mostrar(); } };
+      const p=ov.querySelector('#simPrev'); p.style.visibility=(i===0?'hidden':'visible'); p.onclick=()=>{ if(i>0){ i--; if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e){} } mostrar(); } };
       ov.querySelector('#simNext').onclick=()=>{
         // grados: obliga a señalar el grado antes de pasar/enviar
         if(item.ej._interactivo==='grado'){
           const marcado = item._respuesta && item._respuesta.marca!=null;
           if(!marcado){ mostrarBannerSim('Tienes que señalar el grado: toca la nota que crees que es la respuesta para rodearla.'); return; }
         }
-        if(i<n-1){ i++; try{ sonidoAvance(); }catch(e){} mostrar(); } else { enviado=true; try{ sonidoFinal(); }catch(e){} pantallaFinal(); }
+        if(i<n-1){
+          i++;
+          if(i>maxAvance) maxAvance=i;
+          try{ sonidoAvance(); }catch(e){}
+          // FASE 6.7 · PUNTO DE GUARDADO: al pasar de ejercicio se persiste
+          // el progreso (respuestas + posición). Fire-and-forget.
+          if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e){} }
+          mostrar();
+        } else { enviado=true; try{ sonidoFinal(); }catch(e){} pantallaFinal(); }
       };
       main.scrollTop=0;
     }
@@ -10917,6 +10940,9 @@ function __grados_marker__(){}
           if(error) throw error;
           if(data && data.ok===false){ const c=data.error||'error'; throw new Error(c); }
           pinta('✓ Nota enviada a Iago. Ya puedes cerrar.','#7ef0c0');
+          // FASE 6.7 · entrega completada → el progreso guardado ya no hace
+          // falta (la campana del portal deja de avisar "ficha a medias").
+          try{ progBorrar(ctx.cuenta, ctx.ficha); }catch(e){}
           window.__SUITE_ALUMNO=null;   // evita doble envío si re-renderiza
         }catch(e){
           const c=(e&&e.message)||'red';
@@ -10925,15 +10951,20 @@ function __grados_marker__(){}
                      no_validado:'Tu cuenta no está validada; la nota no se ha guardado.' };
           pinta((mp[c]?('ⓘ '+mp[c]):('⚠ No pude enviar la nota ('+c+'). Habla con Iago.')),
                 (c==='ya_entregada'?'#c7bff0':'#ffb4c8'));
-          if(c==='ya_entregada') window.__SUITE_ALUMNO=null;
+          if(c==='ya_entregada'){ try{ progBorrar(ctx.cuenta, ctx.ficha); }catch(e2){} window.__SUITE_ALUMNO=null; }
         }
       }
     }
-    const onKey=(e)=>{ if(e.key==='Escape') cerrar();
-      else if(!enviado && e.key==='ArrowRight'){ if(i<n-1){ const it=PP.ficha[i]; if(it.ej._interactivo==='grado' && !(it._respuesta && it._respuesta.marca!=null)){ mostrarBannerSim('Tienes que señalar el grado: toca la nota que crees que es la respuesta para rodearla.'); return; } i++; mostrar(); } }
-      else if(!enviado && e.key==='ArrowLeft'){ if(i>0){i--;mostrar();} } };
+    const onKey=(e)=>{ if(e.key==='Escape'){ if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e2){} } cerrar(); }
+      else if(!enviado && e.key==='ArrowRight'){ if(i<n-1){ const it=PP.ficha[i]; if(it.ej._interactivo==='grado' && !(it._respuesta && it._respuesta.marca!=null)){ mostrarBannerSim('Tienes que señalar el grado: toca la nota que crees que es la respuesta para rodearla.'); return; } i++; if(i>maxAvance) maxAvance=i; if(esAlumnoProg){ try{ progGuardar(i, maxAvance); }catch(e2){} } mostrar(); } }
+      else if(!enviado && e.key==='ArrowLeft'){ if(i>0){ i--; if(esAlumnoProg){ try{ progGuardar(i, maxAvance); }catch(e2){} } mostrar(); } } };
     document.addEventListener('keydown',onKey);
     mostrar();
+    // FASE 6.7 · aviso de reanudación: el alumno ve claramente que su
+    // progreso se ha recuperado y en qué ejercicio estaba.
+    if(reanudado){
+      setTimeout(()=>{ try{ mostrarBannerSim('He recuperado tu progreso ✨ Sigues en el ejercicio '+(reanudado.i+1)+' de '+n+'.'); }catch(e){} }, 450);
+    }
   }
 
   /* ============================================================
@@ -11982,6 +12013,91 @@ function __grados_marker__(){}
     return null;
   }
 
+  /* ============================================================
+     FASE 6.7 · GUARDADO A MITAD DE FICHA + REANUDAR
+     ------------------------------------------------------------
+     El alumno puede salir a mitad de ficha: el progreso se guarda
+     en cada PUNTO DE GUARDADO (al pasar de un ejercicio a otro).
+     Como mucho se pierde el ejercicio en curso si se apaga el equipo.
+
+     Persistencia doble:
+       · Supabase: tabla suite_ficha_progreso (cuenta+ficha) vía RPCs
+         suite_ficha_progreso_guardar / _leer / _borrar (+ _pendientes
+         para la campana del portal). SQL en suite_ficha_progreso.sql.
+       · localStorage (espejo sincrónico, mismo origen que el portal
+         iagonaron.github.io): fallback si la red falla y vía rápida
+         para que el portal pinte "ficha a medias" al instante.
+     Al reanudar gana el más reciente (campo t / actualizado_en).
+     El progreso se BORRA cuando la entrega llega bien al Diario
+     (o si el backend dice ya_entregada).
+     Solo aplica al modo ALUMNO (window.__SUITE_ALUMNO); la
+     previsualización del profesor nunca guarda nada.
+     ============================================================ */
+  function progClaveLS(cuenta, ficha){ return 'suite_ficha_prog_'+cuenta+'_'+ficha; }
+
+  // Serializa PP.ficha[k]._respuesta a JSON plano y seguro:
+  // fuera funciones y nodos DOM (por si algún motor cuela referencias).
+  function progSanitizarRespuestas(){
+    return (PP.ficha||[]).map(it=>{
+      if(!it || !it._respuesta) return null;
+      try{
+        return JSON.parse(JSON.stringify(it._respuesta, (k,v)=>{
+          if(typeof v==='function') return undefined;
+          if(v && typeof v==='object' && v.nodeType!=null) return undefined;
+          return v;
+        }));
+      }catch(e){ return null; }
+    });
+  }
+
+  // Guarda un punto de control. Fire-and-forget: nunca bloquea la navegación.
+  function progGuardar(iActual, hechos){
+    const ctx=window.__SUITE_ALUMNO; if(!ctx) return;
+    const total=(PP.ficha||[]).length;
+    const respuestas=progSanitizarRespuestas();
+    const pack={ i:iActual|0, hechos:hechos|0, total:total, respuestas:respuestas, t:Date.now() };
+    try{ localStorage.setItem(progClaveLS(ctx.cuenta, ctx.ficha), JSON.stringify(pack)); }catch(e){}
+    const sb=suiteSb(); if(!sb) return;
+    try{
+      sb.rpc('suite_ficha_progreso_guardar', {
+        p_cuenta_id:ctx.cuenta, p_ficha_id:ctx.ficha,
+        p_ejercicio_actual:iActual|0, p_hechos:hechos|0, p_total:total,
+        p_respuestas:respuestas
+      }).then(r=>{ if(r && r.error) console.warn('[progreso] guardar:', r.error.message); })
+        .catch(e=>console.warn('[progreso] guardar:', e));
+    }catch(e){ console.warn('[progreso] guardar:', e); }
+  }
+
+  // Lee el progreso guardado (Supabase + localStorage; gana el más reciente).
+  async function progLeer(cuenta, ficha){
+    let remoto=null;
+    try{
+      const sb=suiteSb();
+      if(sb){
+        const { data, error } = await sb.rpc('suite_ficha_progreso_leer', { p_cuenta_id:cuenta, p_ficha_id:ficha });
+        if(!error && data && data.ok && data.progreso){
+          const p=data.progreso;
+          remoto={ i:p.ejercicio_actual|0, hechos:p.hechos|0, total:p.total|0,
+                   respuestas:p.respuestas||null, t:Date.parse(p.actualizado_en)||0 };
+        }
+      }
+    }catch(e){ console.warn('[progreso] leer:', e); }
+    let local=null;
+    try{ local=JSON.parse(localStorage.getItem(progClaveLS(cuenta,ficha))||'null'); }catch(e){}
+    if(remoto && local) return ((local.t||0) > (remoto.t||0)) ? local : remoto;
+    return remoto || local || null;
+  }
+
+  // Borra el progreso (entrega completada o ya_entregada).
+  function progBorrar(cuenta, ficha){
+    try{ localStorage.removeItem(progClaveLS(cuenta,ficha)); }catch(e){}
+    try{
+      const sb=suiteSb();
+      if(sb) sb.rpc('suite_ficha_progreso_borrar',{p_cuenta_id:cuenta,p_ficha_id:ficha})
+               .catch(e=>console.warn('[progreso] borrar:', e));
+    }catch(e){}
+  }
+
   /* FASE 6.1c · Envío REAL a alumnos.
      - Con token (llegaste desde el botón del Diario): materializa los ejercicios
        y llama a suite_ficha_enviar_con_token(token, payload) -> activa la ficha y
@@ -12190,6 +12306,28 @@ function __grados_marker__(){}
       // contexto de entrega para el final del motor
       window.__SUITE_ALUMNO={ cuenta:cuenta, ficha:fichaId, numero:(pack.numero!=null?pack.numero:(numFallback||null)) };
       PP.ficha=pack.ejercicios.map(e=>({ n:e.n, key:e.key, label:e.label, ej:rehidratarEj(e) }));
+      // FASE 6.7 · REANUDAR: si hay progreso guardado de ESTA ficha, se
+      // rehidratan las respuestas y se arranca en el ejercicio donde iba.
+      window.__SUITE_REANUDAR=null;
+      try{
+        msg('Buscando progreso guardado…');
+        const prog=await progLeer(cuenta, fichaId);
+        if(prog && (prog.hechos|0)>0 && Array.isArray(prog.respuestas)
+           && (prog.total|0)===PP.ficha.length){
+          prog.respuestas.forEach((r,k)=>{
+            if(r && typeof r==='object' && PP.ficha[k]){
+              if('sel' in r) r.sel=null;   // deseleccionar al rehidratar (referencias rotas)
+              PP.ficha[k]._respuesta=r;
+            }
+          });
+          window.__SUITE_REANUDAR={
+            i: Math.min(Math.max(prog.i|0,0), PP.ficha.length-1),
+            hechos: Math.min(Math.max(prog.hechos|0,0), PP.ficha.length)
+          };
+          console.log('[progreso] reanudando en ejercicio '+(window.__SUITE_REANUDAR.i+1)+
+                      ' · '+window.__SUITE_REANUDAR.hechos+'/'+PP.ficha.length+' hechos');
+        }
+      }catch(e){ console.warn('[progreso] no se pudo reanudar:', e); window.__SUITE_REANUDAR=null; }
       // Lanzar el MOTOR. Se hace ANTES de quitar el overlay de carga: si peta,
       // el error se muestra sobre un nodo aún visible (no sobre la landing muda).
       previsualizarAlumno();
