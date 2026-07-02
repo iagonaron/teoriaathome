@@ -10942,7 +10942,7 @@ function __grados_marker__(){}
           pinta('✓ Nota enviada a Iago. Ya puedes cerrar.','#7ef0c0');
           // FASE 6.7 · entrega completada → el progreso guardado ya no hace
           // falta (la campana del portal deja de avisar "ficha a medias").
-          try{ progBorrar(ctx.cuenta, ctx.ficha); }catch(e){}
+          try{ progMarcarEntregada(ctx.cuenta, ctx.ficha); }catch(e){}
           window.__SUITE_ALUMNO=null;   // evita doble envío si re-renderiza
         }catch(e){
           const c=(e&&e.message)||'red';
@@ -10951,7 +10951,7 @@ function __grados_marker__(){}
                      no_validado:'Tu cuenta no está validada; la nota no se ha guardado.' };
           pinta((mp[c]?('ⓘ '+mp[c]):('⚠ No pude enviar la nota ('+c+'). Habla con Iago.')),
                 (c==='ya_entregada'?'#c7bff0':'#ffb4c8'));
-          if(c==='ya_entregada'){ try{ progBorrar(ctx.cuenta, ctx.ficha); }catch(e2){} window.__SUITE_ALUMNO=null; }
+          if(c==='ya_entregada'){ try{ progMarcarEntregada(ctx.cuenta, ctx.ficha); }catch(e2){} window.__SUITE_ALUMNO=null; }
         }
       }
     }
@@ -12096,6 +12096,14 @@ function __grados_marker__(){}
       if(sb) sb.rpc('suite_ficha_progreso_borrar',{p_cuenta_id:cuenta,p_ficha_id:ficha})
                .catch(e=>console.warn('[progreso] borrar:', e));
     }catch(e){}
+  }
+
+  // FASE 6.9 · Marca la ficha como ENTREGADA en localStorage (mismo origen
+  // que el portal): la campana la pinta al instante en gris con ✓ verde,
+  // sin esperar a la RPC suite_fichas_entregadas. También borra el progreso.
+  function progMarcarEntregada(cuenta, ficha){
+    try{ localStorage.setItem('suite_ficha_hecha_'+cuenta+'_'+ficha, String(Date.now())); }catch(e){}
+    progBorrar(cuenta, ficha);
   }
 
   /* FASE 6.1c · Envío REAL a alumnos.
