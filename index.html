@@ -11217,7 +11217,7 @@ function __grados_marker__(){}
     host.appendChild(acc);
     document.getElementById('ppPreviewAlumno').onclick=()=>{ asegurarFicha() && previsualizarAlumno(); };
     document.getElementById('ppPDF').onclick=()=>{ asegurarFicha() && elegirTipoYGenerarPDF(); };
-    document.getElementById('ppEnviar').onclick=()=>{ asegurarFicha() && abrirEnvio(); };
+    document.getElementById('ppEnviar').onclick=()=>{ asegurarFicha() && preguntarPDFYEnviar(); };
     document.getElementById('ppToggleSol').onclick=()=>{
       PP.mostrarSol=!PP.mostrarSol;
       document.getElementById('ppExList').classList.toggle('pp-hide-sol',!PP.mostrarSol);
@@ -12057,6 +12057,33 @@ function __grados_marker__(){}
   }
   /* Pantalla de selección de tipo de ficha antes de generar el PDF.
      Semanal por defecto (lleva la fecha); 5 exámenes con título fijo. */
+  /* Iago 2-jul · antes de preparar el envío, ofrecer guardar el PDF
+     (alumno + solución) en el ordenador — para no olvidarse de tener la
+     copia física. «Sí» reutiliza el flujo normal del PDF (tipo + nº) y,
+     al terminar de descargar, sigue solo hacia el envío. */
+  function preguntarPDFYEnviar(){
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(10,16,32,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    const card=document.createElement('div');
+    card.style.cssText='background:#fff;border-radius:18px;max-width:430px;width:100%;padding:26px 28px;box-shadow:0 24px 70px #00000050';
+    card.innerHTML=
+      '<div style="font-size:18px;font-weight:800;color:#16203a;margin-bottom:6px">¿Quieres además generar el PDF?</div>'+
+      '<div style="font-size:13.5px;color:#8a93a8;margin-bottom:18px;line-height:1.5">Se descargan la ficha del alumno y la solución (ZIP), para guardarlas en tu ordenador. Después se continúa con el envío a los alumnos.</div>'+
+      '<div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">'+
+      '<button id="pqNo" style="border:0;background:#eef1f7;color:#16203a;border-radius:9px;padding:11px 16px;font-weight:700;cursor:pointer">No, solo enviar</button>'+
+      '<button id="pqSi" style="border:0;background:#1f6df6;color:#fff;border-radius:9px;padding:11px 18px;font-weight:700;cursor:pointer">Sí, generar PDF y seguir</button>'+
+      '</div>';
+    ov.appendChild(card); document.body.appendChild(ov);
+    const cerrar=()=>{ try{ document.body.removeChild(ov); }catch(e){} };
+    ov.addEventListener('click',(e)=>{ if(e.target===ov) cerrar(); });
+    card.querySelector('#pqNo').onclick=()=>{ cerrar(); abrirEnvio(); };
+    card.querySelector('#pqSi').onclick=()=>{
+      cerrar();
+      window.__PDF_LUEGO_ENVIO=true;            // generarPDF() sigue al envío al acabar
+      elegirTipoYGenerarPDF();                  // mismo flujo de siempre (tipo + nº)
+    };
+  }
+
   function elegirTipoYGenerarPDF(){
     const ov=document.createElement('div');
     ov.style.cssText='position:fixed;inset:0;background:rgba(10,16,32,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
@@ -12090,7 +12117,7 @@ function __grados_marker__(){}
       const warn=card.querySelector('#tfWarn'); if(warn) warn.textContent='';
     }
     card.querySelectorAll('input[name=tipoFicha]').forEach(r=>r.onchange=pinta); pinta();
-    const cerrar=()=>{ try{ document.body.removeChild(ov); }catch(e){} };
+    const cerrar=()=>{ try{ document.body.removeChild(ov); }catch(e){} window.__PDF_LUEGO_ENVIO=false; };
     card.querySelector('#tfCancel').onclick=cerrar;
     ov.addEventListener('click',(e)=>{ if(e.target===ov) cerrar(); });
     card.querySelector('#tfOk').onclick=()=>{
@@ -12105,7 +12132,7 @@ function __grados_marker__(){}
       }
       PP.tipoFicha = tipo;
       window.__FICHA_NUMERO = (tipo==='semanal') ? nv : null;   // el Nº solo aplica a la semanal
-      cerrar(); generarPDF();
+      const seguir=window.__PDF_LUEGO_ENVIO; cerrar(); window.__PDF_LUEGO_ENVIO=seguir; generarPDF();
     };
   }
 
@@ -12126,6 +12153,7 @@ function __grados_marker__(){}
       }
     }catch(e){ console.warn(e); alert('Error generando el PDF.'); }
     if(btn){ btn.disabled=false; btn.textContent=prev; }
+    if(window.__PDF_LUEGO_ENVIO){ window.__PDF_LUEGO_ENVIO=false; try{ abrirEnvio(); }catch(e){ console.warn(e); } }
   }
 
   /* PDF en DOS CARILLAS (un folio). Hasta 10 ejercicios (a veces menos).
