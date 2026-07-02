@@ -11048,6 +11048,7 @@ function __grados_marker__(){}
           else if(it.ej._interactivo==='grado' && it.ej._spec){ hecho=corregirGrado(hostEl, it.ej, it._respuesta||{}); }
           else if(it.ej._interactivo==='ruedas' && it.ej._solData){ hecho=corregirRuedas(hostEl, it.ej, it._respuesta||{}); }
           else if(it.ej._interactivo==='mixto' && it.ej._solData){ hecho=corregirMixto(hostEl, it.ej, it._respuesta||{}); }
+          else if(it.ej._interactivo==='vecinos' && it.ej._vecinos){ hecho=corregirVecinos(hostEl, it.ej, it._respuesta||{}); }
         }catch(e){}
         if(!hecho){ try{ pintarBloque(hostEl, it.ej, 'sol'); }catch(e){} }
         try{ vigilarPentagramas(hostEl); }catch(e){}
@@ -11208,16 +11209,25 @@ function __grados_marker__(){}
       const tick=[];
       // 1) nota dada (negro)
       { const sn=new VFx.StaveNote({keys:[nbKey(sd.dada)],duration:'w',clef:'treble'}); if(sd.dada.alter) sn.addModifier(new VFx.Accidental(nbAcc(sd.dada.alter)),0); sn.setStyle({fillStyle:COR_NEG,strokeStyle:COR_NEG}); tick.push(sn); }
-      // 2) respuestas del alumno: verde si es una enarmonía correcta, rojo si no
+      // 2+3) respuestas del alumno (verde/rojo) con su correcta AZUL PEGADA A LA
+      // IZQUIERDA de cada roja (Iago 2-jul: "la correcta pegada al fallo, a la
+      // izquierda porque es más grave"). Las correctas sobrantes (respuestas
+      // en blanco) se añaden al final.
       const correctasUsadas=[];
-      arr.forEach(u=>{ if(!u) return; const okIdx=sd.sols.findIndex((s,si)=>mismaNota(s,u)&&!correctasUsadas.includes(si));
-        const col = okIdx>=0?COR_OK:COR_BAD; if(okIdx>=0) correctasUsadas.push(okIdx);
-        const sn=new VFx.StaveNote({keys:[nbKey(u)],duration:'w',clef:'treble'}); if(u.alter) sn.addModifier(new VFx.Accidental(nbAcc(u.alter)),0); sn.setStyle({fillStyle:col,strokeStyle:col}); tick.push(sn);
+      const items=arr.filter(Boolean).map(u=>{ const okIdx=sd.sols.findIndex((s,si)=>mismaNota(s,u)&&!correctasUsadas.includes(si));
+        if(okIdx>=0) correctasUsadas.push(okIdx);
+        return { u:u, ok:okIdx>=0 }; });
+      const pendientes=sd.sols.map((s,si)=>({s:s,si:si}))
+        .filter(o=>!correctasUsadas.includes(o.si) && !arr.some(u=>u&&mismaNota(u,o.s)));
+      const mkNota=(nb,col)=>{ const sn=new VFx.StaveNote({keys:[nbKey(nb)],duration:'w',clef:'treble'});
+        if(nb.alter) sn.addModifier(new VFx.Accidental(nbAcc(nb.alter)),0);
+        sn.setStyle({fillStyle:col,strokeStyle:col}); return sn; };
+      let pi=0;
+      items.forEach(it=>{
+        if(!it.ok && pi<pendientes.length){ tick.push(mkNota(pendientes[pi].s, COR_SOL)); pi++; }  // azul a la izquierda
+        tick.push(mkNota(it.u, it.ok?COR_OK:COR_BAD));
       });
-      // 3) correctas que el alumno NO puso (azul)
-      sd.sols.forEach((s,si)=>{ if(correctasUsadas.includes(si)) return; if(arr.some(u=>mismaNota(u,s))) return;
-        const sn=new VFx.StaveNote({keys:[nbKey(s)],duration:'w',clef:'treble'}); if(s.alter) sn.addModifier(new VFx.Accidental(nbAcc(s.alter)),0); sn.setStyle({fillStyle:COR_SOL,strokeStyle:COR_SOL}); tick.push(sn);
-      });
+      for(; pi<pendientes.length; pi++) tick.push(mkNota(pendientes[pi].s, COR_SOL));
       try{ const voice=new VFx.Voice({num_beats:tick.length*4,beat_value:4}).setStrict(false); voice.addTickables(tick);
         new VFx.Formatter().joinVoices([voice]).format([voice], wC-(i===0?40:20)); voice.draw(ctx, stave);
       }catch(e){}
@@ -11504,12 +11514,104 @@ function __grados_marker__(){}
   }
 
   // CORRECCIÓN de mixtos (semitonos / acordes): SVG del enunciado + filas de feedback
+  // Tonos vecinos: corrección visual (verde=acierto / rojo=fallo con la
+  // correcta en azul debajo / azul si en blanco). Iago 2-jul: antes caía a
+  // pintarBloque y mostraba la solución en rojo aunque hubiera 100%.
+  function corregirVecinos(host, ej, estado){
+    if(!host||!ej||!ej._vecinos) return false;
+    const {sol, given}=ej._vecinos;
+    const MAPV={Do:'C',Re:'D',Mi:'E',Fa:'F',Sol:'G',La:'A',Si:'B'};
+    const grid=document.createElement('div');
+    grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:560px;margin-top:4px';
+    for(let k=0;k<6;k++){
+      const cell=document.createElement('div');
+      cell.style.cssText='border:1.5px solid #33406b;border-radius:10px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-weight:800;font-size:15px;padding:6px;text-align:center';
+      if(k===given){ cell.textContent=nombreTon(sol[k]); cell.style.background='#eef2fb'; cell.style.color='#16203a'; grid.appendChild(cell); continue; }
+      const want=sol[k]; const got=(estado&&estado.sel&&estado.sel[k])||{};
+      const stepG=got.nota?MAPV[got.nota]:null; const altG=got.alt==='#'?1:got.alt==='b'?-1:0;
+      const stepW=MAPV[want.nota]; const altW=want.alt==='#'?1:want.alt==='b'?-1:0;
+      const ok=(stepG===stepW && altG===altW && got.modo===want.modo);
+      const gotTxt=got.nota?(got.nota+(got.alt==='#'?'♯':got.alt==='b'?'♭':'')+(got.modo?' '+got.modo:' …')):null;
+      if(ok){
+        cell.style.borderColor='#4ade80';
+        const s=document.createElement('span'); s.style.color='#4ade80'; s.textContent=gotTxt; cell.appendChild(s);
+      } else if(gotTxt){
+        cell.style.borderColor='#ff8aa6';
+        const a=document.createElement('span'); a.style.color='#ff8aa6'; a.textContent=gotTxt; cell.appendChild(a);
+        const b=document.createElement('span'); b.style.color='#8ab6ff'; b.textContent=nombreTon(want); cell.appendChild(b);
+      } else {
+        const b=document.createElement('span'); b.style.color='#8ab6ff'; b.textContent=nombreTon(want); cell.appendChild(b);
+      }
+      grid.appendChild(cell);
+    }
+    host.appendChild(grid);
+    return true;
+  }
+
+  // SEMITONOS: pentagrama del resumen re-renderizado con VexFlow coloreando
+  // por acierto (Iago 2-jul: las notas bien construidas deben verse VERDES;
+  // antes se usaba el SVG de solución con las notas en rojo fijo).
+  // id: las dos notas en negro · build: dada negra + tu nota verde/roja
+  // (+ la correcta en azul si fallo o en blanco).
+  function semStaffCorr(host, ej, resp, VFx){
+    const d=ej._solData||[]; const n=d.length; if(!n) return false;
+    const wrap=document.createElement('div'); host.appendChild(wrap);
+    const W=Math.max(host.clientWidth||0, 700), H=150;
+    const r=new VFx.Renderer(wrap, VFx.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const GAP=26, x0=10, usable=W-20-GAP, wC=usable/n;
+    const rsp=(resp&&resp.resp)||[];
+    const mk=(nb,col,needNat)=>{ const sn=new VFx.StaveNote({keys:[nbKey(nb)],duration:'w',clef:'treble'});
+      if(nb.alter) sn.addModifier(new VFx.Accidental(nbAcc(nb.alter)),0);
+      else if(needNat) sn.addModifier(new VFx.Accidental('n'),0);
+      sn.setStyle({fillStyle:col,strokeStyle:col}); return sn; };
+    for(let i=0;i<n;i++){
+      const sd=d[i];
+      const gx=x0+i*wC+(i>=2?GAP:0);
+      const stave=new VFx.Stave(gx,18,wC);
+      if(i===0) stave.addClef('treble');
+      if(i===1) stave.setEndBarType(VFx.Barline.type.DOUBLE);
+      if(i===2) stave.setBegBarType(VFx.Barline.type.DOUBLE);
+      if(i===n-1) stave.setEndBarType(VFx.Barline.type.DOUBLE);
+      stave.setContext(ctx).draw();
+      const tick=[];
+      if(sd.modo==='id'){
+        const needNat=((sd.n2.alter||0)===0 && sd.n1.step===sd.n2.step && sd.n1.octave===sd.n2.octave && (sd.n1.alter||0)!==0);
+        tick.push(mk(sd.n1, COR_NEG, false));
+        tick.push(mk(sd.n2, COR_NEG, needNat));
+      } else {
+        tick.push(mk(sd.dada, COR_NEG, false));
+        const u=rsp[i]; const corr=sd.objetivo;
+        const okB = !!(u && u.step===corr.step && u.octave===corr.octave && (u.alter||0)===(corr.alter||0));
+        const natU = !!(u && (u.alter||0)===0 && sd.dada.step===u.step && sd.dada.octave===u.octave && (sd.dada.alter||0)!==0);
+        const natC = ((corr.alter||0)===0 && sd.dada.step===corr.step && sd.dada.octave===corr.octave && (sd.dada.alter||0)!==0);
+        if(u) tick.push(mk(u, okB?COR_OK:COR_BAD, natU));
+        if(!okB) tick.push(mk(corr, COR_SOL, natC));
+      }
+      try{
+        const voice=new VFx.Voice({num_beats:tick.length*4,beat_value:4}).setStrict(false);
+        voice.addTickables(tick);
+        new VFx.Formatter().joinVoices([voice]).format([voice], wC-(i===0?44:24));
+        voice.draw(ctx, stave);
+      }catch(e){}
+    }
+    const svg=wrap.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.height='auto'; }
+    return true;
+  }
+
   function corregirMixto(host, ej, resp){
     host.innerHTML='';
-    // Pentagrama superior: preferir el SVG de SOLUCIÓN (trae dibujadas las notas
-    // de los compases a construir, coloreadas); si no lo hubiera, cae al del alumno.
-    const _topSvg = (ej._solSvg && ej._solSvg.trim()) ? ej._solSvg : ((ej.render && ej.render.svg) || '');
-    if(_topSvg){ const sc=document.createElement('div'); sc.innerHTML=_topSvg; const svg=sc.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.height='auto'; } host.appendChild(sc); }
+    // Pentagrama superior: en SEMITONOS se re-renderiza coloreado por acierto;
+    // en el resto (acordes) se usa el SVG de SOLUCIÓN; fallback al del alumno.
+    let topHecho=false;
+    if(ej._mixto==='semitonos'){
+      const VFm=(typeof VF!=='undefined')?VF:(window.Vex?window.Vex.Flow:null);
+      if(VFm){ try{ topHecho=semStaffCorr(host, ej, resp, VFm); }catch(e){ topHecho=false; } }
+    }
+    if(!topHecho){
+      const _topSvg = (ej._solSvg && ej._solSvg.trim()) ? ej._solSvg : ((ej.render && ej.render.svg) || '');
+      if(_topSvg){ const sc=document.createElement('div'); sc.innerHTML=_topSvg; const svg=sc.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.height='auto'; } host.appendChild(sc); }
+    }
     const d=ej._solData||[]; const ES={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
     const nN=nb=>nb? (ES[nb.step]+(nb.alter===1?'♯':nb.alter===-1?'♭':nb.alter===2?'𝄪':nb.alter===-2?'𝄫':'')) : '';
     const ul=document.createElement('div'); ul.style.cssText='margin-top:10px;font-size:14px;line-height:1.6';
