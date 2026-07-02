@@ -12552,7 +12552,7 @@ function __grados_marker__(){}
     modalShell(
       '<h3>Preparar envío a alumnos</h3>'+
       '<div class="mc-sub">Se enviará a los grupos que fijaste en el Diario. Los alumnos la '+
-      'verán el <b>lunes de activación</b> (no antes).</div>'+
+      'verán el <b>viernes a las 19:00</b>, con el resto de tareas de la semana (no antes).</div>'+
       '<div class="pp-summary">'+cab+' · <b>'+payload.ejercicios.length+'</b> ejercicios</div>'+
       '<div class="mc-err" id="ppEnvErr"></div>'+
       '<div class="mc-row">'+
@@ -12578,7 +12578,7 @@ function __grados_marker__(){}
         }
         window.__SUITE_ENVIO_TOKEN=null;   // consumido: un solo uso
         cerrarModal();
-        alert('\u2713 Ficha '+data.numero+' enviada.\nAlumnos notificados: '+data.notificados+'.\nLa verán el lunes de activación.');
+        alert('\u2713 Ficha '+data.numero+' enviada.\nAlumnos notificados: '+data.notificados+'.\nLa verán el viernes a las 19:00, con el resto de tareas de la semana.');
       }catch(e){
         ok.disabled=false; ok.textContent=prev;
         err.textContent = (e && e.message) ? e.message : 'Error de red al enviar. Reintenta.';
