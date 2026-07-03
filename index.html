@@ -12820,7 +12820,7 @@ function __grados_marker__(){}
     var qs=new URLSearchParams(location.search);
     if(qs.get('fichaId')||qs.get('ficha')||qs.get('panel')||window.__SUITE_ALUMNO) return;
     var ses=null; try{ ses=JSON.parse(localStorage.getItem('lmeav_session')||'null'); }catch(e){}
-    var cuenta=ses&&ses.cuenta_id; if(!cuenta) return;
+    var cuenta=(ses&&ses.id&&ses.estado==='validado')?ses.id:null; if(!cuenta) return;   // FIX: la sesión guarda s.id
     var URL_SB='https://woiptkyrxkbpnvioypit.supabase.co';
     var ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvaXB0a3lyeGticG52aW95cGl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NzI2ODYsImV4cCI6MjA5MjA0ODY4Nn0.B2nKgj5rD0rkdLeMIrd9KgD8lUPWsBT4Y7aCtmnvbjA';
     function ping(){
