@@ -12812,5 +12812,39 @@ function __grados_marker__(){}
 </script>
 
 
+<script>
+/* FASE 9.1 · tiempo de uso LIBRE (no cuenta la ficha ni el panel del profe) */
+(function(){
+  'use strict';
+  try{
+    var qs=new URLSearchParams(location.search);
+    if(qs.get('fichaId')||qs.get('ficha')||qs.get('panel')||window.__SUITE_ALUMNO) return;
+    var ses=null; try{ ses=JSON.parse(localStorage.getItem('lmeav_session')||'null'); }catch(e){}
+    var cuenta=ses&&ses.cuenta_id; if(!cuenta) return;
+    var URL_SB='https://woiptkyrxkbpnvioypit.supabase.co';
+    var ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvaXB0a3lyeGticG52aW95cGl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NzI2ODYsImV4cCI6MjA5MjA0ODY4Nn0.B2nKgj5rD0rkdLeMIrd9KgD8lUPWsBT4Y7aCtmnvbjA';
+    function ping(){
+      if(document.hidden) return;
+      if(qs.get('fichaId')||window.__SUITE_ALUMNO) return;    // por si el modo cambia en caliente
+      // FASE 9.3 · sub-rastreo por pad: 'teoriaathome:intervalos', ':escalas'…
+      // (la vista activa es la view-* visible; home y profesor no cuentan)
+      var pad=null;
+      try{
+        var vs=document.querySelectorAll('[id^="view-"]');
+        for(var i=0;i<vs.length;i++){
+          var el=vs[i];
+          if(el.offsetParent!==null && el.id!=='view-home' && el.id!=='view-profesor'){ pad=el.id.slice(5); break; }
+        }
+      }catch(e){}
+      if(!pad) return;                                  // en la home no se practica
+      fetch(URL_SB+'/rest/v1/rpc/suite_uso_ping',{method:'POST',
+        headers:{'Content-Type':'application/json','apikey':ANON,'Authorization':'Bearer '+ANON},
+        body:JSON.stringify({p_cuenta_id:cuenta,p_app:'teoriaathome:'+pad})}).catch(function(){});
+    }
+    setTimeout(ping,4000);
+    setInterval(ping,60000);
+  }catch(e){}
+})();
+</script>
 </body>
 </html>
