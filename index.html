@@ -4321,9 +4321,11 @@ function repaintACONota(e,api,accRow){
 function buildACOBuildControls(ans, e, i){
   const wrap=document.createElement('div'); wrap.style.cssText='display:flex;gap:12px;align-items:center;justify-content:center;margin-top:4px';
   const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:5px';
-  accRow.innerHTML='<button class="acc-btn aco-var-acc" data-i="'+i+'" data-a="-1">♭</button>'+
+  accRow.innerHTML='<button class="acc-btn aco-var-acc" data-i="'+i+'" data-a="-2">𝄫</button>'+
+                   '<button class="acc-btn aco-var-acc" data-i="'+i+'" data-a="-1">♭</button>'+
                    '<button class="acc-btn aco-var-acc" data-i="'+i+'" data-a="0">♮</button>'+
-                   '<button class="acc-btn aco-var-acc" data-i="'+i+'" data-a="1">♯</button>';
+                   '<button class="acc-btn aco-var-acc" data-i="'+i+'" data-a="1">♯</button>'+
+                   '<button class="acc-btn aco-var-acc" data-i="'+i+'" data-a="2">x</button>';
   wrap.appendChild(accRow);
   ans.appendChild(wrap);
   refreshACOVarAcc(e,accRow);
