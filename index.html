@@ -670,6 +670,30 @@
   }
   #ppAlumnoSim .nota-del-pop:hover{ filter:brightness(1.08); box-shadow:0 6px 16px rgba(255,92,205,.65); }
   @keyframes popDel{ from{opacity:0; transform:translate(2px,-50%) scale(.7)} to{opacity:1; transform:translate(2px,-50%) scale(1)} }
+  /* GN-UNIF 8-jul-2026 · botón "↶ Deshacer" compartido por todos los ejercicios con ghost notes */
+  .gn-undo{
+    border:1px solid rgba(154,163,192,.5); background:transparent; color:inherit;
+    border-radius:10px; padding:6px 12px; font-size:12.5px; font-weight:700;
+    cursor:pointer; touch-action:manipulation; transition:background .15s,border-color .15s;
+  }
+  .gn-undo:hover{ background:rgba(232,67,147,.12); border-color:rgba(232,67,147,.5) }
+  .gn-undo:disabled{ opacity:.35; cursor:default; background:transparent }
+  /* GN-UNIF 8-jul-2026 · "×" FIJA de borrado junto a cada nota colocada por el alumno.
+     El div exterior es la zona táctil generosa (28px); el span interior es la × visible (16px). */
+  .gn-del-x{
+    position:absolute; z-index:9; width:28px; height:28px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; touch-action:manipulation;
+  }
+  .gn-del-x span{
+    width:16px; height:16px; line-height:14px; text-align:center; border-radius:50%;
+    background:rgba(20,24,48,.9); color:#fff; border:1px solid rgba(255,255,255,.5);
+    font-size:11px; font-weight:700; box-shadow:0 1px 4px rgba(0,0,0,.4); pointer-events:none;
+  }
+  /* GN-UNIF 8-jul-2026 · zona táctil generosa (~32px) para la × de las fichas
+     sin cambiar su tamaño visible (20px): el ::after amplía el área de toque */
+  .nota-del-pop{ touch-action:manipulation }
+  .nota-del-pop::after{ content:''; position:absolute; left:-6px; top:-6px; right:-6px; bottom:-6px; border-radius:50% }
 </style>
 </head>
 <body>
@@ -776,6 +800,8 @@
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
+          <!-- GN-UNIF 8-jul-2026 -->
+          <button class="gn-undo" id="undoB" onclick="gnUndoB()" disabled>↶ Deshacer</button>
           <button class="iconbtn btn-correct" onclick="corregirB()">✓ Corregir</button>
         </div>
       </div>
@@ -972,6 +998,8 @@
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
+          <!-- GN-UNIF 8-jul-2026 -->
+          <button class="gn-undo" id="undoACO" onclick="gnUndoACO()" disabled>↶ Deshacer</button>
           <button class="iconbtn btn-correct" onclick="corregirACO()">✓ Corregir</button>
         </div>
       </div>
@@ -1027,6 +1055,8 @@
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
+          <!-- GN-UNIF 8-jul-2026 -->
+          <button class="gn-undo" id="undoENA" onclick="gnUndoENA()" disabled>↶ Deshacer</button>
           <button class="iconbtn btn-correct" onclick="corregirENA()">✓ Corregir</button>
         </div>
       </div>
@@ -1059,6 +1089,8 @@
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
             Nuevo
           </button>
+          <!-- GN-UNIF 8-jul-2026 -->
+          <button class="gn-undo" id="undoSEM" onclick="gnUndoSEM()" disabled>↶ Deshacer</button>
           <button class="iconbtn btn-correct" onclick="corregirSEM()">✓ Corregir</button>
         </div>
       </div>
@@ -1240,6 +1272,56 @@ function lockScrollDuringRebuild(host){
     if(host) host.style.minHeight='';
   });
 }
+/* GN-UNIF 8-jul-2026 · interacción táctil unificada para GHOST NOTES.
+   gnWireTouch(host, {hover, click, clear}): engancha touchstart/move/end al host
+   con la mecánica "pulsar → arrastrar → soltar" (touchstart pinta la ghost bajo el
+   dedo, touchmove la arrastra, touchend coloca la nota). Un toque simple = una nota.
+   Marca host._touchHandled para que los handlers de click/mousemove del mismo host
+   ignoren los eventos sintéticos que iOS dispara tras el toque. */
+function gnWireTouch(host, opts){
+  if(!host || host._gnTouchWired) return; host._gnTouchWired=true;
+  host._touchHandled=false;
+  host.addEventListener('touchstart',(ev)=>{ if(ev.touches&&ev.touches[0]) opts.hover(ev.touches[0]); },{passive:true});
+  host.addEventListener('touchmove',(ev)=>{ if(ev.touches&&ev.touches[0]){ opts.hover(ev.touches[0]); ev.preventDefault(); } },{passive:false});
+  host.addEventListener('touchend',(ev)=>{
+    const t=(ev.changedTouches&&ev.changedTouches[0]);
+    host._touchHandled=true;
+    if(t) opts.click(t);
+    if(opts.clear) opts.clear();
+    setTimeout(()=>{ host._touchHandled=false; },450);
+    ev.preventDefault();
+  },{passive:false});
+}
+/* GN-UNIF 8-jul-2026 · "×" fijas de borrado (una por nota colocada por el alumno).
+   items = [{x, y, onDel, dx?}] en coordenadas del viewBox del SVG del host.
+   Se re-crean tras CADA re-render del motor (el render las borra con innerHTML=''). */
+function gnDelXs(host, items){
+  if(!host) return;
+  host.querySelectorAll(':scope > .gn-del-x').forEach(el=>el.remove());
+  const svg=host.querySelector('svg'); if(!svg || !items || !items.length) return;
+  let ctm=null, hr=null;
+  try{ ctm=svg.getScreenCTM(); hr=host.getBoundingClientRect(); if(!ctm||!hr||!hr.width) return; }catch(e){ return; }
+  items.forEach(it=>{
+    if(it.x==null||it.y==null) return;
+    let sp; try{ const pt=svg.createSVGPoint(); pt.x=it.x; pt.y=it.y; sp=pt.matrixTransform(ctm); }catch(e){ return; }
+    const w=document.createElement('div'); w.className='gn-del-x'; w.title='Borrar nota';
+    w.innerHTML='<span>×</span>';
+    // la × visible queda a la DERECHA de la cabeza (izquierda hay alteraciones)
+    w.style.left=(sp.x-hr.left+4+(it.dx||0))+'px';
+    w.style.top=(sp.y-hr.top-14)+'px';
+    const borrar=(ev)=>{ ev.stopPropagation(); if(ev.cancelable) ev.preventDefault(); if(typeof it.onDel==='function') it.onDel(); };
+    w.addEventListener('click',(ev)=>{ if(w._gnT){ ev.stopPropagation(); ev.preventDefault(); return; } borrar(ev); });
+    w.addEventListener('touchend',(ev)=>{ w._gnT=true; borrar(ev); setTimeout(()=>{ w._gnT=false; },450); },{passive:false});
+    // que el pentagrama no pinte la ghost debajo al empezar el toque sobre la ×
+    ['pointerdown','touchstart','mousedown','mousemove'].forEach(t=>w.addEventListener(t,(ev)=>ev.stopPropagation(),{passive:true}));
+    host.appendChild(w);
+  });
+}
+/* GN-UNIF 8-jul-2026 · habilita/deshabilita un botón "↶ Deshacer" según su pila */
+function gnRefreshUndo(btnId, pila, locked){
+  const b=document.getElementById(btnId); if(!b) return;
+  b.disabled = !!locked || !pila || !pila.length;
+}
 /* vistas donde se pintan notas (ghost) -> tienen consejos táctiles */
 const VISTAS_GHOST = ['view-intervalos','view-tonalidades','view-escalas','view-grados','view-acordes','view-enarmonias','view-semitonos'];
 function mostrarAvisoTactil(viewId){
@@ -1251,7 +1333,7 @@ function mostrarAvisoTactil(viewId){
   aviso.innerHTML=
     '<div class="ta-full">'+
       '<span class="ta-ico">👆</span>'+
-      '<span class="ta-txt"><b>Consejos táctiles:</b> arrastra los selectores como una rueda (más rápido = avanza más). Para colocar notas con precisión, <b>amplía con el zoom</b> antes de tocar el pentagrama. Si quieres eliminar una nota, <b>púlsala y verás una ✕</b>.</span>'+
+      '<span class="ta-txt"><b>Consejos táctiles:</b> arrastra los selectores como una rueda (más rápido = avanza más). Para colocar una nota, <b>pulsa, arrastra y suelta</b> sobre el pentagrama (amplía con el zoom si necesitas precisión). Para eliminarla, toca la <b>✕</b> que hay junto a cada nota; con <b>↶ Deshacer</b> recuperas el último cambio.</span>'+   /* GN-UNIF 8-jul-2026 */
       '<span class="ta-count" id="taCount-'+viewId+'">5</span>'+
     '</div>'+
     '<button class="ta-tab" onclick="reabrirAvisoTactil(\''+viewId+'\')">👆 Consejos táctiles</button>';
@@ -1810,6 +1892,7 @@ function corregirA(){
 let bMeta=null;            // {noteX, W, H} del último render
 let bGhost=null;          // overlay de nota fantasma
 const HALF=5.0;           // medio espacio en px (aprox; ajustable al ver captura)
+let bUndo=[];             /* GN-UNIF 8-jul-2026 · pila de deshacer: {slot, prev} (prev = 2ª nota machacada o null) */
 
 function nuevoB(){
   unlockCard('cardB');
@@ -1817,6 +1900,7 @@ function nuevoB(){
   // el alumno parte sin 2ª nota
   dataB.forEach(it=>{ it.n2=null; });
   respB=dataB.map(()=>null);   // null = sin colocar
+  bUndo=[]; gnRefreshUndo('undoB', bUndo);   /* GN-UNIF 8-jul-2026 */
   bSel=null; hideBDelX();
   bMeta=dibujarCompases('scoreB',dataB,{modoB:true});
   setupBoardB();
@@ -1834,9 +1918,11 @@ function setupBoardB(){
   // Para simplificar, derivamos y desde el stave: top line = F5 (midi 77).
   // Mejor: medimos vía getBoundingClientRect del svg y usamos un mapeo lineal por diatónico.
   // anchor diatónico: La4 (midi 69) -> y_anchor. half = separación diatónica.
-  host.onmousemove=(e)=>onBoardHover(e);
-  host.onmouseleave=()=>{ clearBGhost(); hideBDelX(); };
-  host.onclick=(e)=>onBoardClick(e);
+  /* GN-UNIF 8-jul-2026 · guarda de eventos sintéticos + wiring táctil unificado */
+  host.onmousemove=(e)=>{ if(host._touchHandled) return; onBoardHover(e); };
+  host.onmouseleave=()=>{ clearBGhost(); };
+  host.onclick=(e)=>{ if(host._touchHandled) return; onBoardClick(e); };
+  gnWireTouch(host, { hover:onBoardHover, click:onBoardClick, clear:clearBGhost });
 }
 function diatonicStep(midi){
   // idéntico a PreDict: índice diatónico absoluto, alteradas mapean a su letra base
@@ -1888,16 +1974,15 @@ function onBoardHover(e){
   const host=document.getElementById('scoreB');
   const svg=host.querySelector('svg'); if(!svg){clearBGhost();return;}
   const p=screenToSvg(svg, e.clientX, e.clientY); if(!p){clearBGhost();return;}
-  // ¿sobre una 2ª nota ya colocada? -> mostrar la × de borrado y ocultar el ghost
-  const sHit=bNoteUnderPoint(p, true);
+  /* GN-UNIF 8-jul-2026 · sobre una 2ª nota ya colocada: solo ocultar el ghost
+     (el borrado es SOLO vía la × fija; la antigua × flotante por hover se retira) */
+  const sHit=bNoteUnderPoint(p, false);
   if(sHit>=0){
-    host.style.cursor='pointer';
-    showBDelX(sHit);
     clearBGhost();
     host._hoverSlot=null; host._hoverNote=null;
     return;
   }
-  hideBDelX(); host.style.cursor='default';
+  host.style.cursor='default';
   const slot=slotUnderX(p.x); if(slot<0){clearBGhost();return;}
   const nat=nearestMidiByY(p.y); if(nat==null){clearBGhost();return;}
   showBGhost(slot,nat);
@@ -1974,58 +2059,60 @@ function onBoardClick(e){
   const host=document.getElementById('scoreB');
   const svg=host.querySelector('svg'); if(!svg) return;
   const p=screenToSvg(svg, e.clientX, e.clientY);
-  // ¿clic sobre una 2ª nota ya colocada? -> seleccionarla y mostrar la × de borrado
+  /* GN-UNIF 8-jul-2026 · clic sobre una 2ª nota ya colocada: no hace nada
+     (el borrado es SOLO vía la × fija) */
   if(p){
-    const sHit=bNoteUnderPoint(p, true);
-    if(sHit>=0){
-      bSel=(bSel===sHit)?null:sHit;
-      renderAnswersB();
-      if(bSel===sHit){ showBDelX(sHit); const xb=document.getElementById('bDelX'); if(xb) xb._over=true; }
-      else hideBDelX();
-      return;
-    }
+    const sHit=bNoteUnderPoint(p, false);
+    if(sHit>=0) return;
   }
   // (no era una nota ya puesta) -> colocar la nota NATURAL elegida
   const slot=host._hoverSlot, nat=host._hoverNote;
   if(slot==null||slot<0||nat==null) return;
+  bUndo.push({slot, prev: respB[slot]? {...respB[slot]} : null});   /* GN-UNIF 8-jul-2026 */
   respB[slot]={step:nat.step, octave:nat.octave, alter:0};
   dataB[slot].n2={...respB[slot]};
   dataB[slot]._userPlaced=true;
-  bSel=slot;                       // queda seleccionada: la × aparece pegada al colocarla
+  bSel=slot;
   redrawB();
   renderAnswersB();
-  if(ES_TACTIL){ showBDelX(slot); const xb=document.getElementById('bDelX'); if(xb) xb._over=true; }
+  gnRefreshUndo('undoB', bUndo);   /* GN-UNIF 8-jul-2026 */
 }
-/* X flotante de borrado pegada a la 2ª nota (mismo sistema que Enarmonías) */
-function showBDelX(slot){
-  const r=respB[slot]; if(r==null) return;
-  const host=document.getElementById('scoreB'); const svg=host&&host.querySelector('svg'); if(!svg) return;
-  const x=bMeta&&bMeta.noteX&&bMeta.noteX[slot]; const y=yRealForNat(r.step,r.octave);
-  if(x==null||y==null) return;
-  let xb=document.getElementById('bDelX');
-  if(!xb){ xb=document.createElement('div'); xb.id='bDelX'; xb.textContent='×';
-    xb.style.cssText='position:absolute;z-index:8;width:18px;height:18px;line-height:16px;text-align:center;'+
-      'border-radius:50%;background:rgba(20,24,48,.9);color:#fff;border:1px solid rgba(255,255,255,.5);'+
-      'font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4)';
-    host.style.position='relative'; host.appendChild(xb);
-    xb.addEventListener('mouseenter',()=>xb._over=true);
-    xb.addEventListener('mouseleave',()=>{ xb._over=false; if(!xb._persist) setTimeout(()=>{ if(!xb._over) xb.style.display='none'; },60); });
-  }
-  xb._persist=ES_TACTIL; xb._slot=slot;
-  try{
-    const pt=svg.createSVGPoint(); pt.x=x; pt.y=y; const sp=pt.matrixTransform(svg.getScreenCTM()); const hr=host.getBoundingClientRect();
-    xb.style.left=(sp.x-hr.left+9)+'px'; xb.style.top=(sp.y-hr.top-22)+'px'; xb.style.display='block';
-  }catch(err){ xb.style.display='none'; return; }
-  xb.onclick=(ev)=>{ ev.stopPropagation();
-    respB[slot]=null; dataB[slot].n2=null; dataB[slot]._userPlaced=false;
-    if(bSel===slot) bSel=null; hideBDelX(); redrawB(); renderAnswersB(); };
-}
-function hideBDelX(){ const x=document.getElementById('bDelX'); if(x && !x._over && !x._persist) x.style.display='none'; }
+/* GN-UNIF 8-jul-2026 · la antigua × flotante por hover queda INERTE: el borrado
+   pasa a las × fijas de bPersistDelX (una por nota colocada, siempre visibles). */
+function showBDelX(slot){ /* GN-UNIF 8-jul-2026: inerte (sustituida por × fijas) */ }
+function hideBDelX(){ /* GN-UNIF 8-jul-2026: inerte (sustituida por × fijas) */ }
+/* GN-UNIF 8-jul-2026 · × FIJA en cada 2ª nota colocada por el alumno (ratón y táctil).
+   Se re-crean tras cada redrawB(); nunca tras corregir (tarjeta locked). */
 function bPersistDelX(){
-  const old=document.getElementById('bDelX'); if(old) old.remove();   // se borró con innerHTML
-  if(!ES_TACTIL) return;
-  const card=document.getElementById('cardB'); if(card && card.classList.contains('locked')) return;
-  if(bSel!=null && respB[bSel]) showBDelX(bSel);
+  const host=document.getElementById('scoreB'); if(!host) return;
+  const card=document.getElementById('cardB');
+  if(card && card.classList.contains('locked')){ gnDelXs(host, []); return; }
+  const items=[];
+  respB.forEach((r,s)=>{
+    if(r==null) return;
+    const x=bMeta&&bMeta.noteX&&bMeta.noteX[s]; const y=yRealForNat(r.step,r.octave);
+    if(x==null||y==null) return;
+    items.push({ x, y, onDel:()=>{
+      bUndo.push({slot:s, prev:{...respB[s]}});
+      respB[s]=null; dataB[s].n2=null; dataB[s]._userPlaced=false;
+      if(bSel===s) bSel=null;
+      redrawB(); renderAnswersB();
+      gnRefreshUndo('undoB', bUndo);
+    }});
+  });
+  gnDelXs(host, items);
+}
+/* GN-UNIF 8-jul-2026 · deshace la última colocación/borrado de la tarjeta B */
+function gnUndoB(){
+  const card=document.getElementById('cardB');
+  if(card && card.classList.contains('locked')) return;
+  const a=bUndo.pop(); if(!a) return;
+  respB[a.slot]=a.prev? {...a.prev} : null;
+  dataB[a.slot].n2=a.prev? {...a.prev} : null;
+  dataB[a.slot]._userPlaced=!!a.prev;
+  if(bSel===a.slot && !a.prev) bSel=null;
+  redrawB(); renderAnswersB();
+  gnRefreshUndo('undoB', bUndo);
 }
 function redrawB(){
   lockScrollDuringRebuild(document.getElementById('cardB'));
@@ -2053,8 +2140,7 @@ function renderAnswersB(){
     if(colocada){
       chip.style.cursor='pointer';
       if(bSel===i) chip.classList.add('sel');
-      chip.onclick=()=>{ bSel=(bSel===i)?null:i; renderAnswersB();
-        if(bSel===i){ showBDelX(i); const xb=document.getElementById('bDelX'); if(xb) xb._over=true; } else hideBDelX(); };
+      chip.onclick=()=>{ bSel=(bSel===i)?null:i; renderAnswersB(); };   /* GN-UNIF 8-jul-2026: el borrado va por la × fija */
     }
     chipRow.appendChild(chip);
     cell.appendChild(chipRow);
@@ -2087,7 +2173,10 @@ function setAltB(i, alter){
 }
 function corregirB(){
   lockCard('cardB');
-  bSel=null; hideBDelX();
+  bSel=null;
+  /* GN-UNIF 8-jul-2026 · tras corregir: fuera × fijas y deshacer deshabilitado */
+  gnDelXs(document.getElementById('scoreB'), []);
+  gnRefreshUndo('undoB', bUndo, true);
   dataB.forEach((it,i)=>{
     const cell=document.getElementById('ansB'+i);
     const want=it._n2cat;
@@ -2861,7 +2950,16 @@ function renderESC(){
     const bCo=document.createElement('button'); bCo.className='iconbtn btn-correct';
     bCo.textContent='✓ Corregir';
     bCo.onclick=()=>corregirESC(fam);
-    btns.appendChild(bEj); btns.appendChild(bNu); btns.appendChild(bCo);
+    btns.appendChild(bEj); btns.appendChild(bNu);
+    /* GN-UNIF 8-jul-2026 · Deshacer (solo escalas donde el alumno coloca notas por ghost) */
+    if(e._variable && !e._precolocada){
+      const bUn=document.createElement('button'); bUn.className='gn-undo'; bUn.id='undoESC'+i;
+      bUn.textContent='↶ Deshacer';
+      bUn.disabled = !(e._gnUndo && e._gnUndo.length) || e._corregido===true;
+      bUn.onclick=()=>gnUndoESC(i);
+      btns.appendChild(bUn);
+    }
+    btns.appendChild(bCo);
     top.appendChild(letter); top.appendChild(btns);
     card.appendChild(top);
 
@@ -3091,6 +3189,7 @@ function renderESCStaveOne(i){
     }catch(err){}
   }
   fitSvgToContent(host, W);
+  escFixedDelXs(i);   /* GN-UNIF 8-jul-2026 · × fijas tras cada re-render (con el viewBox ya ajustado) */
 }
 /* mapa midi->y real para el ghost de escalas variables (mismo método que intervalos) */
 let escYMaps={};
@@ -3155,6 +3254,8 @@ function corregirESCVar(e,i,cell){
   cell.classList.remove('ok','bad'); cell.classList.add(ok?'ok':'bad');
   // guardar estado para dibujar la solución en azul en el pentagrama si hay fallo
   e._corregido=true; e._solVisible = !ok;
+  /* GN-UNIF 8-jul-2026 · tras corregir: deshacer deshabilitado (las × ya las quita escFixedDelXs) */
+  const ubGN=document.getElementById('undoESC'+i); if(ubGN) ubGN.disabled=true;
   renderESCStaveOne(i);
   // texto: solo "Solución" en azul (las notas/armadura van dibujadas en el pentagrama)
   if(ok){ tag.style.color='var(--green)'; tag.textContent='✓'; }
@@ -3167,14 +3268,20 @@ let escPendingAlt={};
 function escWireVarOne(i){
   const host=document.getElementById('scoreESC'+i); if(!host||host._escWired) return; host._escWired=true;
   host.style.position='relative';
-  host.addEventListener('mousemove',(ev)=>onEscHover(i,ev));
+  /* GN-UNIF 8-jul-2026 · guarda de eventos sintéticos + wiring táctil unificado */
+  host.addEventListener('mousemove',(ev)=>{ if(host._touchHandled) return; onEscHover(i,ev); });
   host.addEventListener('mouseleave',()=>clearEscGhost(i));
-  host.addEventListener('click',(ev)=>onEscClick(i,ev));
+  host.addEventListener('click',(ev)=>{ if(host._touchHandled) return; onEscClick(i,ev); });
+  gnWireTouch(host, { hover:(ev)=>onEscHover(i,ev), click:(ev)=>onEscClick(i,ev), clear:()=>clearEscGhost(i) });
   // clic derecho = borrar la última nota (solo en escalas con ghost, no precolocadas)
   host.addEventListener('contextmenu',(ev)=>{
     const e=dataESC[i]; if(e._precolocada){ return; }
     ev.preventDefault();
-    if(e.userSeq.length){ e.userSeq.pop(); e._selVar=(e.userSeq.length?e.userSeq.length-1:null); renderESC(); }
+    if(e.userSeq.length){
+      const k=e.userSeq.length-1;
+      (e._gnUndo=e._gnUndo||[]).push({op:'del', k, nota:{...e.userSeq[k]}});   /* GN-UNIF 8-jul-2026 */
+      e.userSeq.pop(); e._selVar=(e.userSeq.length?e.userSeq.length-1:null); renderESC();
+    }
   });
 }
 function escNearestByY(i,my){
@@ -3197,23 +3304,18 @@ function onEscHover(i,ev){
       if(x==null)return;
       const dx=Math.abs(x-p.x);
       const y=g.noteYs?g.noteYs[k]:null;
-      // zona asimétrica: estrecha bajo la nota, amplia por arriba (hacia la X de borrado)
-      const above = (y!=null && p.y < y);
-      const dy = y!=null ? (above ? (y-p.y) : (p.y-y)) : 0;
-      const dyMax = above ? 42 : 10;
-      if(dx<16 && dy<dyMax){ const d=dx+dy*0.3; if(d<bd){bd=d;hit=k;} }
+      const dy = y!=null ? Math.abs(y-p.y) : 0;   /* GN-UNIF 8-jul-2026: zona simétrica (ya no hay × flotante arriba) */
+      if(dx<16 && dy<10){ const d=dx+dy*0.3; if(d<bd){bd=d;hit=k;} }
     });
     if(hit>=0){
       host.style.cursor='pointer';
-      // X de borrado sobre la nota (sirve para ratón y táctil)
-      showEscDeleteX(i,hit);
-      // tintineo de invitación solo si aún no hay nota seleccionada
+      /* GN-UNIF 8-jul-2026 · el hover sobre una nota colocada solo oculta el ghost
+         (borrado SOLO vía la × fija); se mantiene el tintineo de invitación */
       if(e._selVar==null) setEscHoverNote(i,hit);
       clearEscGhost(i);
       return;
     }
   }
-  hideEscDeleteX(i);
   setEscHoverNote(i,null);
   host.style.cursor='default';
   // si está completa, no mostramos ghost (ya no quedan notas que añadir)
@@ -3221,37 +3323,42 @@ function onEscHover(i,ev){
   const nat=escNearestByY(i,p.y); if(!nat){clearEscGhost(i);return;}
   showEscGhost(i,nat);
 }
-/* X de borrado flotante sobre una nota */
-function showEscDeleteX(i,k){
-  const e=dataESC[i]; if(e._precolocada) return;   // precolocadas no se borran
+/* GN-UNIF 8-jul-2026 · la antigua × flotante por hover queda INERTE: el borrado
+   pasa a las × fijas de escFixedDelXs (una por nota colocada, siempre visibles). */
+function showEscDeleteX(i,k){ /* GN-UNIF 8-jul-2026: inerte (sustituida por × fijas) */ }
+function hideEscDeleteX(i){ /* GN-UNIF 8-jul-2026: inerte (sustituida por × fijas) */ }
+/* GN-UNIF 8-jul-2026 · × FIJA en cada nota colocada por el alumno (nunca en
+   precolocadas ni tras corregir). Se re-crean tras cada renderESCStaveOne. */
+function escFixedDelXs(i){
   const host=document.getElementById('scoreESC'+i); if(!host) return;
-  const g=escVarGeom[i]; if(!g||!g.noteXs) return;
-  const svg=host.querySelector('svg'); if(!svg) return;
-  const x=g.noteXs[k], y=g.noteYs?g.noteYs[k]:null; if(x==null||y==null) return;
-  let xbtn=document.getElementById('escDelX'+i);
-  if(!xbtn){
-    xbtn=document.createElement('div'); xbtn.id='escDelX'+i;
-    xbtn.textContent='×';
-    xbtn.style.cssText='position:absolute;z-index:8;width:20px;height:20px;line-height:18px;text-align:center;'+
-      'border-radius:50%;background:rgba(20,24,48,.92);color:#fff;border:1px solid rgba(255,255,255,.5);'+
-      'font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4)';
-    host.style.position='relative'; host.appendChild(xbtn);
-    xbtn.addEventListener('mouseenter',()=>{ xbtn._over=true; });
-    xbtn.addEventListener('mouseleave',()=>{ xbtn._over=false; setTimeout(()=>{ if(!xbtn._over) xbtn.style.display='none'; },60); });
-  }
-  try{
-    const pt=svg.createSVGPoint(); pt.x=x; pt.y=y;
-    const sp=pt.matrixTransform(svg.getScreenCTM());
-    const hr=host.getBoundingClientRect();
-    xbtn.style.left=(sp.x-hr.left+2)+'px'; xbtn.style.top=(sp.y-hr.top-26)+'px'; xbtn.style.display='block';
-  }catch(err){ xbtn.style.display='none'; return; }
-  xbtn.onclick=(ev)=>{ ev.stopPropagation();
-    e.userSeq.splice(k,1);
-    if(e._selVar===k) e._selVar=null; else if(e._selVar!=null && e._selVar>k) e._selVar--;
-    renderESC();
-  };
+  const e=dataESC[i]; const g=escVarGeom[i];
+  if(!e || !e._variable || e._precolocada || e._corregido || !g || !g.noteXs){ gnDelXs(host, []); return; }
+  const items=[];
+  g.noteXs.forEach((x,k)=>{
+    const y=g.noteYs?g.noteYs[k]:null;
+    if(x==null||y==null) return;
+    items.push({ x, y, onDel:()=>{
+      (e._gnUndo=e._gnUndo||[]).push({op:'del', k, nota:{...e.userSeq[k]}});
+      e.userSeq.splice(k,1);
+      if(e._selVar===k) e._selVar=null; else if(e._selVar!=null && e._selVar>k) e._selVar--;
+      renderESC();
+    }});
+  });
+  gnDelXs(host, items);
 }
-function hideEscDeleteX(i){ const x=document.getElementById('escDelX'+i); if(x && !x._over) x.style.display='none'; }
+/* GN-UNIF 8-jul-2026 · deshace la última colocación/borrado de la escala i */
+function gnUndoESC(i){
+  const e=dataESC[i]; if(!e || e._corregido) return;
+  const a=(e._gnUndo||[]).pop(); if(!a) return;
+  if(a.op==='add'){
+    e.userSeq.pop();
+    if(e._selVar!=null && e._selVar>=e.userSeq.length) e._selVar=null;
+  } else if(a.op==='del'){
+    e.userSeq.splice(a.k,0,a.nota);
+    if(e._selVar!=null && e._selVar>=a.k) e._selVar++;
+  }
+  renderESC();
+}
 /* hover sobre una nota: la pone rosa y la hace tintinear, junto con los botones ♯/♮/♭ */
 let escHoverState={};
 function setEscHoverNote(i,k){
@@ -3359,6 +3466,7 @@ function onEscClick(i,ev){
   // si hay alteración pendiente fijada en el panel, prevalece (explícita)
   const pend=escPendingAlt[i];
   if(pend===1||pend===-1){ nb.alter=pend; nb._inherited=false; }
+  (e._gnUndo=e._gnUndo||[]).push({op:'add'});   /* GN-UNIF 8-jul-2026 */
   e.userSeq.push(nb); escPendingAlt[i]=0;
   // cromática y hexátona: la nueva queda SELECCIONADA (rosa) para alterarla al momento,
   // pero el ghost sigue disponible para seguir colocando
@@ -4159,6 +4267,7 @@ function acoSorteaTipo(tipo, usadas){
 
 function nuevoACO(){
   unlockCard('cardACO');
+  acoUndo=[];   /* GN-UNIF 8-jul-2026 · ejercicio nuevo = pila de deshacer vacía */
   const usadas=new Set();
   const tiposBase=['PM','Pm','Aum','Dis'].concat(acoCfg.sept?['D7']:[]);
   // 2 para identificar + 2 para construir, tipos variados
@@ -4245,6 +4354,9 @@ function renderACOScore(){
     if(e.modo==='build'){ buildACOYMap(i, stave); acoVarGeom[i]={baseX:e._noteX||(x0+i*wC+(i>=2?GAP:0)+wC/2)}; acoWireVarOne(); }
   });
   fitSvgToContent(host, W);
+  /* GN-UNIF 8-jul-2026 · × fijas y estado del Deshacer tras cada re-render */
+  acoFixedDelXs();
+  gnRefreshUndo('undoACO', acoUndo, document.getElementById('cardACO')&&document.getElementById('cardACO').classList.contains('locked'));
 }
 /* fila de selectores, una columna por compás */
 function renderACOAnswers(){
@@ -4347,6 +4459,7 @@ function refreshACOVarAcc(e,accRow){
   } else { accRow.querySelectorAll('.aco-var-acc').forEach(x=>x.classList.remove('on')); }
 }
 let acoPendingAlt={};
+let acoUndo=[];   /* GN-UNIF 8-jul-2026 · pila de deshacer de la tarjeta: {op:'add'|'del', i, k?, nota?} */
 
 /* ---- render del pentagrama de un item ---- */
 /* mapa midi->y para el ghost vertical de construcción (mismo método que escalas) */
@@ -4372,13 +4485,19 @@ function buildACOYMap(i, stave){
 function acoWireVarOne(){
   const host=document.getElementById('scoreACO'); if(!host||host._acoWired) return; host._acoWired=true;
   host.style.position='relative';
-  host.addEventListener('mousemove',(ev)=>onACOHover(ev));
+  /* GN-UNIF 8-jul-2026 · guarda de eventos sintéticos + wiring táctil unificado */
+  host.addEventListener('mousemove',(ev)=>{ if(host._touchHandled) return; onACOHover(ev); });
   host.addEventListener('mouseleave',()=>clearACOGhost());
-  host.addEventListener('click',(ev)=>onACOClick(ev));
+  host.addEventListener('click',(ev)=>{ if(host._touchHandled) return; onACOClick(ev); });
+  gnWireTouch(host, { hover:onACOHover, click:onACOClick, clear:clearACOGhost });
   host.addEventListener('contextmenu',(ev)=>{
     const i=acoCompasEn(ev); if(i==null) return; const e=dataACO[i]; if(e.modo!=='build') return;
     ev.preventDefault();
-    if(e.userSeq.length){ e.userSeq.pop(); e._selVar=null; renderACO(); }
+    if(e.userSeq.length){
+      const k=e.userSeq.length-1;
+      acoUndo.push({op:'del', i, k, nota:{...e.userSeq[k]}});   /* GN-UNIF 8-jul-2026 */
+      e.userSeq.pop(); e._selVar=null; renderACO();
+    }
   });
 }
 /* ¿en qué compás (0..3) está el cursor, según X? */
@@ -4402,53 +4521,57 @@ function acoNearestByY(i,my){
 }
 function acoYReal(i,step,octave){ const map=acoYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
 function onACOHover(ev){
-  const i=acoCompasEn(ev); if(i==null){ clearACOGhost(); hideACODeleteX(); return; }
-  const e=dataACO[i]; if(e.modo!=='build'){ clearACOGhost(); hideACODeleteX(); return; }
+  const i=acoCompasEn(ev); if(i==null){ clearACOGhost(); return; }
+  const e=dataACO[i]; if(e.modo!=='build'){ clearACOGhost(); return; }
   let p; try{ p=acoPointIn(ev); }catch(err){ clearACOGhost(); return; }
-  // ¿sobre una nota colocada? -> X de borrado a la derecha
+  /* GN-UNIF 8-jul-2026 · sobre una nota colocada: solo ocultar el ghost
+     (el borrado es SOLO vía la × fija) */
   for(let k=0;k<e.userSeq.length;k++){
     const y=acoYReal(i,e.userSeq[k].step,e.userSeq[k].octave);
-    if(y!=null && Math.abs(y-p.y)<8){ showACODeleteX(i,k); clearACOGhost(); return; }
+    if(y!=null && Math.abs(y-p.y)<8){ clearACOGhost(); return; }
   }
-  hideACODeleteX();
   if(e.userSeq.length>=e.objetivo.length){ clearACOGhost(); return; }
   const nat=acoNearestByY(i,p.y); if(!nat){ clearACOGhost(); return; }
   showACOGhost(i,nat);
 }
-/* X de borrado a la derecha de la redonda (lugar sin alteración) */
-function showACODeleteX(i,k,persist){
-  const e=dataACO[i];
-  const host=document.getElementById('scoreACO'); const svg=host&&host.querySelector('svg'); if(!svg) return;
-  const x=(acoVarGeom[i]&&acoVarGeom[i].baseX!=null)?acoVarGeom[i].baseX:60;
-  const y=acoYReal(i,e.userSeq[k].step,e.userSeq[k].octave); if(y==null) return;
-  let xbtn=document.getElementById('acoDelX');
-  if(!xbtn){ xbtn=document.createElement('div'); xbtn.id='acoDelX';
-    xbtn.textContent='×';
-    xbtn.style.cssText='position:absolute;z-index:8;width:20px;height:20px;line-height:18px;text-align:center;border-radius:50%;background:rgba(20,24,48,.78);color:#fff;border:1px solid rgba(255,255,255,.35);font-size:14px;font-weight:600;cursor:pointer';
-    host.style.position='relative'; host.appendChild(xbtn);
-    xbtn.addEventListener('mouseenter',()=>{ xbtn._over=true; });
-    xbtn.addEventListener('mouseleave',()=>{ xbtn._over=false; if(!xbtn._persist) setTimeout(()=>{ if(!xbtn._over) xbtn.style.display='none'; },60); });
-  }
-  xbtn._persist=!!persist;
-  try{
-    const pt=svg.createSVGPoint(); pt.x=x; pt.y=y;
-    const sp=pt.matrixTransform(svg.getScreenCTM());
-    const hr=host.getBoundingClientRect();
-    xbtn.style.left=(sp.x-hr.left+16)+'px'; xbtn.style.top=(sp.y-hr.top-10)+'px'; xbtn.style.display='block';
-  }catch(err){ xbtn.style.display='none'; return; }
-  xbtn.onclick=(ev)=>{ ev.stopPropagation();
-    e.userSeq.splice(k,1); if(e._selVar===k) e._selVar=null; else if(e._selVar!=null&&e._selVar>k) e._selVar--;
-    renderACO();
-  };
+/* GN-UNIF 8-jul-2026 · la antigua × flotante por hover queda INERTE: el borrado
+   pasa a las × fijas de acoFixedDelXs (una por nota colocada, siempre visibles). */
+function showACODeleteX(i,k,persist){ /* GN-UNIF 8-jul-2026: inerte (sustituida por × fijas) */ }
+function hideACODeleteX(){ /* GN-UNIF 8-jul-2026: inerte (sustituida por × fijas) */ }
+function acoPersistDelX(){ /* GN-UNIF 8-jul-2026: inerte (sustituida por × fijas) */ }
+/* GN-UNIF 8-jul-2026 · × FIJA en cada nota colocada por el alumno en los compases
+   de construir (nunca en la fundamental dada ni tras corregir/bloquear). Las notas
+   del acorde comparten X: las × se escalonan a la derecha (dx) para no taparse. */
+function acoFixedDelXs(){
+  const host=document.getElementById('scoreACO'); if(!host) return;
+  const card=document.getElementById('cardACO');
+  if(card && card.classList.contains('locked')){ gnDelXs(host, []); return; }
+  const items=[];
+  dataACO.forEach((e,i)=>{
+    if(e.modo!=='build' || e._solVisible) return;
+    const x=(acoVarGeom[i]&&acoVarGeom[i].baseX!=null)?acoVarGeom[i].baseX:null;
+    e.userSeq.forEach((nb,k)=>{
+      const y=acoYReal(i,nb.step,nb.octave);
+      if(x==null||y==null) return;
+      items.push({ x, y, dx:12+k*17, onDel:()=>{
+        acoUndo.push({op:'del', i, k, nota:{...e.userSeq[k]}});
+        e.userSeq.splice(k,1);
+        if(e._selVar===k) e._selVar=null; else if(e._selVar!=null&&e._selVar>k) e._selVar--;
+        renderACO();
+      }});
+    });
+  });
+  gnDelXs(host, items);
 }
-function hideACODeleteX(){ const x=document.getElementById('acoDelX'); if(x && !x._over && !x._persist) x.style.display='none'; }
-/* X persistente sobre la nota seleccionada (tablet) */
-function acoPersistDelX(){
-  hideACODeleteX();
-  for(let i=0;i<dataACO.length;i++){
-    const e=dataACO[i];
-    if(e.modo==='build' && !e._solVisible && e._selVar!=null && e.userSeq[e._selVar]){ showACODeleteX(i,e._selVar,true); break; }
-  }
+/* GN-UNIF 8-jul-2026 · deshace la última colocación/borrado de la tarjeta de acordes */
+function gnUndoACO(){
+  const card=document.getElementById('cardACO');
+  if(card && card.classList.contains('locked')) return;
+  const a=acoUndo.pop(); if(!a) return;
+  const e=dataACO[a.i]; if(!e || e.modo!=='build'){ gnRefreshUndo('undoACO', acoUndo); return; }
+  if(a.op==='add'){ e.userSeq.pop(); e._selVar=null; }
+  else if(a.op==='del'){ e.userSeq.splice(a.k,0,a.nota); e._selVar=null; }
+  renderACO();
 }
 function showACOGhost(i,nat){
   const host=document.getElementById('scoreACO');
@@ -4471,12 +4594,10 @@ function onACOClick(ev){
   const i=acoCompasEn(ev); if(i==null) return;
   const e=dataACO[i]; if(e.modo!=='build') return;
   let p; try{ p=acoPointIn(ev); }catch(err){ return; }
-  // ¿clic sobre una nota colocada? -> seleccionarla
+  // ¿clic sobre una nota colocada? -> seleccionarla (para alterarla; el borrado va por la × fija)
   for(let k=0;k<e.userSeq.length;k++){
     const y=acoYReal(i,e.userSeq[k].step,e.userSeq[k].octave);
-    if(y!=null && Math.abs(y-p.y)<8){ e._selVar=(e._selVar===k)?null:k; renderACO();
-      if(e._selVar===k){ requestAnimationFrame(()=>{ showACODeleteX(i,k); const x=document.getElementById('acoDelX'); if(x) x._over=true; }); }
-      return; }
+    if(y!=null && Math.abs(y-p.y)<8){ e._selVar=(e._selVar===k)?null:k; renderACO(); return; }   /* GN-UNIF 8-jul-2026 */
   }
   if(e.userSeq.length>=e.objetivo.length) return;
   const nat=acoNearestByY(i,p.y); if(!nat) return;
@@ -4484,6 +4605,7 @@ function onACOClick(ev){
   for(let k=e.userSeq.length-1;k>=0;k--){ const pv=e.userSeq[k]; if(pv.step===nb.step&&pv.octave===nb.octave){ nb.alter=pv.alter; nb._inherited=true; break; } }
   const pend=acoPendingAlt[i];
   if(pend===1||pend===-1){ nb.alter=pend; nb._inherited=false; }
+  acoUndo.push({op:'add', i});   /* GN-UNIF 8-jul-2026 */
   e.userSeq.push(nb); acoPendingAlt[i]=0;
   e._selVar=e.userSeq.length-1;
   renderACO();
@@ -4930,9 +5052,11 @@ let dataENA = [];
 let enaScoreMeta = null;
 let enaYMaps = {};
 let enaPendingAlt = {};
+let enaUndo=[];   /* GN-UNIF 8-jul-2026 · pila de deshacer de la tarjeta: {op:'add'|'del', i, k?, nota?} */
 
 function nuevoENA(){
   unlockCard('cardENA');
+  enaUndo=[];   /* GN-UNIF 8-jul-2026 */
   const usadas=new Set();
   dataENA=[];
   for(let k=0;k<4;k++){
@@ -5015,17 +5139,43 @@ function renderENAScore(){
     enaWire();
   });
   fitSvgToContent(host, W);
-  // X persistente sobre la nota seleccionada (para tablet)
-  enaPersistDelX();
+  // GN-UNIF 8-jul-2026 · × fijas (una por nota colocada) y estado del Deshacer
+  enaFixedDelXs();
+  gnRefreshUndo('undoENA', enaUndo, document.getElementById('cardENA')&&document.getElementById('cardENA').classList.contains('locked'));
 }
-/* X persistente sobre la nota seleccionada SOLO en táctil (en ratón aparece al hover) */
-function enaPersistDelX(){
-  hideENADelX();
-  if(!ES_TACTIL) return;
-  for(let i=0;i<dataENA.length;i++){
-    const e=dataENA[i];
-    if(!e._solVisible && e._selVar!=null && e.userSeq[e._selVar]){ showENADelX(i, e._selVar, true); break; }
-  }
+/* GN-UNIF 8-jul-2026 · la antigua × persistente de selección queda INERTE */
+function enaPersistDelX(){ /* GN-UNIF 8-jul-2026: inerte (sustituida por × fijas) */ }
+/* GN-UNIF 8-jul-2026 · × FIJA en cada enarmonía colocada por el alumno (nunca en la
+   nota dada ni tras corregir/bloquear). Se re-crean tras cada renderENAScore. */
+function enaFixedDelXs(){
+  const host=document.getElementById('scoreENA'); if(!host) return;
+  const card=document.getElementById('cardENA');
+  if(card && card.classList.contains('locked')){ gnDelXs(host, []); return; }
+  const items=[];
+  dataENA.forEach((e,i)=>{
+    if(e._solVisible) return;
+    e.userSeq.forEach((u,k)=>{
+      const x=(e._slotX&&e._slotX[k+1]); const y=enaYReal(i,u.step,u.octave);
+      if(x==null||y==null) return;
+      items.push({ x, y, onDel:()=>{
+        enaUndo.push({op:'del', i, k, nota:{...e.userSeq[k]}});
+        e.userSeq.splice(k,1);
+        if(e._selVar===k) e._selVar=null; else if(e._selVar!=null&&e._selVar>k) e._selVar--;
+        renderENA();
+      }});
+    });
+  });
+  gnDelXs(host, items);
+}
+/* GN-UNIF 8-jul-2026 · deshace la última colocación/borrado de la tarjeta de enarmonías */
+function gnUndoENA(){
+  const card=document.getElementById('cardENA');
+  if(card && card.classList.contains('locked')) return;
+  const a=enaUndo.pop(); if(!a) return;
+  const e=dataENA[a.i]; if(!e){ gnRefreshUndo('undoENA', enaUndo); return; }
+  if(a.op==='add'){ e.userSeq.pop(); e._selVar=null; }
+  else if(a.op==='del'){ e.userSeq.splice(a.k,0,a.nota); e._selVar=null; }
+  renderENA();
 }
 
 function buildENAYMap(i, stave){
@@ -5102,12 +5252,19 @@ function renderENAAnswers(){
 function enaWire(){
   const host=document.getElementById('scoreENA'); if(!host||host._enaWired) return; host._enaWired=true;
   host.style.position='relative';
-  host.addEventListener('mousemove',(ev)=>onENAHover(ev));
-  host.addEventListener('mouseleave',()=>{ clearENAGhost(); hideENADelX(); });
-  host.addEventListener('click',(ev)=>onENAClick(ev));
+  /* GN-UNIF 8-jul-2026 · guarda de eventos sintéticos + wiring táctil unificado */
+  host.addEventListener('mousemove',(ev)=>{ if(host._touchHandled) return; onENAHover(ev); });
+  host.addEventListener('mouseleave',()=>{ clearENAGhost(); });
+  host.addEventListener('click',(ev)=>{ if(host._touchHandled) return; onENAClick(ev); });
+  gnWireTouch(host, { hover:onENAHover, click:onENAClick, clear:clearENAGhost });
   host.addEventListener('contextmenu',(ev)=>{
     const i=enaCompasEn(ev); if(i==null) return; const e=dataENA[i];
-    ev.preventDefault(); if(e.userSeq.length){ e.userSeq.pop(); e._selVar=null; renderENA(); }
+    ev.preventDefault();
+    if(e.userSeq.length){
+      const k=e.userSeq.length-1;
+      enaUndo.push({op:'del', i, k, nota:{...e.userSeq[k]}});   /* GN-UNIF 8-jul-2026 */
+      e.userSeq.pop(); e._selVar=null; renderENA();
+    }
   });
 }
 function enaCompasEn(ev){
@@ -5121,18 +5278,18 @@ function enaPointIn(ev){ const svg=document.getElementById('scoreENA').querySele
 function enaNearestByY(i,my){ const map=enaYMaps[i]; if(!map) return null; let best=null,bd=1e9; for(const k in map){ const o=map[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} } return best; }
 function enaYReal(i,step,octave){ const map=enaYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
 function onENAHover(ev){
-  const i=enaCompasEn(ev); if(i==null){ clearENAGhost(); hideENADelX(); return; }
+  const i=enaCompasEn(ev); if(i==null){ clearENAGhost(); return; }
   const e=dataENA[i]; if(e._solVisible){ clearENAGhost(); return; }
   let p; try{ p=enaPointIn(ev); }catch(err){ clearENAGhost(); return; }
-  // hover sobre nota colocada (proximidad X+Y) -> X de borrado
+  /* GN-UNIF 8-jul-2026 · sobre una nota colocada: solo ocultar el ghost
+     (el borrado es SOLO vía la × fija) */
   for(let k=0;k<e.userSeq.length;k++){
     const y=enaYReal(i,e.userSeq[k].step,e.userSeq[k].octave);
     const nx=(e._slotX&&e._slotX[k+1]);
     const cercaY = (y!=null && Math.abs(y-p.y)<10);
     const cercaX = (nx==null) || (Math.abs(nx-p.x)<22);
-    if(cercaY && cercaX){ showENADelX(i,k); clearENAGhost(); return; }
+    if(cercaY && cercaX){ clearENAGhost(); return; }
   }
-  hideENADelX();
   if(e.userSeq.length>=e.sols.length){ clearENAGhost(); return; }
   const nat=enaNearestByY(i,p.y); if(!nat){ clearENAGhost(); return; }
   showENAGhost(i,nat);
@@ -5180,25 +5337,10 @@ function drawENAGhostLedger(i, svg, hr, xInt, nat){
 }
 function clearENAGhost(){ const g=document.getElementById('enaghost'); if(g) g.style.display='none';
   const host=document.getElementById('scoreENA'); if(host) host.querySelectorAll('.enaghost-ledger').forEach(el=>el.remove()); }
-function showENADelX(i,k,persist){
-  const e=dataENA[i]; const host=document.getElementById('scoreENA'); const svg=host&&host.querySelector('svg'); if(!svg) return;
-  const x=(e._slotX&&e._slotX[k+1]) || e._noteX || 60; const y=enaYReal(i,e.userSeq[k].step,e.userSeq[k].octave); if(y==null) return;
-  let xb=document.getElementById('enaDelX');
-  if(!xb){ xb=document.createElement('div'); xb.id='enaDelX'; xb.textContent='×';
-    xb.style.cssText='position:absolute;z-index:8;width:17px;height:17px;line-height:15px;text-align:center;border-radius:50%;background:rgba(20,24,48,.8);color:#fff;border:1px solid rgba(255,255,255,.4);font-size:12px;font-weight:600;cursor:pointer';
-    host.appendChild(xb);
-    xb.addEventListener('mouseenter',()=>xb._over=true);
-    xb.addEventListener('mouseleave',()=>{ xb._over=false; if(!xb._persist) setTimeout(()=>{ if(!xb._over) xb.style.display='none'; },60); });
-  }
-  xb._persist=!!persist; xb._i=i; xb._k=k;
-  try{
-    const pt=svg.createSVGPoint(); pt.x=x; pt.y=y; const sp=pt.matrixTransform(svg.getScreenCTM()); const hr=host.getBoundingClientRect();
-    // pegada a la nota: ligeramente arriba-derecha de la cabeza, sin invadir el slot siguiente
-    xb.style.left=(sp.x-hr.left+9)+'px'; xb.style.top=(sp.y-hr.top-18)+'px'; xb.style.display='block';
-  }catch(e){ xb.style.display='none'; return; }
-  xb.onclick=(ev)=>{ ev.stopPropagation(); e.userSeq.splice(k,1); if(e._selVar===k) e._selVar=null; else if(e._selVar!=null&&e._selVar>k) e._selVar--; renderENA(); };
-}
-function hideENADelX(){ const x=document.getElementById('enaDelX'); if(x && !x._over && !x._persist) x.style.display='none'; }
+/* GN-UNIF 8-jul-2026 · la antigua × flotante por hover queda INERTE: el borrado
+   pasa a las × fijas de enaFixedDelXs (una por nota colocada, siempre visibles). */
+function showENADelX(i,k,persist){ /* GN-UNIF 8-jul-2026: inerte (sustituida por × fijas) */ }
+function hideENADelX(){ /* GN-UNIF 8-jul-2026: inerte (sustituida por × fijas) */ }
 function onENAClick(ev){
   const i=enaCompasEn(ev); if(i==null) return;
   const e=dataENA[i]; if(e._solVisible) return;
@@ -5208,9 +5350,7 @@ function onENAClick(ev){
     const nx=(e._slotX&&e._slotX[k+1]);
     const cercaY=(y!=null && Math.abs(y-p.y)<10);
     const cercaX=(nx==null) || (Math.abs(nx-p.x)<22);
-    if(cercaY && cercaX){ e._selVar=(e._selVar===k)?null:k; renderENA();
-      if(e._selVar===k){ requestAnimationFrame(()=>{ showENADelX(i,k); const x=document.getElementById('enaDelX'); if(x) x._over=true; }); }
-      return; }
+    if(cercaY && cercaX){ e._selVar=(e._selVar===k)?null:k; renderENA(); return; }   /* GN-UNIF 8-jul-2026: selección para alterar; el borrado va por la × fija */
   }
   if(e.userSeq.length>=e.sols.length) return;
   const nat=enaNearestByY(i,p.y); if(!nat) return;
@@ -5218,6 +5358,7 @@ function onENAClick(ev){
   for(let k=e.userSeq.length-1;k>=0;k--){ const pv=e.userSeq[k]; if(pv.step===nb.step&&pv.octave===nb.octave){ nb.alter=pv.alter; nb._inherited=true; break; } }
   const pend=enaPendingAlt[i];
   if(pend!=null){ nb.alter=pend; nb._inherited=false; }
+  enaUndo.push({op:'add', i});   /* GN-UNIF 8-jul-2026 */
   e.userSeq.push(nb); enaPendingAlt[i]=null;
   e._selVar=e.userSeq.length-1;
   renderENA();
@@ -5311,9 +5452,11 @@ function semSortea(tipo){
 
 let dataSEM=[];
 let semScoreMeta=null, semYMaps={}, semPendingAlt={};
+let semUndo=[];   /* GN-UNIF 8-jul-2026 · pila de deshacer de la tarjeta: {op:'add'|'del', i, nota?} */
 
 function nuevoSEM(){
   unlockCard('cardSEM');
+  semUndo=[];   /* GN-UNIF 8-jul-2026 */
   dataSEM=[];
   // compases 1-2: identificar (uno cromático, uno diatónico, orden mezclado)
   const tiposId=shuffleSEM(['cromatico','diatonico']);
@@ -5480,10 +5623,16 @@ function renderSEMAnswers(){
 function semWire(){
   const host=document.getElementById('scoreSEM'); if(!host||host._semWired) return; host._semWired=true;
   host.style.position='relative';
-  host.addEventListener('mousemove',(ev)=>onSEMHover(ev));
-  host.addEventListener('mouseleave',()=>{ clearSEMGhost(); hideSEMDelX(); });
-  host.addEventListener('click',(ev)=>onSEMClick(ev));
-  host.addEventListener('contextmenu',(ev)=>{ const i=semCompasEn(ev); if(i==null) return; const e=dataSEM[i]; if(e.modo!=='build') return; ev.preventDefault(); if(e.userSeq.length){ e.userSeq.pop(); e._selVar=null; renderSEM(); } });
+  /* GN-UNIF 8-jul-2026 · guarda de eventos sintéticos + wiring táctil unificado */
+  host.addEventListener('mousemove',(ev)=>{ if(host._touchHandled) return; onSEMHover(ev); });
+  host.addEventListener('mouseleave',()=>{ clearSEMGhost(); });
+  host.addEventListener('click',(ev)=>{ if(host._touchHandled) return; onSEMClick(ev); });
+  gnWireTouch(host, { hover:onSEMHover, click:onSEMClick, clear:clearSEMGhost });
+  host.addEventListener('contextmenu',(ev)=>{ const i=semCompasEn(ev); if(i==null) return; const e=dataSEM[i]; if(e.modo!=='build') return; ev.preventDefault();
+    if(e.userSeq.length){
+      semUndo.push({op:'del', i, nota:{...e.userSeq[0]}});   /* GN-UNIF 8-jul-2026 */
+      e.userSeq.pop(); e._selVar=null; renderSEM();
+    } });
 }
 function semCompasEn(ev){
   const host=document.getElementById('scoreSEM'); const svg=host&&host.querySelector('svg'); if(!svg||!semScoreMeta) return null;
@@ -5496,15 +5645,11 @@ function semPointIn(ev){ const svg=document.getElementById('scoreSEM').querySele
 function semNearestByY(i,my){ const map=semYMaps[i]; if(!map) return null; let best=null,bd=1e9; for(const k in map){ const o=map[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} } return best; }
 function semYReal(i,step,octave){ const map=semYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
 function onSEMHover(ev){
-  const i=semCompasEn(ev); if(i==null){ clearSEMGhost(); hideSEMDelX(); return; }
-  const e=dataSEM[i]; if(e.modo!=='build' || e._solVisible){ clearSEMGhost(); hideSEMDelX(); return; }
+  const i=semCompasEn(ev); if(i==null){ clearSEMGhost(); return; }
+  const e=dataSEM[i]; if(e.modo!=='build' || e._solVisible){ clearSEMGhost(); return; }
   let p; try{ p=semPointIn(ev); }catch(err){ clearSEMGhost(); return; }
-  if(e.userSeq.length){
-    const y=semYReal(i,e.userSeq[0].step,e.userSeq[0].octave); const nx=(e._slotX&&e._slotX[1]);
-    const cercaY=(y!=null&&Math.abs(y-p.y)<10), cercaX=(nx==null)||(Math.abs(nx-p.x)<22);
-    if(cercaY&&cercaX){ showSEMDelX(i); clearSEMGhost(); return; }
-  }
-  hideSEMDelX();
+  /* GN-UNIF 8-jul-2026 · sobre la nota colocada: solo ocultar el ghost
+     (el borrado es SOLO vía la × fija) */
   if(e.userSeq.length>=1){ clearSEMGhost(); return; }
   const nat=semNearestByY(i,p.y); if(!nat){ clearSEMGhost(); return; }
   showSEMGhost(i,nat);
@@ -5543,27 +5688,42 @@ function drawSEMGhostLedger(i, svg, hr, xInt, nat){
 }
 function clearSEMGhost(){ const g=document.getElementById('semghost'); if(g) g.style.display='none';
   const host=document.getElementById('scoreSEM'); if(host) host.querySelectorAll('.semghost-ledger').forEach(el=>el.remove()); }
-function showSEMDelX(i,persist){
-  const e=dataSEM[i]; const host=document.getElementById('scoreSEM'); const svg=host&&host.querySelector('svg'); if(!svg) return;
-  if(!e.userSeq.length) return;
-  const x=(e._slotX&&e._slotX[1]) || 60; const y=semYReal(i,e.userSeq[0].step,e.userSeq[0].octave); if(y==null) return;
-  let xb=document.getElementById('semDelX');
-  if(!xb){ xb=document.createElement('div'); xb.id='semDelX'; xb.textContent='×';
-    xb.style.cssText='position:absolute;z-index:8;width:17px;height:17px;line-height:15px;text-align:center;border-radius:50%;background:rgba(20,24,48,.8);color:#fff;border:1px solid rgba(255,255,255,.4);font-size:12px;font-weight:600;cursor:pointer';
-    host.appendChild(xb);
-    xb.addEventListener('mouseenter',()=>xb._over=true);
-    xb.addEventListener('mouseleave',()=>{ xb._over=false; if(!xb._persist) setTimeout(()=>{ if(!xb._over) xb.style.display='none'; },60); });
-  }
-  xb._persist=!!persist;
-  try{ const pt=svg.createSVGPoint(); pt.x=x; pt.y=y; const sp=pt.matrixTransform(svg.getScreenCTM()); const hr=host.getBoundingClientRect();
-    xb.style.left=(sp.x-hr.left+9)+'px'; xb.style.top=(sp.y-hr.top-18)+'px'; xb.style.display='block';
-  }catch(e){ xb.style.display='none'; return; }
-  xb.onclick=(ev)=>{ ev.stopPropagation(); e.userSeq=[]; e._selVar=null; renderSEM(); };
+/* GN-UNIF 8-jul-2026 · la antigua × flotante por hover queda INERTE: el borrado
+   pasa a las × fijas de semFixedDelXs (una por nota colocada, siempre visibles). */
+function showSEMDelX(i,persist){ /* GN-UNIF 8-jul-2026: inerte (sustituida por × fijas) */ }
+function hideSEMDelX(){ /* GN-UNIF 8-jul-2026: inerte (sustituida por × fijas) */ }
+/* GN-UNIF 8-jul-2026 · × FIJA en la 2ª nota colocada de cada compás de construir
+   (nunca en la nota dada ni tras corregir/bloquear). Se re-crean tras cada render. */
+function semFixedDelXs(){
+  const host=document.getElementById('scoreSEM'); if(!host) return;
+  const card=document.getElementById('cardSEM');
+  if(card && card.classList.contains('locked')){ gnDelXs(host, []); return; }
+  const items=[];
+  dataSEM.forEach((e,i)=>{
+    if(e.modo!=='build' || e._solVisible || e._corregido || !e.userSeq.length) return;
+    const x=(e._slotX&&e._slotX[1]); const y=semYReal(i,e.userSeq[0].step,e.userSeq[0].octave);
+    if(x==null||y==null) return;
+    items.push({ x, y, onDel:()=>{
+      semUndo.push({op:'del', i, nota:{...e.userSeq[0]}});
+      e.userSeq=[]; e._selVar=null; renderSEM();
+    }});
+  });
+  gnDelXs(host, items);
 }
-function hideSEMDelX(){ const x=document.getElementById('semDelX'); if(x && !x._over && !x._persist) x.style.display='none'; }
 function semPersistDelX(){
-  hideSEMDelX(); if(!ES_TACTIL) return;
-  for(let i=0;i<dataSEM.length;i++){ const e=dataSEM[i]; if(e.modo==='build' && !e._solVisible && e._selVar===0 && e.userSeq[0]){ showSEMDelX(i,true); break; } }
+  /* GN-UNIF 8-jul-2026 · ahora pinta las × fijas y refresca el Deshacer (se llama tras cada render) */
+  semFixedDelXs();
+  gnRefreshUndo('undoSEM', semUndo, document.getElementById('cardSEM')&&document.getElementById('cardSEM').classList.contains('locked'));
+}
+/* GN-UNIF 8-jul-2026 · deshace la última colocación/borrado de la tarjeta de semitonos */
+function gnUndoSEM(){
+  const card=document.getElementById('cardSEM');
+  if(card && card.classList.contains('locked')) return;
+  const a=semUndo.pop(); if(!a) return;
+  const e=dataSEM[a.i]; if(!e || e.modo!=='build'){ gnRefreshUndo('undoSEM', semUndo); return; }
+  if(a.op==='add'){ e.userSeq=[]; e._selVar=null; }
+  else if(a.op==='del'){ e.userSeq=[{...a.nota}]; e._selVar=null; }
+  renderSEM();
 }
 function onSEMClick(ev){
   const i=semCompasEn(ev); if(i==null) return;
@@ -5572,9 +5732,7 @@ function onSEMClick(ev){
   if(e.userSeq.length){
     const y=semYReal(i,e.userSeq[0].step,e.userSeq[0].octave); const nx=(e._slotX&&e._slotX[1]);
     const cercaY=(y!=null&&Math.abs(y-p.y)<10), cercaX=(nx==null)||(Math.abs(nx-p.x)<22);
-    if(cercaY&&cercaX){ e._selVar=(e._selVar===0)?null:0; renderSEM();
-      if(e._selVar===0){ requestAnimationFrame(()=>{ showSEMDelX(i); const x=document.getElementById('semDelX'); if(x) x._over=true; }); }
-      return; }
+    if(cercaY&&cercaX){ e._selVar=(e._selVar===0)?null:0; renderSEM(); return; }   /* GN-UNIF 8-jul-2026: selección para alterar; el borrado va por la × fija */
   }
   if(e.userSeq.length>=1) return;
   const nat=semNearestByY(i,p.y); if(!nat) return;
@@ -5585,6 +5743,7 @@ function onSEMClick(ev){
   }
   const pend=semPendingAlt[i];
   if(pend!=null){ nb.alter=pend; nb._inherited=false; }
+  semUndo.push({op:'add', i});   /* GN-UNIF 8-jul-2026 */
   e.userSeq=[nb]; semPendingAlt[i]=null; e._selVar=0;
   renderSEM();
 }
@@ -7743,9 +7902,16 @@ window.FichaDelPop = function(sc, notas){
       catch(e){ return; }
       const del=document.createElement('button'); del.className='nota-del-pop'; del.title='Borrar nota'; del.textContent='×';
       // separación: medio ancho de cabeza (~6 u * escala) + un margen fijo, todo a la derecha
-      del.style.left=(scrX - hb.left + 6*sx + GAP_PX)+'px';
+      del.style.left=(scrX - hb.left + 6*sx + GAP_PX + (nt.dx||0))+'px';
       del.style.top =(scrY - hb.top)+'px';
-      del.onclick=(ev)=>{ ev.stopPropagation(); if(typeof nt.onDel==='function') nt.onDel(); };
+      /* GN-UNIF 8-jul-2026 · borrado por click Y touchend (con guarda anti-duplicado);
+         stopPropagation también al empezar el toque para que el pentagrama no pinte
+         la ghost debajo de la × */
+      del.onclick=(ev)=>{ ev.stopPropagation(); if(del._gnT) return; if(typeof nt.onDel==='function') nt.onDel(); };
+      del.addEventListener('touchend',(ev)=>{ ev.stopPropagation(); if(ev.cancelable) ev.preventDefault();
+        del._gnT=true; setTimeout(()=>{ del._gnT=false; },450);
+        if(typeof nt.onDel==='function') nt.onDel(); },{passive:false});
+      ['pointerdown','touchstart','mousedown','mousemove'].forEach(t=>del.addEventListener(t,(ev)=>ev.stopPropagation(),{passive:true}));
       sc.appendChild(del);
     });
   }
@@ -7753,6 +7919,41 @@ window.FichaDelPop = function(sc, notas){
   // reintento tras layout (cubre el primer render dentro del overlay, cuando el SVG aún no está medido)
   try{ requestAnimationFrame(pintar); }catch(e){}
   try{ setTimeout(pintar, 60); }catch(e){}
+};
+
+/* GN-UNIF 8-jul-2026 · wiring TÁCTIL común de los motores de ficha:
+   "pulsar → arrastrar → soltar" sobre el svg del pentagrama.
+   touchstart/touchmove -> onMove (pinta/arrastra la ghost bajo el dedo)
+   touchend -> onTap (coloca la nota donde estaba la ghost) + onClear (la oculta)
+   Marca svg._touchHandled para que los handlers de mousemove/click del motor
+   ignoren los eventos sintéticos del toque (deben comprobarlo y salir). */
+window.FichaTouch = function(svg, onMove, onTap, onClear){
+  if(!svg || svg._gnTouchWired) return; svg._gnTouchWired=true;
+  svg._touchHandled=false;
+  svg.addEventListener('touchstart',(ev)=>{ if(ev.touches&&ev.touches[0]) onMove(ev.touches[0]); },{passive:true});
+  svg.addEventListener('touchmove',(ev)=>{ if(ev.touches&&ev.touches[0]){ onMove(ev.touches[0]); ev.preventDefault(); } },{passive:false});
+  svg.addEventListener('touchend',(ev)=>{
+    const t=(ev.changedTouches&&ev.changedTouches[0]);
+    svg._touchHandled=true;
+    if(t) onTap(t);
+    if(onClear) onClear();
+    setTimeout(()=>{ svg._touchHandled=false; },450);
+    ev.preventDefault();
+  },{passive:false});
+};
+
+/* GN-UNIF 8-jul-2026 · botón "↶ Deshacer" común de los motores de ficha.
+   Se inserta arriba a la derecha del pentagrama; devuelve el botón para que el
+   motor lo refresque (disabled) en cada pintar(). */
+window.FichaUndoBtn = function(host, beforeEl, onUndo){
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;justify-content:flex-end;margin:0 0 6px';
+  const b=document.createElement('button'); b.className='gn-undo'; b.type='button';
+  b.textContent='↶ Deshacer'; b.disabled=true;
+  b.onclick=onUndo;
+  row.appendChild(b);
+  host.insertBefore(row, beforeEl||host.firstChild);
+  return b;
 };
 
 
@@ -7904,8 +8105,21 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     wrap.appendChild(ctrlWrap); wrap.appendChild(sc);
     host.appendChild(wrap);
 
+    /* GN-UNIF 8-jul-2026 · pila de deshacer + botón (solo donde el alumno coloca notas) */
+    estado._undo = estado._undo || [];
+    let undoBtn=null;
+    if(!precol){
+      undoBtn = window.FichaUndoBtn(host, wrap, ()=>{
+        const a=(estado._undo||[]).pop(); if(!a) return;
+        if(a.op==='add'){ estado.seq.pop(); if(estado.sel!=null && estado.sel>=estado.seq.length) estado.sel=null; }
+        else if(a.op==='del'){ estado.seq.splice(a.k,0,a.nota); if(estado.sel!=null && estado.sel>=a.k) estado.sel++; }
+        pintar();
+      });
+    }
+
     // mapa Y (step+octave -> y) para hit-testing, recalculado en cada pintado
     let yMap={};
+    let led=null;   /* GN-UNIF 8-jul-2026 · {yTop, esp} para las líneas adicionales del ghost */
     let geom={ noteXs:[], noteYs:[], nextX:null };
 
     // en modo precolocado, las cabezas que el alumno no ha tocado a mano siguen la armadura
@@ -7976,6 +8190,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       refreshAccButtons();
       wireSvg();
       pintarPopupsBorrado();
+      if(undoBtn) undoBtn.disabled = !(estado._undo && estado._undo.length);   /* GN-UNIF 8-jul-2026 */
     }
 
     // ×: a la derecha de cada nota colocada por el alumno. Solo en modo "otras" (no precolocado),
@@ -7984,7 +8199,9 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       if(precol){ sc.querySelectorAll(':scope > .nota-del-pop').forEach(el=>el.remove()); return; }
       const notas=[];
       (geom.noteXs||[]).forEach((x,k)=>{ const y=geom.noteYs?geom.noteYs[k]:null; if(x==null||y==null) return;
-        notas.push({ x, y, onDel:()=>{ estado.seq.splice(k,1); if(estado.sel===k) estado.sel=null; else if(estado.sel!=null && estado.sel>k) estado.sel--; estado._dirty=true; pintar(); } });
+        notas.push({ x, y, onDel:()=>{
+          (estado._undo=estado._undo||[]).push({op:'del', k, nota:{...estado.seq[k]}});   /* GN-UNIF 8-jul-2026 */
+          estado.seq.splice(k,1); if(estado.sel===k) estado.sel=null; else if(estado.sel!=null && estado.sel>k) estado.sel--; estado._dirty=true; pintar(); } });
       });
       window.FichaDelPop(sc, notas);
     }
@@ -7995,6 +8212,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
         const yTop=stave.getYForLine(0);
         const yLine1=stave.getYForLine(1);
         const half=(yLine1-yTop)/2;     // medio espacio
+        led={yTop:yTop, esp:half*2};    /* GN-UNIF 8-jul-2026 · para las líneas adicionales del ghost */
         const refMidi=midiNota('F',5,0); // línea superior del pentagrama (Fa5)
         const refStep=diatonicStep(refMidi);
         for(let oct=3;oct<=6;oct++){
@@ -8019,14 +8237,41 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       catch(e){ return null; }
     }
 
+    /* GN-UNIF 8-jul-2026 · ghost bajo el cursor/dedo (antes este motor no tenía hover) */
+    function onMove(ev){
+      const svg=sc.querySelector('svg'); if(!svg) return;
+      if(precol){ window.FichaGhost.hide(sc); return; }   // sin colocación de cabezas
+      const p=svgPoint(svg,ev); if(!p){ window.FichaGhost.hide(sc); return; }
+      // sobre una nota ya colocada: solo ocultar el ghost
+      let hit=-1;
+      (geom.noteXs||[]).forEach((x,k)=>{ if(x==null) return;
+        const y=geom.noteYs?geom.noteYs[k]:null; const dy=y!=null?Math.abs(y-p.y):0;
+        if(Math.abs(x-p.x)<18 && dy<13) hit=k; });
+      if(hit>=0){ window.FichaGhost.hide(sc); return; }
+      if(estado.seq.length>=nNotas){ window.FichaGhost.hide(sc); return; }
+      const nat=nearestByY(p.y); if(!nat){ window.FichaGhost.hide(sc); return; }
+      const gy=yReal(nat.step,nat.octave);
+      let gx=geom.nextX;
+      if(gx==null){ for(let k=(geom.noteXs||[]).length-1;k>=0;k--){ if(geom.noteXs[k]!=null){ gx=geom.noteXs[k]+34; break; } } }
+      if(gx==null) gx=80;
+      window.FichaGhost.show(sc, svg, gx, gy, led);
+    }
+
     function wireSvg(){
       const svg=sc.querySelector('svg'); if(!svg) return;
       if(svg._escWired) return; svg._escWired=true;
       svg.style.cursor='pointer';
-      svg.addEventListener('click',(ev)=>onClick(ev));
+      /* GN-UNIF 8-jul-2026 · guarda de eventos sintéticos + wiring táctil unificado */
+      svg.addEventListener('mousemove',(ev)=>{ if(svg._touchHandled) return; onMove(ev); });
+      svg.addEventListener('mouseleave',()=>window.FichaGhost.hide(sc));
+      svg.addEventListener('click',(ev)=>{ if(svg._touchHandled) return; onClick(ev); });
+      window.FichaTouch(svg, onMove, onClick, ()=>window.FichaGhost.hide(sc));
       svg.addEventListener('contextmenu',(ev)=>{ ev.preventDefault();
         if(precol) return;   // cabezas precolocadas no se borran
-        if(estado.seq.length){ estado.seq.pop(); estado.sel=(estado.seq.length?estado.seq.length-1:null); pintar(); } });
+        if(estado.seq.length){
+          const k=estado.seq.length-1;
+          (estado._undo=estado._undo||[]).push({op:'del', k, nota:{...estado.seq[k]}});   /* GN-UNIF 8-jul-2026 */
+          estado.seq.pop(); estado.sel=(estado.seq.length?estado.seq.length-1:null); pintar(); } });
     }
 
     function onClick(ev){
@@ -8056,6 +8301,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       }
       // alteración pendiente fijada en el panel -> prevalece
       if(estado.pend===1||estado.pend===-1){ nb.alter=estado.pend; nb._inherited=false; }
+      (estado._undo=estado._undo||[]).push({op:'add'});   /* GN-UNIF 8-jul-2026 */
       estado.seq.push(nb); estado.pend=0; estado._dirty=true;
       // cromática/hexátona: la nueva queda seleccionada para alterarla al momento
       const fijaSel = (spec.familia==='cromatica' || spec.familia==='hexatona');
@@ -8529,6 +8775,15 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     panel.style.cssText='display:grid;grid-template-columns:repeat('+n+',1fr);gap:10px;margin-top:12px';
     host.appendChild(panel);
 
+    /* GN-UNIF 8-jul-2026 · pila de deshacer + botón: {i, prev} (prev = 2ª nota machacada o null) */
+    estado._undo = estado._undo || [];
+    const undoBtn = window.FichaUndoBtn(host, sc, ()=>{
+      const a=(estado._undo||[]).pop(); if(!a) return;
+      estado.resp[a.i]=a.prev? {...a.prev} : null;
+      if(estado.sel===a.i && !a.prev) estado.sel=null;
+      pintar();
+    });
+
     // geometría por compás (mapa Y compartido, mismo pentagrama)
     let geom={ slots:[], yMap:{} };
 
@@ -8575,6 +8830,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       wire(sc.querySelector('svg'), x0, wC);
       pintarPopupsBorrado();
       pintarPanel();
+      undoBtn.disabled = !(estado._undo && estado._undo.length);   /* GN-UNIF 8-jul-2026 */
     }
 
     // botón emergente "×" para borrar, posado sobre cada nota colocada (rosa).
@@ -8583,7 +8839,9 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       for(let i=0;i<n;i++){ const r2=estado.resp[i]; if(!r2) continue;
         const x=geom.slots[i]?geom.slots[i].x:null; const y=yReal(null,r2.step,r2.octave);
         if(x==null||y==null) continue;
-        notas.push({ x, y, onDel:()=>{ estado.resp[i]=null; if(estado.sel===i) estado.sel=null; estado._dirty=true; pintar(); } });
+        notas.push({ x, y, onDel:()=>{
+          (estado._undo=estado._undo||[]).push({i, prev:{...estado.resp[i]}});   /* GN-UNIF 8-jul-2026 */
+          estado.resp[i]=null; if(estado.sel===i) estado.sel=null; estado._dirty=true; pintar(); } });
       }
       window.FichaDelPop(sc, notas);
     }
@@ -8610,7 +8868,8 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
 
     function wire(svg, x0, wC){
       if(!svg||svg._wired) return; svg._wired=true; svg.style.cursor='pointer';
-      svg.addEventListener('mousemove',(ev)=>{
+      /* GN-UNIF 8-jul-2026 · handlers nombrados compartidos por ratón y táctil */
+      const onMove=(ev)=>{
         const p=pt(svg,ev); if(!p){ window.FichaGhost.hide(sc); return; }
         for(let i=0;i<n;i++){ const r2=estado.resp[i]; if(!r2) continue; const x=geom.slots[i].x, y=yReal(null,r2.step,r2.octave);
           if(x!=null&&y!=null && Math.abs(x-p.x)<18 && Math.abs(y-p.y)<13){ window.FichaGhost.hide(sc); return; } }
@@ -8618,9 +8877,8 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
         if(i<0||!nat){ window.FichaGhost.hide(sc); return; }
         const gx=geom.slots[i] ? geom.slots[i].x : null; const gy=geom.yMap[nat.step+nat.octave]?geom.yMap[nat.step+nat.octave].y:null;
         window.FichaGhost.show(sc, svg, gx, gy, geom.led);
-      });
-      svg.addEventListener('mouseleave',()=>window.FichaGhost.hide(sc));
-      svg.addEventListener('click',(ev)=>{
+      };
+      const onTap=(ev)=>{
         const p=pt(svg,ev); if(!p) return;
         window.FichaGhost.hide(sc);
         // ¿clic sobre una 2ª nota ya puesta? -> seleccionarla (toggle)
@@ -8630,14 +8888,21 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
         // colocar nota nueva en el compás bajo el cursor
         const i=slotUnderX(p.x, wC, x0); if(i<0) return;
         const nat=nearestY(p.y); if(!nat) return;
+        (estado._undo=estado._undo||[]).push({i, prev: estado.resp[i]? {...estado.resp[i]} : null});   /* GN-UNIF 8-jul-2026 */
         estado.resp[i]={step:nat.step, octave:nat.octave, alter:0};
         estado.sel=i; estado._dirty=true; pintar();
-      });
+      };
+      svg.addEventListener('mousemove',(ev)=>{ if(svg._touchHandled) return; onMove(ev); });
+      svg.addEventListener('mouseleave',()=>window.FichaGhost.hide(sc));
+      svg.addEventListener('click',(ev)=>{ if(svg._touchHandled) return; onTap(ev); });
+      window.FichaTouch(svg, onMove, onTap, ()=>window.FichaGhost.hide(sc));
       svg.addEventListener('contextmenu',(ev)=>{ ev.preventDefault();
         const p=pt(svg,ev); if(!p) return;
         for(let i=0;i<n;i++){ const r2=estado.resp[i]; if(!r2) continue;
           const x=geom.slots[i].x, y=yReal(null,r2.step,r2.octave);
-          if(x!=null&&y!=null && Math.abs(x-p.x)<20 && Math.abs(y-p.y)<14){ estado.resp[i]=null; if(estado.sel===i) estado.sel=null; pintar(); return; } }
+          if(x!=null&&y!=null && Math.abs(x-p.x)<20 && Math.abs(y-p.y)<14){
+            (estado._undo=estado._undo||[]).push({i, prev:{...r2}});   /* GN-UNIF 8-jul-2026 */
+            estado.resp[i]=null; if(estado.sel===i) estado.sel=null; pintar(); return; } }
       });
     }
 
@@ -8728,6 +8993,16 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     panel.style.cssText='display:grid;grid-template-columns:repeat('+n+',1fr);gap:10px;margin-top:12px';
     host.appendChild(panel);
 
+    /* GN-UNIF 8-jul-2026 · pila de deshacer + botón: {op:'add'|'del', i, h?, nota?} */
+    estado._undo = estado._undo || [];
+    const undoBtn = window.FichaUndoBtn(host, sc, ()=>{
+      const a=(estado._undo||[]).pop(); if(!a) return;
+      if(a.op==='add'){ estado.resp[a.i].pop(); }
+      else if(a.op==='del'){ estado.resp[a.i].splice(a.h,0,a.nota); }
+      estado.sel=null;
+      pintar();
+    });
+
     let geom={ comp:[], yMap:{} };   // comp[i] = {x0i, wC, slotX:[...] }
 
     function pintar(){
@@ -8774,6 +9049,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       wire(sc.querySelector('svg'), x0, wC);
       pintarPopupsBorrado();
       pintarPanel();
+      undoBtn.disabled = !(estado._undo && estado._undo.length);   /* GN-UNIF 8-jul-2026 */
     }
 
     // ×: a la derecha de cada nota colocada por el alumno (slot 0 es la nota dada, no se borra)
@@ -8782,7 +9058,9 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       for(let i=0;i<n;i++){ const arr=estado.resp[i]||[]; const c=geom.comp[i]; if(!c) continue;
         arr.forEach((u,h)=>{ const x=c.slotX[1+h], y=yReal(u.step,u.octave);
           if(x==null||y==null) return;
-          notas.push({ x, y, onDel:()=>{ estado.resp[i].splice(h,1); if(estado.sel && estado.sel.compas===i){ if(estado.sel.idx===h) estado.sel=null; else if(estado.sel.idx>h) estado.sel.idx--; } estado._dirty=true; pintar(); } });
+          notas.push({ x, y, onDel:()=>{
+            (estado._undo=estado._undo||[]).push({op:'del', i, h, nota:{...estado.resp[i][h]}});   /* GN-UNIF 8-jul-2026 */
+            estado.resp[i].splice(h,1); if(estado.sel && estado.sel.compas===i){ if(estado.sel.idx===h) estado.sel=null; else if(estado.sel.idx>h) estado.sel.idx--; } estado._dirty=true; pintar(); } });
         });
       }
       window.FichaDelPop(sc, notas);
@@ -8821,7 +9099,8 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
 
     function wire(svg, x0, wC){
       if(!svg||svg._wired) return; svg._wired=true; svg.style.cursor='pointer';
-      svg.addEventListener('mousemove',(ev)=>{
+      /* GN-UNIF 8-jul-2026 · handlers nombrados compartidos por ratón y táctil */
+      const onMove=(ev)=>{
         const p=pt(svg,ev); if(!p){ window.FichaGhost.hide(sc); return; }
         if(noteHit(p)){ window.FichaGhost.hide(sc); return; }
         const i=compUnderX(p.x); const sd=i>=0?ej._solData[i]:null;
@@ -8829,9 +9108,8 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
         const nat=nearestY(p.y); if(!nat){ window.FichaGhost.hide(sc); return; }
         const gy=geom.yMap[nat.step+nat.octave]?geom.yMap[nat.step+nat.octave].y:null;
         window.FichaGhost.show(sc, svg, p.x, gy, geom.led);
-      });
-      svg.addEventListener('mouseleave',()=>window.FichaGhost.hide(sc));
-      svg.addEventListener('click',(ev)=>{
+      };
+      const onTap=(ev)=>{
         const p=pt(svg,ev); if(!p) return;
         window.FichaGhost.hide(sc);
         const hit=noteHit(p);
@@ -8843,13 +9121,20 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
         let nb={step:nat.step,octave:nat.octave,alter:0};
         // hereda alteración de una nota previa del mismo nombre+octava en el compás
         for(let k=estado.resp[i].length-1;k>=0;k--){ const pv=estado.resp[i][k]; if(pv.step===nb.step&&pv.octave===nb.octave){ nb.alter=pv.alter; nb._inherited=true; break; } }
+        (estado._undo=estado._undo||[]).push({op:'add', i});   /* GN-UNIF 8-jul-2026 */
         estado.resp[i].push(nb); estado._dirty=true;
         estado.sel={compas:i, idx:estado.resp[i].length-1};
         pintar();
-      });
+      };
+      svg.addEventListener('mousemove',(ev)=>{ if(svg._touchHandled) return; onMove(ev); });
+      svg.addEventListener('mouseleave',()=>window.FichaGhost.hide(sc));
+      svg.addEventListener('click',(ev)=>{ if(svg._touchHandled) return; onTap(ev); });
+      window.FichaTouch(svg, onMove, onTap, ()=>window.FichaGhost.hide(sc));
       svg.addEventListener('contextmenu',(ev)=>{ ev.preventDefault();
         const p=pt(svg,ev); if(!p) return; const hit=noteHit(p);
-        if(hit){ estado.resp[hit.compas].splice(hit.idx,1); if(estado.sel && estado.sel.compas===hit.compas){ if(estado.sel.idx===hit.idx) estado.sel=null; else if(estado.sel.idx>hit.idx) estado.sel.idx--; } pintar(); }
+        if(hit){
+          (estado._undo=estado._undo||[]).push({op:'del', i:hit.compas, h:hit.idx, nota:{...estado.resp[hit.compas][hit.idx]}});   /* GN-UNIF 8-jul-2026 */
+          estado.resp[hit.compas].splice(hit.idx,1); if(estado.sel && estado.sel.compas===hit.compas){ if(estado.sel.idx===hit.idx) estado.sel=null; else if(estado.sel.idx>hit.idx) estado.sel.idx--; } pintar(); }
       });
     }
 
@@ -9176,6 +9461,15 @@ function __grados_marker__(){}
     const panel=document.createElement('div'); panel.style.cssText='display:grid;grid-template-columns:repeat('+n+',1fr);gap:10px;margin-top:12px';
     host.appendChild(panel);
 
+    /* GN-UNIF 8-jul-2026 · pila de deshacer + botón: {i, prev} (prev = nota borrada o null) */
+    estado._undo = estado._undo || [];
+    const undoBtn = window.FichaUndoBtn(host, sc, ()=>{
+      const a=(estado._undo||[]).pop(); if(!a) return;
+      estado.resp[a.i]=a.prev? {...a.prev} : null;
+      if(estado.foco===a.i && !a.prev) estado.foco=null;
+      pintar();
+    });
+
     let geom={ comp:[], yMap:{} };
 
     function pintar(){
@@ -9234,6 +9528,7 @@ function __grados_marker__(){}
       wire(sc.querySelector('svg'), x0, wC, GAP);
       pintarPopupsBorrado();
       pintarPanel();
+      undoBtn.disabled = !(estado._undo && estado._undo.length);   /* GN-UNIF 8-jul-2026 */
     }
 
     // botón "×" para borrar, a la derecha de la 2ª nota colocada (solo modo build)
@@ -9242,7 +9537,9 @@ function __grados_marker__(){}
       for(let i=0;i<n;i++){ const sd=ej._solData[i]; if(sd.modo!=='build') continue; const r2=estado.resp[i]; if(!r2) continue;
         const c=geom.comp[i]; const x=c?c.x2:null; const y=yReal(r2.step,r2.octave);
         if(x==null||y==null) continue;
-        notas.push({ x, y, onDel:()=>{ estado.resp[i]=null; if(estado.foco===i) estado.foco=null; estado._dirty=true; pintar(); } });
+        notas.push({ x, y, onDel:()=>{
+          (estado._undo=estado._undo||[]).push({i, prev:{...estado.resp[i]}});   /* GN-UNIF 8-jul-2026 */
+          estado.resp[i]=null; if(estado.foco===i) estado.foco=null; estado._dirty=true; pintar(); } });
       }
       window.FichaDelPop(sc, notas);
     }
@@ -9266,16 +9563,16 @@ function __grados_marker__(){}
     }
 
     function wire(svg, x0, wC, GAP){ if(!svg||svg._wired) return; svg._wired=true; svg.style.cursor='pointer';
-      svg.addEventListener('mousemove',(ev)=>{ const p=pt(svg,ev); if(!p){ window.FichaGhost.hide(sc); return; }
+      /* GN-UNIF 8-jul-2026 · handlers nombrados compartidos por ratón y táctil */
+      const onMove=(ev)=>{ const p=pt(svg,ev); if(!p){ window.FichaGhost.hide(sc); return; }
         if(buildNoteHit(p)>=0){ window.FichaGhost.hide(sc); return; }
         const i=compUnderX(p.x);
         if(i<0 || geom.comp[i].modo!=='build' || estado.resp[i]!=null){ window.FichaGhost.hide(sc); return; }
         const nat=nearestY(p.y); if(!nat){ window.FichaGhost.hide(sc); return; }
         const gx=geom.comp[i].x2, gy=geom.yMap[nat.step+nat.octave]?geom.yMap[nat.step+nat.octave].y:null;
         window.FichaGhost.show(sc, svg, gx, gy, geom.led);
-      });
-      svg.addEventListener('mouseleave',()=>window.FichaGhost.hide(sc));
-      svg.addEventListener('click',(ev)=>{ const p=pt(svg,ev); if(!p) return; window.FichaGhost.hide(sc);
+      };
+      const onTap=(ev)=>{ const p=pt(svg,ev); if(!p) return; window.FichaGhost.hide(sc);
         const hit=buildNoteHit(p);
         if(hit>=0){ estado.foco=(estado.foco===hit)?null:hit; pintar(); return; }
         const i=compUnderX(p.x); if(i<0) return; if(geom.comp[i].modo!=='build') return;
@@ -9285,11 +9582,18 @@ function __grados_marker__(){}
         // hereda alteración si coincide letra+octava con la nota dada
         const sd=ej._solData[i];
         if(sd.dada && sd.dada.step===nb.step && sd.dada.octave===nb.octave){ nb.alter=sd.dada.alter; nb._inherited=true; }
+        (estado._undo=estado._undo||[]).push({i, prev:null});   /* GN-UNIF 8-jul-2026 */
         estado.resp[i]=nb; estado.foco=i; estado._dirty=true; pintar();
-      });
+      };
+      svg.addEventListener('mousemove',(ev)=>{ if(svg._touchHandled) return; onMove(ev); });
+      svg.addEventListener('mouseleave',()=>window.FichaGhost.hide(sc));
+      svg.addEventListener('click',(ev)=>{ if(svg._touchHandled) return; onTap(ev); });
+      window.FichaTouch(svg, onMove, onTap, ()=>window.FichaGhost.hide(sc));
       svg.addEventListener('contextmenu',(ev)=>{ ev.preventDefault(); const p=pt(svg,ev); if(!p) return;
         const hit=buildNoteHit(p);
-        if(hit>=0){ estado.resp[hit]=null; if(estado.foco===hit) estado.foco=null; pintar(); }
+        if(hit>=0){
+          (estado._undo=estado._undo||[]).push({i:hit, prev:{...estado.resp[hit]}});   /* GN-UNIF 8-jul-2026 */
+          estado.resp[hit]=null; if(estado.foco===hit) estado.foco=null; pintar(); }
       });
     }
 
@@ -9397,6 +9701,16 @@ function __grados_marker__(){}
     const panel=document.createElement('div'); panel.style.cssText='display:grid;grid-template-columns:repeat('+n+',1fr);gap:10px;margin-top:12px';
     host.appendChild(panel);
 
+    /* GN-UNIF 8-jul-2026 · pila de deshacer + botón: {op:'add'|'del', i, h?, nota?} */
+    estado._undo = estado._undo || [];
+    const undoBtn = window.FichaUndoBtn(host, sc, ()=>{
+      const a=(estado._undo||[]).pop(); if(!a) return;
+      if(a.op==='add'){ estado.resp[a.i].pop(); }
+      else if(a.op==='del'){ estado.resp[a.i].splice(a.h,0,a.nota); }
+      estado.fsel=null;
+      pintar();
+    });
+
     let geom={ comp:[], yMap:{} };
 
     function pintar(){
@@ -9451,16 +9765,19 @@ function __grados_marker__(){}
       wire(sc.querySelector('svg'));
       pintarPopupsBorrado();
       pintarPanel();
+      undoBtn.disabled = !(estado._undo && estado._undo.length);   /* GN-UNIF 8-jul-2026 */
     }
 
-    // ×: a la derecha de cada nota colocada por el alumno (compases build). Varias notas comparten X => se apilan a la derecha.
-    // ×: a la derecha de cada nota colocada por el alumno (compases build). Varias notas comparten X => se apilan a la derecha.
+    // ×: a la derecha de cada nota colocada por el alumno (compases build). Varias notas comparten X
+    // => se escalonan a la derecha (dx) para no taparse. /* GN-UNIF 8-jul-2026 */
     function pintarPopupsBorrado(){
       const notas=[];
       for(let i=0;i<n;i++){ if(geom.comp[i].modo!=='build') continue; const arr=estado.resp[i]||[];
         arr.forEach((u,h)=>{ const x=geom.comp[i].baseX, y=yReal(u.step,u.octave);
           if(x==null||y==null) return;
-          notas.push({ x, y, onDel:()=>{ estado.resp[i].splice(h,1); if(estado.foco===i){ if(estado.fsel===h) estado.fsel=null; else if(estado.fsel!=null && estado.fsel>h) estado.fsel--; } estado._dirty=true; pintar(); } });
+          notas.push({ x, y, dx:h*17, onDel:()=>{
+            (estado._undo=estado._undo||[]).push({op:'del', i, h, nota:{...estado.resp[i][h]}});   /* GN-UNIF 8-jul-2026 */
+            estado.resp[i].splice(h,1); if(estado.foco===i){ if(estado.fsel===h) estado.fsel=null; else if(estado.fsel!=null && estado.fsel>h) estado.fsel--; } estado._dirty=true; pintar(); } });
         });
       }
       window.FichaDelPop(sc, notas);
@@ -9485,16 +9802,16 @@ function __grados_marker__(){}
     }
 
     function wire(svg){ if(!svg||svg._wired) return; svg._wired=true; svg.style.cursor='pointer';
-      svg.addEventListener('mousemove',(ev)=>{ const p=pt(svg,ev); if(!p){ window.FichaGhost.hide(sc); return; }
+      /* GN-UNIF 8-jul-2026 · handlers nombrados compartidos por ratón y táctil */
+      const onMove=(ev)=>{ const p=pt(svg,ev); if(!p){ window.FichaGhost.hide(sc); return; }
         if(buildNoteHit(p)){ window.FichaGhost.hide(sc); return; }
         const i=compUnderX(p.x); const sd=i>=0?ej._solData[i]:null;
         if(i<0 || !sd || geom.comp[i].modo!=='build' || estado.resp[i].length>=sd.objetivo.length){ window.FichaGhost.hide(sc); return; }
         const nat=nearestY(p.y); if(!nat){ window.FichaGhost.hide(sc); return; }
         const gx=geom.comp[i].baseX, gy=geom.yMap[nat.step+nat.octave]?geom.yMap[nat.step+nat.octave].y:null;
         window.FichaGhost.show(sc, svg, gx, gy, geom.led);
-      });
-      svg.addEventListener('mouseleave',()=>window.FichaGhost.hide(sc));
-      svg.addEventListener('click',(ev)=>{ const p=pt(svg,ev); if(!p) return; window.FichaGhost.hide(sc);
+      };
+      const onTap=(ev)=>{ const p=pt(svg,ev); if(!p) return; window.FichaGhost.hide(sc);
         const hit=buildNoteHit(p);
         if(hit){ estado.foco=hit.compas; estado.fsel=(estado.foco===hit.compas && estado.fsel===hit.idx)? null : hit.idx; pintar(); return; }
         const i=compUnderX(p.x); if(i<0) return; if(geom.comp[i].modo!=='build') return;
@@ -9505,11 +9822,18 @@ function __grados_marker__(){}
         // hereda alteración si coincide letra+octava con la fundamental o con una nota ya puesta
         if(sd.fund.step===nb.step && sd.fund.octave===nb.octave){ nb.alter=sd.fund.alter; nb._inherited=true; }
         else { for(let k=estado.resp[i].length-1;k>=0;k--){ const pv=estado.resp[i][k]; if(pv.step===nb.step&&pv.octave===nb.octave){ nb.alter=pv.alter; nb._inherited=true; break; } } }
+        (estado._undo=estado._undo||[]).push({op:'add', i});   /* GN-UNIF 8-jul-2026 */
         estado.resp[i].push(nb); estado.foco=i; estado.fsel=estado.resp[i].length-1; estado._dirty=true; pintar();
-      });
+      };
+      svg.addEventListener('mousemove',(ev)=>{ if(svg._touchHandled) return; onMove(ev); });
+      svg.addEventListener('mouseleave',()=>window.FichaGhost.hide(sc));
+      svg.addEventListener('click',(ev)=>{ if(svg._touchHandled) return; onTap(ev); });
+      window.FichaTouch(svg, onMove, onTap, ()=>window.FichaGhost.hide(sc));
       svg.addEventListener('contextmenu',(ev)=>{ ev.preventDefault(); const p=pt(svg,ev); if(!p) return;
         const hit=buildNoteHit(p);
-        if(hit){ estado.resp[hit.compas].splice(hit.idx,1); if(estado.foco===hit.compas){ if(estado.fsel===hit.idx) estado.fsel=null; else if(estado.fsel!=null && estado.fsel>hit.idx) estado.fsel--; } pintar(); }
+        if(hit){
+          (estado._undo=estado._undo||[]).push({op:'del', i:hit.compas, h:hit.idx, nota:{...estado.resp[hit.compas][hit.idx]}});   /* GN-UNIF 8-jul-2026 */
+          estado.resp[hit.compas].splice(hit.idx,1); if(estado.foco===hit.compas){ if(estado.fsel===hit.idx) estado.fsel=null; else if(estado.fsel!=null && estado.fsel>hit.idx) estado.fsel--; } pintar(); }
       });
     }
 
