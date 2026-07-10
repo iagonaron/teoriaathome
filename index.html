@@ -1281,9 +1281,18 @@ function lockScrollDuringRebuild(host){
 function gnWireTouch(host, opts){
   if(!host || host._gnTouchWired) return; host._gnTouchWired=true;
   host._touchHandled=false;
-  host.addEventListener('touchstart',(ev)=>{ if(ev.touches&&ev.touches[0]) opts.hover(ev.touches[0]); },{passive:true});
-  host.addEventListener('touchmove',(ev)=>{ if(ev.touches&&ev.touches[0]){ opts.hover(ev.touches[0]); ev.preventDefault(); } },{passive:false});
+  host._gnMulti=false; /* R4 10-jul-2026 */
+  host.addEventListener('touchstart',(ev)=>{
+    if(ev.touches && ev.touches.length>=2){ host._gnMulti=true; if(opts.clear) opts.clear(); return; } /* R4 10-jul-2026 · 2 dedos: sin ghost, deja pasar el pinch */
+    host._gnMulti=false; /* R4 10-jul-2026 */
+    if(ev.touches&&ev.touches[0]) opts.hover(ev.touches[0]);
+  },{passive:true});
+  host.addEventListener('touchmove',(ev)=>{
+    if((ev.touches && ev.touches.length>=2) || host._gnMulti){ host._gnMulti=true; if(opts.clear) opts.clear(); return; } /* R4 10-jul-2026 · NO preventDefault → el navegador hace zoom */
+    if(ev.touches&&ev.touches[0]){ opts.hover(ev.touches[0]); ev.preventDefault(); }
+  },{passive:false});
   host.addEventListener('touchend',(ev)=>{
+    if(host._gnMulti){ if(!ev.touches || ev.touches.length===0) host._gnMulti=false; if(opts.clear) opts.clear(); return; } /* R4 10-jul-2026 · gesto multitouch: no colocar; resetear al soltar todos los dedos */
     const t=(ev.changedTouches&&ev.changedTouches[0]);
     host._touchHandled=true;
     if(t) opts.click(t);
@@ -1330,30 +1339,21 @@ function mostrarAvisoTactil(viewId){
   const view=document.getElementById(viewId); if(!view) return;
   if(view.querySelector('.tactil-aviso')) return;  // ya está
   const aviso=document.createElement('div'); aviso.className='tactil-aviso';
+  /* R3 10-jul-2026 · la tarjeta de consejos queda SIEMPRE desplegada: se elimina el
+     contador (.ta-count) y la pestaña de reabrir (.ta-tab) para que la pantalla no
+     se descoloque al colapsar. */
   aviso.innerHTML=
     '<div class="ta-full">'+
       '<span class="ta-ico">👆</span>'+
       '<span class="ta-txt"><b>Consejos táctiles:</b> arrastra los selectores como una rueda (más rápido = avanza más). Para colocar una nota, <b>pulsa, arrastra y suelta</b> sobre el pentagrama (amplía con el zoom si necesitas precisión). Para eliminarla, toca la <b>✕</b> que hay junto a cada nota; con <b>↶ Deshacer</b> recuperas el último cambio.</span>'+   /* GN-UNIF 8-jul-2026 */
-      '<span class="ta-count" id="taCount-'+viewId+'">5</span>'+
-    '</div>'+
-    '<button class="ta-tab" onclick="reabrirAvisoTactil(\''+viewId+'\')">👆 Consejos táctiles</button>';
+    '</div>';
   const sub=view.querySelector('.iv-sub');
   if(sub && sub.parentNode){ sub.parentNode.insertBefore(aviso, sub.nextSibling); }
   else { view.insertBefore(aviso, view.firstChild); }
-  // cuenta atrás 5..1 y colapso
-  let n=5; const cnt=document.getElementById('taCount-'+viewId);
-  clearInterval(aviso._iv);
-  aviso._iv=setInterval(()=>{
-    n--; if(cnt) cnt.textContent=n>0?String(n):'';
-    if(n<=0){ clearInterval(aviso._iv); aviso.classList.add('colapsado'); }
-  },1000);
+  /* R3 10-jul-2026 · sin cuenta atrás ni colapso: la tarjeta permanece visible */
 }
-function reabrirAvisoTactil(viewId){
-  const view=document.getElementById(viewId); if(!view) return;
-  const aviso=view.querySelector('.tactil-aviso'); if(!aviso) return;
-  aviso.classList.remove('colapsado');
-  const cnt=document.getElementById('taCount-'+viewId); if(cnt) cnt.textContent='';
-}
+/* R3 10-jul-2026 · inerte: ya no hay colapso, no hay nada que reabrir */
+function reabrirAvisoTactil(viewId){}
 function goHome(){ showView('view-home'); }
 
 /* bloqueo de edición tras corregir: el contenido de la tarjeta deja de aceptar
@@ -1777,7 +1777,8 @@ function dibujarCompases(hostId, items, opts){
         if(it.n2.alter) sn2.addModifier(new VF.Accidental(accStr(it.n2.alter)),0);
         if(it._okB) sn2.setKeyStyle(0,{fillStyle:'#22c98a',strokeStyle:'#22c98a'});
         /* SEL-UNICA 10-jul-2026 · rosa SOLO en la nota seleccionada; el resto en gris neutro */
-        else if(opts.modoB && !it._solB) sn2.setKeyStyle(0, it._selNote?{fillStyle:'#e84393',strokeStyle:'#e84393'}:{fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});
+        /* R3 10-jul-2026 · la NO seleccionada ya no va en gris: se deja en negro por defecto de VexFlow (solo se fuerza rosa la seleccionada) */
+        else if(opts.modoB && !it._solB && it._selNote) sn2.setKeyStyle(0,{fillStyle:'#e84393',strokeStyle:'#e84393'});
         if(it._solB) sn2.setKeyStyle(0,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
         notas.push(sn2);
       }
@@ -3128,8 +3129,7 @@ function renderESCStaveOne(i){
         try{ sn.addModifier(new VF.Parenthesis(VF.Modifier.Position.LEFT),0);
              sn.addModifier(new VF.Parenthesis(VF.Modifier.Position.RIGHT),0); }catch(err){}
       } else if(k===e._selVar) sn.setStyle({fillStyle:"#e84393",strokeStyle:"#e84393"});
-      /* SEL-UNICA 10-jul-2026 · nota colocada NO seleccionada -> gris neutro (sin ×) */
-      else sn.setStyle({fillStyle:"#9aa3c0",strokeStyle:"#9aa3c0"});
+      /* R3 10-jul-2026 · nota colocada NO seleccionada -> se deja en NEGRO por defecto (no gris); solo la seleccionada va en rosa */
       return sn;
     });
     const fillCount=Math.max(0, e.nNotas-realCount);
@@ -4356,11 +4356,8 @@ function renderACOScore(){
       else if(e.modo==='build' && e._selVar!=null && e.userSeq[e._selVar] &&
               n.step===e.userSeq[e._selVar].step && n.octave===e.userSeq[e._selVar].octave && !e._solVisible)
         sn.setKeyStyle(idx,{fillStyle:'#e84393',strokeStyle:'#e84393'});
-      /* SEL-UNICA 10-jul-2026 · nota del alumno NO seleccionada -> gris neutro (sin ×).
-         La fundamental dada (no está en userSeq) se deja en negro. */
-      else if(e.modo==='build' && !e._solVisible && n!==e.fund &&
-              e.userSeq.some(u=>u.step===n.step && u.octave===n.octave && u.alter===n.alter))
-        sn.setKeyStyle(idx,{fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});
+      /* R3 10-jul-2026 · nota del alumno NO seleccionada -> se deja en NEGRO por defecto (ya no gris).
+         La fundamental dada (no está en userSeq) también queda en negro. Solo la seleccionada va en rosa. */
     });
     try{
       const voice=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false);
@@ -5148,8 +5145,7 @@ function renderENAScore(){
       else if(s._red) sn.setKeyStyle(0,{fillStyle:'#ff5c72',strokeStyle:'#ff5c72'});
       else if(s._blue) sn.setKeyStyle(0,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
       else if(!e._solVisible && !s._dada && e._selVar===(si-1)) sn.setKeyStyle(0,{fillStyle:'#e84393',strokeStyle:'#e84393'});
-      /* SEL-UNICA 10-jul-2026 · enarmonía del alumno NO seleccionada -> gris neutro (sin ×) */
-      else if(!e._solVisible && !s._dada) sn.setKeyStyle(0,{fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});
+      /* R3 10-jul-2026 · enarmonía del alumno NO seleccionada -> se deja en NEGRO por defecto (ya no gris); solo la seleccionada va en rosa */
       tickables.push(sn); slotIsNote.push(true);
     });
     const slotX=new Array(slots.length).fill(0);
@@ -5573,8 +5569,7 @@ function renderSEMScore(){
         if(s._green) sn.setKeyStyle(0,{fillStyle:'#22c98a',strokeStyle:'#22c98a'});
         else if(s._blue) sn.setKeyStyle(0,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
         else if(!e._solVisible && !s._dada && e._selVar===0) sn.setKeyStyle(0,{fillStyle:'#e84393',strokeStyle:'#e84393'});
-        /* SEL-UNICA 10-jul-2026 · 2ª nota del alumno NO seleccionada -> gris neutro (sin ×) */
-        else if(!e._solVisible && !s._dada) sn.setKeyStyle(0,{fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});
+        /* R3 10-jul-2026 · 2ª nota del alumno NO seleccionada -> se deja en NEGRO por defecto (ya no gris); solo la seleccionada va en rosa */
         tickables.push(sn);
       });
       const slotX=new Array(slots.length).fill(0);
@@ -7977,9 +7972,18 @@ window.FichaDelPop = function(sc, notas){
 window.FichaTouch = function(svg, onMove, onTap, onClear){
   if(!svg || svg._gnTouchWired) return; svg._gnTouchWired=true;
   svg._touchHandled=false;
-  svg.addEventListener('touchstart',(ev)=>{ if(ev.touches&&ev.touches[0]) onMove(ev.touches[0]); },{passive:true});
-  svg.addEventListener('touchmove',(ev)=>{ if(ev.touches&&ev.touches[0]){ onMove(ev.touches[0]); ev.preventDefault(); } },{passive:false});
+  svg._gnMulti=false; /* R4 10-jul-2026 */
+  svg.addEventListener('touchstart',(ev)=>{
+    if(ev.touches && ev.touches.length>=2){ svg._gnMulti=true; if(onClear) onClear(); return; } /* R4 10-jul-2026 · 2 dedos: sin ghost, deja pasar el pinch */
+    svg._gnMulti=false; /* R4 10-jul-2026 */
+    if(ev.touches&&ev.touches[0]) onMove(ev.touches[0]);
+  },{passive:true});
+  svg.addEventListener('touchmove',(ev)=>{
+    if((ev.touches && ev.touches.length>=2) || svg._gnMulti){ svg._gnMulti=true; if(onClear) onClear(); return; } /* R4 10-jul-2026 · NO preventDefault → el navegador hace zoom */
+    if(ev.touches&&ev.touches[0]){ onMove(ev.touches[0]); ev.preventDefault(); }
+  },{passive:false});
   svg.addEventListener('touchend',(ev)=>{
+    if(svg._gnMulti){ if(!ev.touches || ev.touches.length===0) svg._gnMulti=false; if(onClear) onClear(); return; } /* R4 10-jul-2026 · gesto multitouch: no colocar; resetear al soltar todos los dedos */
     const t=(ev.changedTouches&&ev.changedTouches[0]);
     svg._touchHandled=true;
     if(t) onTap(t);
@@ -8211,9 +8215,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
           sn.addModifier(new VFx.Accidental('n'),0);
         }
         if(k===estado.sel) sn.setStyle({fillStyle:'#e84393',strokeStyle:'#e84393'});
-        /* SEL-UNICA 10-jul-2026 · nota colocada NO seleccionada -> gris neutro (sin ×).
-           En precolocado (menores/mayores) NO se aplica: esas cabezas quedan en negro. */
-        else if(!precol) sn.setStyle({fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});
+        /* R3 10-jul-2026 · nota colocada NO seleccionada -> se deja en NEGRO por defecto (ya no gris); solo la seleccionada va en rosa */
         return sn;
       });
       const fillCount=Math.max(0, nNotas-realCount);
@@ -8868,7 +8870,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
           if(nb.alter!==0) sn.addModifier(new VFx.Accidental(acc(nb.alter)),0);
           if(k===0) sn.setStyle({fillStyle:'#16203a',strokeStyle:'#16203a'});       // 1ª dada (negro)
           else if(i===estado.sel) sn.setStyle({fillStyle:'#e84393',strokeStyle:'#e84393'}); // 2ª seleccionada (rosa)
-          else sn.setStyle({fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});            /* SEL-UNICA 10-jul-2026 · 2ª colocada NO seleccionada -> gris neutro (sin ×) */
+          /* R3 10-jul-2026 · 2ª colocada NO seleccionada -> se deja en NEGRO por defecto (ya no gris); solo la seleccionada va en rosa */
           return sn;
         });
         const voice=new VFx.Voice({num_beats:notas.length*4,beat_value:4}).setStrict(false);
@@ -9093,7 +9095,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
           if(s.alter!==0 && !s._inherited) sn.addModifier(new VFx.Accidental(acc(s.alter)),0);
           if(s._dada) sn.setStyle({fillStyle:'#16203a',strokeStyle:'#16203a'});
           else if(estado.sel && estado.sel.compas===i && estado.sel.idx===s._hueco) sn.setStyle({fillStyle:'#e84393',strokeStyle:'#e84393'});
-          else sn.setStyle({fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});   /* SEL-UNICA 10-jul-2026 · enarmonía del alumno NO seleccionada -> gris neutro (sin ×) */
+          /* R3 10-jul-2026 · enarmonía del alumno NO seleccionada -> se deja en NEGRO por defecto (ya no gris); solo la seleccionada va en rosa */
           tickables.push(sn); slotMeta.push(s);
         });
         for(let f=0;f<fill;f++){ try{ tickables.push(new VFx.GhostNote({duration:'w'})); slotMeta.push(null); }
@@ -9578,7 +9580,7 @@ function __grados_marker__(){}
             if(s.alter && !s._inherited) sn.addModifier(new VFx.Accidental(acc(s.alter)),0); else if(needNat) sn.addModifier(new VFx.Accidental('n'),0);
             if(s._dada) sn.setStyle({fillStyle:'#16203a',strokeStyle:'#16203a'});
             else if(i===estado.foco) sn.setStyle({fillStyle:'#e84393',strokeStyle:'#e84393'});
-            else sn.setStyle({fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});   /* SEL-UNICA 10-jul-2026 · 2ª nota del alumno NO seleccionada -> gris neutro (sin ×) */
+            /* R3 10-jul-2026 · 2ª nota del alumno NO seleccionada -> se deja en NEGRO por defecto (ya no gris); solo la seleccionada va en rosa */
             return sn;
           });
           if(slots.length<2) tickables.push(new VFx.GhostNote({duration:'w'}));
@@ -9818,7 +9820,7 @@ function __grados_marker__(){}
               else if(i===estado.foco && estado.fsel!=null && estado.resp[i][estado.fsel] &&
                       nb.step===estado.resp[i][estado.fsel].step && nb.octave===estado.resp[i][estado.fsel].octave)
                 sn.setKeyStyle(idx,{fillStyle:'#e84393',strokeStyle:'#e84393'});
-              else sn.setKeyStyle(idx,{fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});   /* SEL-UNICA 10-jul-2026 · nota del alumno NO seleccionada -> gris neutro (sin ×). La fundamental dada queda en negro. */
+              /* R3 10-jul-2026 · nota del alumno NO seleccionada -> se deja en NEGRO por defecto (ya no gris). La fundamental dada queda en negro. Solo la seleccionada va en rosa. */
             } else {
               sn.setKeyStyle(idx,{fillStyle:'#16203a',strokeStyle:'#16203a'});
             }
