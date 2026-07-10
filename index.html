@@ -1285,6 +1285,7 @@ function gnWireTouch(host, opts){
   host.addEventListener('touchstart',(ev)=>{
     if(ev.touches && ev.touches.length>=2){ host._gnMulti=true; if(opts.clear) opts.clear(); return; } /* R4 10-jul-2026 · 2 dedos: sin ghost, deja pasar el pinch */
     host._gnMulti=false; /* R4 10-jul-2026 */
+    host._gnLastNat=null; /* R5 10-jul-2026 · primer punto del gesto: sin histéresis (tap exacto) */
     if(ev.touches&&ev.touches[0]) opts.hover(ev.touches[0]);
   },{passive:true});
   host.addEventListener('touchmove',(ev)=>{
@@ -1926,6 +1927,42 @@ function setupBoardB(){
   host.onclick=(e)=>{ if(host._touchHandled) return; onBoardClick(e); };
   gnWireTouch(host, { hover:onBoardHover, click:onBoardClick, clear:clearBGhost });
 }
+/* R5 10-jul-2026 · HISTÉRESIS común del arrastre vertical (reduce la sensibilidad).
+   ymap: objeto {clave:{step,octave,y,...}} de notas naturales (5px/paso típico).
+   my: Y del cursor/dedo. curKey: clave (step+octave) de la nota que la ghost muestra
+   AHORA mismo, o null. FACTOR: cuánto cuesta cambiar de nota (0.75 recomendado; con
+   0.5 sería el comportamiento antiguo, sin zona muerta).
+   Comportamiento: elige la entrada del ymap más cercana a my. Pero si curKey sigue
+   en el mapa y el candidato más cercano NO es curKey, solo cambia si la mejora de
+   distancia (|y_actual-my| - |y_cand-my|) supera la zona muerta half*(2*FACTOR-1);
+   si no, CONSERVA la nota actual (curKey). Con curKey==null NO hay histéresis: el
+   primer punto del gesto / tap directo cae exacto en la nota apuntada.
+   'half' se deriva del propio ymap (menor separación entre alturas = 1 paso). */
+function gnHysteresis(ymap, my, curKey, FACTOR){
+  if(!ymap) return null;
+  var best=null, bestKey=null, bd=1e9;
+  var curEntry=null, curD=1e9;
+  var ys=[];
+  for(var k in ymap){
+    var o=ymap[k]; if(!o||o.y==null) continue;
+    ys.push(o.y);
+    var d=Math.abs(o.y-my);
+    if(d<bd){ bd=d; best=o; bestKey=k; }
+    if(curKey!=null && k===curKey){ curEntry=o; curD=d; }
+  }
+  if(best==null) return null;
+  /* sin nota actual (tap directo o primer punto del gesto): más cercano exacto */
+  if(curKey==null || curEntry==null || bestKey===curKey) return best;
+  /* half = menor separación entre alturas del mapa */
+  var half=1e9;
+  ys.sort(function(a,b){return a-b;});
+  for(var i=1;i<ys.length;i++){ var gap=ys[i]-ys[i-1]; if(gap>0.5 && gap<half) half=gap; }
+  if(half>=1e9) half=5;
+  var FAC=(FACTOR==null)?0.75:FACTOR;
+  var dead=half*(2*FAC-1);            /* zona muerta (0 con FACTOR=0.5) */
+  if((curD - bd) < dead) return curEntry;   /* dentro de la zona muerta: conserva actual */
+  return best;
+}
 function diatonicStep(midi){
   // idéntico a PreDict: índice diatónico absoluto, alteradas mapean a su letra base
   const pcToStep={0:0,2:1,4:2,5:3,7:4,9:5,11:6,1:0,3:1,6:3,8:4,10:5};
@@ -1941,13 +1978,13 @@ function midiToNatural(midi){
 }
 function nearestMidiByY(my){
   if(!bMeta||!bMeta.ymap) return null;
-  let best=null,bd=1e9;
-  for(const k in bMeta.ymap){
-    const e=bMeta.ymap[k];
-    const d=Math.abs(e.y-my);
-    if(d<bd){bd=d;best={step:e.step,octave:e.octave};}
-  }
-  return best;
+  /* R5 10-jul-2026 · histéresis de arrastre: la nota actual la guarda el host */
+  var host=document.getElementById('scoreB');
+  var curKey=(host&&host._gnLastNat!=null)?host._gnLastNat:null;
+  var e=gnHysteresis(bMeta.ymap, my, curKey, 0.75);
+  if(!e) return null;
+  if(host) host._gnLastNat=e.step+e.octave;   /* R5 · recuerda la altura elegida */
+  return {step:e.step, octave:e.octave};
 }
 /* y real de una nota natural (del mapa) */
 function yRealForNat(step,octave){
@@ -1962,7 +1999,7 @@ function slotUnderX(mx){
   return slot;
 }
 function clearBGhost(){ const g=document.getElementById('bghost'); if(g) g.style.display='none';
-  const host=document.getElementById('scoreB'); if(host) host.querySelectorAll('.bghost-ledger').forEach(el=>el.remove()); }
+  const host=document.getElementById('scoreB'); if(host){ host.querySelectorAll('.bghost-ledger').forEach(el=>el.remove()); host._gnLastNat=null; /* R5 10-jul-2026 · sin ghost: reinicia histéresis */ } }
 /* convierte un punto de pantalla a coordenadas internas del SVG (exacto, sin calibraciones) */
 function screenToSvg(svg, clientX, clientY){
   try{
@@ -3297,9 +3334,13 @@ function escWireVarOne(i){
 }
 function escNearestByY(i,my){
   const map=escYMaps[i]; if(!map) return null;
-  let best=null,bd=1e9;
-  for(const k in map){ const o=map[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} }
-  return best;
+  /* R5 10-jul-2026 · histéresis de arrastre por tarjeta (host scoreESCi) */
+  var host=document.getElementById('scoreESC'+i);
+  var curKey=(host&&host._gnLastNat!=null)?host._gnLastNat:null;
+  var o=gnHysteresis(map, my, curKey, 0.75);
+  if(!o) return null;
+  if(host) host._gnLastNat=o.step+o.octave;
+  return {step:o.step, octave:o.octave};
 }
 function escYReal(i,step,octave){ const map=escYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
 function onEscHover(i,ev){
@@ -3395,7 +3436,7 @@ function setEscHoverNote(i,k){
   ansBtns.forEach(b=>b.classList.toggle('acc-tintin', k!=null));
 }
 function clearEscGhost(i){ const g=document.getElementById('escghost'+i); if(g) g.style.display='none';
-  const host=document.getElementById('scoreESC'+i); if(host) host.querySelectorAll('.escghost-ledger').forEach(el=>el.remove()); }
+  const host=document.getElementById('scoreESC'+i); if(host){ host.querySelectorAll('.escghost-ledger').forEach(el=>el.remove()); host._gnLastNat=null; /* R5 10-jul-2026 */ } }
 function escGhostX(i){
   // X de previsualización: poco después de la última nota escrita
   const g=escVarGeom[i];
@@ -4530,9 +4571,13 @@ function acoPointIn(ev){
 }
 function acoNearestByY(i,my){
   const map=acoYMaps[i]; if(!map) return null;
-  let best=null,bd=1e9;
-  for(const k in map){ const o=map[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} }
-  return best;
+  /* R5 10-jul-2026 · histéresis de arrastre (host scoreACO, un tablero por índice i) */
+  var host=document.getElementById('scoreACO');
+  var curKey=(host&&host._gnLastNat!=null&&host._gnLastI===i)?host._gnLastNat:null;
+  var o=gnHysteresis(map, my, curKey, 0.75);
+  if(!o) return null;
+  if(host){ host._gnLastNat=o.step+o.octave; host._gnLastI=i; }
+  return {step:o.step, octave:o.octave};
 }
 function acoYReal(i,step,octave){ const map=acoYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
 function onACOHover(ev){
@@ -4608,7 +4653,8 @@ function showACOGhost(i,nat){
     g.style.left=(sp.x-hr.left-6)+'px'; g.style.top=(sp.y-hr.top-5)+'px'; g.style.display='block';
   }catch(err){ g.style.display='none'; }
 }
-function clearACOGhost(){ const g=document.getElementById('acoghost'); if(g) g.style.display='none'; }
+function clearACOGhost(){ const g=document.getElementById('acoghost'); if(g) g.style.display='none';
+  const host=document.getElementById('scoreACO'); if(host){ host._gnLastNat=null; /* R5 10-jul-2026 */ } }
 /* SEL-UNICA 10-jul-2026 · selección ÚNICA en toda la tarjeta: deselecciona las
    notas de los DEMÁS compases de construir (solo 1 × en pantalla). */
 function acoDeselOtros(iSel){ dataACO.forEach((e,j)=>{ if(j!==iSel && e.modo==='build') e._selVar=null; }); }
@@ -5306,7 +5352,13 @@ function enaCompasEn(ev){
   return null;
 }
 function enaPointIn(ev){ const svg=document.getElementById('scoreENA').querySelector('svg'); const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
-function enaNearestByY(i,my){ const map=enaYMaps[i]; if(!map) return null; let best=null,bd=1e9; for(const k in map){ const o=map[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} } return best; }
+function enaNearestByY(i,my){ const map=enaYMaps[i]; if(!map) return null;
+  /* R5 10-jul-2026 · histéresis de arrastre (host scoreENA por índice i) */
+  var host=document.getElementById('scoreENA');
+  var curKey=(host&&host._gnLastNat!=null&&host._gnLastI===i)?host._gnLastNat:null;
+  var o=gnHysteresis(map, my, curKey, 0.75); if(!o) return null;
+  if(host){ host._gnLastNat=o.step+o.octave; host._gnLastI=i; }
+  return {step:o.step, octave:o.octave}; }
 function enaYReal(i,step,octave){ const map=enaYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
 function onENAHover(ev){
   const i=enaCompasEn(ev); if(i==null){ clearENAGhost(); return; }
@@ -5367,7 +5419,7 @@ function drawENAGhostLedger(i, svg, hr, xInt, nat){
   });
 }
 function clearENAGhost(){ const g=document.getElementById('enaghost'); if(g) g.style.display='none';
-  const host=document.getElementById('scoreENA'); if(host) host.querySelectorAll('.enaghost-ledger').forEach(el=>el.remove()); }
+  const host=document.getElementById('scoreENA'); if(host){ host.querySelectorAll('.enaghost-ledger').forEach(el=>el.remove()); host._gnLastNat=null; /* R5 10-jul-2026 */ } }
 /* GN-UNIF 8-jul-2026 · la antigua × flotante por hover queda INERTE: el borrado
    pasa a las × fijas de enaFixedDelXs (una por nota colocada, siempre visibles). */
 function showENADelX(i,k,persist){ /* GN-UNIF 8-jul-2026: inerte (sustituida por × fijas) */ }
@@ -5676,7 +5728,13 @@ function semCompasEn(ev){
   return null;
 }
 function semPointIn(ev){ const svg=document.getElementById('scoreSEM').querySelector('svg'); const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
-function semNearestByY(i,my){ const map=semYMaps[i]; if(!map) return null; let best=null,bd=1e9; for(const k in map){ const o=map[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} } return best; }
+function semNearestByY(i,my){ const map=semYMaps[i]; if(!map) return null;
+  /* R5 10-jul-2026 · histéresis de arrastre (host scoreSEM por índice i) */
+  var host=document.getElementById('scoreSEM');
+  var curKey=(host&&host._gnLastNat!=null&&host._gnLastI===i)?host._gnLastNat:null;
+  var o=gnHysteresis(map, my, curKey, 0.75); if(!o) return null;
+  if(host){ host._gnLastNat=o.step+o.octave; host._gnLastI=i; }
+  return {step:o.step, octave:o.octave}; }
 function semYReal(i,step,octave){ const map=semYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
 function onSEMHover(ev){
   const i=semCompasEn(ev); if(i==null){ clearSEMGhost(); return; }
@@ -5721,7 +5779,7 @@ function drawSEMGhostLedger(i, svg, hr, xInt, nat){
   }catch(e){} });
 }
 function clearSEMGhost(){ const g=document.getElementById('semghost'); if(g) g.style.display='none';
-  const host=document.getElementById('scoreSEM'); if(host) host.querySelectorAll('.semghost-ledger').forEach(el=>el.remove()); }
+  const host=document.getElementById('scoreSEM'); if(host){ host.querySelectorAll('.semghost-ledger').forEach(el=>el.remove()); host._gnLastNat=null; /* R5 10-jul-2026 */ } }
 /* GN-UNIF 8-jul-2026 · la antigua × flotante por hover queda INERTE: el borrado
    pasa a las × fijas de semFixedDelXs (una por nota colocada, siempre visibles). */
 function showSEMDelX(i,persist){ /* GN-UNIF 8-jul-2026: inerte (sustituida por × fijas) */ }
@@ -7914,6 +7972,8 @@ window.FichaGhost = (function(){
   function hide(host){ if(!host) return;
     const g=host.querySelector(':scope > .ficha-ghost'); if(g) g.style.display='none';
     host.querySelectorAll(':scope > .ficha-ghost-ledger').forEach(el=>el.remove());
+    /* R5 10-jul-2026 · sin ghost: reinicia la histéresis del svg (el próximo punto será exacto) */
+    var svg=host.querySelector('svg'); if(svg) svg._gnLastNat=null;
   }
   return { show, hide };
 })();
@@ -7976,6 +8036,7 @@ window.FichaTouch = function(svg, onMove, onTap, onClear){
   svg.addEventListener('touchstart',(ev)=>{
     if(ev.touches && ev.touches.length>=2){ svg._gnMulti=true; if(onClear) onClear(); return; } /* R4 10-jul-2026 · 2 dedos: sin ghost, deja pasar el pinch */
     svg._gnMulti=false; /* R4 10-jul-2026 */
+    svg._gnLastNat=null; /* R5 10-jul-2026 · primer punto del gesto: sin histéresis (tap exacto) */
     if(ev.touches&&ev.touches[0]) onMove(ev.touches[0]);
   },{passive:true});
   svg.addEventListener('touchmove',(ev)=>{
@@ -8285,9 +8346,12 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     }
     function yReal(step,octave){ const o=yMap[step+octave]; return o?o.y:null; }
     function nearestByY(my){
-      let best=null,bd=1e9;
-      for(const k in yMap){ const o=yMap[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} }
-      return best;
+      /* R5 10-jul-2026 · histéresis de arrastre; nota actual guardada en el svg */
+      var svg=sc.querySelector('svg');
+      var curKey=(svg&&svg._gnLastNat!=null)?svg._gnLastNat:null;
+      var o=gnHysteresis(yMap, my, curKey, 0.75); if(!o) return null;
+      if(svg) svg._gnLastNat=o.step+o.octave;
+      return {step:o.step, octave:o.octave};
     }
 
     function svgPoint(svg, ev){
@@ -8923,7 +8987,10 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       }catch(e){}
     }
     function yReal(stave,step,octave){ const o=geom.yMap[step+octave]; return o?o.y:null; }
-    function nearestY(my){ let best=null,bd=1e9; for(const k in geom.yMap){ const o=geom.yMap[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} } return best; }
+    function nearestY(my){ /* R5 10-jul-2026 · histéresis de arrastre (nota actual en el svg) */
+      var svg=sc.querySelector('svg'); var curKey=(svg&&svg._gnLastNat!=null)?svg._gnLastNat:null;
+      var o=gnHysteresis(geom.yMap, my, curKey, 0.75); if(!o) return null;
+      if(svg) svg._gnLastNat=o.step+o.octave; return {step:o.step,octave:o.octave}; }
     function slotUnderX(mx, wC, x0){ let best=-1,bd=1e9; for(let i=0;i<n;i++){ const cx=x0+i*wC+wC/2; const d=Math.abs(cx-mx); if(d<bd){bd=d;best=i;} } return best; }
 
     function pt(svg,ev){ try{ const p=svg.createSVGPoint(); p.x=ev.clientX; p.y=ev.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }catch(e){ return null; } }
@@ -9147,7 +9214,10 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       }catch(e){}
     }
     function yReal(step,octave){ const o=geom.yMap[step+octave]; return o?o.y:null; }
-    function nearestY(my){ let best=null,bd=1e9; for(const k in geom.yMap){ const o=geom.yMap[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} } return best; }
+    function nearestY(my){ /* R5 10-jul-2026 · histéresis de arrastre (nota actual en el svg) */
+      var svg=sc.querySelector('svg'); var curKey=(svg&&svg._gnLastNat!=null)?svg._gnLastNat:null;
+      var o=gnHysteresis(geom.yMap, my, curKey, 0.75); if(!o) return null;
+      if(svg) svg._gnLastNat=o.step+o.octave; return {step:o.step,octave:o.octave}; }
     function compUnderX(mx){ let best=-1,bd=1e9; for(let i=0;i<n;i++){ const c=geom.comp[i]; const cx=c.x0i+c.wC/2; const d=Math.abs(cx-mx); if(d<bd){bd=d;best=i;} } return best; }
 
     function pt(svg,ev){ try{ const p=svg.createSVGPoint(); p.x=ev.clientX; p.y=ev.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }catch(e){ return null; } }
@@ -9622,7 +9692,10 @@ function __grados_marker__(){}
       }catch(e){}
     }
     function yReal(step,octave){ const o=geom.yMap[step+octave]; return o?o.y:null; }
-    function nearestY(my){ let best=null,bd=1e9; for(const k in geom.yMap){ const o=geom.yMap[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} } return best; }
+    function nearestY(my){ /* R5 10-jul-2026 · histéresis de arrastre (nota actual en el svg) */
+      var svg=sc.querySelector('svg'); var curKey=(svg&&svg._gnLastNat!=null)?svg._gnLastNat:null;
+      var o=gnHysteresis(geom.yMap, my, curKey, 0.75); if(!o) return null;
+      if(svg) svg._gnLastNat=o.step+o.octave; return {step:o.step,octave:o.octave}; }
     function compUnderX(mx){ for(let i=0;i<n;i++){ const c=geom.comp[i]; if(mx>=c.gx && mx<c.gx+c.wC) return i; } return -1; }
     function pt(svg,ev){ try{ const p=svg.createSVGPoint(); p.x=ev.clientX; p.y=ev.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }catch(e){ return null; } }
 
@@ -9864,7 +9937,10 @@ function __grados_marker__(){}
       }catch(e){}
     }
     function yReal(step,octave){ const o=geom.yMap[step+octave]; return o?o.y:null; }
-    function nearestY(my){ let best=null,bd=1e9; for(const k in geom.yMap){ const o=geom.yMap[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} } return best; }
+    function nearestY(my){ /* R5 10-jul-2026 · histéresis de arrastre (nota actual en el svg) */
+      var svg=sc.querySelector('svg'); var curKey=(svg&&svg._gnLastNat!=null)?svg._gnLastNat:null;
+      var o=gnHysteresis(geom.yMap, my, curKey, 0.75); if(!o) return null;
+      if(svg) svg._gnLastNat=o.step+o.octave; return {step:o.step,octave:o.octave}; }
     function compUnderX(mx){ for(let i=0;i<n;i++){ const c=geom.comp[i]; if(mx>=c.gx && mx<c.gx+c.wC) return i; } return -1; }
     function pt(svg,ev){ try{ const p=svg.createSVGPoint(); p.x=ev.clientX; p.y=ev.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }catch(e){ return null; } }
 
