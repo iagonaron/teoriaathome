@@ -1776,7 +1776,8 @@ function dibujarCompases(hostId, items, opts){
         const sn2=new VF.StaveNote({keys:[notaToKey(it.n2)],duration:"w",clef:"treble"});
         if(it.n2.alter) sn2.addModifier(new VF.Accidental(accStr(it.n2.alter)),0);
         if(it._okB) sn2.setKeyStyle(0,{fillStyle:'#22c98a',strokeStyle:'#22c98a'});
-        else if(opts.modoB && !it._solB) sn2.setKeyStyle(0,{fillStyle:'#e84393',strokeStyle:'#e84393'});
+        /* SEL-UNICA 10-jul-2026 · rosa SOLO en la nota seleccionada; el resto en gris neutro */
+        else if(opts.modoB && !it._solB) sn2.setKeyStyle(0, it._selNote?{fillStyle:'#e84393',strokeStyle:'#e84393'}:{fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});
         if(it._solB) sn2.setKeyStyle(0,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
         notas.push(sn2);
       }
@@ -2059,15 +2060,19 @@ function onBoardClick(e){
   const host=document.getElementById('scoreB');
   const svg=host.querySelector('svg'); if(!svg) return;
   const p=screenToSvg(svg, e.clientX, e.clientY);
-  /* GN-UNIF 8-jul-2026 · clic sobre una 2ª nota ya colocada: no hace nada
-     (el borrado es SOLO vía la × fija) */
+  /* SEL-UNICA 10-jul-2026 · clic sobre una 2ª nota ya colocada: la SELECCIONA
+     (traslada la × y el color); no coloca ni borra. */
   if(p){
     const sHit=bNoteUnderPoint(p, false);
-    if(sHit>=0) return;
+    if(sHit>=0){ bSel=sHit; redrawB(); renderAnswersB(); return; }
   }
   // (no era una nota ya puesta) -> colocar la nota NATURAL elegida
   const slot=host._hoverSlot, nat=host._hoverNote;
-  if(slot==null||slot<0||nat==null) return;
+  /* SEL-UNICA 10-jul-2026 · clic en vacío sin ghost activa: deselecciona (0 ×) */
+  if(slot==null||slot<0||nat==null){
+    if(bSel!=null){ bSel=null; redrawB(); renderAnswersB(); }
+    return;
+  }
   bUndo.push({slot, prev: respB[slot]? {...respB[slot]} : null});   /* GN-UNIF 8-jul-2026 */
   respB[slot]={step:nat.step, octave:nat.octave, alter:0};
   dataB[slot].n2={...respB[slot]};
@@ -2087,19 +2092,22 @@ function bPersistDelX(){
   const host=document.getElementById('scoreB'); if(!host) return;
   const card=document.getElementById('cardB');
   if(card && card.classList.contains('locked')){ gnDelXs(host, []); return; }
+  /* SEL-UNICA 10-jul-2026 · una sola × : la de la nota seleccionada (bSel) */
   const items=[];
-  respB.forEach((r,s)=>{
-    if(r==null) return;
+  const s=bSel;
+  if(s!=null && respB[s]!=null){
+    const r=respB[s];
     const x=bMeta&&bMeta.noteX&&bMeta.noteX[s]; const y=yRealForNat(r.step,r.octave);
-    if(x==null||y==null) return;
-    items.push({ x, y, onDel:()=>{
-      bUndo.push({slot:s, prev:{...respB[s]}});
-      respB[s]=null; dataB[s].n2=null; dataB[s]._userPlaced=false;
-      if(bSel===s) bSel=null;
-      redrawB(); renderAnswersB();
-      gnRefreshUndo('undoB', bUndo);
-    }});
-  });
+    if(x!=null&&y!=null){
+      items.push({ x, y, onDel:()=>{
+        bUndo.push({slot:s, prev:{...respB[s]}});
+        respB[s]=null; dataB[s].n2=null; dataB[s]._userPlaced=false;
+        bSel=null;   /* SEL-UNICA 10-jul-2026 · tras borrar, sin selección */
+        redrawB(); renderAnswersB();
+        gnRefreshUndo('undoB', bUndo);
+      }});
+    }
+  }
   gnDelXs(host, items);
 }
 /* GN-UNIF 8-jul-2026 · deshace la última colocación/borrado de la tarjeta B */
@@ -2110,13 +2118,14 @@ function gnUndoB(){
   respB[a.slot]=a.prev? {...a.prev} : null;
   dataB[a.slot].n2=a.prev? {...a.prev} : null;
   dataB[a.slot]._userPlaced=!!a.prev;
-  if(bSel===a.slot && !a.prev) bSel=null;
+  /* SEL-UNICA 10-jul-2026 · al deshacer, deja seleccionada la nota recuperada (o ninguna) */
+  bSel = a.prev? a.slot : null;
   redrawB(); renderAnswersB();
   gnRefreshUndo('undoB', bUndo);
 }
 function redrawB(){
   lockScrollDuringRebuild(document.getElementById('cardB'));
-  const merged=dataB.map((it,i)=> respB[i]? {...it,n2:respB[i]} : {...it,n2:null});
+  const merged=dataB.map((it,i)=> respB[i]? {...it,n2:respB[i],_selNote:(bSel===i)} : {...it,n2:null});   /* SEL-UNICA 10-jul-2026 · marca la seleccionada para el rosa */
   bMeta=dibujarCompases('scoreB',merged,{modoB:true});
   setupBoardB();
   bPersistDelX();
@@ -2140,7 +2149,7 @@ function renderAnswersB(){
     if(colocada){
       chip.style.cursor='pointer';
       if(bSel===i) chip.classList.add('sel');
-      chip.onclick=()=>{ bSel=(bSel===i)?null:i; renderAnswersB(); };   /* GN-UNIF 8-jul-2026: el borrado va por la × fija */
+      chip.onclick=()=>{ bSel=(bSel===i)?null:i; redrawB(); renderAnswersB(); };   /* SEL-UNICA 10-jul-2026 · el chip también traslada la × y el color en el pentagrama */
     }
     chipRow.appendChild(chip);
     cell.appendChild(chipRow);
@@ -3119,6 +3128,8 @@ function renderESCStaveOne(i){
         try{ sn.addModifier(new VF.Parenthesis(VF.Modifier.Position.LEFT),0);
              sn.addModifier(new VF.Parenthesis(VF.Modifier.Position.RIGHT),0); }catch(err){}
       } else if(k===e._selVar) sn.setStyle({fillStyle:"#e84393",strokeStyle:"#e84393"});
+      /* SEL-UNICA 10-jul-2026 · nota colocada NO seleccionada -> gris neutro (sin ×) */
+      else sn.setStyle({fillStyle:"#9aa3c0",strokeStyle:"#9aa3c0"});
       return sn;
     });
     const fillCount=Math.max(0, e.nNotas-realCount);
@@ -3333,17 +3344,20 @@ function escFixedDelXs(i){
   const host=document.getElementById('scoreESC'+i); if(!host) return;
   const e=dataESC[i]; const g=escVarGeom[i];
   if(!e || !e._variable || e._precolocada || e._corregido || !g || !g.noteXs){ gnDelXs(host, []); return; }
+  /* SEL-UNICA 10-jul-2026 · una sola × : la de la nota seleccionada (e._selVar) */
   const items=[];
-  g.noteXs.forEach((x,k)=>{
-    const y=g.noteYs?g.noteYs[k]:null;
-    if(x==null||y==null) return;
-    items.push({ x, y, onDel:()=>{
-      (e._gnUndo=e._gnUndo||[]).push({op:'del', k, nota:{...e.userSeq[k]}});
-      e.userSeq.splice(k,1);
-      if(e._selVar===k) e._selVar=null; else if(e._selVar!=null && e._selVar>k) e._selVar--;
-      renderESC();
-    }});
-  });
+  const k=e._selVar;
+  if(k!=null && k>=0 && e.userSeq[k] && !e.userSeq[k]._opt){
+    const x=g.noteXs[k], y=g.noteYs?g.noteYs[k]:null;
+    if(x!=null&&y!=null){
+      items.push({ x, y, onDel:()=>{
+        (e._gnUndo=e._gnUndo||[]).push({op:'del', k, nota:{...e.userSeq[k]}});
+        e.userSeq.splice(k,1);
+        e._selVar=null;   /* SEL-UNICA 10-jul-2026 · tras borrar, sin selección */
+        renderESC();
+      }});
+    }
+  }
   gnDelXs(host, items);
 }
 /* GN-UNIF 8-jul-2026 · deshace la última colocación/borrado de la escala i */
@@ -3448,7 +3462,7 @@ function onEscClick(i,ev){
       if(dx<16 && dy<11){ const d=dx+dy; if(d<bd){bd=d;hit=k;} }
     });
     if(hit>=0){
-      e._selVar=(e._selVar===hit)?null:hit;  // toggle selección
+      e._selVar=hit;  /* SEL-UNICA 10-jul-2026 · clic sobre nota colocada: la SELECCIONA (traslada × y color) */
       renderESC();
       return;
     }
@@ -3468,10 +3482,9 @@ function onEscClick(i,ev){
   if(pend===1||pend===-1){ nb.alter=pend; nb._inherited=false; }
   (e._gnUndo=e._gnUndo||[]).push({op:'add'});   /* GN-UNIF 8-jul-2026 */
   e.userSeq.push(nb); escPendingAlt[i]=0;
-  // cromática y hexátona: la nueva queda SELECCIONADA (rosa) para alterarla al momento,
-  // pero el ghost sigue disponible para seguir colocando
-  const fijaSel = (e.familia==='cromatica' || e.familia==='hexatona');
-  e._selVar = fijaSel ? (e.userSeq.length-1) : null;
+  /* SEL-UNICA 10-jul-2026 · la nota recién colocada queda SELECCIONADA (× y rosa);
+     el ghost sigue disponible para seguir colocando. */
+  e._selVar = e.userSeq.length-1;
   renderESC();
 }
 
@@ -4343,6 +4356,11 @@ function renderACOScore(){
       else if(e.modo==='build' && e._selVar!=null && e.userSeq[e._selVar] &&
               n.step===e.userSeq[e._selVar].step && n.octave===e.userSeq[e._selVar].octave && !e._solVisible)
         sn.setKeyStyle(idx,{fillStyle:'#e84393',strokeStyle:'#e84393'});
+      /* SEL-UNICA 10-jul-2026 · nota del alumno NO seleccionada -> gris neutro (sin ×).
+         La fundamental dada (no está en userSeq) se deja en negro. */
+      else if(e.modo==='build' && !e._solVisible && n!==e.fund &&
+              e.userSeq.some(u=>u.step===n.step && u.octave===n.octave && u.alter===n.alter))
+        sn.setKeyStyle(idx,{fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});
     });
     try{
       const voice=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false);
@@ -4546,20 +4564,24 @@ function acoFixedDelXs(){
   const host=document.getElementById('scoreACO'); if(!host) return;
   const card=document.getElementById('cardACO');
   if(card && card.classList.contains('locked')){ gnDelXs(host, []); return; }
+  /* SEL-UNICA 10-jul-2026 · una sola × por compás de construir: la de la nota
+     seleccionada (e._selVar). El dx conserva el escalonado por posición k de la
+     nota en el acorde para no taparse con las cabezas apiladas. */
   const items=[];
   dataACO.forEach((e,i)=>{
     if(e.modo!=='build' || e._solVisible) return;
     const x=(acoVarGeom[i]&&acoVarGeom[i].baseX!=null)?acoVarGeom[i].baseX:null;
-    e.userSeq.forEach((nb,k)=>{
-      const y=acoYReal(i,nb.step,nb.octave);
-      if(x==null||y==null) return;
-      items.push({ x, y, dx:12+k*17, onDel:()=>{
-        acoUndo.push({op:'del', i, k, nota:{...e.userSeq[k]}});
-        e.userSeq.splice(k,1);
-        if(e._selVar===k) e._selVar=null; else if(e._selVar!=null&&e._selVar>k) e._selVar--;
-        renderACO();
-      }});
-    });
+    const k=e._selVar;
+    if(k==null||k<0||!e.userSeq[k]) return;
+    const nb=e.userSeq[k];
+    const y=acoYReal(i,nb.step,nb.octave);
+    if(x==null||y==null) return;
+    items.push({ x, y, dx:12+k*17, onDel:()=>{
+      acoUndo.push({op:'del', i, k, nota:{...e.userSeq[k]}});
+      e.userSeq.splice(k,1);
+      e._selVar=null;   /* SEL-UNICA 10-jul-2026 · tras borrar, sin selección */
+      renderACO();
+    }});
   });
   gnDelXs(host, items);
 }
@@ -4590,16 +4612,20 @@ function showACOGhost(i,nat){
   }catch(err){ g.style.display='none'; }
 }
 function clearACOGhost(){ const g=document.getElementById('acoghost'); if(g) g.style.display='none'; }
+/* SEL-UNICA 10-jul-2026 · selección ÚNICA en toda la tarjeta: deselecciona las
+   notas de los DEMÁS compases de construir (solo 1 × en pantalla). */
+function acoDeselOtros(iSel){ dataACO.forEach((e,j)=>{ if(j!==iSel && e.modo==='build') e._selVar=null; }); }
 function onACOClick(ev){
   const i=acoCompasEn(ev); if(i==null) return;
   const e=dataACO[i]; if(e.modo!=='build') return;
   let p; try{ p=acoPointIn(ev); }catch(err){ return; }
-  // ¿clic sobre una nota colocada? -> seleccionarla (para alterarla; el borrado va por la × fija)
+  // ¿clic sobre una nota colocada? -> seleccionarla (traslada × y color; el borrado va por la × fija)
   for(let k=0;k<e.userSeq.length;k++){
     const y=acoYReal(i,e.userSeq[k].step,e.userSeq[k].octave);
-    if(y!=null && Math.abs(y-p.y)<8){ e._selVar=(e._selVar===k)?null:k; renderACO(); return; }   /* GN-UNIF 8-jul-2026 */
+    if(y!=null && Math.abs(y-p.y)<8){ e._selVar=k; acoDeselOtros(i); renderACO(); return; }   /* SEL-UNICA 10-jul-2026 · clic sobre nota colocada: la SELECCIONA */
   }
-  if(e.userSeq.length>=e.objetivo.length) return;
+  /* SEL-UNICA 10-jul-2026 · compás lleno y clic en vacío: deselecciona (0 ×) */
+  if(e.userSeq.length>=e.objetivo.length){ if(e._selVar!=null){ e._selVar=null; renderACO(); } return; }
   const nat=acoNearestByY(i,p.y); if(!nat) return;
   let nb={step:nat.step,octave:nat.octave,alter:0};
   for(let k=e.userSeq.length-1;k>=0;k--){ const pv=e.userSeq[k]; if(pv.step===nb.step&&pv.octave===nb.octave){ nb.alter=pv.alter; nb._inherited=true; break; } }
@@ -4608,6 +4634,7 @@ function onACOClick(ev){
   acoUndo.push({op:'add', i});   /* GN-UNIF 8-jul-2026 */
   e.userSeq.push(nb); acoPendingAlt[i]=0;
   e._selVar=e.userSeq.length-1;
+  acoDeselOtros(i);   /* SEL-UNICA 10-jul-2026 · colocar auto-selecciona y deselecciona el otro compás */
   renderACO();
 }
 
@@ -5121,6 +5148,8 @@ function renderENAScore(){
       else if(s._red) sn.setKeyStyle(0,{fillStyle:'#ff5c72',strokeStyle:'#ff5c72'});
       else if(s._blue) sn.setKeyStyle(0,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
       else if(!e._solVisible && !s._dada && e._selVar===(si-1)) sn.setKeyStyle(0,{fillStyle:'#e84393',strokeStyle:'#e84393'});
+      /* SEL-UNICA 10-jul-2026 · enarmonía del alumno NO seleccionada -> gris neutro (sin ×) */
+      else if(!e._solVisible && !s._dada) sn.setKeyStyle(0,{fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});
       tickables.push(sn); slotIsNote.push(true);
     });
     const slotX=new Array(slots.length).fill(0);
@@ -5151,19 +5180,22 @@ function enaFixedDelXs(){
   const host=document.getElementById('scoreENA'); if(!host) return;
   const card=document.getElementById('cardENA');
   if(card && card.classList.contains('locked')){ gnDelXs(host, []); return; }
+  /* SEL-UNICA 10-jul-2026 · una sola × en TODA la tarjeta: la de la nota seleccionada
+     del compás cuyo e._selVar esté fijado. */
   const items=[];
   dataENA.forEach((e,i)=>{
     if(e._solVisible) return;
-    e.userSeq.forEach((u,k)=>{
-      const x=(e._slotX&&e._slotX[k+1]); const y=enaYReal(i,u.step,u.octave);
-      if(x==null||y==null) return;
-      items.push({ x, y, onDel:()=>{
-        enaUndo.push({op:'del', i, k, nota:{...e.userSeq[k]}});
-        e.userSeq.splice(k,1);
-        if(e._selVar===k) e._selVar=null; else if(e._selVar!=null&&e._selVar>k) e._selVar--;
-        renderENA();
-      }});
-    });
+    const k=e._selVar;
+    if(k==null||k<0||!e.userSeq[k]) return;
+    const u=e.userSeq[k];
+    const x=(e._slotX&&e._slotX[k+1]); const y=enaYReal(i,u.step,u.octave);
+    if(x==null||y==null) return;
+    items.push({ x, y, onDel:()=>{
+      enaUndo.push({op:'del', i, k, nota:{...e.userSeq[k]}});
+      e.userSeq.splice(k,1);
+      e._selVar=null;   /* SEL-UNICA 10-jul-2026 · tras borrar, sin selección */
+      renderENA();
+    }});
   });
   gnDelXs(host, items);
 }
@@ -5219,7 +5251,7 @@ function renderENAAnswers(){
       if(!puesta) chip.classList.add('vacio');
       if(e._selVar===h && !corregido) chip.classList.add('sel');
       if(corregido && puesta) chip.classList.add(e._notaOk[h]?'ok':'mal');
-      chip.onclick=()=>{ if(e._solVisible) return; if(e.userSeq[h]){ e._selVar=(e._selVar===h)?null:h; renderENA(); } };
+      chip.onclick=()=>{ if(e._solVisible) return; if(e.userSeq[h]){ e._selVar=(e._selVar===h)?null:h; if(e._selVar!=null) enaDeselOtros(i); renderENA(); } };   /* SEL-UNICA 10-jul-2026 · el chip también traslada la × y deselecciona otros compases */
       col.appendChild(chip);
       // debajo, en azul, la solución que corresponde si este hueco está mal o vacío
       if(corregido && (!puesta || !e._notaOk[h]) && faltan.length){
@@ -5248,6 +5280,9 @@ function renderENAAnswers(){
   });
 }
 
+/* SEL-UNICA 10-jul-2026 · selección ÚNICA en toda la tarjeta de enarmonías:
+   deselecciona los DEMÁS compases (solo 1 × en pantalla). */
+function enaDeselOtros(iSel){ dataENA.forEach((e,j)=>{ if(j!==iSel) e._selVar=null; }); }
 /* ---- ghost vertical sobre el pentagrama único ---- */
 function enaWire(){
   const host=document.getElementById('scoreENA'); if(!host||host._enaWired) return; host._enaWired=true;
@@ -5350,9 +5385,10 @@ function onENAClick(ev){
     const nx=(e._slotX&&e._slotX[k+1]);
     const cercaY=(y!=null && Math.abs(y-p.y)<10);
     const cercaX=(nx==null) || (Math.abs(nx-p.x)<22);
-    if(cercaY && cercaX){ e._selVar=(e._selVar===k)?null:k; renderENA(); return; }   /* GN-UNIF 8-jul-2026: selección para alterar; el borrado va por la × fija */
+    if(cercaY && cercaX){ e._selVar=k; enaDeselOtros(i); renderENA(); return; }   /* SEL-UNICA 10-jul-2026 · clic sobre nota colocada: la SELECCIONA (traslada × y color) */
   }
-  if(e.userSeq.length>=e.sols.length) return;
+  /* SEL-UNICA 10-jul-2026 · compás lleno y clic en vacío: deselecciona (0 ×) */
+  if(e.userSeq.length>=e.sols.length){ if(e._selVar!=null){ e._selVar=null; renderENA(); } return; }
   const nat=enaNearestByY(i,p.y); if(!nat) return;
   let nb={step:nat.step,octave:nat.octave,alter:0};
   for(let k=e.userSeq.length-1;k>=0;k--){ const pv=e.userSeq[k]; if(pv.step===nb.step&&pv.octave===nb.octave){ nb.alter=pv.alter; nb._inherited=true; break; } }
@@ -5361,6 +5397,7 @@ function onENAClick(ev){
   enaUndo.push({op:'add', i});   /* GN-UNIF 8-jul-2026 */
   e.userSeq.push(nb); enaPendingAlt[i]=null;
   e._selVar=e.userSeq.length-1;
+  enaDeselOtros(i);   /* SEL-UNICA 10-jul-2026 · colocar auto-selecciona y deselecciona los demás compases */
   renderENA();
 }
 
@@ -5536,6 +5573,8 @@ function renderSEMScore(){
         if(s._green) sn.setKeyStyle(0,{fillStyle:'#22c98a',strokeStyle:'#22c98a'});
         else if(s._blue) sn.setKeyStyle(0,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
         else if(!e._solVisible && !s._dada && e._selVar===0) sn.setKeyStyle(0,{fillStyle:'#e84393',strokeStyle:'#e84393'});
+        /* SEL-UNICA 10-jul-2026 · 2ª nota del alumno NO seleccionada -> gris neutro (sin ×) */
+        else if(!e._solVisible && !s._dada) sn.setKeyStyle(0,{fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});
         tickables.push(sn);
       });
       const slotX=new Array(slots.length).fill(0);
@@ -5598,7 +5637,7 @@ function renderSEMAnswers(){
       if(!puesta) chip.classList.add('vacio');
       if(e._selVar===0 && !e._corregido) chip.classList.add('sel');
       if(e._corregido && puesta) chip.classList.add(e._notaOk?'ok':'mal');
-      chip.onclick=()=>{ if(e._solVisible) return; if(e.userSeq[0]){ e._selVar=(e._selVar===0)?null:0; renderSEM(); } };
+      chip.onclick=()=>{ if(e._solVisible) return; if(e.userSeq[0]){ e._selVar=(e._selVar===0)?null:0; if(e._selVar!=null) semDeselOtros(i); renderSEM(); } };   /* SEL-UNICA 10-jul-2026 · el chip también traslada la × y deselecciona otros compases */
       huecoRow.appendChild(chip);
       if(e._corregido && !e._notaOk){ const c=document.createElement('div'); c.className='ena-hueco azul'; c.textContent=noteName(e.objetivo); huecoRow.appendChild(c); }
       cell.appendChild(huecoRow);
@@ -5698,14 +5737,17 @@ function semFixedDelXs(){
   const host=document.getElementById('scoreSEM'); if(!host) return;
   const card=document.getElementById('cardSEM');
   if(card && card.classList.contains('locked')){ gnDelXs(host, []); return; }
+  /* SEL-UNICA 10-jul-2026 · una sola × en TODA la tarjeta: la de la 2ª nota del
+     compás cuyo e._selVar===0 esté fijado. */
   const items=[];
   dataSEM.forEach((e,i)=>{
     if(e.modo!=='build' || e._solVisible || e._corregido || !e.userSeq.length) return;
+    if(e._selVar!==0) return;
     const x=(e._slotX&&e._slotX[1]); const y=semYReal(i,e.userSeq[0].step,e.userSeq[0].octave);
     if(x==null||y==null) return;
     items.push({ x, y, onDel:()=>{
       semUndo.push({op:'del', i, nota:{...e.userSeq[0]}});
-      e.userSeq=[]; e._selVar=null; renderSEM();
+      e.userSeq=[]; e._selVar=null; renderSEM();   /* SEL-UNICA 10-jul-2026 · tras borrar, sin selección */
     }});
   });
   gnDelXs(host, items);
@@ -5725,6 +5767,9 @@ function gnUndoSEM(){
   else if(a.op==='del'){ e.userSeq=[{...a.nota}]; e._selVar=null; }
   renderSEM();
 }
+/* SEL-UNICA 10-jul-2026 · selección ÚNICA en toda la tarjeta de semitonos:
+   deselecciona los DEMÁS compases (solo 1 × en pantalla). */
+function semDeselOtros(iSel){ dataSEM.forEach((e,j)=>{ if(j!==iSel) e._selVar=null; }); }
 function onSEMClick(ev){
   const i=semCompasEn(ev); if(i==null) return;
   const e=dataSEM[i]; if(e.modo!=='build' || e._solVisible) return;
@@ -5732,9 +5777,10 @@ function onSEMClick(ev){
   if(e.userSeq.length){
     const y=semYReal(i,e.userSeq[0].step,e.userSeq[0].octave); const nx=(e._slotX&&e._slotX[1]);
     const cercaY=(y!=null&&Math.abs(y-p.y)<10), cercaX=(nx==null)||(Math.abs(nx-p.x)<22);
-    if(cercaY&&cercaX){ e._selVar=(e._selVar===0)?null:0; renderSEM(); return; }   /* GN-UNIF 8-jul-2026: selección para alterar; el borrado va por la × fija */
+    if(cercaY&&cercaX){ e._selVar=0; semDeselOtros(i); renderSEM(); return; }   /* SEL-UNICA 10-jul-2026 · clic sobre nota colocada: la SELECCIONA (traslada × y color) */
   }
-  if(e.userSeq.length>=1) return;
+  /* SEL-UNICA 10-jul-2026 · compás lleno y clic en vacío: deselecciona (0 ×) */
+  if(e.userSeq.length>=1){ if(e._selVar!=null){ e._selVar=null; renderSEM(); } return; }
   const nat=semNearestByY(i,p.y); if(!nat) return;
   let nb={step:nat.step,octave:nat.octave,alter:0};
   // convivencia: si coincide con la letra+octava de la nota dada (alterada), hereda su alteración
@@ -5745,6 +5791,7 @@ function onSEMClick(ev){
   if(pend!=null){ nb.alter=pend; nb._inherited=false; }
   semUndo.push({op:'add', i});   /* GN-UNIF 8-jul-2026 */
   e.userSeq=[nb]; semPendingAlt[i]=null; e._selVar=0;
+  semDeselOtros(i);   /* SEL-UNICA 10-jul-2026 · colocar auto-selecciona y deselecciona los demás compases */
   renderSEM();
 }
 
@@ -8111,8 +8158,9 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     if(!precol){
       undoBtn = window.FichaUndoBtn(host, wrap, ()=>{
         const a=(estado._undo||[]).pop(); if(!a) return;
-        if(a.op==='add'){ estado.seq.pop(); if(estado.sel!=null && estado.sel>=estado.seq.length) estado.sel=null; }
-        else if(a.op==='del'){ estado.seq.splice(a.k,0,a.nota); if(estado.sel!=null && estado.sel>=a.k) estado.sel++; }
+        /* SEL-UNICA 10-jul-2026 · al deshacer, deja seleccionada la nota recuperada (del) o ninguna (add) */
+        if(a.op==='add'){ estado.seq.pop(); estado.sel=null; }
+        else if(a.op==='del'){ estado.seq.splice(a.k,0,a.nota); estado.sel=a.k; }
         pintar();
       });
     }
@@ -8163,6 +8211,9 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
           sn.addModifier(new VFx.Accidental('n'),0);
         }
         if(k===estado.sel) sn.setStyle({fillStyle:'#e84393',strokeStyle:'#e84393'});
+        /* SEL-UNICA 10-jul-2026 · nota colocada NO seleccionada -> gris neutro (sin ×).
+           En precolocado (menores/mayores) NO se aplica: esas cabezas quedan en negro. */
+        else if(!precol) sn.setStyle({fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});
         return sn;
       });
       const fillCount=Math.max(0, nNotas-realCount);
@@ -8197,12 +8248,17 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     // que es donde el alumno coloca/borra notas. En menores/mayores las cabezas no se borran.
     function pintarPopupsBorrado(){
       if(precol){ sc.querySelectorAll(':scope > .nota-del-pop').forEach(el=>el.remove()); return; }
+      /* SEL-UNICA 10-jul-2026 · una sola × : la de la nota seleccionada (estado.sel) */
       const notas=[];
-      (geom.noteXs||[]).forEach((x,k)=>{ const y=geom.noteYs?geom.noteYs[k]:null; if(x==null||y==null) return;
-        notas.push({ x, y, onDel:()=>{
-          (estado._undo=estado._undo||[]).push({op:'del', k, nota:{...estado.seq[k]}});   /* GN-UNIF 8-jul-2026 */
-          estado.seq.splice(k,1); if(estado.sel===k) estado.sel=null; else if(estado.sel!=null && estado.sel>k) estado.sel--; estado._dirty=true; pintar(); } });
-      });
+      const k=estado.sel;
+      if(k!=null && k>=0 && estado.seq[k]){
+        const x=(geom.noteXs||[])[k], y=geom.noteYs?geom.noteYs[k]:null;
+        if(x!=null&&y!=null){
+          notas.push({ x, y, onDel:()=>{
+            (estado._undo=estado._undo||[]).push({op:'del', k, nota:{...estado.seq[k]}});   /* GN-UNIF 8-jul-2026 */
+            estado.seq.splice(k,1); estado.sel=null; estado._dirty=true; pintar(); } });   /* SEL-UNICA 10-jul-2026 · tras borrar, sin selección */
+        }
+      }
       window.FichaDelPop(sc, notas);
     }
 
@@ -8287,7 +8343,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
           const dy=y!=null?Math.abs(y-p.y):0;
           if(dx<18 && dy<13){ const d=dx+dy; if(d<bd){bd=d;hit=k;} }
         });
-        if(hit>=0){ estado.sel=(estado.sel===hit)?null:hit; pintar(); return; }
+        if(hit>=0){ estado.sel=hit; pintar(); return; }   /* SEL-UNICA 10-jul-2026 · clic sobre nota colocada: la SELECCIONA (traslada × y color) */
       }
       if(precol) return;   // en modo precolocado no se colocan cabezas nuevas
       // colocar nueva nota (si no está completa)
@@ -8303,9 +8359,8 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       if(estado.pend===1||estado.pend===-1){ nb.alter=estado.pend; nb._inherited=false; }
       (estado._undo=estado._undo||[]).push({op:'add'});   /* GN-UNIF 8-jul-2026 */
       estado.seq.push(nb); estado.pend=0; estado._dirty=true;
-      // cromática/hexátona: la nueva queda seleccionada para alterarla al momento
-      const fijaSel = (spec.familia==='cromatica' || spec.familia==='hexatona');
-      estado.sel = fijaSel ? (estado.seq.length-1) : null;
+      /* SEL-UNICA 10-jul-2026 · la nota recién colocada queda SELECCIONADA (× y rosa) */
+      estado.sel = estado.seq.length-1;
       pintar();
     }
 
@@ -8780,7 +8835,8 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     const undoBtn = window.FichaUndoBtn(host, sc, ()=>{
       const a=(estado._undo||[]).pop(); if(!a) return;
       estado.resp[a.i]=a.prev? {...a.prev} : null;
-      if(estado.sel===a.i && !a.prev) estado.sel=null;
+      /* SEL-UNICA 10-jul-2026 · al deshacer, deja seleccionada la nota recuperada (o ninguna) */
+      estado.sel = a.prev? a.i : null;
       pintar();
     });
 
@@ -8812,7 +8868,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
           if(nb.alter!==0) sn.addModifier(new VFx.Accidental(acc(nb.alter)),0);
           if(k===0) sn.setStyle({fillStyle:'#16203a',strokeStyle:'#16203a'});       // 1ª dada (negro)
           else if(i===estado.sel) sn.setStyle({fillStyle:'#e84393',strokeStyle:'#e84393'}); // 2ª seleccionada (rosa)
-          else sn.setStyle({fillStyle:'#16203a',strokeStyle:'#16203a'});            // 2ª colocada (negro, sin pistas)
+          else sn.setStyle({fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});            /* SEL-UNICA 10-jul-2026 · 2ª colocada NO seleccionada -> gris neutro (sin ×) */
           return sn;
         });
         const voice=new VFx.Voice({num_beats:notas.length*4,beat_value:4}).setStrict(false);
@@ -8835,13 +8891,17 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
 
     // botón emergente "×" para borrar, posado sobre cada nota colocada (rosa).
     function pintarPopupsBorrado(){
+      /* SEL-UNICA 10-jul-2026 · una sola × : la de la 2ª nota del compás seleccionado */
       const notas=[];
-      for(let i=0;i<n;i++){ const r2=estado.resp[i]; if(!r2) continue;
+      const i=estado.sel;
+      if(i!=null && i>=0 && estado.resp[i]){
+        const r2=estado.resp[i];
         const x=geom.slots[i]?geom.slots[i].x:null; const y=yReal(null,r2.step,r2.octave);
-        if(x==null||y==null) continue;
-        notas.push({ x, y, onDel:()=>{
-          (estado._undo=estado._undo||[]).push({i, prev:{...estado.resp[i]}});   /* GN-UNIF 8-jul-2026 */
-          estado.resp[i]=null; if(estado.sel===i) estado.sel=null; estado._dirty=true; pintar(); } });
+        if(x!=null&&y!=null){
+          notas.push({ x, y, onDel:()=>{
+            (estado._undo=estado._undo||[]).push({i, prev:{...estado.resp[i]}});   /* GN-UNIF 8-jul-2026 */
+            estado.resp[i]=null; estado.sel=null; estado._dirty=true; pintar(); } });   /* SEL-UNICA 10-jul-2026 · tras borrar, sin selección */
+        }
       }
       window.FichaDelPop(sc, notas);
     }
@@ -8881,10 +8941,10 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       const onTap=(ev)=>{
         const p=pt(svg,ev); if(!p) return;
         window.FichaGhost.hide(sc);
-        // ¿clic sobre una 2ª nota ya puesta? -> seleccionarla (toggle)
+        // ¿clic sobre una 2ª nota ya puesta? -> seleccionarla (traslada × y color)
         for(let i=0;i<n;i++){ const r2=estado.resp[i]; if(!r2) continue;
           const x=geom.slots[i].x, y=yReal(null,r2.step,r2.octave);
-          if(x!=null&&y!=null && Math.abs(x-p.x)<18 && Math.abs(y-p.y)<13){ estado.sel=(estado.sel===i)?null:i; pintar(); return; } }
+          if(x!=null&&y!=null && Math.abs(x-p.x)<18 && Math.abs(y-p.y)<13){ estado.sel=i; pintar(); return; } }   /* SEL-UNICA 10-jul-2026 · clic sobre nota colocada: la SELECCIONA */
         // colocar nota nueva en el compás bajo el cursor
         const i=slotUnderX(p.x, wC, x0); if(i<0) return;
         const nat=nearestY(p.y); if(!nat) return;
@@ -8919,7 +8979,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
         const chipRow=document.createElement('div'); chipRow.style.cssText='display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:8px;min-height:24px';
         const chip=document.createElement('div'); chip.style.cssText='font-size:13px;font-weight:800;color:'+(colocada?'#9fc0ff':'#9aa3c0');
         chip.textContent = colocada? nName(estado.resp[i]) : 'toca el pentagrama';
-        if(colocada){ chip.style.cursor='pointer'; chip.onclick=()=>{ estado.sel=(estado.sel===i)?null:i; pintar(); }; }
+        if(colocada){ chip.style.cursor='pointer'; chip.onclick=()=>{ estado.sel=(estado.sel===i)?null:i; pintar(); }; }   /* SEL-UNICA 10-jul-2026 · el chip traslada la × y el color (toggle deselecciona) */
         chipRow.appendChild(chip);
         cell.appendChild(chipRow);
         // alteraciones en UNA sola fila (5): 𝄫 ♭ ♮ ♯ × (× = doble sostenido)
@@ -8997,9 +9057,9 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     estado._undo = estado._undo || [];
     const undoBtn = window.FichaUndoBtn(host, sc, ()=>{
       const a=(estado._undo||[]).pop(); if(!a) return;
-      if(a.op==='add'){ estado.resp[a.i].pop(); }
-      else if(a.op==='del'){ estado.resp[a.i].splice(a.h,0,a.nota); }
-      estado.sel=null;
+      /* SEL-UNICA 10-jul-2026 · al deshacer, deja seleccionada la nota recuperada (del) o ninguna (add) */
+      if(a.op==='add'){ estado.resp[a.i].pop(); estado.sel=null; }
+      else if(a.op==='del'){ estado.resp[a.i].splice(a.h,0,a.nota); estado.sel={compas:a.i, idx:a.h}; }
       pintar();
     });
 
@@ -9033,7 +9093,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
           if(s.alter!==0 && !s._inherited) sn.addModifier(new VFx.Accidental(acc(s.alter)),0);
           if(s._dada) sn.setStyle({fillStyle:'#16203a',strokeStyle:'#16203a'});
           else if(estado.sel && estado.sel.compas===i && estado.sel.idx===s._hueco) sn.setStyle({fillStyle:'#e84393',strokeStyle:'#e84393'});
-          else sn.setStyle({fillStyle:'#16203a',strokeStyle:'#16203a'});
+          else sn.setStyle({fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});   /* SEL-UNICA 10-jul-2026 · enarmonía del alumno NO seleccionada -> gris neutro (sin ×) */
           tickables.push(sn); slotMeta.push(s);
         });
         for(let f=0;f<fill;f++){ try{ tickables.push(new VFx.GhostNote({duration:'w'})); slotMeta.push(null); }
@@ -9054,14 +9114,19 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
 
     // ×: a la derecha de cada nota colocada por el alumno (slot 0 es la nota dada, no se borra)
     function pintarPopupsBorrado(){
+      /* SEL-UNICA 10-jul-2026 · una sola × en TODA la ficha: la de la nota seleccionada */
       const notas=[];
-      for(let i=0;i<n;i++){ const arr=estado.resp[i]||[]; const c=geom.comp[i]; if(!c) continue;
-        arr.forEach((u,h)=>{ const x=c.slotX[1+h], y=yReal(u.step,u.octave);
-          if(x==null||y==null) return;
-          notas.push({ x, y, onDel:()=>{
-            (estado._undo=estado._undo||[]).push({op:'del', i, h, nota:{...estado.resp[i][h]}});   /* GN-UNIF 8-jul-2026 */
-            estado.resp[i].splice(h,1); if(estado.sel && estado.sel.compas===i){ if(estado.sel.idx===h) estado.sel=null; else if(estado.sel.idx>h) estado.sel.idx--; } estado._dirty=true; pintar(); } });
-        });
+      if(estado.sel){
+        const i=estado.sel.compas, h=estado.sel.idx;
+        const arr=estado.resp[i]||[]; const c=geom.comp[i];
+        if(c && arr[h]){
+          const u=arr[h]; const x=c.slotX[1+h], y=yReal(u.step,u.octave);
+          if(x!=null&&y!=null){
+            notas.push({ x, y, onDel:()=>{
+              (estado._undo=estado._undo||[]).push({op:'del', i, h, nota:{...estado.resp[i][h]}});   /* GN-UNIF 8-jul-2026 */
+              estado.resp[i].splice(h,1); estado.sel=null; estado._dirty=true; pintar(); } });   /* SEL-UNICA 10-jul-2026 · tras borrar, sin selección */
+          }
+        }
       }
       window.FichaDelPop(sc, notas);
     }
@@ -9113,7 +9178,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
         const p=pt(svg,ev); if(!p) return;
         window.FichaGhost.hide(sc);
         const hit=noteHit(p);
-        if(hit){ estado.sel=(estado.sel && estado.sel.compas===hit.compas && estado.sel.idx===hit.idx)? null : hit; pintar(); return; }
+        if(hit){ estado.sel=hit; pintar(); return; }   /* SEL-UNICA 10-jul-2026 · clic sobre nota colocada: la SELECCIONA (traslada × y color) */
         const i=compUnderX(p.x); if(i<0) return;
         const sd=ej._solData[i];
         if(estado.resp[i].length>=sd.sols.length) return;   // ya completo
@@ -9466,7 +9531,8 @@ function __grados_marker__(){}
     const undoBtn = window.FichaUndoBtn(host, sc, ()=>{
       const a=(estado._undo||[]).pop(); if(!a) return;
       estado.resp[a.i]=a.prev? {...a.prev} : null;
-      if(estado.foco===a.i && !a.prev) estado.foco=null;
+      /* SEL-UNICA 10-jul-2026 · al deshacer, deja seleccionada la nota recuperada (o ninguna) */
+      estado.foco = a.prev? a.i : null;
       pintar();
     });
 
@@ -9512,7 +9578,7 @@ function __grados_marker__(){}
             if(s.alter && !s._inherited) sn.addModifier(new VFx.Accidental(acc(s.alter)),0); else if(needNat) sn.addModifier(new VFx.Accidental('n'),0);
             if(s._dada) sn.setStyle({fillStyle:'#16203a',strokeStyle:'#16203a'});
             else if(i===estado.foco) sn.setStyle({fillStyle:'#e84393',strokeStyle:'#e84393'});
-            else sn.setStyle({fillStyle:'#16203a',strokeStyle:'#16203a'});
+            else sn.setStyle({fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});   /* SEL-UNICA 10-jul-2026 · 2ª nota del alumno NO seleccionada -> gris neutro (sin ×) */
             return sn;
           });
           if(slots.length<2) tickables.push(new VFx.GhostNote({duration:'w'}));
@@ -9533,13 +9599,17 @@ function __grados_marker__(){}
 
     // botón "×" para borrar, a la derecha de la 2ª nota colocada (solo modo build)
     function pintarPopupsBorrado(){
-      const notas=[]; const n=ej._solData.length;
-      for(let i=0;i<n;i++){ const sd=ej._solData[i]; if(sd.modo!=='build') continue; const r2=estado.resp[i]; if(!r2) continue;
+      /* SEL-UNICA 10-jul-2026 · una sola × en TODA la ficha: la del compás con foco */
+      const notas=[];
+      const i=estado.foco;
+      if(i!=null && i>=0 && ej._solData[i] && ej._solData[i].modo==='build' && estado.resp[i]){
+        const r2=estado.resp[i];
         const c=geom.comp[i]; const x=c?c.x2:null; const y=yReal(r2.step,r2.octave);
-        if(x==null||y==null) continue;
-        notas.push({ x, y, onDel:()=>{
-          (estado._undo=estado._undo||[]).push({i, prev:{...estado.resp[i]}});   /* GN-UNIF 8-jul-2026 */
-          estado.resp[i]=null; if(estado.foco===i) estado.foco=null; estado._dirty=true; pintar(); } });
+        if(x!=null&&y!=null){
+          notas.push({ x, y, onDel:()=>{
+            (estado._undo=estado._undo||[]).push({i, prev:{...estado.resp[i]}});   /* GN-UNIF 8-jul-2026 */
+            estado.resp[i]=null; estado.foco=null; estado._dirty=true; pintar(); } });   /* SEL-UNICA 10-jul-2026 · tras borrar, sin selección */
+        }
       }
       window.FichaDelPop(sc, notas);
     }
@@ -9574,7 +9644,7 @@ function __grados_marker__(){}
       };
       const onTap=(ev)=>{ const p=pt(svg,ev); if(!p) return; window.FichaGhost.hide(sc);
         const hit=buildNoteHit(p);
-        if(hit>=0){ estado.foco=(estado.foco===hit)?null:hit; pintar(); return; }
+        if(hit>=0){ estado.foco=hit; pintar(); return; }   /* SEL-UNICA 10-jul-2026 · clic sobre nota colocada: la SELECCIONA (traslada × y color) */
         const i=compUnderX(p.x); if(i<0) return; if(geom.comp[i].modo!=='build') return;
         if(estado.resp[i]!=null) return;   // ya tiene nota
         const nat=nearestY(p.y); if(!nat) return;
@@ -9705,9 +9775,9 @@ function __grados_marker__(){}
     estado._undo = estado._undo || [];
     const undoBtn = window.FichaUndoBtn(host, sc, ()=>{
       const a=(estado._undo||[]).pop(); if(!a) return;
-      if(a.op==='add'){ estado.resp[a.i].pop(); }
-      else if(a.op==='del'){ estado.resp[a.i].splice(a.h,0,a.nota); }
-      estado.fsel=null;
+      /* SEL-UNICA 10-jul-2026 · al deshacer, deja seleccionada la nota recuperada (del) o ninguna (add) */
+      if(a.op==='add'){ estado.resp[a.i].pop(); estado.foco=null; estado.fsel=null; }
+      else if(a.op==='del'){ estado.resp[a.i].splice(a.h,0,a.nota); estado.foco=a.i; estado.fsel=a.h; }
       pintar();
     });
 
@@ -9748,7 +9818,7 @@ function __grados_marker__(){}
               else if(i===estado.foco && estado.fsel!=null && estado.resp[i][estado.fsel] &&
                       nb.step===estado.resp[i][estado.fsel].step && nb.octave===estado.resp[i][estado.fsel].octave)
                 sn.setKeyStyle(idx,{fillStyle:'#e84393',strokeStyle:'#e84393'});
-              else sn.setKeyStyle(idx,{fillStyle:'#16203a',strokeStyle:'#16203a'});
+              else sn.setKeyStyle(idx,{fillStyle:'#9aa3c0',strokeStyle:'#9aa3c0'});   /* SEL-UNICA 10-jul-2026 · nota del alumno NO seleccionada -> gris neutro (sin ×). La fundamental dada queda en negro. */
             } else {
               sn.setKeyStyle(idx,{fillStyle:'#16203a',strokeStyle:'#16203a'});
             }
@@ -9771,14 +9841,17 @@ function __grados_marker__(){}
     // ×: a la derecha de cada nota colocada por el alumno (compases build). Varias notas comparten X
     // => se escalonan a la derecha (dx) para no taparse. /* GN-UNIF 8-jul-2026 */
     function pintarPopupsBorrado(){
+      /* SEL-UNICA 10-jul-2026 · una sola × en TODA la ficha: la de la nota seleccionada
+         (foco+fsel). El dx conserva el escalonado por posición h para no taparse. */
       const notas=[];
-      for(let i=0;i<n;i++){ if(geom.comp[i].modo!=='build') continue; const arr=estado.resp[i]||[];
-        arr.forEach((u,h)=>{ const x=geom.comp[i].baseX, y=yReal(u.step,u.octave);
-          if(x==null||y==null) return;
+      const i=estado.foco, h=estado.fsel;
+      if(i!=null && i>=0 && geom.comp[i] && geom.comp[i].modo==='build' && h!=null && estado.resp[i] && estado.resp[i][h]){
+        const u=estado.resp[i][h]; const x=geom.comp[i].baseX, y=yReal(u.step,u.octave);
+        if(x!=null&&y!=null){
           notas.push({ x, y, dx:h*17, onDel:()=>{
             (estado._undo=estado._undo||[]).push({op:'del', i, h, nota:{...estado.resp[i][h]}});   /* GN-UNIF 8-jul-2026 */
-            estado.resp[i].splice(h,1); if(estado.foco===i){ if(estado.fsel===h) estado.fsel=null; else if(estado.fsel!=null && estado.fsel>h) estado.fsel--; } estado._dirty=true; pintar(); } });
-        });
+            estado.resp[i].splice(h,1); estado.fsel=null; estado._dirty=true; pintar(); } });   /* SEL-UNICA 10-jul-2026 · tras borrar, sin selección */
+        }
       }
       window.FichaDelPop(sc, notas);
     }
@@ -9813,7 +9886,7 @@ function __grados_marker__(){}
       };
       const onTap=(ev)=>{ const p=pt(svg,ev); if(!p) return; window.FichaGhost.hide(sc);
         const hit=buildNoteHit(p);
-        if(hit){ estado.foco=hit.compas; estado.fsel=(estado.foco===hit.compas && estado.fsel===hit.idx)? null : hit.idx; pintar(); return; }
+        if(hit){ estado.foco=hit.compas; estado.fsel=hit.idx; pintar(); return; }   /* SEL-UNICA 10-jul-2026 · clic sobre nota colocada: la SELECCIONA (traslada × y color) */
         const i=compUnderX(p.x); if(i<0) return; if(geom.comp[i].modo!=='build') return;
         const sd=ej._solData[i];
         if(estado.resp[i].length>=sd.objetivo.length) return;   // ya colocó todas
