@@ -15016,6 +15016,7 @@ function __grados_marker__(){}
     for(var i=0;i<notes.length;i++){ if(!inb[i] && notes[i] && notes[i].setStemDirection) notes[i].setStemDirection(dirNote(keys[i])); } }
   function sn(key,dur){ return new VF.StaveNote({keys:[key],duration:dur}); }
   function seq(list){ return list.map(function(p){ return sn(p[0],p[1]); }); }
+  function addDot(n){ try{ VF.Dot.buildAndAttach([n],{all:true}); }catch(e){ try{ n.addDotToAll(); }catch(e2){} } }
 
   // catálogo de adornos: signo (ornamento VexFlow o notita) + una ejecución escrita correcta
   var ADORNOS=[
@@ -15026,29 +15027,38 @@ function __grados_marker__(){}
     {code:'grupeto', nom:'Grupeto', orn:'turn',
       exec:function(){ return {notes:seq([[U,'16'],[R,'16'],[L,'16'],[R,'16']]), beam:[[0,3]]}; } },
     {code:'apoyatura', nom:'Apoyatura', grace:[U], epoca:true,
-      exec:function(){ return {notes:seq([[U,'8'],[R,'8']]), beam:[[0,1]]}; } }
+      exec:function(){ var ns=seq([[U,'8'],[R,'8']]); try{ ns[0].addModifier(new VF.Articulation('a>').setPosition(3),0); }catch(e){} return {notes:ns, beam:[[0,1]]}; } }
   ];
   function adornoDe(code){ for(var i=0;i<ADORNOS.length;i++) if(ADORNOS[i].code===code) return ADORNOS[i]; return ADORNOS[0]; }
   var CON_EJEC=ADORNOS;
 
   // banco de preguntas: SIEMPRE sobre el caso concreto que se ve en la imagen
   var TESTS=[
-    { il:'grupeto_desc', q:'Este grupeto es…', ops:['descendente','ascendente','de cuatro notas'], ok:0 },
-    { il:'grupeto_asc',  q:'Este grupeto es…', ops:['ascendente','descendente','de cuatro notas'], ok:0 },
-    { il:'grupcuatro',   q:'Este grupeto (entre dos notas) se ejecuta…', ops:['entre las dos notas','antes de las dos','después de las dos'], ok:0 },
-    { il:'apoyatura_sup',q:'Esta apoyatura viene…', ops:['de arriba','de abajo','de la nota real'], ok:0 },
-    { il:'apoyatura_inf',q:'Esta apoyatura viene…', ops:['de abajo','de arriba','de la nota real'], ok:0 },
-    { il:'apoyatura_sup',q:'La notita de esta apoyatura, respecto a la nota real…', ops:['le roba parte de su valor','no le quita nada','vale una redonda'], ok:0 },
+    // grupeto (concepto, sin dirección a la vista)
+    { il:'grupeto',      q:'El grupeto rodea la nota real con sus…', ops:['notas auxiliares (vecinas)','octavas','silencios'], ok:0 },
+    // apoyatura · cuánto roba (barroco): hay que leer la figura (binaria/ternaria) y saber la regla
+    { il:'apoy_bin',     q:'En la ejecución barroca, la notita de esta apoyatura roba…', ops:['la mitad de su valor','dos tercios','un tercio'], ok:0 },
+    { il:'apoy_ter',     q:'En la ejecución barroca, la notita de esta apoyatura roba…', ops:['dos tercios de su valor','la mitad','un cuarto'], ok:0 },
+    { il:'apoyatura',    q:'La notita de la apoyatura, respecto a la nota real…', ops:['le roba parte de su valor','no le quita nada','vale una redonda'], ok:0 },
+    // apoyatura · época moderna
+    { il:'apoyatura',    q:'En la interpretación moderna, la notita de la apoyatura vale…', ops:['lo que indica su figura','la mitad de la nota real','dos tercios'], ok:0 },
+    { il:'apoyatura',    q:'¿Cuándo roba la notita una parte fija (mitad o dos tercios) de la nota real?', ops:['en la interpretación barroca','en la interpretación moderna','nunca'], ok:0 },
+    // trino (concepto)
     { il:'trino',        q:'Este trino alterna la nota real con su…', ops:['auxiliar superior','auxiliar inferior','octava'], ok:0 },
+    { il:'trino',        q:'En el Barroco, el trino empezaba por la…', ops:['nota auxiliar (superior)','nota real','octava'], ok:0 },
+    { il:'trino',        q:'Si un trino lleva un mordente delante, se empieza por la…', ops:['nota auxiliar','nota real','última nota'], ok:0 },
+    { il:'trino',        q:'En un trino, un ♯ o ♭ junto al signo afecta a la…', ops:['nota auxiliar','nota real','a las dos por igual'], ok:0 },
+    // mordente (concepto)
     { il:'mordente',     q:'Este mordente se ejecuta…', ops:['lo más rápido posible','muy lento','con calderón'], ok:0 },
-    { il:'mordente',     q:'La notita de este mordente lleva…', ops:['una rayita que la cruza','un puntillo','un calderón'], ok:0 },
-    { il:'mordos_asc',   q:'Este mordente de dos notas es…', ops:['ascendente','descendente','de una sola nota'], ok:0 },
-    { il:'mordos_desc',  q:'Este mordente de dos notas es…', ops:['descendente','ascendente','de una sola nota'], ok:0 },
+    // floreo / nota de paso
     { il:'floreo',       q:'La nota señalada (la del medio) es…', ops:['un floreo','una nota de paso','una apoyatura'], ok:0 },
     { il:'notapaso',     q:'La nota señalada (la del medio) es…', ops:['una nota de paso','un floreo','un mordente'], ok:0 },
     { il:'floreo',       q:'La nota señalada, ¿tiene valor propio?', ops:['sí (se escribe con figura real)','no, no vale nada','solo si es aguda'], ok:0 },
-    { il:'portvoix',     q:'Este adorno francés es un…', ops:['port de voix','tierce coulé','trino'], ok:0 },
-    { il:'tiercecoule',  q:'En este adorno, la tercera…', ops:['se toca arpegiada','se calla','sube una octava'], ok:0 }
+    { il:'floreo',       q:'El floreo es una nota vecina que…', ops:['va y vuelve a la misma nota','sigue subiendo','se calla'], ok:0 },
+    { il:'notapaso',     q:'La nota de paso une dos notas por…', ops:['grados conjuntos','saltos','octavas'], ok:0 },
+    // adornos franceses (concepto)
+    { il:'portvoix',     q:'El port de voix es un adorno típico de la música…', ops:['francesa del Barroco','del Romanticismo','actual'], ok:0 },
+    { il:'tiercecoule',  q:'En el tierce coulé, la tercera…', ops:['se toca arpegiada','se calla','sube una octava'], ok:0 }
   ];
 
   function genTestSigno(){
@@ -15059,12 +15069,27 @@ function __grados_marker__(){}
   function genTestConcepto(){ var t=pick(TESTS); var order=shuffle([0,1,2]); var ops=order.map(function(i){return t.ops[i];});
     return { modo:'concepto', il:t.il, q:t.q, ops:ops, ok:order.indexOf(t.ok) }; }
 
+  function genApoyaturaValor(){
+    var ternaria=chance(0.5), from=chance(0.5)?'sup':'inf', gk=(from==='sup')?U:L, esV=chance(0.5), ejec;
+    if(ternaria){
+      ejec = esV ? [{k:gk,d:'h',ac:1},{k:R,d:'q'}]              // 2/3 correcto: blanca(acento)+negra
+                 : [{k:gk,d:'q',ac:1},{k:R,d:'h'}];             // 1/3 mal: negra(acento)+blanca
+    } else {
+      ejec = esV ? [{k:gk,d:'q',ac:1},{k:R,d:'q'}]              // 1/2 correcto: negra(acento)+negra
+                 : [{k:gk,d:'q',dot:1,ac:1},{k:R,d:'8'}];       // 3/4 mal: negra con puntillo(acento)+corchea
+    }
+    return { modo:'apoyValor', from:from, ternaria:ternaria, beats:(ternaria?3:2), esVerdadero:esV, ejec:ejec, ctx:' (interpretación barroca)' };
+  }
   function generar(){
     var p1 = chance(0.5) ? genTestSigno() : genTestConcepto();
-    var a2=pick(CON_EJEC); var esV=chance(0.5);
-    var ejecDe = esV ? a2 : pick(CON_EJEC.filter(function(x){return x!==a2;}));
-    var ctx = a2.epoca ? ' (interpretación moderna)' : '';
-    var p2={ signo:a2, ejec:ejecDe, esVerdadero:esV, ctx:ctx };
+    var p2;
+    if(chance(0.4)){ p2 = genApoyaturaValor(); }
+    else {
+      var a2=pick(CON_EJEC); var esV=chance(0.5);
+      var ejecDe = esV ? a2 : pick(CON_EJEC.filter(function(x){return x!==a2;}));
+      var ctx = a2.epoca ? ' (interpretación moderna)' : '';
+      p2={ signo:a2, ejec:ejecDe, esVerdadero:esV, ctx:ctx };
+    }
     return { tema:'adorno', p1:p1, p2:p2, resp:{p1:null, p2:null} };
   }
 
@@ -15103,6 +15128,8 @@ function __grados_marker__(){}
     case 'apoyatura':
     case 'apoyatura_sup':return {base:R, grace:[U]};
     case 'apoyatura_inf':return {base:R, grace:[L]};
+    case 'apoy_bin':     return {base:R, grace:[U], dur:'h'};
+    case 'apoy_ter':     return {base:R, grace:[U], dur:'h', dot:true};
     case 'mordos':
     case 'mordos_asc':   return {base:U, grace:[L,R]};
     case 'mordos_desc':  return {base:R, grace:['d/5','c/5']};
@@ -15137,7 +15164,7 @@ function __grados_marker__(){}
     try{
       if(spec.notes){ notes=seq(spec.notes); setStems(notes, keysOf(notes), null); }
       else if(spec.chord){ notes=[ new VF.StaveNote({keys:spec.chord,duration:'h',auto_stem:true}) ]; }
-      else { var n=sn(spec.base,'h'); prepSigno(n, spec); n.setStemDirection(dirNote(spec.base)); notes=[n]; if(spec.trino) trinoNote=n; }
+      else { var n=sn(spec.base, spec.dur||'h'); if(spec.dot) addDot(n); prepSigno(n, spec); n.setStemDirection(dirNote(spec.base)); notes=[n]; if(spec.trino) trinoNote=n; }
       var v=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false); v.addTickables(notes);
       new VF.Formatter().joinVoices([v]).format([v], fmt); v.draw(ctx,st);
     }catch(e){}
@@ -15147,7 +15174,26 @@ function __grados_marker__(){}
     if(spec.arp && notes[0]){ var ax=40; try{ax=notes[0].getAbsoluteX();}catch(e){} var y0=st.getYForLine(4)+3, y1=st.getYForLine(1)-3, d='M'+(ax-9)+','+y0, yy=y0, up=true; while(yy>y1){ var ny=Math.max(yy-6,y1); d+=' Q'+(ax-9+(up?-3:3))+','+((yy+ny)/2)+' '+(ax-9)+','+ny; yy=ny; up=!up; } var pth=document.createElementNS(NS,'path'); pth.setAttribute('d',d);pth.setAttribute('fill','none');pth.setAttribute('stroke','#000');pth.setAttribute('stroke-width','1.5'); svg.appendChild(pth); }
     if(svg){ svg.setAttribute('viewBox',VB); svg.setAttribute('height',compact?110:132); svg.style.maxWidth=W+'px'; }
   }
+  function renderApoyValor(host, p2, compact){ host.innerHTML='';
+    var beats=p2.beats||2, gk=(p2.from==='inf')?L:U;
+    var mw1=132, gap=34, mw2=196, W=6+mw1+gap+mw2+8, svY=compact?34:52;
+    var r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,compact?116:178); var ctx=r.getContext();
+    var x1=6, x2=x1+mw1+gap;
+    var st1=new VF.Stave(x1,svY,mw1); st1.addClef('treble').setContext(ctx).draw();
+    var st2=new VF.Stave(x2,svY,mw2); st2.setContext(ctx).draw();
+    var syMid=(st1.getYForLine(0)+st1.getYForLine(4))/2;
+    var n1=sn(R,'h'); if(p2.ternaria) addDot(n1); prepSigno(n1, {grace:[gk]}); n1.setStemDirection(dirNote(R));
+    try{ var v1=new VF.Voice({num_beats:beats,beat_value:4}).setStrict(false); v1.addTickables([n1]); new VF.Formatter().joinVoices([v1]).format([v1],mw1-52); v1.draw(ctx,st1); }catch(e){}
+    var en=(p2.ejec||[]).map(function(sp){ var nn=sn(sp.k, sp.d); if(sp.dot) addDot(nn); nn.setStemDirection(dirNote(sp.k)); if(sp.ac){ try{ nn.addModifier(new VF.Articulation('a>').setPosition(3),0); }catch(e){} } return nn; });
+    try{ var v2=new VF.Voice({num_beats:beats,beat_value:4}).setStrict(false); v2.addTickables(en); new VF.Formatter().joinVoices([v2]).format([v2],mw2-30); v2.draw(ctx,st2); }catch(e){}
+    var svg=host.querySelector('svg');
+    var ay=(st1.getYForLine(0)+st1.getYForLine(4))/2, ax0=x1+mw1+6, ax1=x2-5;
+    var ln=document.createElementNS(NS,'line'); ln.setAttribute('x1',ax0);ln.setAttribute('y1',ay);ln.setAttribute('x2',ax1-2);ln.setAttribute('y2',ay);ln.setAttribute('stroke','#8a4f78');ln.setAttribute('stroke-width','2.2'); svg.appendChild(ln);
+    var hd=document.createElementNS(NS,'path'); hd.setAttribute('d','M'+ax1+','+ay+' L'+(ax1-8)+','+(ay-5.5)+' M'+ax1+','+ay+' L'+(ax1-8)+','+(ay+5.5)); hd.setAttribute('stroke','#8a4f78');hd.setAttribute('stroke-width','2.2');hd.setAttribute('fill','none'); svg.appendChild(hd);
+    if(svg){ svg.setAttribute('viewBox', compact?('0 '+(syMid-52)+' '+W+' 104'):('0 6 '+W+' 162')); svg.setAttribute('height',compact?110:150); svg.style.maxWidth='100%'; }
+  }
   function renderVF(host, p2, compact){ host.innerHTML='';
+    if(p2 && p2.modo==='apoyValor'){ return renderApoyValor(host, p2, compact); }
     var mw1=118, gap=34, mw2=214, W=6+mw1+gap+mw2+6, svY=compact?34:42;
     var r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,compact?114:150); var ctx=r.getContext();
     var x1=6, x2=x1+mw1+gap;
@@ -15253,7 +15299,7 @@ function __grados_marker__(){}
     if(ov==='8va'){ var y=st.getYForLine(0)-16; sTxt(svg,x0-4,y+4,'8',12,'#000','start','800',true); sTxt(svg,x0+6,y,'va',9,'#000','start','800',true); dashHook(svg,x0+22,x1+12,y,7,'#000'); }
     else if(ov==='8vb'){ var yb=st.getYForLine(4)+20; sTxt(svg,x0-4,yb,'8',12,'#000','start','800',true); sTxt(svg,x0+6,yb-4,'vb',9,'#000','start','800',true); dashHook(svg,x0+22,x1+12,yb,-7,'#000'); }
     else if(ov&&ov.cifra!=null){ var n=notes[ov.at||0]; sTxt(svg, nx(n)+5, st.getYForLine(0)-12, ''+ov.cifra, 15,'#000','middle','800', true); }
-    else if(ov&&ov.puntos!=null){ var m=notes[ov.at||0], cx=nx(m)+6, cy=st.getYForLine(0)-14; for(var i=0;i<ov.puntos;i++){ var c=document.createElementNS(NS,'circle'); c.setAttribute('cx',cx-((ov.puntos-1)*4)+i*8);c.setAttribute('cy',cy);c.setAttribute('r','2.4');c.setAttribute('fill','#000'); svg.appendChild(c); } }
+    else if(ov&&ov.puntos!=null){ var m=notes[ov.at||0], cx; try{ cx=(m.getNoteHeadBeginX()+m.getNoteHeadEndX())/2; }catch(e){ cx=nx(m)+5; } var cy=st.getYForLine(0)-14; for(var i=0;i<ov.puntos;i++){ var c=document.createElementNS(NS,'circle'); c.setAttribute('cx',cx-((ov.puntos-1)*4)+i*8);c.setAttribute('cy',cy);c.setAttribute('r','2.4');c.setAttribute('fill','#000'); svg.appendChild(c); } }
   }
 
   // simile "⁒" (compás igual al anterior): dos puntos + barra gruesa
@@ -15317,23 +15363,20 @@ function __grados_marker__(){}
 
   /* ---------- banco de preguntas: SIEMPRE sobre el caso concreto que se ve en la imagen ---------- */
   var TESTS=[
-    { il:'barras_1', q:'Estas barras equivalen a…', ops:['corcheas','semicorcheas','fusas'], ok:0 },
-    { il:'barras_2', q:'Estas barras equivalen a…', ops:['semicorcheas','corcheas','fusas'], ok:0 },
-    { il:'cifra_3',  q:'Este grupo de valoración especial es un…', ops:['tresillo','seisillo','dosillo'], ok:0 },
-    { il:'cifra_6',  q:'Este grupo de valoración especial es un…', ops:['seisillo','tresillo','cuatrillo'], ok:0 },
+    { il:'puntos',   q:'Estos puntos dividen la nota en…', ops:['dos figuras iguales','dos octavas','dos compases'], ok:0 },
+    { il:'puntos3',  q:'Si una nota lleva tres puntos, se divide en…', ops:['tres figuras iguales','tres compases','tres octavas'], ok:0 },
     { il:'tremolo',  q:'Este trémolo (tres barras) indica…', ops:['una repetición rapidísima','un tresillo exacto','una octava'], ok:0 },
     { il:'tremdos',  q:'En este trémolo, las dos notas…', ops:['se alternan rápidamente','suenan a la vez','se callan'], ok:0 },
     { il:'octava',   q:'Con este signo, la música suena…', ops:['una octava más aguda','una octava más grave','igual, más fuerte'], ok:0 },
     { il:'octavab',  q:'Con este signo, la música suena…', ops:['una octava más grave','una octava más aguda','dos octavas más grave'], ok:0 },
-    { il:'puntos',   q:'Estos puntos dividen la nota en…', ops:['dos figuras iguales','dos octavas','dos compases'], ok:0 },
+    { il:'octava',   q:'Tras un pasaje en 8ª alta, «loco» significa…', ops:['en su lugar: se toca lo escrito','muy fuerte','muy rápido'], ok:0 },
+    { il:'plicas',   q:'Unas plicas o corchetes solos indican que se repite…', ops:['la última nota o acorde','el primer compás','nada'], ok:0 },
     { il:'simile',   q:'Este signo significa…', ops:['compás igual al anterior','todo el compás en silencio','subir una octava'], ok:0 },
     { il:'silencio', q:'Este silencio de redonda vale…', ops:['todo un compás','solo un tiempo','medio compás'], ok:0 },
-    { il:'multirest',q:'¿Cuántos compases de silencio indica este signo?', ops:['6','1','16'], ok:0 },
-    { il:'gliss',    q:'Este deslizamiento es un…', ops:['glissando','portamento','trino'], ok:0 },
-    { il:'portamento',q:'Este deslizamiento (línea recta) es un…', ops:['portamento','glissando','trino'], ok:0 }
+    { il:'gliss',    q:'El glissando se diferencia del portamento en que…', ops:['se oyen todas las notas intermedias','es un sonido continuo','es más lento'], ok:0 }
   ];
-  var SIGNO_IDENT=['barras','cifra','tremolo','tremdos','octava','octavab','puntos','simile','silencio','multirest'];
-  var NOM={ barras:'Barras en la plica', cifra:'La cifra: grupos especiales', tremolo:'Trémolo', tremdos:'Trémolo', octava:'8ª alta', octavab:'8ª bassa', puntos:'Puntos sobre la nota', simile:'Compás igual (⁒)', silencio:'Compás en silencio', multirest:'Compases en silencio', plicas:'Plicas solas', gliss:'Glissando', portamento:'Portamento' };
+  var SIGNO_IDENT=['cifra','tremolo','tremdos','octava','octavab','simile','silencio','multirest'];
+  var NOM={ barras:'Barras en la plica', cifra:'La cifra: grupos especiales', tremolo:'Trémolo', tremdos:'Trémolo', octava:'8ª alta', octavab:'8ª bassa', puntos:'Puntos sobre la nota', simile:'Compás igual al anterior', silencio:'Compás en silencio', multirest:'Compases en silencio', plicas:'Plicas solas', gliss:'Glissando', portamento:'Portamento' };
 
   function genTestSigno(){ var code=pick(SIGNO_IDENT); var seen={}; seen[NOM[code]]=1; var pool=[];
     shuffle(SIGNO_IDENT).forEach(function(x){ if(!seen[NOM[x]]){ seen[NOM[x]]=1; pool.push(x); } });
@@ -15379,6 +15422,7 @@ function __grados_marker__(){}
       case 'octava':  return {notes:[['c/4','q'],['e/4','q'],['g/4','q']], overlay:'8va', fmt:150};
       case 'octavab': return {notes:[['g/5','q'],['e/5','q'],['c/5','q']], overlay:'8vb', fmt:150};
       case 'puntos':  return {notes:[['e/5','w']], overlay:{puntos:2}, fmt:60};
+      case 'puntos3': return {notes:[['e/5','w']], overlay:{puntos:3}, fmt:60};
       case 'silencio':return {notes:[['d/5','wr']], fmt:60};
       default:        return {notes:[['b/4','q']], fmt:60};
     }
