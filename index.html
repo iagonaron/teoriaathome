@@ -993,7 +993,7 @@
       <button id="tabACOa" class="on" onclick="acoTab('identificar')">A · Identifica</button>
       <button id="tabACOb" onclick="acoTab('construir')">B · Construye</button>
     </div></div>
-    <p class="iv-sub" id="subACO">Identifica el tipo de acorde y su inversión. Puedes ordenarlo en el paréntesis gris para deducir qué nota está en el bajo.</p>
+    <p class="iv-sub" id="subACO">Identifica el tipo de acorde y su inversión. Puedes ordenarlo en el paréntesis gris si te resulta útil.</p>
     <div class="ex-card" id="cardINVACO">
       <div class="ex-top">
         <div class="ex-letter"><b id="modeLblACO">A · Identifica</b><span id="modeSubACO">identifica el acorde y su inversión</span></div>
@@ -8931,12 +8931,14 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     const esClaveB = (ej._ruedas==='cla_b');
     const esTonArm = (ej._ruedas==='ton_tono_arm');
     // pentagrama del enunciado (SVG ya generado) arriba — salvo cla_b y ton_tono_arm, que dibujan el suyo (editable)
+    let staffW=null;   // ancho natural del pentagrama (figuras a tamaño real; la zona lo acompaña)
     if(ej.render && ej.render.svg && !esClaveB && !esTonArm){
-      const sc=document.createElement('div'); sc.innerHTML=ej.render.svg; sc.style.pointerEvents='none';
+      const sc=document.createElement('div'); sc.style.cssText='pointer-events:none;max-width:100%;margin:0 auto'; sc.innerHTML=ej.render.svg;
       const svg=sc.querySelector('svg'); if(svg){
-        if(!svg.getAttribute('viewBox')){ const _w=parseFloat(svg.getAttribute('width'))||700, _h=parseFloat(svg.getAttribute('height'))||150; svg.setAttribute('viewBox','0 0 '+_w+' '+_h); }
+        let vb=svg.getAttribute('viewBox'); if(!vb){ const _w=parseFloat(svg.getAttribute('width'))||760, _h=parseFloat(svg.getAttribute('height'))||150; vb='0 0 '+_w+' '+_h; svg.setAttribute('viewBox',vb); }
+        staffW=parseFloat(vb.split(/\s+/)[2])||760;
         svg.removeAttribute('width'); svg.removeAttribute('height');
-        svg.style.width='100%'; svg.style.height='auto'; svg.style.pointerEvents='none';
+        svg.style.width=staffW+'px'; svg.style.maxWidth='100%'; svg.style.height='auto'; svg.style.display='block'; svg.style.margin='0 auto'; svg.style.pointerEvents='none';
       }
       host.appendChild(sc);
     }
@@ -8944,7 +8946,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     let editStave=null;
     if(esClaveB || esTonArm){ editStave=document.createElement('div'); editStave.style.cssText='position:relative;margin-bottom:4px'; host.appendChild(editStave); }
     const zona=document.createElement('div');
-    zona.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px';
+    zona.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px auto 0;'+(staffW?('width:'+staffW+'px;max-width:100%'):'max-width:960px');
     host.appendChild(zona);
 
     if(ej._ruedas==='int_clasif') montarIntClasif(zona, ej, estado);
@@ -8958,19 +8960,33 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       const alinear=()=>{
         const svg=host.querySelector('svg'); if(!svg) return;
         const vb=svg.viewBox&&svg.viewBox.baseVal; if(!vb||!vb.width) return;
-        let el=svg.querySelectorAll('.vf-notehead'); if(!el.length) el=svg.querySelectorAll('.vf-stavenote');
         const n=ej._solData.length; const cells=zona.querySelectorAll('.ans-cell');
-        if(!el.length || cells.length!==n) return;
-        let xs=[]; el.forEach(g=>{ try{ const b=g.getBBox(); xs.push(b.x+b.width/2); }catch(e){} });
-        xs.sort((a,b)=>a-b); if(xs.length<n) return;
-        const gaps=[]; for(let i=1;i<xs.length;i++) gaps.push({g:xs[i]-xs[i-1],at:i});
-        gaps.sort((a,b)=>b.g-a.g);
-        const cortes=gaps.slice(0,n-1).map(x=>x.at).sort((a,b)=>a-b);
-        const grupos=[]; let st=0; cortes.forEach(c=>{ grupos.push(xs.slice(st,c)); st=c; }); grupos.push(xs.slice(st));
-        if(grupos.length!==n) return;
+        if(cells.length!==n) return;
+        // centro de cada RUEDA = CENTRO GEOMÉTRICO de su compás (barra a barra = bbox del
+        // .vf-stave), NO el centroide de las cabezas. Así los armónicos (notas a un lado) y
+        // los melódicos quedan igualmente centrados en el medio del compás.
+        let centros=[];
+        const staves=svg.querySelectorAll('.vf-stave');
+        if(staves.length===n){
+          staves.forEach(st=>{ try{ const b=st.getBBox(); centros.push(b.x+b.width/2); }catch(e){} });
+        }
+        if(centros.length!==n){
+          // fallback: centroide de cabezas agrupadas por los huecos mayores
+          let el=svg.querySelectorAll('.vf-notehead'); if(!el.length) el=svg.querySelectorAll('.vf-stavenote');
+          if(!el.length) return;
+          let xs=[]; el.forEach(g=>{ try{ const b=g.getBBox(); xs.push(b.x+b.width/2); }catch(e){} });
+          xs.sort((a,b)=>a-b); if(xs.length<n) return;
+          const gaps=[]; for(let i=1;i<xs.length;i++) gaps.push({g:xs[i]-xs[i-1],at:i});
+          gaps.sort((a,b)=>b.g-a.g);
+          const cortes=gaps.slice(0,n-1).map(x=>x.at).sort((a,b)=>a-b);
+          const grupos=[]; let s0=0; cortes.forEach(c=>{ grupos.push(xs.slice(s0,c)); s0=c; }); grupos.push(xs.slice(s0));
+          if(grupos.length!==n) return;
+          centros=grupos.map(g=>(g[0]+g[g.length-1])/2);
+        }
+        centros.sort((a,b)=>a-b);
         zona.style.position='relative'; zona.style.display='block'; let maxH=0;
-        cells.forEach((cell,i)=>{ const g=grupos[i]; if(!cell||!g||!g.length) return;
-          const cx=(g[0]+g[g.length-1])/2; const frac=Math.max(0.02,Math.min(0.98,(cx-vb.x)/vb.width));
+        cells.forEach((cell,i)=>{ const cx=centros[i]; if(cell==null||cx==null) return;
+          const frac=Math.max(0.02,Math.min(0.98,(cx-vb.x)/vb.width));
           cell.style.position='absolute'; cell.style.top='0'; cell.style.left=(frac*100).toFixed(2)+'%'; cell.style.transform='translateX(-50%)';
           maxH=Math.max(maxH,cell.offsetHeight); });
         zona.style.height=maxH+'px';
@@ -15050,11 +15066,33 @@ function __grados_marker__(){}
   function sTxt(svg,x,y,s,sz,col,anc,w,it){ var t=document.createElementNS(NS,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('text-anchor',anc||'middle');t.setAttribute('font-size',sz);t.setAttribute('font-weight',w||'700');t.setAttribute('fill',col);t.setAttribute('font-family','Helvetica,Arial,sans-serif'); if(it) t.setAttribute('font-style','italic'); t.textContent=s; svg.appendChild(t); return t; }
   function segLine(svg,x1,y1,x2,y2,col,w){ var l=document.createElementNS(NS,'line'); l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);l.setAttribute('stroke',col);l.setAttribute('stroke-width',w||1.3); svg.appendChild(l); }
   function ellArcD(cx,cy,rx,ry,deg){ var th=deg*Math.PI/180,c=Math.cos(th),s=Math.sin(th),x1=cx+rx*c,y1=cy+rx*s,x2=cx-rx*c,y2=cy-rx*s; return 'M '+x1.toFixed(2)+' '+y1.toFixed(2)+' A '+rx.toFixed(2)+' '+ry.toFixed(2)+' '+deg+' 0 1 '+x2.toFixed(2)+' '+y2.toFixed(2)+' A '+rx.toFixed(2)+' '+ry.toFixed(2)+' '+deg+' 0 1 '+x1.toFixed(2)+' '+y1.toFixed(2)+' Z'; }
+  /* Cabezas = glyphs REALES de VexFlow (redonda y negra), extraídos del propio
+     VexFlow que ya carga la app, para que se vean idénticas al resto de ejercicios.
+     El hueco de la redonda sale solo por el 'nonzero winding' del path (subtrazo
+     interior en sentido contrario) -> deja ver la línea del pentagrama. */
+  var VF_HEAD_W={ cx:62.665, cy:100.005, h:10.11, d:'M62.858 94.946C57.495 94.946,54.125 97.164,54.125 99.916C54.125 102.64,56.428 105.054,62.465 105.054C69.092 105.054,71.198 102.752,71.198 99.916C71.198 97.052,66.621 94.946,62.858 94.946M58.618 97.445C59.067 96.041,60.556 95.844,61.819 95.844C64.599 95.844,66.817 98.821,66.817 101.264C66.817 102.499,66.284 103.65,64.964 103.959C64.571 104.072,64.122 104.128,63.701 104.128C62.24 104.128,60.752 103.145,59.91 102.022C59.095 101.095,58.506 99.719,58.506 98.428C58.506 98.091,58.534 97.782,58.618 97.445' };
+  var VF_HEAD_Q={ cx:240.385, cy:100.005, h:10.11, d:'M238.349 105.054C241.943 105.054,246.352 101.741,246.352 98.315C246.352 96.237,244.723 94.946,242.421 94.946C237.984 94.946,234.418 98.231,234.418 101.685C234.418 103.791,236.159 105.054,238.349 105.054' };
+  var GLYPH_K=1.70;   // altura de la cabeza ≈ rx*GLYPH_K (rx=6 -> ~10.2px, como VexFlow)
   function head(svg,x,y,col,filled,rx){ rx=rx||6;
-    if(filled){ var e=document.createElementNS(NS,'ellipse'); e.setAttribute('cx',x);e.setAttribute('cy',y);e.setAttribute('rx',rx);e.setAttribute('ry',rx*0.74);e.setAttribute('transform','rotate(-16 '+x+' '+y+')');e.setAttribute('fill',col);e.setAttribute('stroke',col);e.setAttribute('stroke-width','1'); svg.appendChild(e); return; }
-    /* REDONDA estilo VexFlow: anillo con hueco transparente (deja ver la línea) y lados gruesos (óvalos a distinto ángulo) */
-    var d=ellArcD(x,y,rx*1.20,rx*0.76,-20)+' '+ellArcD(x,y,rx*0.66,rx*0.30,30);
-    var p=document.createElementNS(NS,'path'); p.setAttribute('d',d); p.setAttribute('fill',col); p.setAttribute('fill-rule','evenodd'); svg.appendChild(p); }
+    var g=filled?VF_HEAD_Q:VF_HEAD_W, s=(rx*GLYPH_K)/g.h;
+    var p=document.createElementNS(NS,'path'); p.setAttribute('d',g.d); p.setAttribute('fill',col);
+    p.setAttribute('transform','translate('+x.toFixed(2)+' '+y.toFixed(2)+') scale('+s.toFixed(4)+') translate('+(-g.cx).toFixed(2)+' '+(-g.cy).toFixed(2)+')');
+    svg.appendChild(p); }
+  /* Alteraciones = glyphs REALES de VexFlow (mismo criterio que las cabezas);
+     escaladas con el MISMO factor -> proporción cabeza/alteración como en VexFlow. */
+  var ACC_G={
+    '-1':{cx:61.688,cy:114.664,w:9.13,offY:-5.336,d:'M57.603 126.88C57.743 127.048,57.855 127.076,57.968 127.076C58.108 127.076,58.22 126.992,58.22 126.992C59.428 126.318,60.411 125.223,61.422 124.521C65.016 122.022,66.251 119.551,66.251 117.697C66.251 115.395,64.482 113.935,62.629 113.822C61.927 113.822,60.972 114.131,60.411 114.496C60.158 114.693,59.709 115.058,59.512 115.058C59.428 115.058,59.4 115.058,59.316 115.03C59.035 114.918,58.866 114.609,58.866 114.328C58.894 113.457,59.147 103.742,59.147 102.927C59.147 102.478,58.782 102.253,58.389 102.253C57.799 102.253,57.153 102.647,57.125 103.377C57.125 103.377,57.294 126.458,57.603 126.88M59.035 123.285C59.035 123.285,58.894 120.842,58.894 119.242C58.894 118.596,58.95 118.091,58.979 117.95C59.259 117.136,60.888 115.956,61.815 115.956C62.994 115.956,63.471 117.304,63.471 118.315C63.471 120.477,61.618 122.668,59.877 123.763C59.709 123.847,59.596 123.875,59.484 123.875C59.119 123.875,59.035 123.482,59.035 123.285'},
+    '1':{cx:188.42,cy:119.958,w:10.08,offY:-0.042,d:'M192.955 115.226C193.235 115.114,193.46 114.777,193.46 114.552L193.46 111.66C193.46 111.464,193.32 111.351,193.151 111.351C193.095 111.351,193.039 111.351,192.955 111.379C192.955 111.379,192.14 111.716,191.944 111.744C191.663 111.744,191.382 111.548,191.382 111.239L191.382 106.297C191.382 106.044,191.129 105.848,190.82 105.848C190.427 105.848,190.175 106.044,190.175 106.297L190.175 111.548C190.118 111.941,190.006 112.475,189.641 112.727C189.164 113.008,187.788 113.57,187.086 113.738C186.749 113.738,186.608 113.261,186.608 112.924L186.608 108.066C186.608 107.841,186.328 107.617,186.047 107.617C185.654 107.617,185.401 107.841,185.401 108.066L185.401 113.542C185.401 114.103,185.148 114.496,184.924 114.609C184.671 114.749,183.857 115.058,183.857 115.058C183.576 115.142,183.379 115.479,183.379 115.704L183.379 118.596C183.379 118.821,183.492 118.961,183.744 118.961L183.829 118.905C183.857 118.905,184.474 118.652,184.783 118.512L184.839 118.456C185.148 118.456,185.401 118.877,185.401 119.186L185.401 123.201C185.401 123.65,185.204 124.015,184.952 124.128C184.727 124.212,183.857 124.577,183.857 124.577C183.576 124.661,183.379 124.97,183.379 125.223L183.379 128.087C183.379 128.34,183.492 128.452,183.744 128.452L183.829 128.424C183.857 128.424,184.418 128.171,184.783 128.059C184.839 128.003,184.868 128.003,184.924 128.003C185.204 128.003,185.401 128.452,185.401 128.649L185.401 133.619C185.401 133.872,185.654 134.068,185.935 134.068C186.328 134.068,186.608 133.872,186.608 133.619L186.608 128.003C186.608 127.469,186.805 127.188,187.03 127.104L189.473 126.093C189.473 126.093,189.529 126.093,189.529 126.093L189.613 126.065C189.978 126.065,190.175 126.543,190.175 126.795L190.175 131.85C190.175 132.102,190.427 132.299,190.708 132.299C191.129 132.299,191.382 132.102,191.382 131.85L191.382 126.093C191.382 125.784,191.551 125.307,191.831 125.167C192.112 125.054,192.955 124.717,192.955 124.717C193.235 124.605,193.46 124.296,193.46 124.044L193.46 121.179C193.46 120.983,193.32 120.842,193.151 120.842C193.095 120.842,193.039 120.842,192.955 120.899L191.916 121.292C191.663 121.292,191.382 121.039,191.382 120.562L191.382 116.799C191.382 116.518,191.579 115.76,191.916 115.62M190.175 121.825C189.922 122.64,188.041 123.426,187.086 123.426C186.861 123.426,186.665 123.37,186.608 123.229C186.524 123.061,186.496 122.19,186.496 121.207C186.496 119.972,186.524 118.54,186.608 118.231C186.693 117.529,188.546 116.687,189.557 116.687C189.838 116.687,190.09 116.771,190.175 116.939C190.259 117.136,190.343 118.147,190.343 119.242C190.343 120.337,190.259 121.46,190.175 121.825'},
+    '-2':{cx:312.357,cy:114.707,w:16.62,offY:-5.293,d:'M316.738 113.907C316.007 113.907,315.502 114.187,314.828 114.552C314.547 114.693,314.238 115.058,313.873 115.058C313.789 115.058,313.705 115.058,313.677 115.03C313.396 114.946,313.256 114.665,313.256 114.328C313.256 113.485,313.508 103.742,313.508 102.984C313.508 102.534,313.143 102.338,312.75 102.338C312.217 102.338,311.571 102.703,311.487 103.377C311.487 103.377,311.515 108.908,311.599 114.552C311.009 114.131,310.307 113.907,309.549 113.907L309.296 113.907C308.538 113.907,308.061 114.187,307.415 114.552C307.078 114.693,306.797 115.058,306.432 115.058C306.348 115.058,306.32 115.058,306.236 115.03C305.955 114.946,305.786 114.665,305.786 114.328C305.786 113.485,306.067 103.742,306.067 102.984C306.067 102.534,305.702 102.338,305.309 102.338C304.719 102.338,304.073 102.703,304.045 103.377C304.045 103.377,304.242 126.515,304.523 126.88C304.663 127.048,304.775 127.076,304.888 127.076C305.028 127.076,305.141 126.992,305.141 126.992C306.404 126.346,307.415 125.223,308.342 124.521C309.83 123.482,310.953 122.387,311.739 121.404C311.795 124.437,311.88 126.739,312.02 126.88C312.132 127.048,312.245 127.076,312.329 127.076C312.469 127.076,312.582 126.992,312.582 126.992C313.817 126.346,314.8 125.223,315.727 124.577C319.377 122.022,320.669 119.551,320.669 117.697C320.669 115.423,318.872 113.935,316.99 113.907M306.741 123.763C306.629 123.847,306.46 123.875,306.404 123.875C306.067 123.875,305.955 123.482,305.955 123.229C305.955 123.229,305.814 120.842,305.814 119.27C305.814 118.624,305.871 118.147,305.899 117.978C306.151 117.164,307.808 115.956,308.763 115.956C309.998 115.956,310.391 117.332,310.391 118.343C310.391 120.618,308.566 122.64,306.741 123.763M314.182 123.763C314.042 123.847,313.901 123.875,313.817 123.875C313.508 123.875,313.396 123.482,313.396 123.229C313.396 123.229,313.256 120.449,313.256 118.905C313.256 118.456,313.256 118.091,313.312 117.978C313.536 117.164,315.249 115.956,316.204 115.956C316.625 115.956,316.934 116.069,317.187 116.35C317.552 116.855,317.805 117.529,317.805 118.343C317.805 120.618,316.007 122.64,314.182 123.763'},
+    '2':{cx:442.879,cy:119.958,w:10,offY:-0.042,d:'M445.575 121.292C445.126 121.039,443.665 120.253,443.665 119.972C443.665 119.382,444.985 118.793,445.575 118.596C445.603 118.596,445.631 118.596,445.687 118.596L445.94 118.624C446.417 118.624,447.175 118.54,447.597 118.231C447.793 118.006,447.877 117.417,447.877 116.771C447.877 115.114,447.737 114.861,446.08 114.861C445.35 114.861,444.62 114.946,444.424 115.142C444.283 115.283,444.227 115.985,444.227 116.715C444.031 117.164,443.385 118.624,442.907 118.624C442.318 118.624,441.672 117.304,441.531 116.715C441.531 116.041,441.391 115.311,441.194 115.142C441.026 114.946,440.38 114.861,439.734 114.861C439.06 114.861,438.33 114.946,438.078 115.142C437.965 115.226,437.881 115.928,437.881 116.63C437.881 117.36,437.965 118.091,438.078 118.231C438.358 118.456,439.088 118.624,439.79 118.624C439.931 118.624,440.071 118.596,440.184 118.596C440.633 118.821,442.093 119.635,442.093 119.916C442.093 120.449,440.801 121.095,440.24 121.292L439.819 121.292C439.088 121.292,438.33 121.376,438.078 121.572C437.965 121.685,437.881 122.387,437.881 123.117C437.881 123.847,437.965 124.577,438.078 124.661C438.358 124.886,439.004 125.054,439.706 125.054C440.296 125.054,440.942 124.942,441.194 124.661C441.447 124.437,441.531 123.763,441.531 123.117C441.531 123.061,441.559 123.005,441.588 122.948C441.84 122.387,442.318 121.264,442.851 121.264C443.385 121.264,444.059 122.555,444.227 123.117C444.227 123.847,444.283 124.521,444.424 124.661C444.704 124.886,445.35 125.054,446.052 125.054C447.597 125.054,447.877 124.661,447.877 123.201C447.877 122.499,447.737 121.769,447.597 121.572C447.372 121.376,446.642 121.292,445.968 121.292'},
+    '0':{cx:571.689,cy:119.874,w:6.79,offY:-0.126,d:'M573.991 112.671C573.907 112.671,573.879 112.727,573.823 112.727C573.823 112.727,571.239 113.654,570.2 113.654C569.948 113.654,569.779 113.598,569.779 113.457L569.779 106.69C569.779 106.409,569.554 106.213,569.302 106.213L568.768 106.213C568.487 106.213,568.291 106.409,568.291 106.69L568.291 127.525C568.291 127.75,568.403 127.89,568.656 127.89L568.74 127.834C568.768 127.834,568.852 127.834,568.909 127.806C569.47 127.554,571.717 126.599,572.896 126.599C573.317 126.599,573.598 126.711,573.598 127.048L573.598 133.057C573.598 133.338,573.795 133.535,574.075 133.535L574.609 133.535C574.834 133.535,575.086 133.338,575.086 133.057L575.086 112.755C575.086 112.559,574.918 112.446,574.749 112.446C574.721 112.446,574.637 112.446,574.609 112.475M569.779 118.428C569.779 117.866,572.25 116.799,573.233 116.799C573.458 116.799,573.598 116.855,573.598 116.995L573.598 121.179C573.598 121.909,571.295 122.836,570.285 122.836C569.976 122.836,569.779 122.752,569.779 122.583'},
+  };
+  var ACC_HEADHW=8.535, ACC_GAP=3;
+  function accHead(svg,hx,y,col,alter,rx){ var g=ACC_G[String(alter)]; if(!g) return;
+    var s=(rx*GLYPH_K)/10.11, ax=hx-s*(ACC_HEADHW+ACC_GAP+g.w/2), ay=y+g.offY*s;
+    var p=document.createElementNS(NS,'path'); p.setAttribute('d',g.d); p.setAttribute('fill',col);
+    p.setAttribute('transform','translate('+ax.toFixed(2)+' '+ay.toFixed(2)+') scale('+s.toFixed(4)+') translate('+(-g.cx).toFixed(2)+' '+(-g.cy).toFixed(2)+')');
+    svg.appendChild(p); }
   function ledgers(svg,x,y,st,col,hw){ hw=hw||9; var yTop=st.getYForLine(0),yBot=st.getYForLine(4),half=(yBot-yTop)/8,stp=2*half,yy; if(y<yTop-half*0.6){ for(yy=yTop-stp;yy>=y-1;yy-=stp) segLine(svg,x-hw,yy,x+hw,yy,col,1.2); } if(y>yBot+half*0.6){ for(yy=yBot+stp;yy<=y+1;yy+=stp) segLine(svg,x-hw,yy,x+hw,yy,col,1.2); } }
   function yOfNote(st,n){ var yTop=st.getYForLine(0),half=(st.getYForLine(4)-yTop)/8; return yTop+(38-(STEPS.indexOf(n.step)+n.octave*7))*half; }   // diat(F5)=38 en la línea superior
   /* dibuja un acorde apilado a mano; maneja segundas (desplaza la cabeza) y alteraciones a la izquierda */
@@ -15062,10 +15100,10 @@ function __grados_marker__(){}
     var sorted=notes.slice().sort(function(a,b){return diat(a)-diat(b);});
     var off=[]; for(var i=0;i<sorted.length;i++){ off[i]=(i>0 && (diat(sorted[i])-diat(sorted[i-1])===1) && off[i-1]===0)?1:0; }
     sorted.forEach(function(n,i){ var y=yOfNote(st,n); var c=colFn?colFn(n):((hiKey && (n.step+n.octave===hiKey))?PINK:col); var hx=x+off[i]*(rx*1.9); ledgers(svg,hx,y,st,c,rx+3);
-      if(n.alter) sTxt(svg, x-rx-6-(off[i]?rx*1.9:0), y+4, accES(n.alter), filled?'11':'13.5', c,'middle','700');
+      if(n.alter) accHead(svg, hx, y, c, n.alter, rx);
       head(svg, hx, y, c, filled, rx); if(posOut) posOut.push({key:n.step+n.octave, x:hx, y:y, rx:rx}); });
   }
-  function drawParen(svg, cx, yc, col, hw){ hw=hw||27; sTxt(svg,cx-hw,yc+11,'(', '36', col,'middle','300'); sTxt(svg,cx+hw,yc+11,')', '36', col,'middle','300'); }
+  function drawParen(svg, cx, yc, col, hw){ hw=hw||27; sTxt(svg,cx-hw,yc+11,'(', '32', col,'middle','700'); sTxt(svg,cx+hw,yc+11,')', '32', col,'middle','700'); }
   function arrowUp(svg, x, yNote, col){ var y0=yNote+34, y1=yNote+9; segLine(svg,x,y0,x,y1,col,1.7); segLine(svg,x,y1,x-4.5,y1+8,col,1.7); segLine(svg,x,y1,x+4.5,y1+8,col,1.7); }
   function boxCell(svg, cx, yTopBox, r1, r2){ var bw=112, bh=38, bx=cx-bw/2;
     var rect=document.createElementNS(NS,'rect'); rect.setAttribute('x',bx);rect.setAttribute('y',yTopBox);rect.setAttribute('width',bw);rect.setAttribute('height',bh);rect.setAttribute('rx','5');rect.setAttribute('fill','#fff');rect.setAttribute('stroke','#8a4f78');rect.setAttribute('stroke-width','1.4'); svg.appendChild(rect);
@@ -15117,7 +15155,7 @@ function __grados_marker__(){}
           if(m.parenDelKey && m.parenNotes){ m.parenNotes.forEach(function(o){ var _pn=o.n; if(_pn.step+_pn.octave===m.parenDelKey){ var _py=yOfNote(st,_pn), _px=xR+16; sTxt(svg, _px, _py+3.5, '✕', '10.5', '#d47a7a', 'middle','800'); meta.delX=meta.delX||{}; meta.delX[mi]=meta.delX[mi]||[]; meta.delX[mi].push({key:m.parenDelKey, x:_px, y:_py, zona:'ord', r:8}); } }); }
           if(m.parenLabels && m.parenNotes){ var pn=m.parenNotes.map(function(o){return o.n;}).slice().sort(function(a,b){return midi(a)-midi(b);});
             pn.forEach(function(n,i){ if(m.parenLabels[i]) sTxt(svg, xR+40, yOfNote(st,n)+4, m.parenLabels[i], '11.5','#7a1f5a','start','800'); }); }
-          if(m.parenText) sTxt(svg, xR, st.getYForLine(0)-14, m.parenText, '10.5', GRAY,'middle','700', true); }
+          if(m.parenText) sTxt(svg, xR, st.getYForLine(0)-14, m.parenText, '10.5', GRAY,'middle','700', false); }
         if(m.arrowAt){ arrowUp(svg, xL, yOfNote(st, m.arrowAt), m.arrowCol||GOLD); }
         // línea base baja: por debajo de la nota más grave DIBUJABLE (La3), para dejar hueco a la respuesta
         var yFloor=yOfNote(st,{step:'A',octave:3}), yLow=st.getYForLine(4);
@@ -15340,7 +15378,7 @@ function __grados_marker__(){}
 (function(){
   function $(id){return document.getElementById(id);}
   var acoApi=null, acoCur=null, acoTipo='identificar', acoMounted=false;
-  var SUBACO={ identificar:'Identifica el tipo de acorde y su inversión. Puedes ordenarlo en el paréntesis gris para deducir qué nota está en el bajo.',
+  var SUBACO={ identificar:'Identifica el tipo de acorde y su inversión. Puedes ordenarlo en el paréntesis gris si te resulta útil.',
     construir:'Construye el acorde en el estado pedido (mitad izquierda del compás). Usa los botones de alteración. El paréntesis gris (derecha) es para ordenarlo (opcional).' };
   function acoMount(){ if(!window.ACORD) return; acoCur=ACORD.generar(acoTipo); acoApi=ACORD.montar($('scoreINVACO'), acoCur); var fb=$('fbACO'); if(fb) fb.innerHTML=''; if(acoApi&&acoApi.onUndo) acoApi.onUndo(function(has){ var b=$('undoINVACO'); if(b) b.disabled=!has; }); acoMounted=true; }
   window.openInvAcordes=function(){ showView('view-inv-acordes'); if(!acoMounted) acoMount(); };
