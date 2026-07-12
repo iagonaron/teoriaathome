@@ -1655,7 +1655,7 @@ const PADS=[
   {id:'tonalidades',nombre:'Tonalidades',kick:'Teoría',foot:'Armaduras y tonos vecinos',activo:true,open:'openTonalidades',ico:'armT',sub:'tonalidad · armadura · tonos vecinos'},
   {id:'escalas',nombre:'Escalas',kick:'Teoría',foot:'Menores, mayores y otras',activo:true,open:'openEscalas',sub:'menores · mayores · pentatónica · hexátona · cromática'},
   {id:'grados',nombre:'Grados',kick:'Teoría',foot:'Señala el grado pedido',activo:true,open:'openGrados'},
-  {id:'semitonos',nombre:'Semitonos',kick:'Teoría',foot:'Diatónico / cromático',activo:true,open:'openSemitonos'},
+  {id:'semitonos',nombre:'Semitonos',kick:'Teoría',foot:'Diatónico / cromático',activo:true,open:'openSemitonos',sub:'cromático · diatónico'},
   {id:'acordes',nombre:'Acordes',kick:'Teoría',foot:'Identificar y construir',activo:true,open:'openAcordes',sub:'tríadas · cuatríadas · inversión · 7ª de dominante'},
   {id:'inv-acordes',nombre:'Inversión de acordes',kick:'Teoría',foot:'Identifica y construye',activo:true,open:'openInvAcordes'},
   {id:'enarmonias',nombre:'Enarmonías',kick:'Teoría',foot:'Equivalencias',activo:true,open:'openEnarmonias',sub:'de nota · parcial · total · tonalidades enarmónicas'},
@@ -10818,7 +10818,7 @@ function __grados_marker__(){}
           if(!movido && Math.hypot(e.clientX-sx, e.clientY-sy)>6){
             movido=true;
             ghost=chipEl.cloneNode(true);
-            ghost.style.cssText='position:fixed;z-index:9999;pointer-events:none;opacity:.92;box-shadow:0 6px 16px rgba(0,0,0,.45);left:0;top:0';
+            ghost.style.cssText='position:fixed;z-index:1000000;pointer-events:none;opacity:.92;box-shadow:0 6px 16px rgba(0,0,0,.45);left:0;top:0';
             document.body.appendChild(ghost);
             chipEl.style.opacity='.35';
           }
@@ -12434,7 +12434,7 @@ function __grados_marker__(){}
       if(!esAccidental){ ref=mkCorNoteArm(VFx,s,COR_NEG,armA); tick.push(ref); }   // cubierta por armadura -> negra
       else {
         const acerto = u && u.step===s.step && u.octave===s.octave && (u.alter||0)===(s.alter||0);
-        if(acerto){ ref=mkCorNoteArm(VFx,s,COR_NEG,armA); tick.push(ref); }                    // acertado -> NEGRO (cabeza dada)
+        if(acerto){ ref=mkCorNoteArm(VFx,s,COR_OK,armA); tick.push(ref); }                    // acertado -> VERDE (el alumno lo alteró bien)
         else if(u){ tick.push(mkCorNoteArm(VFx,u,COR_BAD,armAlterFor(u.step,fifths))); ref=mkCorNoteArm(VFx,s,COR_SOL,armA); tick.push(ref); }  // alumno ROJO + correcta AZUL pegada
         else { ref=mkCorNoteArm(VFx,s,COR_SOL,armA); tick.push(ref); }                          // faltó -> correcta azul
       }
@@ -12453,8 +12453,9 @@ function __grados_marker__(){}
         let yBase=112; try{ yBase=stave.getYForLine(4)+24; }catch(e){}
         const yTip=yBase-12, yTail=yBase+10;
         const d='M '+x+' '+yTip+' L '+(x-6)+' '+(yTip+9)+' L '+(x-2.4)+' '+(yTip+9)+' L '+(x-2.4)+' '+yTail+' L '+(x+2.4)+' '+yTail+' L '+(x+2.4)+' '+(yTip+9)+' L '+(x+6)+' '+(yTip+9)+' Z';
-        const p=document.createElementNS(NS,'path'); p.setAttribute('d',d); p.setAttribute('fill','#e84393'); svg.appendChild(p);
-        if(opts.markLabel){ const t=document.createElementNS(NS,'text'); t.setAttribute('x',x+10); t.setAttribute('y',yTail+2); t.setAttribute('fill','#e84393'); t.setAttribute('font-size','16'); t.setAttribute('font-weight','800'); t.setAttribute('font-family','system-ui,-apple-system,sans-serif'); t.textContent=opts.markLabel; svg.appendChild(t); }
+        const markCol = opts.markOk ? COR_OK : COR_SOL;   // verde si el alumno lo señaló bien · azul si es la solución
+        const p=document.createElementNS(NS,'path'); p.setAttribute('d',d); p.setAttribute('fill',markCol); svg.appendChild(p);
+        if(opts.markLabel){ const t=document.createElementNS(NS,'text'); t.setAttribute('x',x+10); t.setAttribute('y',yTail+2); t.setAttribute('fill',markCol); t.setAttribute('font-size','16'); t.setAttribute('font-weight','800'); t.setAttribute('font-family','system-ui,-apple-system,sans-serif'); t.textContent=opts.markLabel; svg.appendChild(t); }
       }catch(e){}
     }
     // feedback de armadura
@@ -12491,7 +12492,7 @@ function __grados_marker__(){}
     return dibujarEscalaCorrArm(host, sol, alumno, {
       fifths: spec.fifths||0,
       alumnoArm: (resp&&resp.arm!=null)?resp.arm:0,
-      markIdx: mkIdx, markLabel: mkLabel
+      markIdx: mkIdx, markLabel: mkLabel, markOk: !!(resp && resp.marca===mkIdx)
     });
   }
 
@@ -14213,7 +14214,7 @@ function __grados_marker__(){}
       var yo=map[u.step+u.octave]; if(!yo) return;
       var idx=(meta.ml[mi].role==='nota')?(1+k):0;
       var nx=(meta.noteX[mi]&&meta.noteX[mi][idx]) || (meta.x[mi]+meta.w[mi]*0.6);
-      GN_UNIF.delXAt(b.sd,svg,'gn-ena',nx,yo.y,16,function(){
+      GN_UNIF.delXAt(b.sd,svg,'gn-ena',nx,yo.y,22,function(){
         var idx2=it.user.indexOf(u); if(idx2<0) return;
         gnPush({t:'del',ii:ii,idx:idx2,nota:u});
         it.user.splice(idx2,1); g._sel=null;
@@ -14565,7 +14566,7 @@ function __grados_marker__(){}
     }
     function clr(svg){ if(!svg) return; var o=svg.querySelector('#invg'); if(o) o.remove(); }
     function dels(res){ if(!window.GN_UNIF) return; GN_UNIF.clearDelX(sbox,'gn-inv'); if(res) return; if(!g._sel) return; var arr=g.m[g._sel.m].user, u=arr[g._sel.k]; if(!u) return; var mi=g._sel.m+1; var ent=meta.ymap[mi][u.step+u.octave]; if(!ent) return; var nx=(meta.noteX[mi]&&meta.noteX[mi][g._sel.k])||(meta.x[mi]+meta.w[mi]*0.55);
-      var svg=sbox.querySelector('svg'); GN_UNIF.delXAt(sbox,svg,'gn-inv',nx,ent.y,16,function(){ var i=arr.indexOf(u); if(i<0) return; gnPush({t:'del',m:g._sel.m,idx:i,nota:u}); arr.splice(i,1); g._sel=null; redraw(false); });
+      var svg=sbox.querySelector('svg'); GN_UNIF.delXAt(sbox,svg,'gn-inv',nx,ent.y,26,function(){ var i=arr.indexOf(u); if(i<0) return; gnPush({t:'del',m:g._sel.m,idx:i,nota:u}); arr.splice(i,1); g._sel=null; redraw(false); });
     }
 
     // DOS ruedas (inicial bajo compás 1, final bajo compás 4) + cuadrícula de alteraciones al centro (para las notas que colocas)
@@ -14691,7 +14692,7 @@ function __grados_marker__(){}
     function clr(svg){ if(!svg) return; var o=svg.querySelector('#invg'); if(o) o.remove(); }
     function dels(res){ if(!window.GN_UNIF) return; GN_UNIF.clearDelX(sbox,'gn-inv'); if(res) return; if(!g._sel) return; var par=g.pares[g._sel.p], u=par.user[g._sel.k]; if(!u) return;
       var mi=2*g._sel.p+1; var map=meta.ymap[mi]; if(!map) return; var yo=map[u.step+u.octave]; if(!yo) return; var nx=(meta.noteX[mi]&&meta.noteX[mi][g._sel.k])||(meta.x[mi]+meta.w[mi]*0.6);
-      var svg=sbox.querySelector('svg'); GN_UNIF.delXAt(sbox,svg,'gn-inv',nx,yo.y,16,function(){ var i=par.user.indexOf(u); if(i<0) return; gnPush({t:'del',p:g._sel.p,idx:i,nota:u}); par.user.splice(i,1); g._sel=null; redraw(false); });
+      var svg=sbox.querySelector('svg'); GN_UNIF.delXAt(sbox,svg,'gn-inv',nx,yo.y,26,function(){ var i=par.user.indexOf(u); if(i<0) return; gnPush({t:'del',p:g._sel.p,idx:i,nota:u}); par.user.splice(i,1); g._sel=null; redraw(false); });
     }
 
     // por pareja: cuadrícula 2×2 de alteraciones + doble-rueda, ALINEADAS bajo el compás de respuesta
@@ -15033,7 +15034,7 @@ function __grados_marker__(){}
   function drawChord(svg, x, notes, st, col, filled, rx, hiKey, posOut, colFn){ if(!notes||!notes.length) return; rx=rx||6;
     var sorted=notes.slice().sort(function(a,b){return diat(a)-diat(b);});
     var off=[]; for(var i=0;i<sorted.length;i++){ off[i]=(i>0 && (diat(sorted[i])-diat(sorted[i-1])===1) && off[i-1]===0)?1:0; }
-    sorted.forEach(function(n,i){ var y=yOfNote(st,n); var c=colFn?colFn(n):((hiKey && (n.step+n.octave===hiKey))?PINK:col); var hx=x+off[i]*(rx*1.9); ledgers(svg,x,y,st,c,rx+3);
+    sorted.forEach(function(n,i){ var y=yOfNote(st,n); var c=colFn?colFn(n):((hiKey && (n.step+n.octave===hiKey))?PINK:col); var hx=x+off[i]*(rx*1.9); ledgers(svg,hx,y,st,c,rx+3);
       if(n.alter) sTxt(svg, x-rx-6-(off[i]?rx*1.9:0), y+4, accES(n.alter), filled?'11':'13.5', c,'middle','700');
       head(svg, hx, y, c, filled, rx); if(posOut) posOut.push({key:n.step+n.octave, x:hx, y:y, rx:rx}); });
   }
@@ -15183,7 +15184,7 @@ function __grados_marker__(){}
     });
     redraw(false);
     return { corregir:function(){ var e=evaluaIdentificar(g);
-      g.items.forEach(function(it){ if(it._solEl){ var ok=it._okTipo&&it._okInv; it._solEl.innerHTML='<span style="color:'+(ok?'#22c98a':'#ff5c72')+'">'+(ok?'✓ '+nombreAcorde(it)+' · '+INV_LAB[it.inv]:'Sol: '+TIPOS[it.tipo].lab+' · '+INV_LAB[it.inv])+'</span>'; } });
+      g.items.forEach(function(it){ if(it._solEl){ var ok=it._okTipo&&it._okInv; it._solEl.innerHTML='<span style="color:'+(ok?'#22c98a':COL_BLUE)+'">'+(ok?'✓ '+nombreAcorde(it)+' · '+INV_LAB[it.inv]:'Solución: '+nombreAcorde(it)+' · '+INV_LAB[it.inv])+'</span>'; } });
       redraw(true); return e; }, undo:doUndo, onUndo:function(cb){ undoCb=cb; if(undoCb) undoCb(undoStack.length>0); } };
   }
   function evaluaIdentificar(g){ var vals=[]; g.items.forEach(function(it){ it._okTipo=(it.sel.tipo===it.tipo); it._okInv=(it.sel.inv===it.inv); it._okNotas=it._okTipo&&it._okInv; vals.push({tipo:it._okTipo?1:0, inv:it._okInv?1:0}); });
