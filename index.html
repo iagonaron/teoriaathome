@@ -8394,18 +8394,21 @@ window.FichaTouch = function(svg, onMove, onTap, onClear){
   svg.addEventListener('touchstart',(ev)=>{
     if(ev.touches && ev.touches.length>=2){ svg._gnMulti=true; if(onClear) onClear(); return; } /* R4 10-jul-2026 · 2 dedos: sin ghost, deja pasar el pinch */
     svg._gnMulti=false; /* R4 10-jul-2026 */
-    svg._gnLastNat=null; /* R5 10-jul-2026 · primer punto del gesto: sin histéresis (tap exacto) */
+    svg._gnLastNat=null; svg._gnX0=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:null; /* R5 10-jul-2026 · primer punto del gesto: sin histéresis (tap exacto) */
     if(ev.touches&&ev.touches[0]) onMove(ev.touches[0]);
   },{passive:true});
   svg.addEventListener('touchmove',(ev)=>{
     if((ev.touches && ev.touches.length>=2) || svg._gnMulti){ svg._gnMulti=true; if(onClear) onClear(); return; } /* R4 10-jul-2026 · NO preventDefault → el navegador hace zoom */
-    if(ev.touches&&ev.touches[0]){ onMove(ev.touches[0]); ev.preventDefault(); }
+    if(ev.touches&&ev.touches[0]){ const t=ev.touches[0]; svg._gnPendXY={clientX:(svg._gnX0!=null?svg._gnX0:t.clientX),clientY:t.clientY};
+      if(!svg._gnRaf){ svg._gnRaf=requestAnimationFrame(()=>{ svg._gnRaf=0; if(svg._gnPendXY) onMove(svg._gnPendXY); }); }
+      ev.preventDefault(); }
   },{passive:false});
   svg.addEventListener('touchend',(ev)=>{
+    if(svg._gnRaf){ cancelAnimationFrame(svg._gnRaf); svg._gnRaf=0; } svg._gnPendXY=null;
     if(svg._gnMulti){ if(!ev.touches || ev.touches.length===0) svg._gnMulti=false; if(onClear) onClear(); return; } /* R4 10-jul-2026 · gesto multitouch: no colocar; resetear al soltar todos los dedos */
     const t=(ev.changedTouches&&ev.changedTouches[0]);
     svg._touchHandled=true;
-    if(t) onTap(t);
+    if(t) onTap(svg._gnX0!=null?{clientX:svg._gnX0,clientY:t.clientY}:t);
     if(onClear) onClear();
     setTimeout(()=>{ svg._touchHandled=false; },450);
     ev.preventDefault();
@@ -15023,9 +15026,10 @@ function __grados_marker__(){}
       if(!m.noStaff){
         var _railPos=[];
         if(m.main && m.main.notes) drawChord(svg, xL, m.main.notes, st, m.main.col||COL_INK, false, 6, (m.selMark&&m.selMark.zona==='user')?m.selMark.key:null, m.railDelKey?_railPos:null);
-        if(m.railDelKey && _railPos.length){ meta.delX=meta.delX||{}; meta.delX[mi]=[]; _railPos.forEach(function(pp){ if(pp.key!==m.railDelKey) return; var cx=pp.x+pp.rx+13, cy=pp.y; sTxt(svg, cx, cy+4, '✕', '12.5', '#d47a7a', 'middle','800'); meta.delX[mi].push({key:pp.key, x:cx, y:cy}); }); }
+        if(m.railDelKey && _railPos.length){ meta.delX=meta.delX||{}; meta.delX[mi]=[]; _railPos.forEach(function(pp){ if(pp.key!==m.railDelKey) return; var cx=pp.x+pp.rx+13, cy=pp.y; sTxt(svg, cx, cy+4, '✕', '12.5', '#d47a7a', 'middle','800'); meta.delX[mi].push({key:pp.key, x:cx, y:cy, zona:'user'}); }); }
         if(m.leftNote) drawChord(svg, xL, [m.leftNote.n], st, m.leftNote.col||PINK, false, 6);
         if(m.paren){ drawParen(svg, xR, yc, GRAY); if(m.parenNotes&&m.parenNotes.length) drawChord(svg, xR, m.parenNotes.map(function(o){return o.n;}), st, (m.parenNotes[0]&&m.parenNotes[0].col)||GRAY, true, 4.4, (m.selMark&&m.selMark.zona==='ord')?m.selMark.key:null);
+          if(m.parenDelKey && m.parenNotes){ m.parenNotes.forEach(function(o){ var _pn=o.n; if(_pn.step+_pn.octave===m.parenDelKey){ var _py=yOfNote(st,_pn), _px=xR+16; sTxt(svg, _px, _py+3.5, '✕', '10.5', '#d47a7a', 'middle','800'); meta.delX=meta.delX||{}; meta.delX[mi]=meta.delX[mi]||[]; meta.delX[mi].push({key:m.parenDelKey, x:_px, y:_py, zona:'ord', r:8}); } }); }
           if(m.parenLabels && m.parenNotes){ var pn=m.parenNotes.map(function(o){return o.n;}).slice().sort(function(a,b){return midi(a)-midi(b);});
             pn.forEach(function(n,i){ if(m.parenLabels[i]) sTxt(svg, xR+40, yOfNote(st,n)+4, m.parenLabels[i], '11.5','#7a1f5a','start','800'); }); }
           if(m.parenText) sTxt(svg, xR, st.getYForLine(0)-14, m.parenText, '10.5', GRAY,'middle','700', true); }
@@ -15055,13 +15059,17 @@ function __grados_marker__(){}
     var sbox=document.createElement('div'); sbox.className='ac-staffbox'; wrap.appendChild(sbox);
     var ctrls=document.createElement('div'); ctrls.className='ac-ctrls'; wrap.appendChild(ctrls);
     g.items.forEach(function(it){ it.ord=it.ord||[]; it.sel=it.sel||{tipo:null,inv:null}; });
-    function measuresOf(res){ return g.items.map(function(it){ return {
+    var selA=null;   // {i,k} nota del paréntesis seleccionada (para la ✕)
+    function measuresOf(res){ return g.items.map(function(it,ci){
+      var sm=(!res && selA && selA.i===ci && it.ord[selA.k])?{key:it.ord[selA.k].step+it.ord[selA.k].octave, zona:'ord'}:null;
+      return {
       main:{notes:it.voiced, col:res?(it._okNotas?COL_GREEN:COL_INK):COL_INK},
-      paren:true, parenNotes:it.ord.map(function(n){return {n:n,col:GRAY};}), parenText:'puedes ordenar aquí el acorde' }; }); }
+      paren:true, parenNotes:it.ord.map(function(n){return {n:n,col:GRAY};}), parenText:'puedes ordenar aquí el acorde',
+      selMark:sm, parenDelKey:sm?sm.key:null }; }); }
     var meta=null;
     var undoStack=[], undoCb=null;
     function pushUndo(arr,note){ undoStack.push({arr:arr,note:note}); if(undoCb) undoCb(true); }
-    function doUndo(){ var did=false; while(undoStack.length){ var last=undoStack.pop(); var idx=last.arr.indexOf(last.note); if(idx>=0){ last.arr.splice(idx,1); did=true; break; } } if(did) redraw(false); if(undoCb) undoCb(undoStack.length>0); }
+    function doUndo(){ var did=false; while(undoStack.length){ var last=undoStack.pop(); var idx=last.arr.indexOf(last.note); if(idx>=0){ last.arr.splice(idx,1); did=true; break; } } if(did){ selA=null; redraw(false); } if(undoCb) undoCb(undoStack.length>0); }
     function redraw(res){ meta=renderSys(sbox, measuresOf(res)); wire(); }
     var NSV='http://www.w3.org/2000/svg';
     function ghostAt(svg, xx, st, nat){ acoClr(svg); if(nat==null) return; var y=yOfNote(st,nat);
@@ -15075,14 +15083,22 @@ function __grados_marker__(){}
     function hover(t){ var svg=sbox.querySelector('svg'); if(!svg) return; var p=svgPt(svg,t); var mi=measureAt(meta,p.x);
       if(mi==null || p.x < meta.x[mi]+meta.w[mi]*0.5){ acoClr(svg); return; }
       var nat=acoNearestH(meta.st[mi],p.y,svg,mi); ghostAt(svg, meta.xR[mi], meta.st[mi], nat); }
-    function place(t){ var svg=sbox.querySelector('svg'); if(!svg) return; var p=svgPt(svg,t); var mi=measureAt(meta,p.x); if(mi==null) return;
-      if(p.x < meta.x[mi]+meta.w[mi]*0.5) return;   // solo el paréntesis (derecha) es editable en A
+    function place(t){ var svg=sbox.querySelector('svg'); if(!svg) return; var p=svgPt(svg,t);
+      if(selA && delXHitA(selA.i,p)) return;   // ✕ de la nota seleccionada (aunque caiga fuera del compás)
+      var mi=measureAt(meta,p.x); if(mi==null){ selA=null; return; }
+      if(p.x < meta.x[mi]+meta.w[mi]*0.5){ selA=null; return; }   // solo el paréntesis (derecha) es editable en A
       var it=g.items[mi]; var nat=acoNearestH(meta.st[mi],p.y,svg,mi); if(!nat) return;
-      for(var k=0;k<it.ord.length;k++){ if(it.ord[k].step===nat.step&&it.ord[k].octave===nat.octave){ return; } }   // ya está: no dupliques (para borrar, usa Deshacer)
+      for(var k=0;k<it.ord.length;k++){ if(it.ord[k].step===nat.step&&it.ord[k].octave===nat.octave){ selA={i:mi,k:k}; redraw(false); return; } }   // ya está: selecciónala (✕ para borrar)
       if(it.ord.length>=4) return;
       /* hereda la alteración de la nota del acorde con el mismo NOMBRE (cualquier octava) */
       var al=0; for(var vi=0; vi<it.voiced.length; vi++){ if(it.voiced[vi].step===nat.step){ al=it.voiced[vi].alter||0; break; } }
-      var _nb={step:nat.step,octave:nat.octave,alter:al}; it.ord.push(_nb); pushUndo(it.ord,_nb); redraw(false); }
+      var _nb={step:nat.step,octave:nat.octave,alter:al}; it.ord.push(_nb); selA={i:mi,k:it.ord.length-1}; pushUndo(it.ord,_nb); redraw(false); }
+    function delXHitA(mi,p){ if(!meta.delX || !meta.delX[mi]) return false;
+      for(var d=0;d<meta.delX[mi].length;d++){ var dm=meta.delX[mi][d]; var _r=dm.r||10; if(Math.abs(p.x-dm.x)<_r && Math.abs(p.y-dm.y)<_r){ var arr=g.items[mi].ord;
+        for(var kk=0;kk<arr.length;kk++){ if(arr[kk].step+arr[kk].octave===dm.key){ var note=arr[kk];
+          for(var u=undoStack.length-1;u>=0;u--){ if(undoStack[u].note===note){ undoStack.splice(u,1); break; } }
+          arr.splice(kk,1); selA=null; if(undoCb) undoCb(undoStack.length>0); redraw(false); return true; } } } }
+      return false; }
     function wire(){ var svg=sbox.querySelector('svg'); if(!svg) return; svg.style.cursor='crosshair';
       svg.onmousemove=function(ev){ if(svg._touchHandled) return; hover(ev); };
       svg.onmouseleave=function(){ svg._gnLastNat=null; acoClr(svg); };
@@ -15130,7 +15146,7 @@ function __grados_marker__(){}
       return {
       main:{notes:it.user, col:res?(it._ok?COL_GREEN:COL_RED):COL_INK},
       paren:true, parenNotes:it.ord.map(function(n){return {n:n,col:GRAY};}), parenText:'ordena aquí (opcional)',
-      box:{r1:nombreAcorde(it), r2:INV_LAB[it.inv]}, selMark:sm, railDelKey:(sm && sm.zona==='user')?sm.key:null }; }); }
+      box:{r1:nombreAcorde(it), r2:INV_LAB[it.inv]}, selMark:sm, railDelKey:(sm && sm.zona==='user')?sm.key:null, parenDelKey:(sm && sm.zona==='ord')?sm.key:null }; }); }
     var meta=null;
     var undoStack=[], undoCb=null;
     function pushUndo(arr,note){ undoStack.push({arr:arr,note:note}); if(undoCb) undoCb(true); }
@@ -15146,17 +15162,18 @@ function __grados_marker__(){}
       svg.appendChild(gg); }
     function acoClr(svg){ if(!svg) return; var o=svg.querySelector('#acog'); if(o) o.remove(); }
     function delXHit(mi,p){ if(!meta.delX || !meta.delX[mi]) return false;
-      for(var d=0;d<meta.delX[mi].length;d++){ var dm=meta.delX[mi][d]; if(Math.abs(p.x-dm.x)<10 && Math.abs(p.y-dm.y)<10){ var itd=g.items[mi];
-        for(var kk=0;kk<itd.user.length;kk++){ if(itd.user[kk].step+itd.user[kk].octave===dm.key){ var note=itd.user[kk];
+      for(var d=0;d<meta.delX[mi].length;d++){ var dm=meta.delX[mi][d]; var _r=dm.r||10; if(Math.abs(p.x-dm.x)<_r && Math.abs(p.y-dm.y)<_r){ var itd=g.items[mi]; var arr=(dm.zona==='ord')?itd.ord:itd.user;
+        for(var kk=0;kk<arr.length;kk++){ if(arr[kk].step+arr[kk].octave===dm.key){ var note=arr[kk];
           for(var u=undoStack.length-1;u>=0;u--){ if(undoStack[u].note===note){ undoStack.splice(u,1); break; } }
-          itd.user.splice(kk,1); g._sel=null; if(undoCb) undoCb(undoStack.length>0); redraw(false); return true; } } } }
+          arr.splice(kk,1); g._sel=null; if(undoCb) undoCb(undoStack.length>0); redraw(false); return true; } } } }
       return false; }
     function hover(t){ var svg=sbox.querySelector('svg'); if(!svg) return; var p=svgPt(svg,t); var mi=measureAt(meta,p.x);
       if(mi==null){ acoClr(svg); return; }
       var zona=(p.x < meta.x[mi]+meta.w[mi]*0.5)?'user':'ord';
       var nat=acoNearestH(meta.st[mi],p.y,svg,mi); ghostAt(svg, (zona==='ord')?meta.xR[mi]:meta.xL[mi], meta.st[mi], nat); }
-    function place(t){ var svg=sbox.querySelector('svg'); if(!svg) return; var p=svgPt(svg,t); var mi=measureAt(meta,p.x); if(mi==null){ g._sel=null; return; }
-      if(delXHit(mi,p)) return;
+    function place(t){ var svg=sbox.querySelector('svg'); if(!svg) return; var p=svgPt(svg,t);
+      if(g._sel && delXHit(g._sel.i,p)) return;   // ✕ de la nota seleccionada (carril/paréntesis), aunque caiga fuera del compás
+      var mi=measureAt(meta,p.x); if(mi==null){ g._sel=null; return; }
       var it=g.items[mi]; var nat=acoNearestH(meta.st[mi],p.y,svg,mi); if(!nat) return;
       var zona=(p.x < meta.x[mi]+meta.w[mi]*0.5)?'user':'ord'; var arr=(zona==='ord')?it.ord:it.user;
       for(var k=0;k<arr.length;k++){ if(arr[k].step===nat.step&&arr[k].octave===nat.octave){ g._sel={zona:zona,i:mi,k:k}; redraw(false); return; } }
