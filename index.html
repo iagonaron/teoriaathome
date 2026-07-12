@@ -93,9 +93,12 @@
     background:rgba(232,67,147,.14)}
   .pad .edge{display:none}
   .pad-main{flex:1;display:flex;align-items:center;justify-content:center;width:100%}
-  .pad-sub{font-size:10.5px;letter-spacing:.02em;color:#a6afd0;opacity:.5;line-height:1.4;text-align:center;max-width:96%;padding-top:9px;
-    transition:opacity .22s ease,color .22s ease;pointer-events:none}
-  .pad:hover .pad-sub{opacity:1;color:#ffd7f2}
+  .pad-sub{font-size:10.5px;letter-spacing:.02em;color:#c2cae8;opacity:.82;line-height:1.4;text-align:center;max-width:96%;padding-top:9px;
+    transition:opacity .22s ease,color .22s ease;pointer-events:none}   /* táctil/tablet: legible de por sí */
+  @media (hover:hover){
+    .pad-sub{color:#a6afd0;opacity:.42}   /* ordenador: sutil en reposo */
+    .pad:hover .pad-sub{opacity:1;color:#ffd7f2}
+  }
   .pad h3{font-size:21px;font-weight:800;letter-spacing:.04em;margin:0;line-height:1.1;text-align:center;text-transform:uppercase}
   .pad.soon{cursor:default;opacity:.42}
   .pad.soon:hover{transform:none;border-color:var(--line);box-shadow:none;background:linear-gradient(180deg,var(--panel2),var(--panel))}
