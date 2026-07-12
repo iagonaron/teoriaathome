@@ -2648,7 +2648,7 @@ function renderAnswersTA(){
     const cols=document.createElement('div'); cols.style.cssText='display:flex;gap:6px;justify-content:center';
     ['M','m'].forEach((modo,mi)=>{
       const colu=document.createElement('div'); colu.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px';
-      const wNota=document.createElement('div'); wNota.className='wheel'; wNota.style.cssText='height:78px;width:64px';
+      const wNota=document.createElement('div'); wNota.className='wheel'; wNota.style.cssText='height:90px;width:58px';
       const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:5px';
       accRow.innerHTML='<button class="acc-btn ta-acc" data-i="'+i+'" data-m="'+mi+'" data-a="b">♭</button>'+
                        '<button class="acc-btn ta-acc" data-i="'+i+'" data-m="'+mi+'" data-a="#">♯</button>';
@@ -4781,14 +4781,14 @@ function buildACOIdControls(ans, e, i){
   const wrap=document.createElement('div'); wrap.style.cssText='display:flex;gap:12px;align-items:flex-start;justify-content:center;margin-top:4px';
   // nombre de la fundamental
   const colN=document.createElement('div'); colN.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px';
-  const wN=document.createElement('div'); wN.className='wheel'; wN.style.cssText='height:78px;width:60px';
+  const wN=document.createElement('div'); wN.className='wheel'; wN.style.cssText='height:90px;width:60px';
   const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:5px';
   accRow.innerHTML='<button class="acc-btn aco-acc" data-a="b">♭</button>'+
                    '<button class="acc-btn aco-acc" data-a="#">♯</button>';
   colN.appendChild(wN); colN.appendChild(accRow);
   // tipo de acorde
   const colT=document.createElement('div'); colT.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px';
-  const wT=document.createElement('div'); wT.className='wheel'; wT.style.cssText='height:78px;width:64px';
+  const wT=document.createElement('div'); wT.className='wheel'; wT.style.cssText='height:90px;width:60px';
   const capT=document.createElement('div'); capT.style.cssText='font-size:10px;color:var(--muted2);height:24px;display:flex;align-items:center'; capT.textContent='Tipo';
   colT.appendChild(wT); colT.appendChild(capT);
   wrap.appendChild(colN); wrap.appendChild(colT);
@@ -8957,23 +8957,26 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     if(ej._ruedas==='int_clasif' || ej._ruedas==='cla_a'){
       const alinear=()=>{
         const svg=host.querySelector('svg'); if(!svg) return;
-        const notas=svg.querySelectorAll('.vf-stavenote'); const n=ej._solData.length;
-        const cells=zona.querySelectorAll('.ans-cell'); if(!notas.length || cells.length!==n) return;
-        const xs=Array.from(notas).map(g=>{ const b=g.getBoundingClientRect(); return b.left+b.width/2; }).sort((a,b)=>a-b);
-        if(xs.length<n) return;
+        const vb=svg.viewBox&&svg.viewBox.baseVal; if(!vb||!vb.width) return;
+        let el=svg.querySelectorAll('.vf-notehead'); if(!el.length) el=svg.querySelectorAll('.vf-stavenote');
+        const n=ej._solData.length; const cells=zona.querySelectorAll('.ans-cell');
+        if(!el.length || cells.length!==n) return;
+        let xs=[]; el.forEach(g=>{ try{ const b=g.getBBox(); xs.push(b.x+b.width/2); }catch(e){} });
+        xs.sort((a,b)=>a-b); if(xs.length<n) return;
         const gaps=[]; for(let i=1;i<xs.length;i++) gaps.push({g:xs[i]-xs[i-1],at:i});
         gaps.sort((a,b)=>b.g-a.g);
         const cortes=gaps.slice(0,n-1).map(x=>x.at).sort((a,b)=>a-b);
         const grupos=[]; let st=0; cortes.forEach(c=>{ grupos.push(xs.slice(st,c)); st=c; }); grupos.push(xs.slice(st));
         if(grupos.length!==n) return;
-        zona.style.position='relative'; zona.style.display='block';
-        cells.forEach(c=>{ c.style.position='absolute'; c.style.top='0'; });
-        const rz=zona.getBoundingClientRect(); let h=0;
-        grupos.forEach((g,i)=>{ const cell=cells[i]; if(!cell||!g.length) return; const cx=(g[0]+g[g.length-1])/2 - rz.left; cell.style.left=Math.max(0,cx-cell.offsetWidth/2)+'px'; h=Math.max(h,cell.offsetHeight); });
-        zona.style.height=h+'px';
+        zona.style.position='relative'; zona.style.display='block'; let maxH=0;
+        cells.forEach((cell,i)=>{ const g=grupos[i]; if(!cell||!g||!g.length) return;
+          const cx=(g[0]+g[g.length-1])/2; const frac=Math.max(0.02,Math.min(0.98,(cx-vb.x)/vb.width));
+          cell.style.position='absolute'; cell.style.top='0'; cell.style.left=(frac*100).toFixed(2)+'%'; cell.style.transform='translateX(-50%)';
+          maxH=Math.max(maxH,cell.offsetHeight); });
+        zona.style.height=maxH+'px';
       };
       host._alinear=alinear;
-      requestAnimationFrame(()=>{ requestAnimationFrame(alinear); }); setTimeout(alinear,160);
+      requestAnimationFrame(alinear); setTimeout(alinear,80); setTimeout(alinear,320);
       if(!window._alinRuedasWired){ window._alinRuedasWired=true; window.addEventListener('resize',()=>{ document.querySelectorAll('#simScore, .simSolHost').forEach(h=>{ if(h._alinear) try{ h._alinear(); }catch(e){} }); }); }
     }
   }
@@ -8987,8 +8990,8 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     for(let i=0;i<n;i++){
       const cell=document.createElement('div'); cell.className='ans-cell';
       const dual=document.createElement('div'); dual.style.cssText='display:flex;gap:6px;justify-content:center';
-      const wNum=document.createElement('div'); wNum.className='wheel'; wNum.style.cssText='height:96px;width:64px';
-      const wEsp=document.createElement('div'); wEsp.className='wheel'; wEsp.style.cssText='height:96px;width:70px';
+      const wNum=document.createElement('div'); wNum.className='wheel'; wNum.style.cssText='height:90px';
+      const wEsp=document.createElement('div'); wEsp.className='wheel'; wEsp.style.cssText='height:90px';
       dual.appendChild(wNum); dual.appendChild(wEsp);
       cell.appendChild(dual); zona.appendChild(cell);
       const numItems=numerosDisponibles(false).map(String);
@@ -9019,7 +9022,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     for(let i=0;i<n;i++){
       const cell=document.createElement('div'); cell.className='ans-cell';
       const colu=document.createElement('div'); colu.style.cssText='display:flex;flex-direction:column;align-items:center;gap:5px';
-      const wNota=document.createElement('div'); wNota.className='wheel'; wNota.style.cssText='height:78px;width:64px';
+      const wNota=document.createElement('div'); wNota.className='wheel'; wNota.style.cssText='height:90px;width:58px';
       const altRow=document.createElement('div'); altRow.style.cssText='display:flex;gap:5px';
       altRow.innerHTML='<button class="acc-btn ca-acc" data-a="b">♭</button><button class="acc-btn ca-acc" data-a="#">♯</button>';
       colu.appendChild(wNota); colu.appendChild(altRow);
@@ -9052,7 +9055,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       const cols=document.createElement('div'); cols.style.cssText='display:flex;gap:6px;justify-content:center';
       ['M','m'].forEach((suf,mi)=>{
         const colu=document.createElement('div'); colu.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px';
-        const wNota=document.createElement('div'); wNota.className='wheel'; wNota.style.cssText='height:74px;width:60px';
+        const wNota=document.createElement('div'); wNota.className='wheel'; wNota.style.cssText='height:90px;width:58px';
         const altRow=document.createElement('div'); altRow.style.cssText='display:flex;gap:4px';
         altRow.innerHTML='<button class="acc-btn ta2-acc" data-a="b">♭</button><button class="acc-btn ta2-acc" data-a="#">♯</button>';
         colu.appendChild(wNota); colu.appendChild(altRow); cols.appendChild(colu);
@@ -9093,7 +9096,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       const cell=document.createElement('div'); cell.className='ans-cell';
       const lab=document.createElement('div'); lab.style.cssText='font-size:15px;font-weight:800;color:#dce4f7;text-align:center;margin-bottom:4px';
       lab.textContent=ej._solData[i].nom||'';
-      const wArm=document.createElement('div'); wArm.className='wheel'; wArm.style.cssText='height:88px;margin:0 auto';
+      const wArm=document.createElement('div'); wArm.className='wheel'; wArm.style.cssText='height:90px;margin:0 auto';
       cell.appendChild(lab); cell.appendChild(wArm); zona.appendChild(cell);
       const items=[]; for(let f=7;f>=-7;f--){ items.push(f===0?'0':(f>0?f+'♯':Math.abs(f)+'♭')); }
       const startIdx = 7 - (estado.sel[i]||0);
@@ -10437,13 +10440,13 @@ function __grados_marker__(){}
       const wrap=document.createElement('div'); wrap.style.cssText='display:flex;gap:10px;align-items:flex-start;justify-content:center';
       // nombre
       const colN=document.createElement('div'); colN.style.cssText='display:flex;flex-direction:column;align-items:center;gap:5px';
-      const wN=document.createElement('div'); wN.className='wheel'; wN.style.cssText='height:74px;width:58px';
+      const wN=document.createElement('div'); wN.className='wheel'; wN.style.cssText='height:90px;width:58px';
       const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:5px';
       accRow.innerHTML='<button class="acc-btn" data-a="b">♭</button><button class="acc-btn" data-a="#">♯</button>';
       colN.appendChild(wN); colN.appendChild(accRow);
       // tipo
       const colT=document.createElement('div'); colT.style.cssText='display:flex;flex-direction:column;align-items:center;gap:5px';
-      const wT=document.createElement('div'); wT.className='wheel'; wT.style.cssText='height:74px;width:62px';
+      const wT=document.createElement('div'); wT.className='wheel'; wT.style.cssText='height:90px;width:60px';
       const capT=document.createElement('div'); capT.style.cssText='font-size:10px;color:#8a93a8'; capT.textContent='Tipo';
       colT.appendChild(wT); colT.appendChild(capT);
       wrap.appendChild(colN); wrap.appendChild(colT);
@@ -10699,7 +10702,7 @@ function __grados_marker__(){}
       const resum=document.createElement('div');
       resum.style.cssText='min-height:28px;display:flex;align-items:center;justify-content:center;font-size:16.5px;font-weight:900;letter-spacing:.01em;border-radius:9px;padding:2px 14px;box-sizing:border-box;transition:background .15s,border-color .15s';
       cell.appendChild(resum);
-      const wN=document.createElement('div'); wN.className='wheel'; wN.style.cssText='height:64px;width:56px';
+      const wN=document.createElement('div'); wN.className='wheel'; wN.style.cssText='height:90px;width:56px';
       const row=document.createElement('div'); row.style.cssText='display:flex;gap:5px;align-items:center;justify-content:center;flex-wrap:wrap';
       // ♯/♭
       ['b','#'].forEach(a=>{ const b=document.createElement('button'); b.className='acc-btn'; b.style.cssText='min-width:30px;height:28px;font-size:14px;padding:0'; b.textContent=a==='#'?'♯':'♭'; b.dataset.a=a;
@@ -11299,7 +11302,7 @@ function __grados_marker__(){}
     semitonos:'Analiza los semitonos: indica si los dos primeros son cromáticos o diatónicos y construye los dos últimos.',
     ena_a:'Escribe las enarmonías de cada nota.',
     ena_avanzado:'Reescribe la enarmonía parcial y total de cada intervalo y escribe la tonalidad enarmónica.',
-    inv_simples:'Construye la inversión de cada intervalo simple y analízala.',
+    inv_simples:'Clasifica el intervalo, inviértelo y vuelve a clasificarlo.',
     inv_compuestos:'Aplica el truco AIA (acerca, invierte, aleja) y analiza el intervalo final del intervalo compuesto.',
     aco_identificar:'Identifica el tipo de acorde y su inversión (ordena en el paréntesis si te ayuda).',
     aco_construir:'Construye cada acorde en el estado pedido (mitad izquierda del compás).',
@@ -14174,7 +14177,7 @@ function __grados_marker__(){}
         top.appendChild(g1); top.appendChild(g2); tb.appendChild(top);
         var sel=document.createElement('div'); sel.className='ena-ton-sel';
         function seg(title){ var s=document.createElement('div'); s.className='ena-ton-seg'; var h=document.createElement('div'); h.className='ena-hint'; h.textContent=title; var body=document.createElement('div'); body.style.cssText='display:flex;gap:6px;align-items:center;justify-content:center'; s.appendChild(h); s.appendChild(body); s._body=body; return s; }
-        var wn=document.createElement('div'); wn.className='wheel'; wn.style.cssText='height:86px;width:44px';
+        var wn=document.createElement('div'); wn.className='wheel'; wn.style.cssText='height:90px;width:46px';
         var notas=['Do','Re','Mi','Fa','Sol','La','Si'], natInv=notas.slice().reverse().concat(['—']);
         window.makeWheel(wn,natInv,natInv.length-1,function(ix){ g.ton.sel.step=(ix<notas.length)?ES2L[notas[notas.length-1-ix]]:null; refr(); });
         var accC=document.createElement('div'); accC.style.cssText='display:flex;flex-direction:column;gap:6px';
@@ -14183,7 +14186,7 @@ function __grados_marker__(){}
         var mC=document.createElement('div'); mC.style.cssText='display:flex;flex-direction:column;gap:6px';
         var bM=document.createElement('button'); bM.className='ena-tbtn'; bM.textContent='M'; var bm=document.createElement('button'); bm.className='ena-tbtn'; bm.textContent='m';
         bM.onclick=function(){ g.ton.sel.mode='M'; pa(); refr(); }; bm.onclick=function(){ g.ton.sel.mode='m'; pa(); refr(); }; mC.appendChild(bM); mC.appendChild(bm);
-        var wa=document.createElement('div'); wa.className='wheel'; wa.style.cssText='height:86px;width:48px';
+        var wa=document.createElement('div'); wa.className='wheel'; wa.style.cssText='height:90px;width:48px';
         var armV=[]; for(var s=7;s>=1;s--) armV.push({f:s,t:s+'♯'}); armV.push({f:null,t:'—'}); for(var b2=1;b2<=7;b2++) armV.push({f:-b2,t:b2+'♭'});
         window.makeWheel(wa,armV.map(function(o){return o.t;}),armV.findIndex(function(o){return o.f===null;}),function(ix){ g.ton.sel.f=armV[ix].f||0; refr(); });
         var segT=seg('Tonalidad'); segT._body.appendChild(wn); segT._body.appendChild(accC); segT._body.appendChild(mC);
