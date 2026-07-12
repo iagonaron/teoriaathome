@@ -5515,7 +5515,7 @@ function renderENAScore(){
   const W=Math.max(host.clientWidth||0,720), H=150;
   const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
   const ctx=r.getContext();
-  const x0=10,usable=W-20,wC=usable/4;
+  const x0=10,usable=W-20,wC=usable/(dataENA.length||4);   // repartir por el nº REAL de compases (llena el ancho)
   enaScoreMeta={staves:[], wC, x0};
   dataENA.forEach((e,i)=>{
     const stave=new VF.Stave(x0+i*wC,14,wC);
@@ -13403,7 +13403,7 @@ function __grados_marker__(){}
             let iw=img.w*s, ih=img.h*s;
             if(ih>boxH){ const r=boxH/ih; iw*=r; ih*=r; }
             if(iw>boxW){ const r=boxW/iw; iw*=r; ih*=r; }
-            const ixA=M+6+(boxW-iw)/2, iyA=boxTop+(boxH-ih)/2;
+            const ixA=M+8, iyA=boxTop+(boxH-ih)/2;   // MISMA X de inicio en todos los pentagramas
             try{ doc.addImage(img.png,'PNG', ixA, iyA, iw, ih); }catch(e){}
           }
         } else if(esQuiz){
@@ -13431,7 +13431,7 @@ function __grados_marker__(){}
             iw=img.w*s; ih=img.h*s;
             if(ih>boxH){ const r=boxH/ih; iw*=r; ih*=r; }
             if(iw>boxW){ const r=boxW/iw; iw*=r; ih*=r; }
-            ix=M+6+(boxW-iw)/2;                           // CENTRADO horizontal
+            ix=M+8;                                       // MISMA X de inicio en todos los pentagramas
             iy=boxTop+(boxH-ih)/2;
             try{ doc.addImage(img.png,'PNG', ix, iy, iw, ih); }catch(e){}
           }
@@ -14886,7 +14886,7 @@ function __grados_marker__(){}
     var minY=top, maxY=bot;
     cols.forEach(function(c){ (c.notes||[]).forEach(function(o){ var y=yOf(o.n); if(y<minY)minY=y; if(y>maxY)maxY=y; }); });
     (opts.extraNotes||[]).forEach(function(n){ var y=yOf(n); if(y<minY)minY=y; if(y>maxY)maxY=y; });
-    var subY=minY-16, labY=maxY+30;
+    var subY=minY-16, labY=maxY+44;   // líneas de respuesta más separadas del pentagrama
     cols.forEach(function(c,ci){ if(c.sub) sT(svg, xs[ci]+ws[ci]/2, subY, c.sub, '12', c.subcol||PINK, 'middle', '800', c.subit);
       if(c.lab!=null){ if(c.lab===''){ var ln=document.createElementNS(NS,'line'); ln.setAttribute('x1',xs[ci]+14);ln.setAttribute('x2',xs[ci]+ws[ci]-14);ln.setAttribute('y1',labY-2);ln.setAttribute('y2',labY-2);ln.setAttribute('stroke','#c9b0be');ln.setAttribute('stroke-width','1'); svg.appendChild(ln); } else sT(svg, xs[ci]+ws[ci]/2, labY, c.lab, '13', c.labcol||'#111', 'middle', '800'); } });
     if(opts.after) opts.after(svg, {xs:xs, ws:ws, top:top, bot:bot, minY:minY, maxY:maxY, yOf:yOf, st0:st0, mw:mw, cols:cols});
@@ -14907,7 +14907,7 @@ function __grados_marker__(){}
       var inv=invSimplePair(lo,hi);
       // compás respuesta: doble barra al cerrar la pareja + hueco grande entre parejas (dos propuestas distintas)
       cols.push({ notes: resuelto?[{n:inv[0],col:RED},{n:inv[1],col:RED}]:[], sub:'Inviértelo', subcol:PINK,
-                  lab: resuelto?(par.invNum+ESP_LABEL[par.invCode]):'', labcol:RED, endBar:true, gapAfter:(pi===0?54:0) });
+                  lab: resuelto?(par.invNum+ESP_LABEL[par.invCode]):'', labcol:RED, endBar:true, gapAfter:(pi===0?24:0) });
     });
     drawTrebleCols(host, cols, {fill:true, gap:10});
   }
@@ -15196,7 +15196,7 @@ function __grados_marker__(){}
         if(m.main&&m.main.notes) m.main.notes.forEach(function(n){ var yy=yOfNote(st,n); if(yy>yLow)yLow=yy; });
         var baseLow=Math.max(st.getYForLine(4), yLow, yFloor);
         if(m.box){ var boxTop=baseLow+16; boxCell(svg, xL, boxTop, m.box.r1, m.box.r2); if(boxTop+38>maxBot)maxBot=boxTop+38; }
-        if(m.subLeft){ var syL=m.box?(baseLow+16+38+14):(baseLow+26); sTxt(svg, xL, syL, m.subLeft, '12',m.subLeftCol||'#7a1f5a','middle','800'); if(syL>maxBot)maxBot=syL; }
+        if(m.subLeft){ var syL=m.box?(baseLow+16+38+14):(baseLow+36); sTxt(svg, xL, syL, m.subLeft, '12',m.subLeftCol||'#7a1f5a','middle','800'); if(syL>maxBot)maxBot=syL; }
         if(m.subRight){ sTxt(svg, xR, baseLow+26, m.subRight, '12','#7a5a8c','middle','800'); if(baseLow+26>maxBot)maxBot=baseLow+26; }
       }
     });
@@ -15392,7 +15392,7 @@ function __grados_marker__(){}
       main:{notes:it.voiced, col:'#000'},
       paren:true, parenNotes: resuelto ? ordenado(it).map(function(n){return {n:n,col:COL_RED};}) : [], parenText:'ordena aquí',
       subLeft: resuelto ? (TIPOS[it.tipo].lab+' · '+INV_LAB[it.inv]) : 'tipo: ______   ·   inv.: ______',
-      subLeftCol: resuelto ? COL_RED : '#9aa3b8' }; });
+      subLeftCol: resuelto ? COL_RED : '#1a1a1a' }; });
     renderSys(host, measures);
   }
   function fpPintaConstruir(host, g, resuelto){ if(!VF){host.innerHTML='';return;}
@@ -15965,18 +15965,18 @@ function __grados_marker__(){}
   // ejercicio quiz como UN solo SVG (para la ficha PDF y la solución del profe)
   var NS='http://www.w3.org/2000/svg', LET=['a','b','c'];
   window.quizFichaPinta=function(M, host, g, sol){ var mo=window[M]; host.innerHTML=''; if(!mo||!g) return;
-    var W=880, H=232;   // más alto para dar a las figuras de adorno/abreviatura más tamaño
+    var W=880, H=246;   // más alto: figuras grandes + texto de respuesta grande (como el resto)
     var svg=document.createElementNS(NS,'svg'); svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.setAttribute('width',W); svg.setAttribute('height',H); host.appendChild(svg);
     function txt(x,y,s,sz,col,w){ var t=document.createElementNS(NS,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('font-size',sz);t.setAttribute('font-weight',w||'600');t.setAttribute('fill',col||'#111');t.setAttribute('font-family','Arial,Helvetica,sans-serif'); t.textContent=s; svg.appendChild(t); }
     function box(x,y,mark){ var r=document.createElementNS(NS,'rect'); r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',15);r.setAttribute('height',15);r.setAttribute('rx',3);r.setAttribute('fill','none');r.setAttribute('stroke',mark?'#12a05f':'#7a8299');r.setAttribute('stroke-width',mark?2.4:1.5); svg.appendChild(r); if(mark){ var c=document.createElementNS(NS,'path'); c.setAttribute('d','M'+(x+3)+','+(y+8)+' l3,4 l6,-8'); c.setAttribute('fill','none');c.setAttribute('stroke','#0a7a52');c.setAttribute('stroke-width',2.2); svg.appendChild(c);} }
     function embed(render, x, y, targetH){ var tmp=document.createElement('div'); tmp.style.cssText='position:absolute;left:-9999px;top:0'; document.body.appendChild(tmp); try{ render(tmp); }catch(e){} var inner=tmp.querySelector('svg'); if(inner){ var vb=(inner.getAttribute('viewBox')||'0 0 100 100').split(/\s+/).map(parseFloat); var scale=targetH/(vb[3]||100); var gg=document.createElementNS(NS,'g'); gg.setAttribute('fill', inner.getAttribute('fill')||'#000'); gg.setAttribute('stroke', inner.getAttribute('stroke')||'#000'); gg.setAttribute('transform','translate('+x+','+y+') scale('+scale+') translate('+(-vb[0])+','+(-vb[1])+')'); while(inner.firstChild){ gg.appendChild(inner.firstChild); } svg.appendChild(gg); } try{document.body.removeChild(tmp);}catch(e){} }
     var sep=document.createElementNS(NS,'line'); sep.setAttribute('x1',445);sep.setAttribute('y1',6);sep.setAttribute('x2',445);sep.setAttribute('y2',H-6);sep.setAttribute('stroke','#dfe2ee');sep.setAttribute('stroke-dasharray','4 4');sep.setAttribute('stroke-width',1); svg.appendChild(sep);
-    txt(8,16,'1) '+g.p1.q, 12.5, '#c11d76','800');
-    txt(455,16,'2) ¿La ejecución es correcta?'+(g.p2.ctx?' '+g.p2.ctx:''), 12.5, '#c11d76','800');
-    embed(function(h){ mo.pintaIlustra(h, g.p1.il, true); }, 40, 28, 120);
-    embed(function(h){ mo.pintaVF(h, g.p2, true); }, 470, 28, 120);
-    (g.p1.ops||[]).forEach(function(op,i){ var y=172+i*18; box(12,y-11, sol&&i===g.p1.ok); txt(36,y,LET[i]+') '+op, 12,'#111','600'); });
-    var vy=200; box(505,vy-11, sol&&g.p2.esVerdadero); txt(528,vy,'Verdadero',12.5,'#111','700'); box(650,vy-11, sol&&!g.p2.esVerdadero); txt(673,vy,'Falso',12.5,'#111','700');
+    txt(8,17,'1) '+g.p1.q, 16, '#c11d76','800');
+    txt(455,17,'2) ¿La ejecución es correcta?'+(g.p2.ctx?' '+g.p2.ctx:''), 16, '#c11d76','800');
+    embed(function(h){ mo.pintaIlustra(h, g.p1.il, true); }, 40, 30, 118);
+    embed(function(h){ mo.pintaVF(h, g.p2, true); }, 470, 30, 118);
+    (g.p1.ops||[]).forEach(function(op,i){ var y=174+i*23; box(12,y-13, sol&&i===g.p1.ok); txt(38,y,LET[i]+') '+op, 16.5,'#111','600'); });
+    var vy=212; box(505,vy-13, sol&&g.p2.esVerdadero); txt(530,vy,'Verdadero',16.5,'#111','700'); box(675,vy-13, sol&&!g.p2.esVerdadero); txt(700,vy,'Falso',16.5,'#111','700');
   };
 })();
 
@@ -16563,8 +16563,8 @@ function pintaFichaSVG(host, gen, sol){
   try{ document.body.removeChild(tmp); }catch(e){}
   function txt(x,y,s,sz,col,w){ const t=document.createElementNS(NS,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('font-size',sz);t.setAttribute('font-weight',w||'700');t.setAttribute('fill',col||'#25203a');t.setAttribute('stroke','none');t.setAttribute('font-family','Arial,Helvetica,sans-serif'); t.textContent=s; svg.appendChild(t); }
   function box(x,y,mark){ const r=document.createElementNS(NS,'rect'); r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',15);r.setAttribute('height',15);r.setAttribute('rx',3);r.setAttribute('fill','none');r.setAttribute('stroke',mark?'#12a05f':'#5a6488');r.setAttribute('stroke-width',mark?2.4:1.5); svg.appendChild(r); if(mark){ const c=document.createElementNS(NS,'path'); c.setAttribute('d','M'+(x+3)+','+(y+8)+' l3,4 l6,-8'); c.setAttribute('fill','none');c.setAttribute('stroke','#0a7a52');c.setAttribute('stroke-width',2.2); svg.appendChild(c);} }
-  const colX=572, lblX=colX+22, n=TYPE_ORDER.length, rowH=(H-22)/n;
-  TYPE_ORDER.forEach(function(t,i){ const cyy=15+i*rowH+rowH/2; box(colX, cyy-8, sol && t===gen.type); txt(lblX, cyy+4, TYPE_LABELS[t]+' ('+TYPE_AB[t]+')', 12.5, '#25203a','700'); });
+  const colX=572, lblX=colX+22, n=TYPE_ORDER.length, rowH=30, y0=(H-n*rowH)/2+rowH/2;
+  TYPE_ORDER.forEach(function(t,i){ const cyy=y0+i*rowH; box(colX, cyy-8, sol && t===gen.type); txt(lblX, cyy+4, TYPE_LABELS[t]+' ('+TYPE_AB[t]+')', 12.5, '#25203a','700'); });
 }
 
 window.CAD = {
