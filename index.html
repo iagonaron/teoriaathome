@@ -2215,7 +2215,7 @@ function gnHysteresis(ymap, my, curKey, FACTOR){
   ys.sort(function(a,b){return a-b;});
   for(var i=1;i<ys.length;i++){ var gap=ys[i]-ys[i-1]; if(gap>0.5 && gap<half) half=gap; }
   if(half>=1e9) half=5;
-  var FAC=(FACTOR==null)?0.85:FACTOR;
+  var FAC=(FACTOR==null)?0.90:FACTOR;
   var dead=half*(2*FAC-1);            /* zona muerta (0 con FACTOR=0.5) */
   if((curD - bd) < dead) return curEntry;   /* dentro de la zona muerta: conserva actual */
   return best;
@@ -2238,7 +2238,7 @@ function nearestMidiByY(my){
   /* R5 10-jul-2026 · histéresis de arrastre: la nota actual la guarda el host */
   var host=document.getElementById('scoreB');
   var curKey=(host&&host._gnLastNat!=null)?host._gnLastNat:null;
-  var e=gnHysteresis(bMeta.ymap, my, curKey, 0.85);
+  var e=gnHysteresis(bMeta.ymap, my, curKey, 0.90);
   if(!e) return null;
   if(host) host._gnLastNat=e.step+e.octave;   /* R5 · recuerda la altura elegida */
   return {step:e.step, octave:e.octave};
@@ -3599,7 +3599,7 @@ function escNearestByY(i,my){
   /* R5 10-jul-2026 · histéresis de arrastre por tarjeta (host scoreESCi) */
   var host=document.getElementById('scoreESC'+i);
   var curKey=(host&&host._gnLastNat!=null)?host._gnLastNat:null;
-  var o=gnHysteresis(map, my, curKey, 0.85);
+  var o=gnHysteresis(map, my, curKey, 0.90);
   if(!o) return null;
   if(host) host._gnLastNat=o.step+o.octave;
   return {step:o.step, octave:o.octave};
@@ -4838,7 +4838,7 @@ function acoNearestByY(i,my){
   /* R5 10-jul-2026 · histéresis de arrastre (host scoreACO, un tablero por índice i) */
   var host=document.getElementById('scoreACO');
   var curKey=(host&&host._gnLastNat!=null&&host._gnLastI===i)?host._gnLastNat:null;
-  var o=gnHysteresis(map, my, curKey, 0.85);
+  var o=gnHysteresis(map, my, curKey, 0.90);
   if(!o) return null;
   if(host){ host._gnLastNat=o.step+o.octave; host._gnLastI=i; }
   return {step:o.step, octave:o.octave};
@@ -5639,7 +5639,7 @@ function enaNearestByY(i,my){ const map=enaYMaps[i]; if(!map) return null;
   /* R5 10-jul-2026 · histéresis de arrastre (host scoreENA por índice i) */
   var host=document.getElementById('scoreENA');
   var curKey=(host&&host._gnLastNat!=null&&host._gnLastI===i)?host._gnLastNat:null;
-  var o=gnHysteresis(map, my, curKey, 0.85); if(!o) return null;
+  var o=gnHysteresis(map, my, curKey, 0.90); if(!o) return null;
   if(host){ host._gnLastNat=o.step+o.octave; host._gnLastI=i; }
   return {step:o.step, octave:o.octave}; }
 function enaYReal(i,step,octave){ const map=enaYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
@@ -6016,7 +6016,7 @@ function semNearestByY(i,my){ const map=semYMaps[i]; if(!map) return null;
   /* R5 10-jul-2026 · histéresis de arrastre (host scoreSEM por índice i) */
   var host=document.getElementById('scoreSEM');
   var curKey=(host&&host._gnLastNat!=null&&host._gnLastI===i)?host._gnLastNat:null;
-  var o=gnHysteresis(map, my, curKey, 0.85); if(!o) return null;
+  var o=gnHysteresis(map, my, curKey, 0.90); if(!o) return null;
   if(host){ host._gnLastNat=o.step+o.octave; host._gnLastI=i; }
   return {step:o.step, octave:o.octave}; }
 function semYReal(i,step,octave){ const map=semYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
@@ -8645,7 +8645,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       /* R5 10-jul-2026 · histéresis de arrastre; nota actual guardada en el svg */
       var svg=sc.querySelector('svg');
       var curKey=(svg&&svg._gnLastNat!=null)?svg._gnLastNat:null;
-      var o=gnHysteresis(yMap, my, curKey, 0.85); if(!o) return null;
+      var o=gnHysteresis(yMap, my, curKey, 0.90); if(!o) return null;
       if(svg) svg._gnLastNat=o.step+o.octave;
       return {step:o.step, octave:o.octave};
     }
@@ -9285,7 +9285,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     function yReal(stave,step,octave){ const o=geom.yMap[step+octave]; return o?o.y:null; }
     function nearestY(my){ /* R5 10-jul-2026 · histéresis de arrastre (nota actual en el svg) */
       var svg=sc.querySelector('svg'); var curKey=(svg&&svg._gnLastNat!=null)?svg._gnLastNat:null;
-      var o=gnHysteresis(geom.yMap, my, curKey, 0.85); if(!o) return null;
+      var o=gnHysteresis(geom.yMap, my, curKey, 0.90); if(!o) return null;
       if(svg) svg._gnLastNat=o.step+o.octave; return {step:o.step,octave:o.octave}; }
     function slotUnderX(mx, wC, x0){ let best=-1,bd=1e9; for(let i=0;i<n;i++){ const cx=x0+i*wC+wC/2; const d=Math.abs(cx-mx); if(d<bd){bd=d;best=i;} } return best; }
 
@@ -9512,7 +9512,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     function yReal(step,octave){ const o=geom.yMap[step+octave]; return o?o.y:null; }
     function nearestY(my){ /* R5 10-jul-2026 · histéresis de arrastre (nota actual en el svg) */
       var svg=sc.querySelector('svg'); var curKey=(svg&&svg._gnLastNat!=null)?svg._gnLastNat:null;
-      var o=gnHysteresis(geom.yMap, my, curKey, 0.85); if(!o) return null;
+      var o=gnHysteresis(geom.yMap, my, curKey, 0.90); if(!o) return null;
       if(svg) svg._gnLastNat=o.step+o.octave; return {step:o.step,octave:o.octave}; }
     function compUnderX(mx){ let best=-1,bd=1e9; for(let i=0;i<n;i++){ const c=geom.comp[i]; const cx=c.x0i+c.wC/2; const d=Math.abs(cx-mx); if(d<bd){bd=d;best=i;} } return best; }
 
@@ -9990,7 +9990,7 @@ function __grados_marker__(){}
     function yReal(step,octave){ const o=geom.yMap[step+octave]; return o?o.y:null; }
     function nearestY(my){ /* R5 10-jul-2026 · histéresis de arrastre (nota actual en el svg) */
       var svg=sc.querySelector('svg'); var curKey=(svg&&svg._gnLastNat!=null)?svg._gnLastNat:null;
-      var o=gnHysteresis(geom.yMap, my, curKey, 0.85); if(!o) return null;
+      var o=gnHysteresis(geom.yMap, my, curKey, 0.90); if(!o) return null;
       if(svg) svg._gnLastNat=o.step+o.octave; return {step:o.step,octave:o.octave}; }
     function compUnderX(mx){ for(let i=0;i<n;i++){ const c=geom.comp[i]; if(mx>=c.gx && mx<c.gx+c.wC) return i; } return -1; }
     function pt(svg,ev){ try{ const p=svg.createSVGPoint(); p.x=ev.clientX; p.y=ev.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }catch(e){ return null; } }
@@ -10235,7 +10235,7 @@ function __grados_marker__(){}
     function yReal(step,octave){ const o=geom.yMap[step+octave]; return o?o.y:null; }
     function nearestY(my){ /* R5 10-jul-2026 · histéresis de arrastre (nota actual en el svg) */
       var svg=sc.querySelector('svg'); var curKey=(svg&&svg._gnLastNat!=null)?svg._gnLastNat:null;
-      var o=gnHysteresis(geom.yMap, my, curKey, 0.85); if(!o) return null;
+      var o=gnHysteresis(geom.yMap, my, curKey, 0.90); if(!o) return null;
       if(svg) svg._gnLastNat=o.step+o.octave; return {step:o.step,octave:o.octave}; }
     function compUnderX(mx){ for(let i=0;i<n;i++){ const c=geom.comp[i]; if(mx>=c.gx && mx<c.gx+c.wC) return i; } return -1; }
     function pt(svg,ev){ try{ const p=svg.createSVGPoint(); p.x=ev.clientX; p.y=ev.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }catch(e){ return null; } }
@@ -13870,7 +13870,7 @@ function __grados_marker__(){}
     var half=1e9; ys.sort(function(a,b){return a-b;});
     for(var i=1;i<ys.length;i++){ var gap=ys[i]-ys[i-1]; if(gap>0.5 && gap<half) half=gap; }
     if(half>=1e9) half=5;
-    var FAC=(FACTOR==null)?0.85:FACTOR;
+    var FAC=(FACTOR==null)?0.90:FACTOR;
     if((curD-bd) < half*(2*FAC-1)) return curEntry;
     return best;
   }
@@ -13973,7 +13973,7 @@ function __grados_marker__(){}
   function svgPt(svg,ev){ try{ var pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }catch(e){ var r=svg.getBoundingClientRect(); return {x:ev.clientX-r.left,y:ev.clientY-r.top}; } }
   function nearestY(meta,mi,my,svg){ var map=meta.ymap[mi]; if(!map) return null;
     var curKey=(svg&&svg._gnLastNat!=null&&svg._gnLastMi===mi)?svg._gnLastNat:null;
-    var o=window.gnHysteresis(map, my, curKey, 0.85); if(!o) return null;
+    var o=window.gnHysteresis(map, my, curKey, 0.90); if(!o) return null;
     if(svg){ svg._gnLastNat=o.step+o.octave; svg._gnLastMi=mi; }
     return {step:o.step, octave:o.octave}; }
   function measureEn(meta,px){ for(var i=0;i<meta.x.length;i++){ if(px>=meta.x[i] && px<meta.x[i]+meta.w[i]) return i; } return null; }
@@ -14413,13 +14413,14 @@ function __grados_marker__(){}
     }
     function svgPt(svg,ev){ try{ var pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }catch(e){ var r=svg.getBoundingClientRect(); return {x:ev.clientX-r.left,y:ev.clientY-r.top}; } }
     function measureAt(px){ for(var i=0;i<meta.x.length;i++){ if(px>=meta.x[i]&&px<meta.x[i]+meta.w[i]) return i; } return null; }
-    function nearestY(mi,my,svg){ var map=meta.ymap[mi]; if(!map) return null; var curKey=(svg&&svg._gnLastNat!=null&&svg._gnLastMi===mi)?svg._gnLastNat:null; var o=window.gnHysteresis(map,my,curKey,0.85); if(!o) return null; if(svg){ svg._gnLastNat=o.step+o.octave; svg._gnLastMi=mi; } return {step:o.step,octave:o.octave,staff:map[o.step+o.octave].staff}; }
+    function nearestY(mi,my,svg){ var map=meta.ymap[mi]; if(!map) return null; var curKey=(svg&&svg._gnLastNat!=null&&svg._gnLastMi===mi)?svg._gnLastNat:null; var o=window.gnHysteresis(map,my,curKey,0.90); if(!o) return null; if(svg){ svg._gnLastNat=o.step+o.octave; svg._gnLastMi=mi; } return {step:o.step,octave:o.octave,staff:map[o.step+o.octave].staff}; }
     function deselect(){ if(g._sel){ g._sel=null; redraw(false); } }
     function wire(res){ var svg=sbox.querySelector('svg'); if(!svg) return; svg.style.cursor='crosshair';
       function hover(ev){ var p=svgPt(svg,ev); var mi=measureAt(p.x); ghost(mi, mi!=null?nearestY(mi,p.y,svg):null); }
       function click(ev){ if(res) return; var p=svgPt(svg,ev); var mi=measureAt(p.x); if(mi==null){ deselect(); return; } var m=meta.ml[mi]; if(m.role!=='ghost'){ deselect(); return; } var arr=g.m[m.mi].user; var nat=nearestY(mi,p.y,svg); if(!nat){ deselect(); return; }
         for(var k=0;k<arr.length;k++){ if(arr[k].step===nat.step&&arr[k].octave===nat.octave){ g._sel={m:m.mi,k:k}; redraw(false); return; } }
-        if(arr.length>=2){ deselect(); return; } var nb=noteFrom(nat.step,nat.octave,0); arr.push(nb); gnPush({t:'add',m:m.mi,nota:nb}); g._sel={m:m.mi,k:arr.length-1}; redraw(false);
+        if(arr.length>=2){ var map2=meta.ymap[mi]||{}; var bk=-1,bd=1e9; for(var kk=0;kk<arr.length;kk++){ var en=map2[arr[kk].step+arr[kk].octave]; if(!en) continue; var dd=Math.abs(en.y-p.y); if(dd<bd){bd=dd;bk=kk;} } if(bk>=0){ g._sel={m:m.mi,k:bk}; redraw(false); return; } deselect(); return; }
+        var nb=noteFrom(nat.step,nat.octave,0); arr.push(nb); gnPush({t:'add',m:m.mi,nota:nb}); g._sel={m:m.mi,k:arr.length-1}; redraw(false);
       }
       svg.onmousemove=function(ev){ if(svg._touchHandled) return; hover(ev); };
       svg.onmouseleave=function(){ svg._gnLastNat=null; clr(svg); };
@@ -14537,13 +14538,14 @@ function __grados_marker__(){}
     function redraw(res){ meta=renderStaff(sbox, measuresOf(res)); wire(res); dels(res); refreshAccs(); undoUpd(); }
     function svgPt(svg,ev){ try{ var pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }catch(e){ var r=svg.getBoundingClientRect(); return {x:ev.clientX-r.left,y:ev.clientY-r.top}; } }
     function measureAt(px){ for(var i=0;i<meta.x.length;i++){ if(px>=meta.x[i]&&px<meta.x[i]+meta.w[i]) return i; } return null; }
-    function nearestY(mi,my,svg){ var map=meta.ymap[mi]; if(!map) return null; var curKey=(svg&&svg._gnLastNat!=null&&svg._gnLastMi===mi)?svg._gnLastNat:null; var o=window.gnHysteresis(map,my,curKey,0.85); if(!o) return null; if(svg){ svg._gnLastNat=o.step+o.octave; svg._gnLastMi=mi; } return {step:o.step,octave:o.octave}; }
+    function nearestY(mi,my,svg){ var map=meta.ymap[mi]; if(!map) return null; var curKey=(svg&&svg._gnLastNat!=null&&svg._gnLastMi===mi)?svg._gnLastNat:null; var o=window.gnHysteresis(map,my,curKey,0.90); if(!o) return null; if(svg){ svg._gnLastNat=o.step+o.octave; svg._gnLastMi=mi; } return {step:o.step,octave:o.octave}; }
     function deselect(){ if(g._sel){ g._sel=null; redraw(false); } }
     function wire(res){ var svg=sbox.querySelector('svg'); if(!svg) return; svg.style.cursor='crosshair';
       function hover(ev){ var p=svgPt(svg,ev); var mi=measureAt(p.x); ghost(mi, mi!=null?nearestY(mi,p.y,svg):null); }
       function click(ev){ if(res) return; var p=svgPt(svg,ev); var mi=measureAt(p.x); if(mi==null){ deselect(); return; } var m=meta.ml[mi]; if(m.role!=='answer'){ deselect(); return; } var par=g.pares[m.pair]; var nat=nearestY(mi,p.y,svg); if(!nat){ deselect(); return; }
         for(var k=0;k<par.user.length;k++){ if(par.user[k].step===nat.step&&par.user[k].octave===nat.octave){ g._sel={p:m.pair,k:k}; redraw(false); return; } }
-        if(par.user.length>=2){ deselect(); return; } var nb=noteFrom(nat.step,nat.octave,0); par.user.push(nb); gnPush({t:'add',p:m.pair,nota:nb}); g._sel={p:m.pair,k:par.user.length-1}; redraw(false);
+        if(par.user.length>=2){ var map2=meta.ymap[mi]||{}; var bk=-1,bd=1e9; for(var kk=0;kk<par.user.length;kk++){ var en=map2[par.user[kk].step+par.user[kk].octave]; if(!en) continue; var dd=Math.abs(en.y-p.y); if(dd<bd){bd=dd;bk=kk;} } if(bk>=0){ g._sel={p:m.pair,k:bk}; redraw(false); return; } deselect(); return; }
+        var nb=noteFrom(nat.step,nat.octave,0); par.user.push(nb); gnPush({t:'add',p:m.pair,nota:nb}); g._sel={p:m.pair,k:par.user.length-1}; redraw(false);
       }
       svg.onmousemove=function(ev){ if(svg._touchHandled) return; hover(ev); };
       svg.onmouseleave=function(){ svg._gnLastNat=null; clr(svg); };
@@ -14561,7 +14563,6 @@ function __grados_marker__(){}
     }
     function clr(svg){ if(!svg) return; var o=svg.querySelector('#invg'); if(o) o.remove(); }
     function dels(res){ if(!window.GN_UNIF) return; GN_UNIF.clearDelX(sbox,'gn-inv'); if(res) return; if(!g._sel) return; var par=g.pares[g._sel.p], u=par.user[g._sel.k]; if(!u) return;
-      // el compás respuesta de la pareja p es el índice 2*p+1
       var mi=2*g._sel.p+1; var map=meta.ymap[mi]; if(!map) return; var yo=map[u.step+u.octave]; if(!yo) return; var nx=(meta.noteX[mi]&&meta.noteX[mi][g._sel.k])||(meta.x[mi]+meta.w[mi]*0.6);
       var svg=sbox.querySelector('svg'); GN_UNIF.delXAt(sbox,svg,'gn-inv',nx,yo.y,12,function(){ var i=par.user.indexOf(u); if(i<0) return; gnPush({t:'del',p:g._sel.p,idx:i,nota:u}); par.user.splice(i,1); g._sel=null; redraw(false); });
     }
@@ -14921,6 +14922,14 @@ function __grados_marker__(){}
 
   /* candidatos para el clic->altura */
   function nearestNote(st,my){ var best=null,bd=1e9; for(var oc=2;oc<=6;oc++) for(var si=0;si<7;si++){ var stp=STEPS[si]; var mm=12*(oc+1)+ST[stp]; if(mm<36||mm>86) continue; var y=yOfNote(st,{step:stp,octave:oc}); var d=Math.abs(y-my); if(d<bd){bd=d;best={step:stp,octave:oc};} } return (bd<12)?best:null; }
+  /* como nearestNote pero con HISTÉRESIS (menos sensible al deslizar el dedo en tablet) */
+  function acoNearestH(st, my, svg, mi){ var map={}, nb=1e9;
+    for(var oc=2;oc<=6;oc++) for(var si=0;si<7;si++){ var stp=STEPS[si]; var mm=12*(oc+1)+ST[stp]; if(mm<36||mm>86) continue; var y=yOfNote(st,{step:stp,octave:oc}); map[stp+oc]={step:stp,octave:oc,y:y}; var d=Math.abs(y-my); if(d<nb) nb=d; }
+    if(nb>=14) return null;   // dedo lejos del pentagrama: no coloca
+    var curKey=(svg&&svg._gnLastMi===mi)?svg._gnLastNat:null;
+    var o=window.gnHysteresis(map,my,curKey,0.9); if(!o) return null;
+    if(svg){ svg._gnLastNat=o.step+o.octave; svg._gnLastMi=mi; }
+    return {step:o.step,octave:o.octave}; }
 
   /* ---------------- render de un sistema en DOS MITADES ---------------- */
   function renderSys(div, measures){
@@ -14945,8 +14954,8 @@ function __grados_marker__(){}
       if(m.bigBox){ bigBox(svg, meta.x[mi]+meta.w[mi]/2, yc, m.bigBox.title, m.bigBox.body); }
       if(!m.noStaff){
         var _railPos=[];
-        if(m.main && m.main.notes) drawChord(svg, xL, m.main.notes, st, m.main.col||COL_INK, false, 6, (m.selMark&&m.selMark.zona==='user')?m.selMark.key:null, m.railDelX?_railPos:null);
-        if(m.railDelX && _railPos.length){ meta.delX=meta.delX||{}; meta.delX[mi]=[]; _railPos.forEach(function(pp){ var cx=pp.x+pp.rx+13, cy=pp.y; sTxt(svg, cx, cy+4, '✕', '12.5', '#d47a7a', 'middle','800'); meta.delX[mi].push({key:pp.key, x:cx, y:cy}); }); }
+        if(m.main && m.main.notes) drawChord(svg, xL, m.main.notes, st, m.main.col||COL_INK, false, 6, (m.selMark&&m.selMark.zona==='user')?m.selMark.key:null, m.railDelKey?_railPos:null);
+        if(m.railDelKey && _railPos.length){ meta.delX=meta.delX||{}; meta.delX[mi]=[]; _railPos.forEach(function(pp){ if(pp.key!==m.railDelKey) return; var cx=pp.x+pp.rx+13, cy=pp.y; sTxt(svg, cx, cy+4, '✕', '12.5', '#d47a7a', 'middle','800'); meta.delX[mi].push({key:pp.key, x:cx, y:cy}); }); }
         if(m.leftNote) drawChord(svg, xL, [m.leftNote.n], st, m.leftNote.col||PINK, false, 6);
         if(m.paren){ drawParen(svg, xR, yc, GRAY); if(m.parenNotes&&m.parenNotes.length) drawChord(svg, xR, m.parenNotes.map(function(o){return o.n;}), st, (m.parenNotes[0]&&m.parenNotes[0].col)||GRAY, true, 4.4, (m.selMark&&m.selMark.zona==='ord')?m.selMark.key:null);
           if(m.parenLabels && m.parenNotes){ var pn=m.parenNotes.map(function(o){return o.n;}).slice().sort(function(a,b){return midi(a)-midi(b);});
@@ -14986,15 +14995,31 @@ function __grados_marker__(){}
     function pushUndo(arr,note){ undoStack.push({arr:arr,note:note}); if(undoCb) undoCb(true); }
     function doUndo(){ var did=false; while(undoStack.length){ var last=undoStack.pop(); var idx=last.arr.indexOf(last.note); if(idx>=0){ last.arr.splice(idx,1); did=true; break; } } if(did) redraw(false); if(undoCb) undoCb(undoStack.length>0); }
     function redraw(res){ meta=renderSys(sbox, measuresOf(res)); wire(); }
+    var NSV='http://www.w3.org/2000/svg';
+    function ghostAt(svg, xx, st, nat){ acoClr(svg); if(nat==null) return; var y=yOfNote(st,nat);
+      var gg=document.createElementNS(NSV,'g'); gg.setAttribute('id','acog'); gg.setAttribute('pointer-events','none');
+      var yTop=st.getYForLine(0),yBot=st.getYForLine(4),half=(yBot-yTop)/8,stp=2*half,yy,l;
+      if(y<yTop-half*0.6){ for(yy=yTop-stp;yy>=y-1;yy-=stp){ l=document.createElementNS(NSV,'line'); l.setAttribute('x1',xx-9);l.setAttribute('x2',xx+9);l.setAttribute('y1',yy);l.setAttribute('y2',yy);l.setAttribute('stroke',PINK);l.setAttribute('stroke-width','1.4'); gg.appendChild(l);} }
+      if(y>yBot+half*0.6){ for(yy=yBot+stp;yy<=y+1;yy+=stp){ l=document.createElementNS(NSV,'line'); l.setAttribute('x1',xx-9);l.setAttribute('x2',xx+9);l.setAttribute('y1',yy);l.setAttribute('y2',yy);l.setAttribute('stroke',PINK);l.setAttribute('stroke-width','1.4'); gg.appendChild(l);} }
+      var e=document.createElementNS(NSV,'ellipse'); e.setAttribute('cx',xx);e.setAttribute('cy',y);e.setAttribute('rx','4.6');e.setAttribute('ry','3.6');e.setAttribute('transform','rotate(-16 '+xx+' '+y+')');e.setAttribute('fill','rgba(232,67,147,.30)');e.setAttribute('stroke',PINK);e.setAttribute('stroke-width','1.5'); gg.appendChild(e);
+      svg.appendChild(gg); }
+    function acoClr(svg){ if(!svg) return; var o=svg.querySelector('#acog'); if(o) o.remove(); }
+    function hover(t){ var svg=sbox.querySelector('svg'); if(!svg) return; var p=svgPt(svg,t); var mi=measureAt(meta,p.x);
+      if(mi==null || p.x < meta.x[mi]+meta.w[mi]*0.5){ acoClr(svg); return; }
+      var nat=acoNearestH(meta.st[mi],p.y,svg,mi); ghostAt(svg, meta.xR[mi], meta.st[mi], nat); }
+    function place(t){ var svg=sbox.querySelector('svg'); if(!svg) return; var p=svgPt(svg,t); var mi=measureAt(meta,p.x); if(mi==null) return;
+      if(p.x < meta.x[mi]+meta.w[mi]*0.5) return;   // solo el paréntesis (derecha) es editable en A
+      var it=g.items[mi]; var nat=acoNearestH(meta.st[mi],p.y,svg,mi); if(!nat) return;
+      for(var k=0;k<it.ord.length;k++){ if(it.ord[k].step===nat.step&&it.ord[k].octave===nat.octave){ return; } }   // ya está: no dupliques (para borrar, usa Deshacer)
+      if(it.ord.length>=4) return;
+      /* hereda la alteración de la nota del acorde en esa posición (evita becuadros espurios) */
+      var al=0; for(var vi=0; vi<it.voiced.length; vi++){ if(it.voiced[vi].step===nat.step && it.voiced[vi].octave===nat.octave){ al=it.voiced[vi].alter||0; break; } }
+      var _nb={step:nat.step,octave:nat.octave,alter:al}; it.ord.push(_nb); pushUndo(it.ord,_nb); redraw(false); }
     function wire(){ var svg=sbox.querySelector('svg'); if(!svg) return; svg.style.cursor='crosshair';
-      svg.onclick=function(ev){ var p=svgPt(svg,ev); var mi=measureAt(meta,p.x); if(mi==null) return;
-        if(p.x < meta.x[mi]+meta.w[mi]*0.5) return;   // solo el paréntesis (derecha) es editable en A
-        var it=g.items[mi]; var nat=nearestNote(meta.st[mi],p.y); if(!nat) return;
-        for(var k=0;k<it.ord.length;k++){ if(it.ord[k].step===nat.step&&it.ord[k].octave===nat.octave){ it.ord.splice(k,1); redraw(false); return; } }
-        if(it.ord.length>=4) return;
-        /* hereda la alteración de la nota del acorde en esa posición (evita becuadros espurios) */
-        var al=0; for(var vi=0; vi<it.voiced.length; vi++){ if(it.voiced[vi].step===nat.step && it.voiced[vi].octave===nat.octave){ al=it.voiced[vi].alter||0; break; } }
-        var _nb={step:nat.step,octave:nat.octave,alter:al}; it.ord.push(_nb); pushUndo(it.ord,_nb); redraw(false); }; }
+      svg.onmousemove=function(ev){ if(svg._touchHandled) return; hover(ev); };
+      svg.onmouseleave=function(){ svg._gnLastNat=null; acoClr(svg); };
+      svg.onclick=function(ev){ if(svg._touchHandled) return; place(ev); };
+      if(window.GN_UNIF) GN_UNIF.wireGhostTouch(svg,{ hover:function(t){ hover(t); }, click:function(t){ place(t); }, clear:function(){ acoClr(svg); } }); }
     g.items.forEach(function(it){
       var cell=document.createElement('div'); cell.className='ac-cell';
       var wcol=document.createElement('div'); var wl=document.createElement('div'); wl.className='wlab'; wl.textContent='Tipo de acorde'; wcol.appendChild(wl);
@@ -15037,20 +15062,42 @@ function __grados_marker__(){}
       return {
       main:{notes:it.user, col:res?(it._ok?COL_GREEN:COL_RED):COL_INK},
       paren:true, parenNotes:it.ord.map(function(n){return {n:n,col:GRAY};}), parenText:'ordena aquí (opcional)',
-      box:{r1:nombreAcorde(it), r2:INV_LAB[it.inv]}, selMark:sm, railDelX:!res }; }); }
+      box:{r1:nombreAcorde(it), r2:INV_LAB[it.inv]}, selMark:sm, railDelKey:(sm && sm.zona==='user')?sm.key:null }; }); }
     var meta=null;
     var undoStack=[], undoCb=null;
     function pushUndo(arr,note){ undoStack.push({arr:arr,note:note}); if(undoCb) undoCb(true); }
     function doUndo(){ var did=false; while(undoStack.length){ var last=undoStack.pop(); var idx=last.arr.indexOf(last.note); if(idx>=0){ last.arr.splice(idx,1); did=true; break; } } if(did){ g._sel=null; redraw(false); } if(undoCb) undoCb(undoStack.length>0); }
     function redraw(res){ meta=renderSys(sbox, measuresOf(res)); wire(); }
+    var NSV='http://www.w3.org/2000/svg';
+    function ghostAt(svg, xx, st, nat){ acoClr(svg); if(nat==null) return; var y=yOfNote(st,nat);
+      var gg=document.createElementNS(NSV,'g'); gg.setAttribute('id','acog'); gg.setAttribute('pointer-events','none');
+      var yTop=st.getYForLine(0),yBot=st.getYForLine(4),half=(yBot-yTop)/8,stp=2*half,yy,l;
+      if(y<yTop-half*0.6){ for(yy=yTop-stp;yy>=y-1;yy-=stp){ l=document.createElementNS(NSV,'line'); l.setAttribute('x1',xx-9);l.setAttribute('x2',xx+9);l.setAttribute('y1',yy);l.setAttribute('y2',yy);l.setAttribute('stroke',PINK);l.setAttribute('stroke-width','1.4'); gg.appendChild(l);} }
+      if(y>yBot+half*0.6){ for(yy=yBot+stp;yy<=y+1;yy+=stp){ l=document.createElementNS(NSV,'line'); l.setAttribute('x1',xx-9);l.setAttribute('x2',xx+9);l.setAttribute('y1',yy);l.setAttribute('y2',yy);l.setAttribute('stroke',PINK);l.setAttribute('stroke-width','1.4'); gg.appendChild(l);} }
+      var e=document.createElementNS(NSV,'ellipse'); e.setAttribute('cx',xx);e.setAttribute('cy',y);e.setAttribute('rx','4.6');e.setAttribute('ry','3.6');e.setAttribute('transform','rotate(-16 '+xx+' '+y+')');e.setAttribute('fill','rgba(232,67,147,.30)');e.setAttribute('stroke',PINK);e.setAttribute('stroke-width','1.5'); gg.appendChild(e);
+      svg.appendChild(gg); }
+    function acoClr(svg){ if(!svg) return; var o=svg.querySelector('#acog'); if(o) o.remove(); }
+    function delXHit(mi,p){ if(!meta.delX || !meta.delX[mi]) return false;
+      for(var d=0;d<meta.delX[mi].length;d++){ var dm=meta.delX[mi][d]; if(Math.abs(p.x-dm.x)<10 && Math.abs(p.y-dm.y)<10){ var itd=g.items[mi];
+        for(var kk=0;kk<itd.user.length;kk++){ if(itd.user[kk].step+itd.user[kk].octave===dm.key){ var note=itd.user[kk];
+          for(var u=undoStack.length-1;u>=0;u--){ if(undoStack[u].note===note){ undoStack.splice(u,1); break; } }
+          itd.user.splice(kk,1); g._sel=null; if(undoCb) undoCb(undoStack.length>0); redraw(false); return true; } } } }
+      return false; }
+    function hover(t){ var svg=sbox.querySelector('svg'); if(!svg) return; var p=svgPt(svg,t); var mi=measureAt(meta,p.x);
+      if(mi==null){ acoClr(svg); return; }
+      var zona=(p.x < meta.x[mi]+meta.w[mi]*0.5)?'user':'ord';
+      var nat=acoNearestH(meta.st[mi],p.y,svg,mi); ghostAt(svg, (zona==='ord')?meta.xR[mi]:meta.xL[mi], meta.st[mi], nat); }
+    function place(t){ var svg=sbox.querySelector('svg'); if(!svg) return; var p=svgPt(svg,t); var mi=measureAt(meta,p.x); if(mi==null){ g._sel=null; return; }
+      if(delXHit(mi,p)) return;
+      var it=g.items[mi]; var nat=acoNearestH(meta.st[mi],p.y,svg,mi); if(!nat) return;
+      var zona=(p.x < meta.x[mi]+meta.w[mi]*0.5)?'user':'ord'; var arr=(zona==='ord')?it.ord:it.user;
+      for(var k=0;k<arr.length;k++){ if(arr[k].step===nat.step&&arr[k].octave===nat.octave){ g._sel={zona:zona,i:mi,k:k}; redraw(false); return; } }
+      if(arr.length>=4) return; var _nb={step:nat.step,octave:nat.octave,alter:0}; arr.push(_nb); pushUndo(arr,_nb); g._sel={zona:zona,i:mi,k:arr.length-1}; redraw(false); }
     function wire(){ var svg=sbox.querySelector('svg'); if(!svg) return; svg.style.cursor='crosshair';
-      svg.onclick=function(ev){ var p=svgPt(svg,ev); var mi=measureAt(meta,p.x); if(mi==null){ g._sel=null; return; }
-        // ✕ borrar (carril de solución): comprobar antes de colocar/seleccionar
-        if(meta.delX && meta.delX[mi]){ for(var d=0;d<meta.delX[mi].length;d++){ var dm=meta.delX[mi][d]; if(Math.abs(p.x-dm.x)<10 && Math.abs(p.y-dm.y)<10){ var itd=g.items[mi]; for(var kk=0;kk<itd.user.length;kk++){ if(itd.user[kk].step+itd.user[kk].octave===dm.key){ itd.user.splice(kk,1); g._sel=null; redraw(false); return; } } } } }
-        var it=g.items[mi]; var nat=nearestNote(meta.st[mi],p.y); if(!nat) return;
-        var zona=(p.x < meta.x[mi]+meta.w[mi]*0.5)?'user':'ord'; var arr=(zona==='ord')?it.ord:it.user;
-        for(var k=0;k<arr.length;k++){ if(arr[k].step===nat.step&&arr[k].octave===nat.octave){ g._sel={zona:zona,i:mi,k:k}; redraw(false); return; } }
-        if(arr.length>=4) return; var _nb={step:nat.step,octave:nat.octave,alter:0}; arr.push(_nb); pushUndo(arr,_nb); g._sel={zona:zona,i:mi,k:arr.length-1}; redraw(false); }; }
+      svg.onmousemove=function(ev){ if(svg._touchHandled) return; hover(ev); };
+      svg.onmouseleave=function(){ svg._gnLastNat=null; acoClr(svg); };
+      svg.onclick=function(ev){ if(svg._touchHandled) return; place(ev); };
+      if(window.GN_UNIF) GN_UNIF.wireGhostTouch(svg,{ hover:function(t){ hover(t); }, click:function(t){ place(t); }, clear:function(){ acoClr(svg); } }); }
     redraw(false);
     return { corregir:function(){ var e=evaluaConstruir(g); redraw(true); return e; }, undo:doUndo, onUndo:function(cb){ undoCb=cb; if(undoCb) undoCb(undoStack.length>0); } };
   }
