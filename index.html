@@ -8917,6 +8917,30 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     else if(ej._ruedas==='ton_arm_tono') montarTonArm(zona, ej, estado);
     else if(ej._ruedas==='ton_tono_arm') montarTonTonoArm(zona, ej, estado, editStave);
     else if(ej._ruedas==='cla_b') montarClaveB(zona, ej, estado, editStave);
+
+    // anclar cada grupo de ruedas justo bajo su compás (int_clasif / cla_a, que llevan el pentagrama del enunciado arriba)
+    if(ej._ruedas==='int_clasif' || ej._ruedas==='cla_a'){
+      const alinear=()=>{
+        const svg=host.querySelector('svg'); if(!svg) return;
+        const notas=svg.querySelectorAll('.vf-stavenote'); const n=ej._solData.length;
+        const cells=zona.querySelectorAll('.ans-cell'); if(!notas.length || cells.length!==n) return;
+        const xs=Array.from(notas).map(g=>{ const b=g.getBoundingClientRect(); return b.left+b.width/2; }).sort((a,b)=>a-b);
+        if(xs.length<n) return;
+        const gaps=[]; for(let i=1;i<xs.length;i++) gaps.push({g:xs[i]-xs[i-1],at:i});
+        gaps.sort((a,b)=>b.g-a.g);
+        const cortes=gaps.slice(0,n-1).map(x=>x.at).sort((a,b)=>a-b);
+        const grupos=[]; let st=0; cortes.forEach(c=>{ grupos.push(xs.slice(st,c)); st=c; }); grupos.push(xs.slice(st));
+        if(grupos.length!==n) return;
+        zona.style.position='relative'; zona.style.display='block';
+        cells.forEach(c=>{ c.style.position='absolute'; c.style.top='0'; });
+        const rz=zona.getBoundingClientRect(); let h=0;
+        grupos.forEach((g,i)=>{ const cell=cells[i]; if(!cell||!g.length) return; const cx=(g[0]+g[g.length-1])/2 - rz.left; cell.style.left=Math.max(0,cx-cell.offsetWidth/2)+'px'; h=Math.max(h,cell.offsetHeight); });
+        zona.style.height=h+'px';
+      };
+      host._alinear=alinear;
+      requestAnimationFrame(()=>{ requestAnimationFrame(alinear); }); setTimeout(alinear,160);
+      if(!window._alinRuedasWired){ window._alinRuedasWired=true; window.addEventListener('resize',()=>{ document.querySelectorAll('#simScore, .simSolHost').forEach(h=>{ if(h._alinear) try{ h._alinear(); }catch(e){} }); }); }
+    }
   }
 
   /* ---- INT_CLASIF: rueda número + rueda especie por compás ---- */
@@ -8928,8 +8952,8 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     for(let i=0;i<n;i++){
       const cell=document.createElement('div'); cell.className='ans-cell';
       const dual=document.createElement('div'); dual.style.cssText='display:flex;gap:6px;justify-content:center';
-      const wNum=document.createElement('div'); wNum.className='wheel'; wNum.style.cssText='height:78px;width:58px';
-      const wEsp=document.createElement('div'); wEsp.className='wheel'; wEsp.style.cssText='height:78px;width:64px';
+      const wNum=document.createElement('div'); wNum.className='wheel'; wNum.style.cssText='height:96px;width:64px';
+      const wEsp=document.createElement('div'); wEsp.className='wheel'; wEsp.style.cssText='height:96px;width:70px';
       dual.appendChild(wNum); dual.appendChild(wEsp);
       cell.appendChild(dual); zona.appendChild(cell);
       const numItems=numerosDisponibles(false).map(String);
@@ -11465,7 +11489,7 @@ function __grados_marker__(){}
     const host=document.getElementById('ppSelector');
     const lleno = sumaPesos()>=TOPE;
     let h='<div class="pp-h">Tipos de ejercicio · clic izquierdo para añadir · clic derecho para quitar</div>';
-    PP_CAT.slice().sort((a,b)=>a.grupo.localeCompare(b.grupo,'es',{sensitivity:'base'})).forEach(g=>{
+    PP_CAT.forEach(g=>{   // orden del índice (ya no alfabético)
       h+='<div class="pp-cat-grp"><h5>'+g.grupo+'</h5>';
       g.items.forEach(it=>{
         const p=pesoDe(it.key);
@@ -11810,9 +11834,12 @@ function __grados_marker__(){}
       const esAco = item.ej._interactivo==='aco' && item.ej._aco && window.ACORD && window.ACORD.montar;
       const esQuiz = item.ej._interactivo==='quiz' && item.ej._quiz && window[item.ej._quizM] && window[item.ej._quizM].montar;
       const esCad = item.ej._interactivo==='cad' && item.ej._cad && window.CAD && window.CAD.montar;
-      const interactivo = esEscala || esRuedas || esNotaB || esEnarm || esGrado || esMixto || esCompas || esVecinos || esTerminos || esInv || esAco || esQuiz || esCad;
+      const esEnaAdv = item.ej._interactivo==='ena_adv' && item.ej._enaAdv && window.ENA_ADV && window.ENA_ADV.montar;
+      const interactivo = esEscala || esRuedas || esNotaB || esEnarm || esGrado || esMixto || esCompas || esVecinos || esTerminos || esInv || esAco || esQuiz || esCad || esEnaAdv;
       const escPrecol = esEscala && item.ej._spec && item.ej._spec.precolocada===true;
-      const pieFoot = esCad
+      const pieFoot = esEnaAdv
+        ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Elige con las ruedas la enarmonía de cada nota/intervalo y, si aparece, la tonalidad enarmónica. Se corrige al enviar.</div>'
+        : esCad
         ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Pulsa ▶ para escuchar la secuencia (cada acorde suena 3 s) y marca qué cadencia es.</div>'
         : esQuiz
         ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Elige la respuesta del test (a, b o c) y pulsa Verdadero o Falso. Cada pregunta vale la mitad.</div>'
@@ -11839,7 +11866,7 @@ function __grados_marker__(){}
                 : '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px;font-style:italic">Simulación: aquí el alumno resolvería el ejercicio (colocar notas, escribir, elegir…).</div>';
       const areaItem = AREA_DE[item.key];
       const practiBtn = areaItem ? '<div style="margin-top:16px"><button class="simPracticaLive sim-practica-btn" data-key="'+item.key+'">No lo sé hacer, necesito practicar esto ↗</button></div>' : '';
-      main.innerHTML='<div class="pp-hide-sol sim-card sim-enter" style="max-width:820px;width:100%;align-self:flex-start">'+
+      main.innerHTML='<div class="pp-hide-sol sim-card sim-enter" style="max-width:min(1120px,95vw);width:100%;align-self:flex-start">'+
           '<div class="sim-eyebrow">Ejercicio '+(i+1)+'</div>'+
           '<div class="sim-enun">'+esc(item.ej.enun||item.label)+'</div>'+
           '<div id="simScore"></div>'+
@@ -11879,6 +11906,8 @@ function __grados_marker__(){}
         try{ window.INV_INT.montar(main.querySelector('#simScore'), item.ej._inv, {ficha:true}); }catch(e){}
       } else if(esAco){
         try{ window.ACORD.montar(main.querySelector('#simScore'), item.ej._aco); }catch(e){}
+      } else if(esEnaAdv){
+        try{ window.ENA_ADV.montar(main.querySelector('#simScore'), item.ej._enaAdv, {pad:true}); }catch(e){}
       } else if(esCad){
         try{ window.CAD.montar(main.querySelector('#simScore'), item.ej._cad, {compact:false}); }catch(e){}
       } else if(esQuiz){
@@ -11940,6 +11969,7 @@ function __grados_marker__(){}
         const esAco = item.ej._interactivo==='aco' && item.ej._aco && window.ACORD;
         const esQuiz = item.ej._interactivo==='quiz' && item.ej._quiz && window[item.ej._quizM];
         const esCad = item.ej._interactivo==='cad' && item.ej._cad && window.CAD;
+        const esEnaAdv = item.ej._interactivo==='ena_adv' && item.ej._enaAdv && window.ENA_ADV;
         if(esEscala){
           const est = item._respuesta || { seq:[], arm:0 };
           try{ return window.comprobarEscalaInteractiva(item.ej._spec, est).pct; }catch(e){ return 0; }
@@ -11978,6 +12008,7 @@ function __grados_marker__(){}
         }
         if(esInv){ try{ const g=item.ej._inv; const e=(item.ej._invTipo==='compuestos')?window.INV_INT.evaluaCompuestos(g):window.INV_INT.evaluaSimples(g); return Math.round((e.val||0)*100); }catch(e){ return 0; } }
         if(esAco){ try{ const g=item.ej._aco; const e=(item.ej._acoTipo==='construir')?window.ACORD.evaluaConstruir(g):window.ACORD.evaluaIdentificar(g); return Math.round((e.val||0)*100); }catch(e){ return 0; } }
+        if(esEnaAdv){ try{ const e=window.ENA_ADV.evalua(item.ej._enaAdv); return Math.round((e.val||0)*100); }catch(e){ return 0; } }
         if(esQuiz){ try{ const e=window[item.ej._quizM].evalua(item.ej._quiz); return Math.round((e.val||0)*100); }catch(e){ return 0; } }
         if(esCad){ try{ const e=window.CAD.evalua(item.ej._cad); return Math.round((e.val||0)*100); }catch(e){ return 0; } }
         haySimulado=true;
@@ -12035,6 +12066,11 @@ function __grados_marker__(){}
           else if(it.ej._interactivo==='mixto' && it.ej._solData){ hecho=corregirMixto(hostEl, it.ej, it._respuesta||{}); }
           else if(it.ej._interactivo==='vecinos' && it.ej._vecinos){ hecho=corregirVecinos(hostEl, it.ej, it._respuesta||{}); }
           else if(it.ej._interactivo==='terminos' && it.ej._terminos && typeof window.corregirTerminosResumen==='function'){ hecho=window.corregirTerminosResumen(hostEl, it.ej, it._respuesta||{}); }
+          else if(it.ej._interactivo==='inv' && it.ej._inv && window.INV_INT && window.INV_INT.montar){ const api=window.INV_INT.montar(hostEl, it.ej._inv, {ficha:true}); try{ if(api&&api.corregir) api.corregir(); }catch(e){} hostEl.style.pointerEvents='none'; hecho=true; }
+          else if(it.ej._interactivo==='aco' && it.ej._aco && window.ACORD && window.ACORD.montar){ const api=window.ACORD.montar(hostEl, it.ej._aco); try{ if(api&&api.corregir) api.corregir(); }catch(e){} hostEl.style.pointerEvents='none'; hecho=true; }
+          else if(it.ej._interactivo==='ena_adv' && it.ej._enaAdv && window.ENA_ADV && window.ENA_ADV.montar){ const api=window.ENA_ADV.montar(hostEl, it.ej._enaAdv, {pad:true}); try{ if(api&&api.corregir) api.corregir(); }catch(e){} hostEl.style.pointerEvents='none'; hecho=true; }
+          else if(it.ej._interactivo==='cad' && it.ej._cad && window.CAD && window.CAD.montar){ const api=window.CAD.montar(hostEl, it.ej._cad, {compact:false}); try{ if(api&&api.corregir) api.corregir(); }catch(e){} hostEl.style.pointerEvents='none'; hecho=true; }
+          else if(it.ej._interactivo==='quiz' && it.ej._quiz && window[it.ej._quizM] && window[it.ej._quizM].montar){ const api=window[it.ej._quizM].montar(hostEl, it.ej._quiz); try{ if(api&&api.corregir) api.corregir(); }catch(e){} hostEl.style.pointerEvents='none'; hecho=true; }
         }catch(e){}
         if(!hecho){ try{ pintarBloque(hostEl, it.ej, 'sol'); }catch(e){} }
         try{ vigilarPentagramas(hostEl); }catch(e){}
@@ -13892,10 +13928,10 @@ function __grados_marker__(){}
   }
   function delXAt(host, svg, cls, xSvg, ySvg, dx, onDel){
     try{
-      var pt=svg.createSVGPoint(); pt.x=xSvg; pt.y=ySvg;
+      var pt=svg.createSVGPoint(); pt.x=xSvg+(dx==null?12:dx); pt.y=ySvg;   /* dx en UNIDADES del pentagrama → escala con él (la ✕ no tapa la cabeza al ampliar en la ficha) */
       var sp=pt.matrixTransform(svg.getScreenCTM());
       var hr=host.getBoundingClientRect();
-      return mkDelX(host, cls, sp.x-hr.left+(dx==null?12:dx), sp.y-hr.top, onDel);
+      return mkDelX(host, cls, sp.x-hr.left, sp.y-hr.top, onDel);
     }catch(e){ return null; }
   }
   function clearDelX(host, cls){ if(!host) return; host.querySelectorAll('.gn-delx'+(cls?('.'+cls):'')).forEach(function(el){ el.remove(); }); }
@@ -14159,7 +14195,7 @@ function __grados_marker__(){}
       var yo=map[u.step+u.octave]; if(!yo) return;
       var idx=(meta.ml[mi].role==='nota')?(1+k):0;
       var nx=(meta.noteX[mi]&&meta.noteX[mi][idx]) || (meta.x[mi]+meta.w[mi]*0.6);
-      GN_UNIF.delXAt(b.sd,svg,'gn-ena',nx,yo.y,13,function(){
+      GN_UNIF.delXAt(b.sd,svg,'gn-ena',nx,yo.y,16,function(){
         var idx2=it.user.indexOf(u); if(idx2<0) return;
         gnPush({t:'del',ii:ii,idx:idx2,nota:u});
         it.user.splice(idx2,1); g._sel=null;
@@ -14511,7 +14547,7 @@ function __grados_marker__(){}
     }
     function clr(svg){ if(!svg) return; var o=svg.querySelector('#invg'); if(o) o.remove(); }
     function dels(res){ if(!window.GN_UNIF) return; GN_UNIF.clearDelX(sbox,'gn-inv'); if(res) return; if(!g._sel) return; var arr=g.m[g._sel.m].user, u=arr[g._sel.k]; if(!u) return; var mi=g._sel.m+1; var ent=meta.ymap[mi][u.step+u.octave]; if(!ent) return; var nx=(meta.noteX[mi]&&meta.noteX[mi][g._sel.k])||(meta.x[mi]+meta.w[mi]*0.55);
-      var svg=sbox.querySelector('svg'); GN_UNIF.delXAt(sbox,svg,'gn-inv',nx,ent.y,12,function(){ var i=arr.indexOf(u); if(i<0) return; gnPush({t:'del',m:g._sel.m,idx:i,nota:u}); arr.splice(i,1); g._sel=null; redraw(false); });
+      var svg=sbox.querySelector('svg'); GN_UNIF.delXAt(sbox,svg,'gn-inv',nx,ent.y,16,function(){ var i=arr.indexOf(u); if(i<0) return; gnPush({t:'del',m:g._sel.m,idx:i,nota:u}); arr.splice(i,1); g._sel=null; redraw(false); });
     }
 
     // DOS ruedas (inicial bajo compás 1, final bajo compás 4) + cuadrícula de alteraciones al centro (para las notas que colocas)
@@ -14637,7 +14673,7 @@ function __grados_marker__(){}
     function clr(svg){ if(!svg) return; var o=svg.querySelector('#invg'); if(o) o.remove(); }
     function dels(res){ if(!window.GN_UNIF) return; GN_UNIF.clearDelX(sbox,'gn-inv'); if(res) return; if(!g._sel) return; var par=g.pares[g._sel.p], u=par.user[g._sel.k]; if(!u) return;
       var mi=2*g._sel.p+1; var map=meta.ymap[mi]; if(!map) return; var yo=map[u.step+u.octave]; if(!yo) return; var nx=(meta.noteX[mi]&&meta.noteX[mi][g._sel.k])||(meta.x[mi]+meta.w[mi]*0.6);
-      var svg=sbox.querySelector('svg'); GN_UNIF.delXAt(sbox,svg,'gn-inv',nx,yo.y,12,function(){ var i=par.user.indexOf(u); if(i<0) return; gnPush({t:'del',p:g._sel.p,idx:i,nota:u}); par.user.splice(i,1); g._sel=null; redraw(false); });
+      var svg=sbox.querySelector('svg'); GN_UNIF.delXAt(sbox,svg,'gn-inv',nx,yo.y,16,function(){ var i=par.user.indexOf(u); if(i<0) return; gnPush({t:'del',p:g._sel.p,idx:i,nota:u}); par.user.splice(i,1); g._sel=null; redraw(false); });
     }
 
     // por pareja: cuadrícula 2×2 de alteraciones + doble-rueda, ALINEADAS bajo el compás de respuesta
@@ -16265,7 +16301,8 @@ function ensureCSS(){
   .cad-replay.playing{opacity:.6}
   .cad-answers{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
   @media(min-width:720px){ .cad-answers{grid-template-columns:repeat(4,1fr)} }
-  .cad-ans{position:relative;background:#fff;border:1.6px solid rgba(120,120,160,.28);border-radius:12px;padding:16px 12px 22px;font-weight:800;font-size:15px;color:#25203a;cursor:pointer;transition:.14s;text-align:center}
+  .cad-ans{position:relative;background:#fff !important;border:1.6px solid rgba(120,120,160,.28);border-radius:12px;padding:16px 12px 22px;font-weight:800;font-size:15px;color:#25203a !important;cursor:pointer;transition:.14s;text-align:center}
+  .cad-ans .lbl{color:#25203a}
   .cad-ans:hover{border-color:${ROSA};transform:translateY(-2px)}
   .cad-ans .ab{position:absolute;right:9px;bottom:6px;font-size:11px;font-weight:700;color:#9a93b5;letter-spacing:.02em}
   .cad-ans.sel{border-color:${ROSA};background:${ROSA};color:#fff;box-shadow:0 8px 22px rgba(232,67,147,.42)}
