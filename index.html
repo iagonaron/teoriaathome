@@ -1635,16 +1635,16 @@ function unlockCard(cardId){
 const PADS=[
   {id:'intervalos',nombre:'Intervalos',kick:'Teoría',foot:'Clasificar y construir',activo:true,open:'openIntervalos'},
   {id:'inversiones',nombre:'Inversión de intervalos',kick:'Teoría',foot:'Invierte y clasifica',activo:true,open:'openInversiones'},
-  {id:'claves',nombre:'Claves',kick:'Teoría',foot:'Leer notas en claves',activo:true,open:'openClaves'},
+  {id:'compases',nombre:'Compases',kick:'Ritmo',foot:'Tipo, subdivisión y ritmos',activo:true,open:'openCompases'},
+  {id:'tonalidades',nombre:'Tonalidades',kick:'Teoría',foot:'Armaduras y tonos vecinos',activo:true,open:'openTonalidades',ico:'armT'},
+  {id:'escalas',nombre:'Escalas',kick:'Teoría',foot:'Menores, mayores y otras',activo:true,open:'openEscalas'},
+  {id:'grados',nombre:'Grados',kick:'Teoría',foot:'Señala el grado pedido',activo:true,open:'openGrados'},
+  {id:'semitonos',nombre:'Semitonos',kick:'Teoría',foot:'Diatónico / cromático',activo:true,open:'openSemitonos'},
   {id:'acordes',nombre:'Acordes',kick:'Teoría',foot:'Identificar y construir',activo:true,open:'openAcordes'},
   {id:'inv-acordes',nombre:'Inversión de acordes',kick:'Teoría',foot:'Identifica y construye',activo:true,open:'openInvAcordes'},
-  {id:'grados',nombre:'Grados',kick:'Teoría',foot:'Señala el grado pedido',activo:true,open:'openGrados'},
-  {id:'escalas',nombre:'Escalas',kick:'Teoría',foot:'Menores, mayores y otras',activo:true,open:'openEscalas'},
   {id:'enarmonias',nombre:'Enarmonías',kick:'Teoría',foot:'Equivalencias',activo:true,open:'openEnarmonias'},
-  {id:'semitonos',nombre:'Semitonos',kick:'Teoría',foot:'Diatónico / cromático',activo:true,open:'openSemitonos'},
-  {id:'compases',nombre:'Compases',kick:'Ritmo',foot:'Tipo, subdivisión y ritmos',activo:true,open:'openCompases'},
+  {id:'claves',nombre:'Claves',kick:'Teoría',foot:'Leer notas en claves',activo:true,open:'openClaves'},
   {id:'terminos',nombre:'Términos',kick:'Teoría',foot:'Tempo, carácter y dinámica',activo:true,open:'openTerminos'},
-  {id:'tonalidades',nombre:'Tonalidades',kick:'Teoría',foot:'Armaduras y tonos vecinos',activo:true,open:'openTonalidades',ico:'armT'},
   {id:'adorno',nombre:'Notas de adorno',kick:'Teoría',foot:'Test + verdadero/falso',activo:true,open:'openAdorno'},
   {id:'abrev',nombre:'Abreviaciones',kick:'Teoría',foot:'Test + verdadero/falso',activo:true,open:'openAbrev'},
   {id:'cadencias',nombre:'Cadencias',kick:'Teoría',foot:'Escucha y reconoce',activo:true,open:'openCadencias'},
@@ -11048,9 +11048,6 @@ function __grados_marker__(){}
      'key' coincide con TEORIA_GEN.byKey salvo escalas (kind:'escala').
      ============================================================ */
   const PP_CAT = [
-    {grupo:'Términos', items:[
-      {key:'terminos',    label:'Términos (clasificar + significado + tempos)'},
-    ]},
     {grupo:'Intervalos', items:[
       {key:'int_clasif',  label:'Clasificar intervalo'},
       {key:'int_constr',  label:'Construir intervalo'},
@@ -11059,27 +11056,13 @@ function __grados_marker__(){}
       {key:'inv_simples',    label:'Inversión de intervalos simples'},
       {key:'inv_compuestos', label:'Inversión de intervalos compuestos'},
     ]},
-    {grupo:'Inversión de acordes', items:[
-      {key:'aco_identificar', label:'Inversión de acordes · identificar'},
-      {key:'aco_construir',   label:'Inversión de acordes · construir'},
-    ]},
-    {grupo:'Notas de adorno', items:[
-      {key:'adorno_quiz', label:'Notas de adorno (test + V/F)'},
-    ]},
-    {grupo:'Abreviaciones', items:[
-      {key:'abrev_quiz', label:'Abreviaciones (test + V/F)'},
-    ]},
-    {grupo:'Cadencias', items:[
-      {key:'cadencias_quiz', label:'Cadencias · introducción (escucha y reconoce)'},
+    {grupo:'Compases', items:[
+      {key:'com_clasif',  label:'Analizar el compás'},
     ]},
     {grupo:'Tonalidades', items:[
       {key:'ton_arm_tono',label:'Armadura → tonalidad'},
       {key:'ton_tono_arm',label:'Tonalidad → armadura'},
       {key:'ton_vecinos', label:'Tonos vecinos'},
-    ]},
-    {grupo:'Claves', items:[
-      {key:'cla_a',       label:'Nombrar la nota (varias claves)'},
-      {key:'cla_b',       label:'Colocar la clave señalada'},
     ]},
     {grupo:'Escalas', items:[
       {key:'esc_menor',   label:'Escalas menores',  kind:'escala', fam:'menor'},
@@ -11089,18 +11072,35 @@ function __grados_marker__(){}
     {grupo:'Grados', items:[
       {key:'gra_senalar', label:'Señalar el grado pedido'},
     ]},
+    {grupo:'Semitonos', items:[
+      {key:'semitonos',   label:'Semitonos (identificar + construir)'},
+    ]},
     {grupo:'Acordes', items:[
       {key:'acordes',     label:'Acordes (identificar + construir)'},
     ]},
-    {grupo:'Compases', items:[
-      {key:'com_clasif',  label:'Analizar el compás'},
+    {grupo:'Inversión de acordes', items:[
+      {key:'aco_identificar', label:'Inversión de acordes · identificar'},
+      {key:'aco_construir',   label:'Inversión de acordes · construir'},
     ]},
     {grupo:'Enarmonías', items:[
       {key:'ena_a',       label:'Enarmonías'},
       {key:'ena_avanzado',label:'Enarmonía avanzado'},
     ]},
-    {grupo:'Semitonos', items:[
-      {key:'semitonos',   label:'Semitonos (identificar + construir)'},
+    {grupo:'Claves', items:[
+      {key:'cla_a',       label:'Nombrar la nota (varias claves)'},
+      {key:'cla_b',       label:'Colocar la clave señalada'},
+    ]},
+    {grupo:'Términos', items:[
+      {key:'terminos',    label:'Términos (clasificar + significado + tempos)'},
+    ]},
+    {grupo:'Notas de adorno', items:[
+      {key:'adorno_quiz', label:'Notas de adorno (test + V/F)'},
+    ]},
+    {grupo:'Abreviaciones', items:[
+      {key:'abrev_quiz', label:'Abreviaciones (test + V/F)'},
+    ]},
+    {grupo:'Cadencias', items:[
+      {key:'cadencias_quiz', label:'Cadencias · introducción (escucha y reconoce)'},
     ]},
   ];
   // mapa plano key -> {key,label,grupo,kind,fam}
@@ -11119,7 +11119,7 @@ function __grados_marker__(){}
      config = { items:[{key,peso}], total, opciones:{acorde7} }
      ficha  = [{n,key,label,ej}]   (ejercicios ya materializados)
      ============================================================ */
-  const CFG_KEY = 'teoria_prof_ficha_cfg_v1';
+  const CFG_KEY = 'teoria_prof_ficha_cfg_v2';   // v2: estrena vacía (0 ejercicios) y con el nuevo orden del índice
   function cfgDefault(){ return { version:1, items:[], opciones:{ acorde7:false } }; }
   /* migra configuraciones guardadas con los keys antiguos (aco_id/aco_constr -> acordes, etc.) */
   const MIGRA_KEY={ aco_id:'acordes', aco_constr:'acordes', sem_clasif:'semitonos', sem_constr:'semitonos' };
