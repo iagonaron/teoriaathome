@@ -83,7 +83,7 @@
     position:relative;overflow:hidden;
     background:rgba(22,18,52,.5);backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);
     border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:26px 24px;
-    display:flex;align-items:center;justify-content:center;min-height:96px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:96px;
     cursor:pointer;color:inherit;
     box-shadow:0 10px 30px rgba(8,5,24,.3);
     transition:transform .12s,border-color .15s,box-shadow .15s,background .25s;
@@ -92,6 +92,10 @@
     box-shadow:0 18px 46px rgba(232,67,147,.3);
     background:rgba(232,67,147,.14)}
   .pad .edge{display:none}
+  .pad-main{flex:1;display:flex;align-items:center;justify-content:center;width:100%}
+  .pad-sub{font-size:10.5px;letter-spacing:.02em;color:#a6afd0;opacity:.5;line-height:1.4;text-align:center;max-width:96%;padding-top:9px;
+    transition:opacity .22s ease,color .22s ease;pointer-events:none}
+  .pad:hover .pad-sub{opacity:1;color:#ffd7f2}
   .pad h3{font-size:21px;font-weight:800;letter-spacing:.04em;margin:0;line-height:1.1;text-align:center;text-transform:uppercase}
   .pad.soon{cursor:default;opacity:.42}
   .pad.soon:hover{transform:none;border-color:var(--line);box-shadow:none;background:linear-gradient(180deg,var(--panel2),var(--panel))}
@@ -577,6 +581,12 @@
   }
   /* todos los textos/labels dentro del módulo, en claro */
   #ppAlumnoSim #simScore, #ppAlumnoSim #simScore div, #ppAlumnoSim #simScore label, #ppAlumnoSim #simScore span{ color:#dce4f7; }
+  /* botones de cadencia legibles dentro de la ficha (vencen al color claro global de #simScore) */
+  #ppAlumnoSim .cad-ans .lbl{ color:#25203a !important; }
+  #ppAlumnoSim .cad-ans .ab, #ppAlumnoSim .cad-ans .sens{ color:#8a86a6 !important; }
+  #ppAlumnoSim .cad-ans.sel .lbl, #ppAlumnoSim .cad-ans.ok .lbl, #ppAlumnoSim .cad-ans.bad .lbl{ color:#fff !important; }
+  #ppAlumnoSim .cad-ans.sel .ab, #ppAlumnoSim .cad-ans.ok .ab, #ppAlumnoSim .cad-ans.bad .ab,
+  #ppAlumnoSim .cad-ans.sel .sens, #ppAlumnoSim .cad-ans.ok .sens, #ppAlumnoSim .cad-ans.bad .sens{ color:#ffe9f2 !important; }
   /* ruedas: fondo oscuro propio, marcador rosa y texto claro */
   #ppAlumnoSim #simScore .wheel{ background:#0c1530; border:1px solid #2a3a66; border-radius:10px; }
   #ppAlumnoSim #simScore .wheel .item{ color:#9fb0d8; }
@@ -1636,21 +1646,21 @@ function unlockCard(cardId){
 }
 
 const PADS=[
-  {id:'intervalos',nombre:'Intervalos',kick:'Teoría',foot:'Clasificar y construir',activo:true,open:'openIntervalos'},
-  {id:'inversiones',nombre:'Inversión de intervalos',kick:'Teoría',foot:'Invierte y clasifica',activo:true,open:'openInversiones'},
+  {id:'intervalos',nombre:'Intervalos',kick:'Teoría',foot:'Clasificar y construir',activo:true,open:'openIntervalos',sub:'simples · compuestos'},
+  {id:'inversiones',nombre:'Inversión de intervalos',kick:'Teoría',foot:'Invierte y clasifica',activo:true,open:'openInversiones',sub:'simples · compuestos'},
   {id:'compases',nombre:'Compases',kick:'Ritmo',foot:'Tipo, subdivisión y ritmos',activo:true,open:'openCompases'},
-  {id:'tonalidades',nombre:'Tonalidades',kick:'Teoría',foot:'Armaduras y tonos vecinos',activo:true,open:'openTonalidades',ico:'armT'},
-  {id:'escalas',nombre:'Escalas',kick:'Teoría',foot:'Menores, mayores y otras',activo:true,open:'openEscalas'},
+  {id:'tonalidades',nombre:'Tonalidades',kick:'Teoría',foot:'Armaduras y tonos vecinos',activo:true,open:'openTonalidades',ico:'armT',sub:'tonalidad · armadura · tonos vecinos'},
+  {id:'escalas',nombre:'Escalas',kick:'Teoría',foot:'Menores, mayores y otras',activo:true,open:'openEscalas',sub:'menores · mayores · pentatónica · hexátona · cromática'},
   {id:'grados',nombre:'Grados',kick:'Teoría',foot:'Señala el grado pedido',activo:true,open:'openGrados'},
   {id:'semitonos',nombre:'Semitonos',kick:'Teoría',foot:'Diatónico / cromático',activo:true,open:'openSemitonos'},
-  {id:'acordes',nombre:'Acordes',kick:'Teoría',foot:'Identificar y construir',activo:true,open:'openAcordes'},
+  {id:'acordes',nombre:'Acordes',kick:'Teoría',foot:'Identificar y construir',activo:true,open:'openAcordes',sub:'tríadas · cuatríadas · inversión · 7ª de dominante'},
   {id:'inv-acordes',nombre:'Inversión de acordes',kick:'Teoría',foot:'Identifica y construye',activo:true,open:'openInvAcordes'},
-  {id:'enarmonias',nombre:'Enarmonías',kick:'Teoría',foot:'Equivalencias',activo:true,open:'openEnarmonias'},
+  {id:'enarmonias',nombre:'Enarmonías',kick:'Teoría',foot:'Equivalencias',activo:true,open:'openEnarmonias',sub:'de nota · parcial · total · tonalidades enarmónicas'},
   {id:'claves',nombre:'Claves',kick:'Teoría',foot:'Leer notas en claves',activo:true,open:'openClaves'},
   {id:'terminos',nombre:'Términos',kick:'Teoría',foot:'Tempo, carácter y dinámica',activo:true,open:'openTerminos'},
-  {id:'adorno',nombre:'Notas de adorno',kick:'Teoría',foot:'Test + verdadero/falso',activo:true,open:'openAdorno'},
+  {id:'adorno',nombre:'Notas de adorno',kick:'Teoría',foot:'Test + verdadero/falso',activo:true,open:'openAdorno',sub:'apoyatura · trino · mordente · grupeto'},
   {id:'abrev',nombre:'Abreviaciones',kick:'Teoría',foot:'Test + verdadero/falso',activo:true,open:'openAbrev'},
-  {id:'cadencias',nombre:'Cadencias',kick:'Teoría',foot:'Escucha y reconoce',activo:true,open:'openCadencias'},
+  {id:'cadencias',nombre:'Cadencias',kick:'Teoría',foot:'Escucha y reconoce',activo:true,open:'openCadencias',sub:'auténtica · plagal · semicadencia · rota'},
 ];
 function padIcon(p){
   if(p.ico==='armT') return '<svg viewBox="0 0 120 64"><text x="6" y="42" font-size="30" fill="currentColor">♯♯♭</text><path d="M58 32 H92" stroke="currentColor" stroke-width="3" fill="none"/><path d="M84 24 L94 32 L84 40" stroke="currentColor" stroke-width="3" fill="none"/><text x="98" y="42" font-size="26" font-weight="900" fill="currentColor">T</text></svg>';
@@ -1663,7 +1673,8 @@ function renderPads(){
     const d=document.createElement('div');
     d.className='pad'+(p.activo?'':' soon');
     d.innerHTML='<div class="edge"></div>'+(p.activo?'':'<div class="badge">Próx.</div>')+
-      '<h3>'+p.nombre+'</h3>';
+      '<div class="pad-main"><h3>'+p.nombre+'</h3></div>'+
+      (p.sub?'<div class="pad-sub">'+p.sub+'</div>':'');
     if(p.activo&&p.open) d.onclick=()=>window[p.open]();
     g.appendChild(d);
   });
@@ -8902,7 +8913,11 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     // pentagrama del enunciado (SVG ya generado) arriba — salvo cla_b y ton_tono_arm, que dibujan el suyo (editable)
     if(ej.render && ej.render.svg && !esClaveB && !esTonArm){
       const sc=document.createElement('div'); sc.innerHTML=ej.render.svg; sc.style.pointerEvents='none';
-      const svg=sc.querySelector('svg'); if(svg){ svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.height='auto'; svg.style.pointerEvents='none'; }
+      const svg=sc.querySelector('svg'); if(svg){
+        if(!svg.getAttribute('viewBox')){ const _w=parseFloat(svg.getAttribute('width'))||700, _h=parseFloat(svg.getAttribute('height'))||150; svg.setAttribute('viewBox','0 0 '+_w+' '+_h); }
+        svg.removeAttribute('width'); svg.removeAttribute('height');
+        svg.style.width='100%'; svg.style.height='auto'; svg.style.pointerEvents='none';
+      }
       host.appendChild(sc);
     }
     // contenedor del pentagrama editable (cla_b y ton_tono_arm), arriba del todo
@@ -10228,7 +10243,7 @@ function __grados_marker__(){}
     const n=ej._solData.length;   // 4
     // ¿hay acordes de 7ª en el bloque? (para incluir 7D en la rueda de tipo)
     const hay7 = ej._solData.some(s=> s.tipo==='D7');
-    estado.idSel = estado.idSel || ej._solData.map(()=> ({nota:'Do', alt:'', tipo:null}));
+    estado.idSel = estado.idSel || ej._solData.map(()=> ({nota:null, alt:'', tipo:null}));
     estado.resp  = estado.resp  || ej._solData.map(()=> []);
     estado.foco = (estado.foco===undefined)? null : estado.foco;
     host.innerHTML='';
@@ -10952,7 +10967,7 @@ function __grados_marker__(){}
     D.A.forEach(function(f){ if(col[f.term]===f.cat) ac++; });
     var sel=(est.B&&est.B.sel)||[];
     D.B.forEach(function(q,i){ if(sel[i]===q.corr) ac++; });
-    var orden=(est.C&&est.C.orden)||[];
+    var orden=(est.C&&est.C.orden&&est.C.orden.length)?est.C.orden:((D.C&&D.C.barajado)||[]);   // sin arrastrar, su respuesta es el orden mostrado (no toques = decisión válida)
     (D.C.correcto||[]).forEach(function(tp,p){ if(orden[p]===tp) ac++; });
     var pct= total? Math.round((ac/total)*100) : 0;
     return { ok: ac===total, pct:pct, total:total, aciertos:ac };
@@ -11840,7 +11855,7 @@ function __grados_marker__(){}
       const pieFoot = esEnaAdv
         ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Elige con las ruedas la enarmonía de cada nota/intervalo y, si aparece, la tonalidad enarmónica. Se corrige al enviar.</div>'
         : esCad
-        ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Pulsa ▶ para escuchar la secuencia (cada acorde suena 3 s) y marca qué cadencia es.</div>'
+        ? ''
         : esQuiz
         ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Elige la respuesta del test (a, b o c) y pulsa Verdadero o Falso. Cada pregunta vale la mitad.</div>'
         : esAco
@@ -14969,7 +14984,7 @@ function __grados_marker__(){}
   var INV_LAB=['E.F.','1ª inv.','2ª inv.','3ª inv.'];
   var GRADO_LAB=['fundamental','3ª','5ª','7ª'];   // qué grado está en el bajo por inversión
   var RARAS=new Set(['F,-1','C,-1','B,1','E,1']);
-  var COL_INK='#1a1a1a', COL_GREEN='#22c98a', COL_RED='#e11d1d', GRAY='#9aa3b8', PINK='#b0296e', GOLD='#c79a2e';
+  var COL_INK='#1a1a1a', COL_GREEN='#22c98a', COL_RED='#e11d1d', GRAY='#9aa3b8', PINK='#b0296e', GOLD='#c79a2e', COL_BLUE='#2f6fe0';
   var LA3=57, LA5=81;
 
   function acoNotas(step,octave,alter,tipo){
@@ -15012,10 +15027,10 @@ function __grados_marker__(){}
   function ledgers(svg,x,y,st,col,hw){ hw=hw||9; var yTop=st.getYForLine(0),yBot=st.getYForLine(4),half=(yBot-yTop)/8,stp=2*half,yy; if(y<yTop-half*0.6){ for(yy=yTop-stp;yy>=y-1;yy-=stp) segLine(svg,x-hw,yy,x+hw,yy,col,1.2); } if(y>yBot+half*0.6){ for(yy=yBot+stp;yy<=y+1;yy+=stp) segLine(svg,x-hw,yy,x+hw,yy,col,1.2); } }
   function yOfNote(st,n){ var yTop=st.getYForLine(0),half=(st.getYForLine(4)-yTop)/8; return yTop+(38-(STEPS.indexOf(n.step)+n.octave*7))*half; }   // diat(F5)=38 en la línea superior
   /* dibuja un acorde apilado a mano; maneja segundas (desplaza la cabeza) y alteraciones a la izquierda */
-  function drawChord(svg, x, notes, st, col, filled, rx, hiKey, posOut){ if(!notes||!notes.length) return; rx=rx||6;
+  function drawChord(svg, x, notes, st, col, filled, rx, hiKey, posOut, colFn){ if(!notes||!notes.length) return; rx=rx||6;
     var sorted=notes.slice().sort(function(a,b){return diat(a)-diat(b);});
     var off=[]; for(var i=0;i<sorted.length;i++){ off[i]=(i>0 && (diat(sorted[i])-diat(sorted[i-1])===1) && off[i-1]===0)?1:0; }
-    sorted.forEach(function(n,i){ var y=yOfNote(st,n); var c=(hiKey && (n.step+n.octave===hiKey))?PINK:col; var hx=x+off[i]*(rx*1.9); ledgers(svg,x,y,st,c,rx+3);
+    sorted.forEach(function(n,i){ var y=yOfNote(st,n); var c=colFn?colFn(n):((hiKey && (n.step+n.octave===hiKey))?PINK:col); var hx=x+off[i]*(rx*1.9); ledgers(svg,x,y,st,c,rx+3);
       if(n.alter) sTxt(svg, x-rx-6-(off[i]?rx*1.9:0), y+4, accES(n.alter), filled?'11':'13.5', c,'middle','700');
       head(svg, hx, y, c, filled, rx); if(posOut) posOut.push({key:n.step+n.octave, x:hx, y:y, rx:rx}); });
   }
@@ -15064,7 +15079,7 @@ function __grados_marker__(){}
       if(m.bigBox){ bigBox(svg, meta.x[mi]+meta.w[mi]/2, yc, m.bigBox.title, m.bigBox.body); }
       if(!m.noStaff){
         var _railPos=[];
-        if(m.main && m.main.notes) drawChord(svg, xL, m.main.notes, st, m.main.col||COL_INK, false, 6, (m.selMark&&m.selMark.zona==='user')?m.selMark.key:null, m.railDelKey?_railPos:null);
+        if(m.main && m.main.notes) drawChord(svg, xL, m.main.notes, st, m.main.col||COL_INK, false, 6, (m.selMark&&m.selMark.zona==='user')?m.selMark.key:null, m.railDelKey?_railPos:null, m.main.colFn);
         if(m.railDelKey && _railPos.length){ meta.delX=meta.delX||{}; meta.delX[mi]=[]; _railPos.forEach(function(pp){ if(pp.key!==m.railDelKey) return; var cx=pp.x+pp.rx+13, cy=pp.y; sTxt(svg, cx, cy+4, '✕', '12.5', '#d47a7a', 'middle','800'); meta.delX[mi].push({key:pp.key, x:cx, y:cy, zona:'user'}); }); }
         if(m.leftNote) drawChord(svg, xL, [m.leftNote.n], st, m.leftNote.col||PINK, false, 6);
         if(m.paren){ drawParen(svg, xR, yc, GRAY); if(m.parenNotes&&m.parenNotes.length) drawChord(svg, xR, m.parenNotes.map(function(o){return o.n;}), st, (m.parenNotes[0]&&m.parenNotes[0].col)||GRAY, true, 4.4, (m.selMark&&m.selMark.zona==='ord')?m.selMark.key:null);
@@ -15183,7 +15198,7 @@ function __grados_marker__(){}
     function measuresOf(res){ return g.items.map(function(it,ci){
       var sm=(!res && g._sel && g._sel.i===ci)?(function(){ var arr=(g._sel.zona==='ord')?it.ord:it.user; var n=arr[g._sel.k]; return n?{key:n.step+n.octave, zona:g._sel.zona}:null; })():null;
       return {
-      main:{notes:it.user, col:res?(it._ok?COL_GREEN:COL_RED):COL_INK},
+      main: res ? colConstruir(it) : {notes:it.user, col:COL_INK},
       paren:true, parenNotes:it.ord.map(function(n){return {n:n,col:GRAY};}), parenText:'ordena aquí (opcional)',
       box:{r1:nombreAcorde(it), r2:INV_LAB[it.inv]}, selMark:sm, railDelKey:(sm && sm.zona==='user')?sm.key:null, parenDelKey:(sm && sm.zona==='ord')?sm.key:null }; }); }
     var meta=null;
@@ -15230,6 +15245,16 @@ function __grados_marker__(){}
         var bajoOk=(((midi(uS[0])%12)+12)%12)===(((midi(it.voiced[0])%12)+12)%12); var setOk=pcSet(it.user)===pcSet(it.voiced); ok=bajoOk&&setOk; }
       it._ok=ok; vals.push(ok?1:0); });
     var tot=vals.reduce(function(a,b){return a+b;},0)/Math.max(1,vals.length); return {vals:vals, val:tot}; }
+
+  /* coloreado de corrección (construir): verde=nota tuya correcta · rojo=nota tuya incorrecta · azul=nota correcta que faltó */
+  function colConstruir(it){
+    var vMidi=(it.voiced||[]).map(midi), uMidi=(it.user||[]).map(midi);
+    var faltan=(it.voiced||[]).filter(function(v){ return uMidi.indexOf(midi(v))<0; });
+    var combined=(it.user||[]).concat(faltan);
+    return { notes:combined, colFn:function(n){ var m=midi(n);
+      if(uMidi.indexOf(m)>=0) return (vMidi.indexOf(m)>=0)?COL_GREEN:COL_RED;
+      return COL_BLUE; } };
+  }
 
   function montar(host, g){ if(!VF){ host.innerHTML='<div style="color:#fff">(VexFlow no disponible)</div>'; return {corregir:function(){return{val:0,vals:[]};},undo:function(){},onUndo:function(){}}; }
     return (g.tipo==='construir')?montarConstruir(host,g):montarIdentificar(host,g); }
@@ -16301,7 +16326,7 @@ function ensureCSS(){
   .cad-replay.playing{opacity:.6}
   .cad-answers{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
   @media(min-width:720px){ .cad-answers{grid-template-columns:repeat(4,1fr)} }
-  .cad-ans{position:relative;background:#fff !important;border:1.6px solid rgba(120,120,160,.28);border-radius:12px;padding:16px 12px 22px;font-weight:800;font-size:15px;color:#25203a !important;cursor:pointer;transition:.14s;text-align:center}
+  .cad-ans{position:relative;background:#fff;border:1.6px solid rgba(120,120,160,.28);border-radius:12px;padding:16px 12px 22px;font-weight:800;font-size:15px;color:#25203a;cursor:pointer;transition:.14s;text-align:center}
   .cad-ans .lbl{color:#25203a}
   .cad-ans:hover{border-color:${ROSA};transform:translateY(-2px)}
   .cad-ans .ab{position:absolute;right:9px;bottom:6px;font-size:11px;font-weight:700;color:#9a93b5;letter-spacing:.02em}
