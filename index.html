@@ -655,6 +655,37 @@
   #ppAlumnoSim .sim-enter{ animation:simEnter .44s cubic-bezier(.2,.8,.25,1) both }
   @keyframes simEnter{ 0%{opacity:0; transform:translateY(20px) scale(.965)} 55%{opacity:1; transform:translateY(-3px) scale(1.006)} 100%{opacity:1; transform:none} }
 
+  /* ===== Transición tipo juego entre ejercicios ===== */
+  @keyframes simSlideIn{ 0%{opacity:0; transform:translateX(48px) scale(.97)} 60%{opacity:1} 100%{opacity:1; transform:none} }
+  @keyframes simSlideInL{ 0%{opacity:0; transform:translateX(-48px) scale(.97)} 60%{opacity:1} 100%{opacity:1; transform:none} }
+  @keyframes simSlideOut{ 0%{opacity:1; transform:none} 100%{opacity:0; transform:translateX(-52px) scale(.965)} }
+  @keyframes simSlideOutR{ 0%{opacity:1; transform:none} 100%{opacity:0; transform:translateX(52px) scale(.965)} }
+  #ppAlumnoSim .sim-slide-in{ animation:simSlideIn .36s cubic-bezier(.2,.8,.25,1) both }
+  #ppAlumnoSim .sim-slide-in-l{ animation:simSlideInL .36s cubic-bezier(.2,.8,.25,1) both }
+  #ppAlumnoSim .sim-slide-out{ animation:simSlideOut .19s cubic-bezier(.4,0,1,.6) both }
+  #ppAlumnoSim .sim-slide-out-r{ animation:simSlideOutR .19s cubic-bezier(.4,0,1,.6) both }
+
+  /* ===== Pantalla "Corrigiendo…" (sensación de cómputo) ===== */
+  @keyframes corrSpin{ to{ transform:rotate(360deg) } }
+  @keyframes corrChipOn{ 0%{opacity:.25; transform:scale(.82)} 60%{transform:scale(1.14)} 100%{opacity:1; transform:scale(1)} }
+  @keyframes corrScan{ 0%{left:-32%} 100%{left:132%} }
+  #ppAlumnoSim .corr-ring{ width:76px;height:76px;border-radius:50%;border:6px solid rgba(255,255,255,.12); border-top-color:#5bd0ff; border-right-color:#a974ff; animation:corrSpin .8s linear infinite; margin:0 auto }
+  #ppAlumnoSim .corr-chip{ width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#cdbcff;opacity:.25;transform:scale(.82) }
+  #ppAlumnoSim .corr-chip.on{ animation:corrChipOn .32s ease both; background:linear-gradient(135deg,rgba(59,208,143,.28),rgba(91,208,255,.28)); border-color:rgba(91,208,255,.5);color:#eafff6 }
+  #ppAlumnoSim .corr-bar{ position:relative;height:9px;border-radius:99px;background:rgba(255,255,255,.10);overflow:hidden }
+  #ppAlumnoSim .corr-bar>i{ position:absolute;top:0;height:100%;width:30%;border-radius:99px;background:linear-gradient(90deg,#a974ff,#5bd0ff,#ff5ccd);animation:corrScan 1.05s ease-in-out infinite }
+
+  /* ===== Revelar la nota ===== */
+  @keyframes notaPop{ 0%{opacity:0; transform:scale(.4)} 62%{opacity:1; transform:scale(1.14)} 100%{transform:scale(1)} }
+  #ppAlumnoSim .nota-pop{ animation:notaPop .52s cubic-bezier(.2,.9,.25,1) both }
+  @keyframes ringPulse{ 0%{box-shadow:0 0 0 0 rgba(91,208,255,.45)} 100%{box-shadow:0 0 0 30px rgba(91,208,255,0)} }
+  #ppAlumnoSim .nota-ring{ animation:ringPulse 1.3s ease-out 2 }
+  @keyframes confFall{ 0%{opacity:1; transform:translateY(-14vh) rotate(0)} 100%{opacity:.12; transform:translateY(98vh) rotate(680deg)} }
+  #ppAlumnoSim .conf{ position:fixed;top:0;width:10px;height:14px;border-radius:2px;z-index:6;pointer-events:none;animation:confFall linear forwards }
+
+  @media (prefers-reduced-motion: reduce){ #ppAlumnoSim .sim-slide-in,#ppAlumnoSim .sim-slide-in-l,#ppAlumnoSim .sim-slide-out,#ppAlumnoSim .sim-slide-out-r,#ppAlumnoSim .nota-pop,#ppAlumnoSim .corr-ring,#ppAlumnoSim .corr-bar>i{ animation:none !important } }
+
   /* el módulo interior, un poco más integrado con la tarjeta glass */
   #ppAlumnoSim .sim-card #simScore{
     background:linear-gradient(180deg, rgba(12,18,46,.66), rgba(9,13,34,.72));
@@ -8309,15 +8340,19 @@ function openTerminos(){
 /* SFX · sonidos sutiles y satisfactorios para la ficha (WebAudio, sin ficheros).
    blip = la nota del ghost cambia (muy ligero, con throttle) · tap = botón · next/back = navegar. */
 window.SFX = (function(){
-  var ctx=null, lastBlip=0, on=true;
-  function ac(){ if(!ctx){ try{ ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ ctx=null; } } if(ctx && ctx.state==='suspended'){ try{ ctx.resume(); }catch(e){} } return ctx; }
-  function tone(freq,t0,dur,type,vol){ if(!on) return; var c=ac(); if(!c) return; try{ var o=c.createOscillator(),g=c.createGain(); o.type=type||'sine'; o.frequency.value=freq; o.connect(g); g.connect(c.destination); var t=c.currentTime+t0; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol),t+0.006); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.start(t); o.stop(t+dur+0.03); }catch(e){} }
+  var ctx=null, bus=null, lastBlip=0, on=true;
+  function ac(){ if(!ctx){ try{ ctx=new (window.AudioContext||window.webkitAudioContext)();
+      bus=ctx.createGain(); bus.gain.value=0.8;
+      var lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=2300; lp.Q.value=0.3;   // quita aspereza de agudos
+      bus.connect(lp); lp.connect(ctx.destination);
+    }catch(e){ ctx=null; } } if(ctx && ctx.state==='suspended'){ try{ ctx.resume(); }catch(e){} } return ctx; }
+  function tone(freq,t0,dur,type,vol){ if(!on) return; var c=ac(); if(!c) return; try{ var o=c.createOscillator(),g=c.createGain(); o.type=type||'sine'; o.frequency.value=freq; o.connect(g); g.connect(bus||c.destination); var t=c.currentTime+t0; g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(Math.max(0.0002,vol),t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.start(t); o.stop(t+dur+0.03); }catch(e){} }
   return {
-    blip:function(){ var t=(typeof performance!=='undefined'?performance.now():Date.now()); if(t-lastBlip<36) return; lastBlip=t; tone(1046.5,0,0.05,'sine',0.032); },
-    tap:function(){ tone(560,0,0.05,'triangle',0.05); tone(840,0.005,0.045,'sine',0.02); },
-    next:function(){ tone(587.33,0,0.10,'triangle',0.06); tone(880,0.05,0.12,'triangle',0.06); tone(1174.66,0.10,0.16,'sine',0.05); },
-    back:function(){ tone(523.25,0,0.09,'triangle',0.045); tone(392,0.05,0.11,'sine',0.04); },
-    ok:function(){ tone(659.25,0,0.12,'sine',0.06); tone(987.77,0.07,0.16,'sine',0.05); },
+    blip:function(){ var t=(typeof performance!=='undefined'?performance.now():Date.now()); if(t-lastBlip<36) return; lastBlip=t; tone(1046.5,0,0.05,'sine',0.026); },
+    tap:function(){ tone(523.25,0,0.06,'sine',0.042); tone(783.99,0.018,0.07,'sine',0.028); },   // "tick" suave y satisfactorio (sin triangle)
+    next:function(){ tone(587.33,0,0.12,'sine',0.05); tone(880,0.06,0.16,'sine',0.044); },
+    back:function(){ tone(523.25,0,0.10,'sine',0.04); tone(392,0.05,0.12,'sine',0.036); },
+    ok:function(){ tone(659.25,0,0.13,'sine',0.05); tone(987.77,0.08,0.18,'sine',0.044); },
     setOn:function(v){ on=!!v; }
   };
 })();
@@ -11635,7 +11670,7 @@ function __grados_marker__(){}
   function conVistaMedible(viewId, fn){
     const view=document.getElementById(viewId);
     const prev=view.getAttribute('style');
-    view.style.cssText='position:absolute;left:-99999px;top:0;display:block;width:760px;visibility:hidden';
+    view.style.cssText='position:absolute;left:-99999px;top:0;display:block;width:794px;visibility:hidden';
     let out=null;
     try{ out=fn(); }catch(e){ console.warn('motor',viewId,e); }
     if(prev==null) view.removeAttribute('style'); else view.setAttribute('style',prev);
@@ -11654,11 +11689,17 @@ function __grados_marker__(){}
     window.acoIncluir7=!!PP.config.opciones.acorde7;
     const m=MOTOR[key];
     if(m){
-      let alumnoSvg=null, solSvg=null, qLab=[], aLab=[], solData=null;
+      let alumnoSvg=null, solSvg=null, qLab=[], aLab=[], solData=null, noteFr=null;
       conVistaMedible(m.view, ()=>{
         window[m.fn]();                                  // genera el ejercicio real
         if(typeof m.post==='function'){ try{ m.post(); }catch(e){} }   // re-render especial (hueco de clave)
         alumnoSvg=svgString(svgDe(m.host));
+        if(key==='cla_b'){ try{   // fracciones X reales de cada cabeza -> etiquetas justo debajo de la nota
+          var _h=document.getElementById(m.host), _s=_h&&_h.querySelector('svg');
+          if(_s){ var _vb=(_s.getAttribute('viewBox')||'').split(/\s+/).map(parseFloat), _x0=(_vb.length===4?_vb[0]:0), _W=(_vb.length===4?_vb[2]:(parseFloat(_s.getAttribute('width'))||760));
+            var _fr=[]; _s.querySelectorAll('.vf-notehead').forEach(function(nh){ try{ var b=nh.getBBox(); _fr.push((b.x+b.width/2-_x0)/_W); }catch(e){} });
+            _fr.sort(function(a,b){return a-b;}); if(_fr.length) noteFr=_fr; }
+        }catch(e){} }
         if(typeof m.q==='function'){ try{ qLab=m.q()||[]; }catch(e){} }   // etiquetas de pregunta
         if(typeof m.a==='function'){ try{ aLab=m.a()||[]; }catch(e){} }   // etiquetas de respuesta (rojo)
         if(typeof m.solData==='function'){ try{ solData=m.solData(); }catch(e){} }  // solución estructurada (para corrección interactiva)
@@ -11667,6 +11708,8 @@ function __grados_marker__(){}
       if(!solSvg) solSvg=alumnoSvg;                      // sin solución dibujada -> mismo pentagrama + respuestas en rojo
       const ej={ key, enun:ENUN[key]||'', render:{kind:'svg', svg:alumnoSvg}, layout:m.layout, n:m.n,
                labelsTop:qLab, solLabels:aLab, _solSvg:solSvg };
+      if(key==='ton_arm_tono') ej._dosLineas=true;   // dos líneas bajo cada compás: Mayor (arriba) y relativa menor (abajo)
+      if(noteFr && noteFr.length) ej._noteFr=noteFr;  // cla_b: alinear etiquetas bajo las cabezas (mismo eje X)
       if(m.ruedas && solData){ ej._interactivo='ruedas'; ej._ruedas=m.ruedas; ej._solData=solData; }
       else if(m.notaB && solData){ ej._interactivo='notaB'; ej._notaB=m.notaB; ej._solData=solData; }
       else if(m.enarm && solData){ ej._interactivo='enarm'; ej._enarm=m.enarm; ej._solData=solData; }
@@ -11709,10 +11752,10 @@ function __grados_marker__(){}
       return { key, enun:ENUN.aco_construir, _aco:(window.ACORD?window.ACORD.generar('construir'):null), _acoTipo:'construir', _interactivo:'aco' };
     }
     if(key==='adorno_quiz'){
-      return { key, enun:ENUN.adorno_quiz, _quiz:(window.ADORNO?window.ADORNO.generar():null), _quizM:'ADORNO', _interactivo:'quiz' };
+      return { key, enun:ENUN.adorno_quiz, _pdfEnun:'Marca la respuesta correcta: test y verdadero/falso.', _quiz:(window.ADORNO?window.ADORNO.generar():null), _quizM:'ADORNO', _interactivo:'quiz' };
     }
     if(key==='abrev_quiz'){
-      return { key, enun:ENUN.abrev_quiz, _quiz:(window.ABREV?window.ABREV.generar():null), _quizM:'ABREV', _interactivo:'quiz' };
+      return { key, enun:ENUN.abrev_quiz, _pdfEnun:'Marca la respuesta correcta: test y verdadero/falso.', _quiz:(window.ABREV?window.ABREV.generar():null), _quizM:'ABREV', _interactivo:'quiz' };
     }
     if(key==='cadencias_quiz'){
       return { key, enun:ENUN.cadencias_quiz, _pdfEnun:'Analiza los acordes y marca qué cadencia es.', _cad:(window.CAD?window.CAD.generar():null), _interactivo:'cad' };
@@ -11823,6 +11866,8 @@ function __grados_marker__(){}
     // FASE 6.7 · puntos de guardado (solo modo alumno; el profe nunca guarda)
     const esAlumnoProg = !!window.__SUITE_ALUMNO;
     let maxAvance=0;           // ejercicios COMPLETADOS (índice máximo alcanzado)
+    let animDir=null;          // 'fwd' | 'back' | null -> dirección de la transición de tarjeta
+    const reduceMotion=()=>{ try{ return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
     let reanudado=null;
     if(esAlumnoProg && window.__SUITE_REANUDAR){
       const r=window.__SUITE_REANUDAR; window.__SUITE_REANUDAR=null;
@@ -11862,16 +11907,24 @@ function __grados_marker__(){}
     };
     const btn=(id,txt,primary)=> '<button id="'+id+'" class="'+(primary?'sim-btn-primary':'sim-btn-ghost')+'">'+txt+'</button>';
 
-    // --- sonido de refuerzo positivo (WebAudio, sin ficheros) ---
-    let audioCtx=null;
-    function ensureAudio(){ if(!audioCtx){ try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx=null; } } return audioCtx; }
+    // --- sonidos SUAVES y satisfactorios (WebAudio, sin ficheros; nada estridente ni fuerte) ---
+    // Todo pasa por un filtro paso-bajo (quita la aspereza de los agudos) y va a volumen bajo.
+    let audioCtx=null, sfxBus=null;
+    function ensureAudio(){ if(!audioCtx){ try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+        sfxBus=audioCtx.createGain(); sfxBus.gain.value=0.85;
+        const lp=audioCtx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=2400; lp.Q.value=0.3;
+        sfxBus.connect(lp); lp.connect(audioCtx.destination);
+      }catch(e){ audioCtx=null; } } if(audioCtx && audioCtx.state==='suspended'){ try{ audioCtx.resume(); }catch(e){} } return audioCtx; }
     function tono(freq, t0, dur, type, vol){ const c=ensureAudio(); if(!c) return; const o=c.createOscillator(), g=c.createGain();
-      o.type=type||'sine'; o.frequency.value=freq; o.connect(g); g.connect(c.destination);
-      const t=c.currentTime+t0; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol||0.18,t+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-      o.start(t); o.stop(t+dur+0.02); }
-    function sonidoAvance(){ // arpegio ascendente breve y alegre
-      tono(523.25,0,0.18,'triangle',0.16); tono(659.25,0.07,0.18,'triangle',0.16); tono(783.99,0.14,0.26,'triangle',0.18); }
-    function sonidoFinal(){ tono(523.25,0,0.2,'triangle',0.16); tono(659.25,0.09,0.2,'triangle',0.16); tono(783.99,0.18,0.2,'triangle',0.16); tono(1046.5,0.27,0.4,'triangle',0.2); }
+      o.type=type||'sine'; o.frequency.value=freq; o.connect(g); g.connect(sfxBus||c.destination);
+      const t=c.currentTime+t0, v=(vol||0.06); g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(v,t+0.03); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);   // ataque suave (30ms) -> sin "clic"
+      o.start(t); o.stop(t+dur+0.03); }
+    function sonidoAvance(){ tono(587.33,0,0.15,'sine',0.055); tono(880,0.055,0.22,'sine',0.05); }         // "pop" suave ascendente
+    function sonidoFinal(){ tono(659.25,0,0.22,'sine',0.055); tono(987.77,0.10,0.34,'sine',0.05); }
+    function sonidoNota(fest){   // revelar nota: arpegio alegre si va bien; muy suave si no (para no ofender)
+      if(fest){ [523.25,659.25,783.99,1046.5].forEach((f,k)=> tono(f, k*0.10, 0.36, 'sine', 0.06)); }
+      else { tono(523.25,0,0.32,'sine',0.04); tono(659.25,0.14,0.36,'sine',0.038); } }
+    function sonidoTic(){ tono(660,0,0.05,'sine',0.022); }   // tic muy suave (corrigiendo)
 
     function mostrar(){
       head.textContent=tituloFicha()+' · ejercicio '+(i+1)+' de '+n;
@@ -11925,7 +11978,8 @@ function __grados_marker__(){}
                 : '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px;font-style:italic">Simulación: aquí el alumno resolvería el ejercicio (colocar notas, escribir, elegir…).</div>';
       const areaItem = AREA_DE[item.key];
       const practiBtn = areaItem ? '<div style="margin-top:16px"><button class="simPracticaLive sim-practica-btn" data-key="'+item.key+'">No lo sé hacer, necesito practicar esto ↗</button></div>' : '';
-      main.innerHTML='<div class="pp-hide-sol sim-card sim-enter" style="max-width:min(1120px,95vw);width:100%;align-self:flex-start">'+
+      const entClass = animDir==='fwd' ? 'sim-slide-in' : (animDir==='back' ? 'sim-slide-in-l' : 'sim-enter'); animDir=null;
+      main.innerHTML='<div class="pp-hide-sol sim-card '+entClass+'" style="max-width:min(1120px,95vw);width:100%;align-self:flex-start">'+
           '<div class="sim-eyebrow">Ejercicio '+(i+1)+'</div>'+
           '<div class="sim-enun">'+esc(item.ej.enun||item.label)+'</div>'+
           '<div id="simScore"></div>'+
@@ -11979,7 +12033,11 @@ function __grados_marker__(){}
       const liveBtn=main.querySelector('.simPracticaLive');
       if(liveBtn){ liveBtn.onclick=()=>{ modalPracticar(liveBtn.dataset.key); }; }
       foot.innerHTML = btn('simPrev','‹ Anterior') + btn('simNext', i===n-1?'Enviar y ver puntuación ✓':'Siguiente ›', true);
-      const p=ov.querySelector('#simPrev'); p.style.visibility=(i===0?'hidden':'visible'); p.onclick=()=>{ if(i>0){ if(window.SFX) window.SFX.back(); i--; if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e){} } mostrar(); } };
+      const p=ov.querySelector('#simPrev'); p.style.visibility=(i===0?'hidden':'visible'); p.onclick=()=>{ if(i>0){ if(window.SFX) window.SFX.back();
+        const card=main.querySelector('.sim-card');
+        const go=()=>{ i--; if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e){} } animDir='back'; mostrar(); };
+        if(card && !reduceMotion()){ card.classList.add('sim-slide-out-r'); setTimeout(go, 160); } else go();
+      } };
       ov.querySelector('#simNext').onclick=()=>{
         // grados: obliga a señalar el grado antes de pasar/enviar
         if(item.ej._interactivo==='grado'){
@@ -11987,14 +12045,14 @@ function __grados_marker__(){}
           if(!marcado){ mostrarBannerSim('Tienes que señalar el grado: toca la nota que crees que es la respuesta para rodearla.'); return; }
         }
         if(i<n-1){
-          i++;
-          if(i>maxAvance) maxAvance=i;
           try{ sonidoAvance(); }catch(e){}
-          // FASE 6.7 · PUNTO DE GUARDADO: al pasar de ejercicio se persiste
-          // el progreso (respuestas + posición). Fire-and-forget.
-          if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e){} }
-          mostrar();
-        } else { enviado=true; try{ sonidoFinal(); }catch(e){} pantallaFinal(); }
+          const card=main.querySelector('.sim-card');
+          // transición tipo juego: la tarjeta actual sale y entra la siguiente
+          const go=()=>{ i++; if(i>maxAvance) maxAvance=i;
+            if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e){} }   // FASE 6.7 · punto de guardado
+            animDir='fwd'; mostrar(); };
+          if(card && !reduceMotion()){ card.classList.add('sim-slide-out'); setTimeout(go, 172); } else go();
+        } else { enviado=true; try{ sonidoFinal(); }catch(e){} pantallaCorrigiendo(pantallaFinal); }
       };
       main.scrollTop=0;
     }
@@ -12007,6 +12065,32 @@ function __grados_marker__(){}
       bn.textContent=msg;
       requestAnimationFrame(()=>{ bn.style.opacity='1'; bn.style.top='84px'; });
       clearTimeout(bn._t); bn._t=setTimeout(()=>{ bn.style.opacity='0'; bn.style.top='74px'; }, 3200);
+    }
+    function lanzarConfeti(){ if(reduceMotion()) return; const cols=['#ff5ccd','#a974ff','#5bd0ff','#5bf0c0','#ffd76a'];
+      for(let k=0;k<90;k++){ const s=document.createElement('span'); s.className='conf';
+        s.style.left=(Math.random()*100)+'vw'; s.style.background=cols[k%cols.length];
+        s.style.width=(7+Math.random()*7).toFixed(1)+'px'; s.style.height=(9+Math.random()*8).toFixed(1)+'px';
+        s.style.animationDuration=(1.9+Math.random()*1.7).toFixed(2)+'s'; s.style.animationDelay=(Math.random()*0.5).toFixed(2)+'s';
+        ov.appendChild(s); setTimeout(()=>{ try{ s.remove(); }catch(e){} }, 4600);
+      }
+    }
+    // Animación de "corrección" (sensación de cómputo) ANTES de mostrar la nota.
+    function pantallaCorrigiendo(cb){
+      foot.innerHTML=''; bar.style.width='100%'; head.textContent=tituloFicha()+' · corrigiendo…';
+      const chips=PP.ficha.map((it,idx)=>'<span class="corr-chip" data-ci="'+idx+'">'+(idx+1)+'</span>').join('');
+      main.innerHTML='<div class="sim-card sim-enter" style="max-width:640px;width:100%;align-self:center;text-align:center">'+
+          '<div class="corr-ring"></div>'+
+          '<div style="font-size:23px;font-weight:900;color:#f6f3ff;margin-top:20px">Corrigiendo tu ficha…</div>'+
+          '<div style="color:#9aa3c0;font-size:13px;margin-top:6px">Revisando cada ejercicio</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:20px auto 16px;max-width:430px">'+chips+'</div>'+
+          '<div class="corr-bar" style="max-width:360px;margin:0 auto"><i></i></div>'+
+        '</div>';
+      main.scrollTop=0;
+      if(reduceMotion()){ setTimeout(cb, 350); return; }
+      const chipEls=[].slice.call(main.querySelectorAll('.corr-chip'));
+      const per=Math.max(110, Math.min(280, Math.floor(1150/Math.max(1,chipEls.length))));
+      chipEls.forEach((el,idx)=> setTimeout(()=>{ el.classList.add('on'); el.textContent='✓'; try{ sonidoTic(); }catch(e){} }, 260+idx*per) );
+      setTimeout(cb, Math.max(1450, 260+chipEls.length*per+560));
     }
     function pantallaFinal(){
       bar.style.width='100%'; head.textContent=tituloFicha()+' · corregida';
@@ -12094,13 +12178,16 @@ function __grados_marker__(){}
       const notaSimulada = haySimulado
         ? '<div style="margin-top:6px;color:#b6abdf;font-size:11.5px;font-style:italic">Algunas puntuaciones aún son simuladas (todos los ejercicios ya se corrigen de verdad).</div>'
         : '';
+      const fest = media>=70;                 // 7 o más -> celebración
+      const subtle = media<50;                // menos de 5 -> muy sutil (no ofender)
+      const titulo2 = fest ? '¡Genial! 🎉' : (subtle ? '¡Buen intento! Sigue practicando 💪' : '¡Bien hecho! 👍');
       const aproboBadge = media>=50
         ? 'background:linear-gradient(120deg,#34d399,#5bd0ff);color:#06311f'
-        : 'background:linear-gradient(120deg,#ff5ccd,#a974ff);color:#2a0b2e';
+        : 'background:linear-gradient(120deg,#ff9ad8,#c9a8ff);color:#2a0b2e';   // suave, no agresivo
       main.innerHTML='<div class="sim-card sim-enter" style="max-width:880px;width:100%;align-self:flex-start">'+
           '<div style="text-align:center;margin-bottom:8px">'+
-            '<div style="font-size:30px;font-weight:900;color:#f6f3ff">¡Ficha terminada! ✨</div>'+
-            '<div style="margin-top:14px;display:inline-block;'+aproboBadge+';font-weight:900;font-size:20px;padding:12px 28px;border-radius:99px;box-shadow:0 12px 30px rgba(169,116,255,.4)">Puntuación: '+nota+' / 10 · '+media+'%</div>'+
+            '<div style="font-size:30px;font-weight:900;color:#f6f3ff">'+titulo2+'</div>'+
+            '<div id="simNotaBadge" class="'+(fest?'nota-pop nota-ring':'nota-pop')+'" style="margin-top:14px;display:inline-block;'+aproboBadge+';font-weight:900;font-size:22px;padding:12px 30px;border-radius:99px;box-shadow:0 12px 30px rgba(169,116,255,.4)">Puntuación: <span id="simNota">0,0</span> / 10 · <span id="simPct">0</span>%</div>'+
             '<div style="margin-top:12px;color:#c7bff0;font-size:13.5px">Resumen de tus respuestas. Los ejercicios con menos del 50% tienen un enlace para practicar.</div>'+
             '<div style="margin-top:10px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:12.5px;font-weight:700">'+
               '<span style="color:#16a34a">● lo que hiciste bien</span>'+
@@ -12112,6 +12199,20 @@ function __grados_marker__(){}
           '</div>'+
           '<div style="margin-top:14px">'+cuerpo+'</div>'+
         '</div>';
+      main.scrollTop=0;
+      // REVELAR la nota: cuenta ascendente + celebración (≥7) o muy sutil (<5)
+      (function(){
+        const notaEl=main.querySelector('#simNota'), pctEl=main.querySelector('#simPct');
+        try{ sonidoNota(fest); }catch(e){}
+        const setFin=()=>{ if(notaEl) notaEl.textContent=nota; if(pctEl) pctEl.textContent=media; if(fest) lanzarConfeti(); };
+        if(reduceMotion() || !notaEl){ setFin(); return; }
+        const dur=fest?1150:850, t0=(window.performance&&performance.now)?performance.now():Date.now();
+        (function step(){ const now=(window.performance&&performance.now)?performance.now():Date.now();
+          const p=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-p,3);
+          notaEl.textContent=((media/10)*e).toFixed(1).replace('.',','); if(pctEl) pctEl.textContent=Math.round(media*e);
+          if(p<1) requestAnimationFrame(step); else setFin();
+        })();
+      })();
       main.querySelectorAll('.simSolHost').forEach(hostEl=>{ const k=parseInt(hostEl.dataset.k,10);
         const it=PP.ficha[k];
         let hecho=false;
@@ -12945,7 +13046,7 @@ function __grados_marker__(){}
     }
     if(ej._aco){
       if(!window.ACORD) return null;
-      const host=hostOculto(); host.innerHTML=''; host.style.width='880px';
+      const host=hostOculto(); host.innerHTML=''; host.style.width='838px';   // ancho unificado (~152 mm, como escalas)
       try{ if(ej._acoTipo==='construir') window.ACORD.fpPintaConstruir(host, ej._aco, esSolucion); else window.ACORD.fpPintaIdentificar(host, ej._aco, esSolucion); }catch(e){ host.style.width=''; return null; }
       await nextPaint();
       { const svg=host.querySelector('svg'); if(!svg){ host.style.width=''; return null; }
@@ -12955,7 +13056,7 @@ function __grados_marker__(){}
     }
     if(ej._inv){
       if(!window.INV_INT) return null;
-      const host=hostOculto(); host.innerHTML=''; host.style.width='860px';
+      const host=hostOculto(); host.innerHTML=''; host.style.width=(ej._invTipo==='simples'?'762px':'860px');   // simples: ancho unificado (~152 mm); compuestos: pentagrama doble (~148, limitado por altura)
       try{ if(ej._invTipo==='compuestos') window.INV_INT.fpPintaCompuestos(host, ej._inv, esSolucion); else window.INV_INT.fpPintaSimples(host, ej._inv, esSolucion); }catch(e){ host.style.width=''; return null; }
       await nextPaint();
       { const svg=host.querySelector('svg'); if(!svg){ host.style.width=''; return null; }
@@ -13260,11 +13361,15 @@ function __grados_marker__(){}
     const W=210, H=297, M=14, CW=W-2*M;
     const titulo=tituloFicha()+(esSolucion?' — Solución':'');
     const n=PP.ficha.length;
-    const porPagina=Math.min(5, Math.max(1, Math.ceil(n/2)));   // <=10 ejercicios -> 5/carilla -> 2 carillas
-    const nPaginas=Math.max(2, Math.ceil(n/porPagina));
     const yBot=H-10;
     const topDe=(page)=> page===1?33:16;                // carilla 2+ sin encabezado: empieza arriba
-    const blockHDe=(page)=> (yBot-topDe(page))/porPagina;
+    // MÓDULOS INTERCAMBIABLES: alto de tarjeta FIJO, igual con 5, 7, 10 ó 24 ejercicios.
+    // 5 caben en la carilla 1 (con encabezado); 6 ejercicios = 5 + 1 módulo en la 2ª carilla.
+    const POR_PAGINA=5;
+    const MOD_H=(yBot-33)/POR_PAGINA;                   // ~50,8 mm fijo
+    const porPagina=POR_PAGINA;
+    const nPaginas=Math.max(1, Math.ceil(n/porPagina));
+    const blockHDe=(page)=> MOD_H;                       // mismo alto en TODAS las páginas
 
     function cabecera(page){
       if(page!==1){ return; }                            // solo la primera carilla lleva título y nombre
@@ -13302,11 +13407,16 @@ function __grados_marker__(){}
         doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(232,67,147);
         doc.text(item.n+'.', M+4, by+8);
         const numW=doc.getTextWidth(item.n+'.  ');
-        doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(30,34,58);
-        const enun=pdfSafe(ej._pdfEnun||ej.enun||'');
-        const lineas=doc.splitTextToSize(enun, CW-numW-8);
-        doc.text(lineas, M+4+numW, by+8);
-        const textH=Math.max(7, lineas.length*4.6);
+        let textH;
+        if(ej._terminos){                                     // términos: SIN enunciado (cada apartado A/B/C ya se explica solo) -> aire arriba y mejor reparto
+          textH=4.5;
+        } else {
+          doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(30,34,58);
+          const enun=pdfSafe(ej._pdfEnun||ej.enun||'');
+          const lineas=doc.splitTextToSize(enun, CW-numW-8);
+          doc.text(lineas, M+4+numW, by+8);
+          textH=Math.max(7, lineas.length*4.6);
+        }
         const labels=(ej.labelsTop||ej.labels||[]).filter(x=>x!=null).map(pdfSafe);
         const solLabels=(esSolucion?(ej.solLabels||[]):[]).map(x=>x==null?'':pdfSafe(x));
         const esCompas=(item.key==='com_clasif');
@@ -13317,8 +13427,9 @@ function __grados_marker__(){}
         const esAco=!!ej._aco;
         const esQuiz=!!ej._quiz;
         const esCad=!!ej._cad;
-        const hayEtq = labels.some(Boolean) || solLabels.some(Boolean);
-        const boxTop=by+8+textH-3, boxBot=by+blockH-3-((esCompas||esVecinos||esEnaAdv||esInv||esAco||esQuiz)?0:(hayEtq?(solLabels.some(Boolean)?9:5):0));
+        const esRel=!!ej._dosLineas;                                  // ton_arm_tono: dos líneas (Mayor / relativa menor)
+        const hayEtq = esRel || labels.some(Boolean) || solLabels.some(Boolean);
+        const boxTop=by+8+textH-3, boxBot=by+blockH-3-((esCompas||esVecinos||esEnaAdv||esInv||esAco||esQuiz)?0:(esRel?15:(hayEtq?(solLabels.some(Boolean)?9:5):0)));
         const boxH=Math.max(8, boxBot-boxTop), boxW=CW-12;
 
         if(esVecinos){
@@ -13342,7 +13453,7 @@ function __grados_marker__(){}
           bold('A - Une cada término con su categoría:', colIzqX, ay); ay+=6;
           const A=T.A||[];
           const tX=colIzqX+1, dotAx=colIzqX+colW*0.40, dotBx=colIzqX+colW*0.54, cX=colIzqX+colW*0.58;
-          const rowH=5.6, yA0=ay;
+          const yA0=ay, rowH=Math.max(5.6, Math.min(7.8, (boxBot-yA0-2)/Math.max(1,A.length-1)));   // reparte las filas por todo el módulo
           const catsShuf=A.map(f=>f.label).slice().sort(()=>Math.random()-0.5);
           A.forEach((f,i)=>{ const y=yA0+i*rowH; norm(f.term, tX, y); dot(dotAx, y-1); });
           catsShuf.forEach((c,i)=>{ const y=yA0+i*rowH; dot(dotBx, y-1); norm(c, cX, y); });
@@ -13383,17 +13494,29 @@ function __grados_marker__(){}
             if(iw>40){ const s=40/iw; iw*=s; ih2*=s; }
             try{ doc.addImage(img.png,'PNG', M+8, boxTop+1, iw, ih2); }catch(e){}
           }
-          let ly=boxTop+4; const lx=M+52;
+          const lx=M+52;
           const ans=ej.comAns||[]; const figRow=figs[k]||[];
+          // MISMO margen entre TODAS las preguntas (simétrico); rowH uniforme que deja sitio al cuadrado
+          const nQ=labels.length||1;
+          const rowH=Math.max(6.4, Math.min(7.6, (boxBot-boxTop-6)/Math.max(1,nQ-1)));
+          let ly=boxTop+Math.max(3.2,(boxBot-boxTop-(nQ-1)*rowH)/2);      // bloque centrado verticalmente
+          // cuadrados ALINEADOS en una columna (tras la pregunta de figura más larga) -> simétrico
+          doc.setFont('helvetica','normal'); doc.setFontSize(9);
+          let figColX=0; labels.forEach((l,j)=>{ if(ans[j]&&ans[j].fig) figColX=Math.max(figColX, lx+doc.getTextWidth('• '+l+'  ')); });
+          figColX=Math.min(figColX||(lx+40), M+CW-6-9);
           labels.forEach((l,j)=>{
+            const a=ans[j]; const esFig=!!(a && a.fig);   // preguntas de figura -> cuadrado para dibujarla dentro
             doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(45,50,80);
             doc.text('• '+l, lx, ly);
-            if(esSolucion && ans[j]){ const a=ans[j]; const qw=doc.getTextWidth('• '+l+'    ');
-              if(a.fig && figRow[j] && figRow[j].png){ const fh=5.2, fw=Math.max(3, figRow[j].w*(fh/figRow[j].h));
-                try{ doc.addImage(figRow[j].png,'PNG', lx+qw, ly-fh+1.2, fw, fh); }catch(e){} }
-              else if(a.t){ doc.setTextColor(209,29,29); doc.setFont('helvetica','bold'); doc.text(pdfSafe(a.t), lx+qw, ly); doc.setFont('helvetica','normal'); }
+            if(esFig){
+              const bs=7, bx=figColX, byy=ly-bs+2.4;                      // columna alineada -> cuadrado
+              doc.setDrawColor(150,150,150); doc.setLineWidth(0.4); doc.roundedRect(bx, byy, bs, bs, 1, 1, 'S');
+              if(esSolucion && figRow[j] && figRow[j].png){ const fh=bs-2.6, fw=Math.max(2, figRow[j].w*(fh/figRow[j].h));
+                try{ doc.addImage(figRow[j].png,'PNG', bx+(bs-fw)/2, byy+1.3, fw, fh); }catch(e){} }
+            } else {
+              if(esSolucion && a && a.t){ const qw=doc.getTextWidth('• '+l+'   '); doc.setTextColor(209,29,29); doc.setFont('helvetica','bold'); doc.text(pdfSafe(a.t), lx+qw, ly); doc.setFont('helvetica','normal'); }
             }
-            ly+=4.8;
+            ly+=rowH;                                                     // mismo margen para todas
           });
         } else if(esEnaAdv || esInv || esAco){
           // pentagramas: escala por DISTANCIA ENTRE LÍNEAS -> mismo tamaño de líneas y cabezas en todos
@@ -13403,7 +13526,7 @@ function __grados_marker__(){}
             let iw=img.w*s, ih=img.h*s;
             if(ih>boxH){ const r=boxH/ih; iw*=r; ih*=r; }
             if(iw>boxW){ const r=boxW/iw; iw*=r; ih*=r; }
-            const ixA=M+8, iyA=boxTop+(boxH-ih)/2;   // MISMA X de inicio en todos los pentagramas
+            const ixA=M+Math.max(6,(CW-iw)/2), iyA=boxTop+(boxH-ih)/2;   // CENTRADO -> márgenes izq/dcha simétricos
             try{ doc.addImage(img.png,'PNG', ixA, iyA, iw, ih); }catch(e){}
           }
         } else if(esQuiz){
@@ -13419,7 +13542,9 @@ function __grados_marker__(){}
             const targetH=Math.min(boxH-2, 46);
             let s=targetH/img.h, iw=img.w*s, ih=img.h*s;
             if(iw>boxW){ const s2=boxW/iw; iw*=s2; ih*=s2; }
-            const ix=M+6+(boxW-iw)/2, iy=boxTop+(boxH-ih)/2;
+            const ix=M+6+(boxW-iw)/2;
+            let iy=boxTop+(boxH-ih)/2 - 4.5;               // subir un poco -> más centrado en el eje Y de la tarjeta
+            if(iy < by+9.5) iy = by+9.5;                    // sin invadir el enunciado
             try{ doc.addImage(img.png,'PNG', ix, iy, iw, ih); }catch(e){}
           }
         } else {
@@ -13431,17 +13556,39 @@ function __grados_marker__(){}
             iw=img.w*s; ih=img.h*s;
             if(ih>boxH){ const r=boxH/ih; iw*=r; ih*=r; }
             if(iw>boxW){ const r=boxW/iw; iw*=r; ih*=r; }
-            ix=M+8;                                       // MISMA X de inicio en todos los pentagramas
-            iy=boxTop+(boxH-ih)/2;
+            ix=M+Math.max(6,(CW-iw)/2);                   // CENTRADO -> márgenes izq/dcha simétricos
+            // sin texto bajo el título: pentagrama centrado en la tarjeta (3ª línea al medio).
+            // Con etiquetas/subtítulos: se deja en la caja para dejar hueco al texto de abajo.
+            iy = (!hayEtq && !esRel) ? Math.max(by+10.5, by+blockH/2-ih/2) : boxTop+(boxH-ih)/2;
             try{ doc.addImage(img.png,'PNG', ix, iy, iw, ih); }catch(e){}
           }
-          // etiquetas alineadas bajo cada compás (pregunta en azul, respuesta en rojo)
-          if(hayEtq && (iw>0)){
-            const nn=Math.max(labels.length, solLabels.length);
+          // ton_arm_tono: DOS líneas de escritura bajo cada compás (Mayor arriba, relativa menor abajo)
+          if(esRel && (iw>0)){
+            const nn=Math.max(ej.n||4, solLabels.length||0);
             const fr=fraccionesCol(nn, ej.layout, img?img.w:760);
+            const cellW=iw/nn, lineW=Math.min(30, cellW*0.74);
+            const y1=Math.min(by+blockH-9.5, iy+ih+5.2), y2=y1+6.6;    // dos renglones
+            for(let j=0;j<nn;j++){
+              const cx=ix+fr[j]*iw, x0=cx-lineW/2, x1=cx+lineW/2;
+              // dos renglones (Mayor arriba, relativa menor abajo) — sin prefijo, el alumno ya lo sabe
+              doc.setDrawColor(150,150,150); doc.setLineWidth(0.3);
+              doc.line(x0, y1, x1, y1);
+              doc.line(x0, y2, x1, y2);
+              if(esSolucion){
+                const parts=(solLabels[j]||'').split('/').map(s=>s.trim());   // "La M / Fa# m"
+                doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(209,29,29);
+                if(parts[0]) doc.text(parts[0], (x0+x1)/2, y1-1.3, {align:'center', maxWidth:lineW});
+                if(parts[1]) doc.text(parts[1], (x0+x1)/2, y2-1.3, {align:'center', maxWidth:lineW});
+              }
+            }
+          }
+          // etiquetas alineadas bajo cada compás (pregunta en azul, respuesta en rojo)
+          else if(hayEtq && (iw>0)){
+            const nn=Math.max(labels.length, solLabels.length);
+            const fr=(ej._noteFr && ej._noteFr.length===nn) ? ej._noteFr : fraccionesCol(nn, ej.layout, img?img.w:760);   // cla_b: etiquetas bajo la cabeza
             const lyQ=Math.min(by+blockH-7.5, iy+ih+3.4);
             if(labels.some(Boolean)){
-              doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(30,34,58);   // pregunta = negro (lo da el enunciado)
+              doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(45,50,80);   // etiquetas: misma tipografía/color que Términos
               labels.forEach((l,j)=>{ if(!l) return; const cx=ix+fr[j]*iw; doc.text(l, cx, lyQ, {align:'center', maxWidth:Math.max(12,iw/nn-1)}); });
             }
             if(solLabels.some(Boolean)){
@@ -13449,6 +13596,15 @@ function __grados_marker__(){}
               const lyA=lyQ+4;
               solLabels.forEach((l,j)=>{ if(!l) return; const cx=ix+fr[j]*iw; doc.text(l, cx, lyA, {align:'center', maxWidth:Math.max(12,iw/nn-1)}); });
             }
+          }
+          // GRADOS: "Respuesta" + cuadrado PEQUEÑO a su derecha (solo cabe un nombre de nota: Do, Re#, Mi♯…)
+          if(ej._interactivo==='grado'){
+            const bw=16, bh=10, bx=M+CW-6-bw, byy=by+4;
+            doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(120,124,140);
+            doc.text('Respuesta', bx-3.5, byy+bh/2+1.5, {align:'right'});           // etiqueta a la IZQUIERDA del cuadrado
+            doc.setDrawColor(150,150,150); doc.setLineWidth(0.45); doc.roundedRect(bx, byy, bw, bh, 1.5, 1.5, 'S');
+            if(esSolucion){ let ans=''; try{ ans=(ej._spec&&ej._spec.marks&&ej._spec.marks[0]&&ej._spec.marks[0].text)||''; }catch(e){}
+              if(ans){ doc.setFont('helvetica','bold'); doc.setFontSize(11.5); doc.setTextColor(209,29,29); doc.text(pdfSafe(ans), bx+bw/2, byy+bh/2+2, {align:'center', maxWidth:bw-2}); } }
           }
         }
         if(esSolucion && ej.resp && !esCompas && !esVecinos && !hayEtq){
@@ -14331,15 +14487,23 @@ function __grados_marker__(){}
                ml:[{role:'ksA',clef:true,w:wA},{role:'ksB',clef:false,w:wB}] };
       cols.push(tonCol);
     }
-    var yStave=60, LSP=15, margin=22, gapB=44;
-    var colW=cols.map(function(c){ return c.ml.reduce(function(a,m){return a+mwOf(m);},0); });
+    var yStave=52, LSP=10, margin=10;   // margen pequeño: el contenido llena el SVG (último tramo llega al final, como el resto)
+    // CLAVE del "se ve pequeño": VexFlow dibuja las cabezas/clave a tamaño fijo; si se
+    // agranda spacing_between_lines_px, el pentagrama crece pero la cabeza NO -> queda pequeña
+    // respecto al pentagrama. Con LSP=10 (por defecto) cabeza≈1 espacio, igual que el resto.
+    // Compases CORTOS (1 acorde/armadura) repartidos por la carilla con huecos.
+    function MW(m){ if(m.w) return Math.max(84, Math.round(m.w*0.9)); return m.role==='nota'?150:(m.clef?104:90); }
+    var colW=cols.map(function(c){ return c.ml.reduce(function(a,m){return a+MW(m);},0); });
     var totalCols=colW.reduce(function(a,b){return a+b;},0);
-    var W=margin*2 + totalCols + gapB*(cols.length-1);
+    var SPREAD_W=762;                                    // ancho unificado (~152 mm, como escalas): mismo inicio y fin de pentagrama que el resto
+    var nGaps=Math.max(1, cols.length-1);
+    var gapB=Math.min(150, Math.max(40, Math.round((SPREAD_W - margin*2 - totalCols)/nGaps)));
+    var W=margin*2 + totalCols + gapB*nGaps;
     var d1=document.createElement('div'); d1.className='enaadv-fila'; d1.style.cssText='background:#fff;width:'+W+'px'; host.appendChild(d1);
     var r=new VF.Renderer(d1,VF.Renderer.Backends.SVG); r.resize(W,220); var ctx=r.getContext();
     var x=margin, colX=[], stA=null, stB=null, st0=null;
     cols.forEach(function(c,ci){ colX[ci]=x;
-      c.ml.forEach(function(m){ var w=mwOf(m); var st=new VF.Stave(x,yStave,w,{spacing_between_lines_px:LSP}); if(m.clef) st.addClef('treble'); if(!st0) st0=st;
+      c.ml.forEach(function(m){ var w=MW(m); var st=new VF.Stave(x,yStave,w,{spacing_between_lines_px:LSP}); if(m.clef) st.addClef('treble'); if(!st0) st0=st;
         if(c.kind==='ton'){
           if(m.role==='ksA'){ stA=st; try{ st.addKeySignature(FIFTHS_KEY[String(c.fA)]); }catch(e){} }
           else if(m.role==='ksB'){ stB=st; if(resuelto){ try{ st.addKeySignature(FIFTHS_KEY[String(c.fB)]); }catch(e){} } }
@@ -14357,15 +14521,15 @@ function __grados_marker__(){}
       if(ci<cols.length-1) x+=gapB;
     });
     try{ var svg=d1.querySelector('svg'), NS='http://www.w3.org/2000/svg';
-      function sT(cx,y,s,sz,col,anc,w){ var t=document.createElementNS(NS,'text'); t.setAttribute('x',cx); t.setAttribute('y',y); t.setAttribute('text-anchor',anc||'middle'); t.setAttribute('font-size',sz); t.setAttribute('font-weight',w||'700'); t.setAttribute('fill',col); t.setAttribute('font-family','Helvetica,Arial,sans-serif'); t.textContent=s; svg.appendChild(t); }
+      function sT(cx,y,s,sz,col,anc,w){ var t=document.createElementNS(NS,'text'); t.setAttribute('x',cx); t.setAttribute('y',y); t.setAttribute('text-anchor',anc||'middle'); t.setAttribute('font-size',sz); t.setAttribute('font-weight',w||'700'); t.setAttribute('fill',col); t.setAttribute('stroke','none'); t.setAttribute('font-family','Helvetica,Arial,sans-serif'); t.textContent=s; svg.appendChild(t); }
       // subtitulos de columna, pegados sobre el pentagrama
       var ySub=(st0&&st0.getYForLine)?(st0.getYForLine(0)-22):26;
-      cols.forEach(function(c,ci){ sT(colX[ci]+colW[ci]/2, ySub, c.sub, '13', '#b0296e'); });
+      cols.forEach(function(c,ci){ sT(colX[ci]+colW[ci]/2, ySub, c.sub, '15', '#2d3250'); });   // tipografía unificada (como Términos): Helvetica, gris azulado, sin rosa
       // etiquetas de tonalidad, a la altura (justo debajo) del pentagrama
       if(tonCol){
-        var tci=cols.length-1, tx=colX[tci], w1=mwOf(tonCol.ml[0]), w2=mwOf(tonCol.ml[1]);
+        var tci=cols.length-1, tx=colX[tci], w1=MW(tonCol.ml[0]), w2=MW(tonCol.ml[1]);
         var yBot=(stA&&stA.getYForLine)?stA.getYForLine(4):(yStave+60); var yLab=yBot+34;
-        sT(tx+w1/2, yLab, tonCol.nomA, '13', '#111', 'middle', '800');                       // A: dada (negro), bajo el pentagrama
+        sT(tx+w1/2, yLab, tonCol.nomA, '14', '#2d3250', 'middle', '800');                    // A: dada, tipografía unificada
         if(resuelto){ sT(tx+w1+w2/2, yLab, tonCol.nomB, '13', '#c0392b', 'middle', '800'); }  // B: respuesta (rojo)
         else { var ln=document.createElementNS(NS,'line'); ln.setAttribute('x1',tx+w1+10); ln.setAttribute('x2',tx+w1+w2-10); ln.setAttribute('y1',yLab-2); ln.setAttribute('y2',yLab-2); ln.setAttribute('stroke','#c9b0be'); ln.setAttribute('stroke-width','1'); svg.appendChild(ln); }
         // recolorea en rojo SOLO la armadura respuesta (la ultima key signature dibujada)
@@ -14849,7 +15013,7 @@ function __grados_marker__(){}
 
   /* ---------------- SVG util ---------------- */
   var NS='http://www.w3.org/2000/svg';
-  function sT(svg,x,y,s,sz,col,anc,w,it){ var t=document.createElementNS(NS,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('text-anchor',anc||'middle');t.setAttribute('font-size',sz);t.setAttribute('font-weight',w||'700');t.setAttribute('fill',col);t.setAttribute('font-family','Helvetica,Arial,sans-serif'); if(it) t.setAttribute('font-style','italic'); t.textContent=s; svg.appendChild(t); return t; }
+  function sT(svg,x,y,s,sz,col,anc,w,it){ var t=document.createElementNS(NS,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('text-anchor',anc||'middle');t.setAttribute('font-size',sz);t.setAttribute('font-weight',w||'700');t.setAttribute('fill',col);t.setAttribute('stroke','none');t.setAttribute('font-family','Helvetica,Arial,sans-serif'); if(it) t.setAttribute('font-style','italic'); t.textContent=s; svg.appendChild(t); return t; }
   function dashArrow(svg,x1,y1,x2,y2,col){ var mx=(x1+x2)/2, my=Math.min(y1,y2)-26; var p=document.createElementNS(NS,'path'); p.setAttribute('d','M'+x1+','+y1+' Q'+mx+','+my+' '+x2+','+y2); p.setAttribute('fill','none'); p.setAttribute('stroke',col); p.setAttribute('stroke-width','1.6'); p.setAttribute('stroke-dasharray','4 3'); svg.appendChild(p);
     var ang=Math.atan2(y2-my, x2-mx); var ah=6; var a1=ang+2.5, a2=ang-2.5; var hd=document.createElementNS(NS,'path'); hd.setAttribute('d','M'+x2+','+y2+' L'+(x2+ah*Math.cos(a1))+','+(y2+ah*Math.sin(a1))+' M'+x2+','+y2+' L'+(x2+ah*Math.cos(a2))+','+(y2+ah*Math.sin(a2))); hd.setAttribute('stroke',col); hd.setAttribute('stroke-width','1.6'); hd.setAttribute('fill','none'); svg.appendChild(hd); }
   /* flecha discontinua recta (nota origen -> nota destino), con punta en el destino: muestra la DIRECCIÓN del salto */
@@ -14864,7 +15028,7 @@ function __grados_marker__(){}
   /* cols: [{notes:[{n,col}], lab, labcol, sub}] ; devuelve el svg */
   function drawTrebleCols(host, cols, opts){
     opts=opts||{}; host.innerHTML='';
-    var yS=64, LSP=13, margin=14;
+    var yS=64, LSP=10, margin=14;   // LSP=10 (por defecto): cabezas/clave proporcionales al pentagrama (no pequeñas)
     var defGap=(opts.gap!=null?opts.gap:30);
     var gaps=cols.map(function(c,ci){ return (c.gapAfter!=null?c.gapAfter:(ci<cols.length-1?defGap:0)); });
     var gapTotal=gaps.reduce(function(a,b){return a+b;},0);
@@ -14886,11 +15050,12 @@ function __grados_marker__(){}
     var minY=top, maxY=bot;
     cols.forEach(function(c){ (c.notes||[]).forEach(function(o){ var y=yOf(o.n); if(y<minY)minY=y; if(y>maxY)maxY=y; }); });
     (opts.extraNotes||[]).forEach(function(n){ var y=yOf(n); if(y<minY)minY=y; if(y>maxY)maxY=y; });
-    var subY=minY-16, labY=maxY+44;   // líneas de respuesta más separadas del pentagrama
+    var hasSub=cols.some(function(c){ return !!c.sub; });
+    var subY=minY-16, labY=maxY+(opts.labGap!=null?opts.labGap:44);   // líneas de respuesta separadas del pentagrama
     cols.forEach(function(c,ci){ if(c.sub) sT(svg, xs[ci]+ws[ci]/2, subY, c.sub, '12', c.subcol||PINK, 'middle', '800', c.subit);
       if(c.lab!=null){ if(c.lab===''){ var ln=document.createElementNS(NS,'line'); ln.setAttribute('x1',xs[ci]+14);ln.setAttribute('x2',xs[ci]+ws[ci]-14);ln.setAttribute('y1',labY-2);ln.setAttribute('y2',labY-2);ln.setAttribute('stroke','#c9b0be');ln.setAttribute('stroke-width','1'); svg.appendChild(ln); } else sT(svg, xs[ci]+ws[ci]/2, labY, c.lab, '13', c.labcol||'#111', 'middle', '800'); } });
     if(opts.after) opts.after(svg, {xs:xs, ws:ws, top:top, bot:bot, minY:minY, maxY:maxY, yOf:yOf, st0:st0, mw:mw, cols:cols});
-    var VBY=Math.round(subY-14), VBH=Math.round((labY+8)-VBY);
+    var VBY=Math.round((hasSub?subY:minY-6)-14), VBH=Math.round((labY+8)-VBY);   // sin subtítulos: recorta el hueco superior
     svg.setAttribute('viewBox','0 '+VBY+' '+W+' '+VBH); svg.setAttribute('height',VBH); svg.setAttribute('width',W); svg.style.display='block'; svg.style.maxWidth='100%';
     return svg;
   }
@@ -14902,14 +15067,14 @@ function __grados_marker__(){}
     g.pares.forEach(function(par,pi){
       var sh=4-par.dada[0].octave;                    // registro central: grave en 4ª octava
       var lo=shiftOct(par.dada[0],sh), hi=shiftOct(par.dada[1],sh);
-      // compás propuesta
-      cols.push({ notes:[{n:lo,col:'#000'},{n:hi,col:'#000'}], sub:(pi+1)+'. Intervalo', lab: resuelto?(par.num+ESP_LABEL[par.code]):'', labcol: resuelto?RED:'#111' });
+      // compás propuesta (sin texto encima — el enunciado ya lo explica)
+      cols.push({ notes:[{n:lo,col:'#000'},{n:hi,col:'#000'}], sub:'', lab: resuelto?(par.num+ESP_LABEL[par.code]):'', labcol: resuelto?RED:'#111' });
       var inv=invSimplePair(lo,hi);
       // compás respuesta: doble barra al cerrar la pareja + hueco grande entre parejas (dos propuestas distintas)
-      cols.push({ notes: resuelto?[{n:inv[0],col:RED},{n:inv[1],col:RED}]:[], sub:'Inviértelo', subcol:PINK,
+      cols.push({ notes: resuelto?[{n:inv[0],col:RED},{n:inv[1],col:RED}]:[], sub:'',
                   lab: resuelto?(par.invNum+ESP_LABEL[par.invCode]):'', labcol:RED, endBar:true, gapAfter:(pi===0?24:0) });
     });
-    drawTrebleCols(host, cols, {fill:true, gap:10});
+    drawTrebleCols(host, cols, {fill:true, gap:10, labGap:56});   // línea de respuesta más abajo
   }
 
   /* ---------------- render estático GRAN pentagrama (fichas/PDF/ejemplo B) ---------------- */
@@ -14944,9 +15109,9 @@ function __grados_marker__(){}
     var hintY=minY-14, labY=maxY+42;   // líneas de intervalo un poco más abajo
     var narrowH=(baseW<138);
     if(opts.after) opts.after(svg, {xs:xs, ws:ws, yOfG:yOfG, minY:minY, maxY:maxY, t0:t0, b0:b0, cols:cols});
-    cols.forEach(function(c,ci){ if(c.hint) sT(svg, xs[ci]+ws[ci]/2, hintY, narrowH?c.hint.split(' ')[0]:c.hint, narrowH?'10.5':'11.5', '#7a5a8c','middle','600', true);
+    cols.forEach(function(c,ci){ if(c.hint && !opts.noHint) sT(svg, xs[ci]+ws[ci]/2, hintY, narrowH?c.hint.split(' ')[0]:c.hint, narrowH?'10.5':'11.5', '#7a5a8c','middle','600', true);
       if(c.lab!=null){ if(c.lab===''){ var ln=document.createElementNS(NS,'line'); ln.setAttribute('x1',xs[ci]+16);ln.setAttribute('x2',xs[ci]+ws[ci]-16);ln.setAttribute('y1',labY-2);ln.setAttribute('y2',labY-2);ln.setAttribute('stroke','#c9b0be');ln.setAttribute('stroke-width','1'); svg.appendChild(ln); } else sT(svg, xs[ci]+ws[ci]/2, labY, c.lab, '13', c.labcol||'#111','middle','800'); } });
-    var VBY=Math.round(hintY-14), VBH=Math.round((labY+8)-VBY);
+    var VBY=Math.round((opts.noHint?(minY-6):hintY)-14), VBH=Math.round((labY+8)-VBY);
     svg.setAttribute('viewBox','0 '+VBY+' '+W+' '+VBH); svg.setAttribute('height',VBH); svg.setAttribute('width',W); svg.style.display='block'; svg.style.maxWidth='100%';
     return svg;
   }
@@ -14959,7 +15124,7 @@ function __grados_marker__(){}
     var steps=[cam.m2, cam.m3, cam.m4];
     for(var i=0;i<3;i++){ (function(i){ cols.push({ notes: resuelto?[{n:steps[i][0],col:RED},{n:steps[i][1],col:RED}]:[], hint:HINTS_B[i],
       lab:(i===2)?(resuelto?(g.invNum+ESP_LABEL[g.invCode]):''):null, labcol:RED }); })(i); }
-    drawGrandCols(host, cols, {});
+    drawGrandCols(host, cols, {noHint:true});   // ficha/PDF: sin texto de ayuda (lo dice el enunciado)
   }
 
   /* ---------------- EJEMPLO (visual, flechas) ---------------- */
@@ -15391,7 +15556,7 @@ function __grados_marker__(){}
     var measures=g.items.map(function(it){ return {
       main:{notes:it.voiced, col:'#000'},
       paren:true, parenNotes: resuelto ? ordenado(it).map(function(n){return {n:n,col:COL_RED};}) : [], parenText:'ordena aquí',
-      subLeft: resuelto ? (TIPOS[it.tipo].lab+' · '+INV_LAB[it.inv]) : 'tipo: ______   ·   inv.: ______',
+      subLeft: resuelto ? (TIPOS[it.tipo].lab+' · '+INV_LAB[it.inv]) : 'Acorde: _____________        inv.: ______',
       subLeftCol: resuelto ? COL_RED : '#1a1a1a' }; });
     renderSys(host, measures);
   }
@@ -15537,7 +15702,7 @@ function __grados_marker__(){}
 
   /* ---------- render ---------- */
   var NS='http://www.w3.org/2000/svg';
-  function sTxt(svg,x,y,s,sz,col,anc,w,it){ var t=document.createElementNS(NS,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('text-anchor',anc||'middle');t.setAttribute('font-size',sz);t.setAttribute('font-weight',w||'700');t.setAttribute('fill',col);t.setAttribute('font-family','Georgia,\'Times New Roman\',serif'); if(it) t.setAttribute('font-style','italic'); t.textContent=s; svg.appendChild(t); }
+  function sTxt(svg,x,y,s,sz,col,anc,w,it){ var t=document.createElementNS(NS,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('text-anchor',anc||'middle');t.setAttribute('font-size',sz);t.setAttribute('font-weight',w||'700');t.setAttribute('fill',col);t.setAttribute('stroke','none');t.setAttribute('font-family','Georgia,\'Times New Roman\',serif'); if(it) t.setAttribute('font-style','italic'); t.textContent=s; svg.appendChild(t); }
   function wavy(svg,x0,y,len,col){ var d='M'+x0+','+y, x=x0, seg=6.5, up=true; while(x<x0+len-1){ var nx=Math.min(x+seg,x0+len); d+=' Q'+(x+seg/2)+','+(y+(up?-4.2:4.2))+' '+nx+','+y; x=nx; up=!up; } var p=document.createElementNS(NS,'path'); p.setAttribute('d',d);p.setAttribute('fill','none');p.setAttribute('stroke',col);p.setAttribute('stroke-width','1.7'); svg.appendChild(p); }   // trino largo
   function prepSigno(note, adorno){ if(adorno.grace){ var ks=(adorno.grace===true)?[U]:adorno.grace; var gs=ks.map(function(k){ return new VF.GraceNote({keys:[k],duration:'8',slash:false}); }); var grp=new VF.GraceNoteGroup(gs); if(gs.length>1 && grp.beamNotes) grp.beamNotes(); note.addModifier(grp,0); } }
   function drawTrino(svg, st, note){ var nx=noteHeadCx(note); var ty=st.getYForLine(0)-11; sTxt(svg, nx-6, ty, 'tr', '16','#000','start','800', true); wavy(svg, nx+13, ty-4.5, 54, '#000'); }
@@ -15700,7 +15865,7 @@ function __grados_marker__(){}
   var NS='http://www.w3.org/2000/svg';
 
   /* ---------- helpers de dibujo ---------- */
-  function sTxt(svg,x,y,s,sz,col,anc,w,it){ var t=document.createElementNS(NS,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('text-anchor',anc||'middle');t.setAttribute('font-size',sz);t.setAttribute('font-weight',w||'700');t.setAttribute('fill',col);t.setAttribute('font-family','Georgia,\'Times New Roman\',serif'); if(it) t.setAttribute('font-style','italic'); t.textContent=s; svg.appendChild(t); }
+  function sTxt(svg,x,y,s,sz,col,anc,w,it){ var t=document.createElementNS(NS,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('text-anchor',anc||'middle');t.setAttribute('font-size',sz);t.setAttribute('font-weight',w||'700');t.setAttribute('fill',col);t.setAttribute('stroke','none');t.setAttribute('font-family','Georgia,\'Times New Roman\',serif'); if(it) t.setAttribute('font-style','italic'); t.textContent=s; svg.appendChild(t); }
   function dashHook(svg,x0,x1,y,hook,col){ var l=document.createElementNS(NS,'line'); l.setAttribute('x1',x0);l.setAttribute('y1',y);l.setAttribute('x2',x1);l.setAttribute('y2',y);l.setAttribute('stroke',col);l.setAttribute('stroke-width','1.3');l.setAttribute('stroke-dasharray','5 3'); svg.appendChild(l);
     var h=document.createElementNS(NS,'line'); h.setAttribute('x1',x1);h.setAttribute('y1',y);h.setAttribute('x2',x1);h.setAttribute('y2',y+hook);h.setAttribute('stroke',col);h.setAttribute('stroke-width','1.3'); svg.appendChild(h); }
   function wavy(svg,x0,y,len,col){ var d='M'+x0+','+y, x=x0, seg=6, up=true; while(x<x0+len-1){ var nx=Math.min(x+seg,x0+len); d+=' Q'+(x+seg/2)+','+(y+(up?-3.4:3.4))+' '+nx+','+y; x=nx; up=!up; } var p=document.createElementNS(NS,'path'); p.setAttribute('d',d);p.setAttribute('fill','none');p.setAttribute('stroke',col);p.setAttribute('stroke-width','1.5'); svg.appendChild(p); }
@@ -15837,7 +16002,8 @@ function __grados_marker__(){}
   /* ---------- render de un signo suelto (pregunta 1) ---------- */
   function renderSignoIlustra(host, code, compact){ host.innerHTML='';
     var wide=(code==='octava'||code==='octavab'||code==='gliss'||code==='portamento'||code==='tremdos'||code==='multirest'||code==='plicas');
-    var stW = !compact ? 210 : (wide?168:120);
+    var xtraWide=(code==='octava'||code==='octavab');   // 3 notas + 8va: necesitan más ancho para no comprimirse
+    var stW = !compact ? 210 : (xtraWide?200:(wide?168:120));
     var W=stW+18, fmt=stW-46, svY=compact?34:46;
     var r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,compact?114:150); var ctx=r.getContext();
     var st=new VF.Stave(6,svY,stW); st.addClef('treble').setContext(ctx).draw();
@@ -15967,16 +16133,18 @@ function __grados_marker__(){}
   window.quizFichaPinta=function(M, host, g, sol){ var mo=window[M]; host.innerHTML=''; if(!mo||!g) return;
     var W=880, H=246;   // más alto: figuras grandes + texto de respuesta grande (como el resto)
     var svg=document.createElementNS(NS,'svg'); svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.setAttribute('width',W); svg.setAttribute('height',H); host.appendChild(svg);
-    function txt(x,y,s,sz,col,w){ var t=document.createElementNS(NS,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('font-size',sz);t.setAttribute('font-weight',w||'600');t.setAttribute('fill',col||'#111');t.setAttribute('font-family','Arial,Helvetica,sans-serif'); t.textContent=s; svg.appendChild(t); }
+    function txt(x,y,s,sz,col,w){ var t=document.createElementNS(NS,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('font-size',sz);t.setAttribute('font-weight',w||'600');t.setAttribute('fill',col||'#111');t.setAttribute('stroke','none');t.setAttribute('font-family','Arial,Helvetica,sans-serif'); t.textContent=s; svg.appendChild(t); }
+    var _mc=null; function mText(s,sz,w){ if(!_mc){ try{_mc=document.createElement('canvas').getContext('2d');}catch(e){return s.length*sz*0.55;} } _mc.font=((+w>=700)?'bold ':'')+sz+'px Arial,Helvetica,sans-serif'; return _mc.measureText(s).width; }
+    function fitTxt(x,y,s,sz,col,w,maxW){ var fs=sz, tw=mText(s,fs,w); if(tw>maxW){ fs=Math.max(11, sz*maxW/tw); } txt(x,y,s,fs,col,w); }   // reduce el cuerpo si el texto no cabe en su columna (evita solapes)
     function box(x,y,mark){ var r=document.createElementNS(NS,'rect'); r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',15);r.setAttribute('height',15);r.setAttribute('rx',3);r.setAttribute('fill','none');r.setAttribute('stroke',mark?'#12a05f':'#7a8299');r.setAttribute('stroke-width',mark?2.4:1.5); svg.appendChild(r); if(mark){ var c=document.createElementNS(NS,'path'); c.setAttribute('d','M'+(x+3)+','+(y+8)+' l3,4 l6,-8'); c.setAttribute('fill','none');c.setAttribute('stroke','#0a7a52');c.setAttribute('stroke-width',2.2); svg.appendChild(c);} }
     function embed(render, x, y, targetH){ var tmp=document.createElement('div'); tmp.style.cssText='position:absolute;left:-9999px;top:0'; document.body.appendChild(tmp); try{ render(tmp); }catch(e){} var inner=tmp.querySelector('svg'); if(inner){ var vb=(inner.getAttribute('viewBox')||'0 0 100 100').split(/\s+/).map(parseFloat); var scale=targetH/(vb[3]||100); var gg=document.createElementNS(NS,'g'); gg.setAttribute('fill', inner.getAttribute('fill')||'#000'); gg.setAttribute('stroke', inner.getAttribute('stroke')||'#000'); gg.setAttribute('transform','translate('+x+','+y+') scale('+scale+') translate('+(-vb[0])+','+(-vb[1])+')'); while(inner.firstChild){ gg.appendChild(inner.firstChild); } svg.appendChild(gg); } try{document.body.removeChild(tmp);}catch(e){} }
     var sep=document.createElementNS(NS,'line'); sep.setAttribute('x1',445);sep.setAttribute('y1',6);sep.setAttribute('x2',445);sep.setAttribute('y2',H-6);sep.setAttribute('stroke','#dfe2ee');sep.setAttribute('stroke-dasharray','4 4');sep.setAttribute('stroke-width',1); svg.appendChild(sep);
-    txt(8,17,'1) '+g.p1.q, 16, '#c11d76','800');
-    txt(455,17,'2) ¿La ejecución es correcta?'+(g.p2.ctx?' '+g.p2.ctx:''), 16, '#c11d76','800');
+    fitTxt(8,17,'1) '+g.p1.q, 16, '#2d3250','800', 430);                                       // tipografía unificada (sin rosa); se ajusta a la columna
+    fitTxt(455,17,'2) ¿La ejecución es correcta?'+(g.p2.ctx?' '+g.p2.ctx:''), 16, '#2d3250','800', 415);
     embed(function(h){ mo.pintaIlustra(h, g.p1.il, true); }, 40, 30, 118);
     embed(function(h){ mo.pintaVF(h, g.p2, true); }, 470, 30, 118);
-    (g.p1.ops||[]).forEach(function(op,i){ var y=174+i*23; box(12,y-13, sol&&i===g.p1.ok); txt(38,y,LET[i]+') '+op, 16.5,'#111','600'); });
-    var vy=212; box(505,vy-13, sol&&g.p2.esVerdadero); txt(530,vy,'Verdadero',16.5,'#111','700'); box(675,vy-13, sol&&!g.p2.esVerdadero); txt(700,vy,'Falso',16.5,'#111','700');
+    (g.p1.ops||[]).forEach(function(op,i){ var y=174+i*23; box(12,y-13, sol&&i===g.p1.ok); fitTxt(38,y,op, 16.5,'#2d3250','600', 400); });   // PDF: sin a)/b)/c) — basta la casilla
+    var vy=212; box(505,vy-13, sol&&g.p2.esVerdadero); txt(530,vy,'Verdadero',16.5,'#2d3250','700'); box(675,vy-13, sol&&!g.p2.esVerdadero); txt(700,vy,'Falso',16.5,'#2d3250','700');
   };
 })();
 
@@ -16549,6 +16717,7 @@ function pintaFichaSVG(host, gen, sol){
   const tmp=document.createElement('div'); tmp.style.cssText='position:absolute;left:-9999px;top:0;width:560px'; document.body.appendChild(tmp);
   try{ renderScore(tmp, gen, {reveal:true, compact:true, tight:true, showRoman:!!sol}); }catch(e){}
   const inner=tmp.querySelector('svg');
+  let sysTop=14, sysBot=H-14, braceMid=null;        // alto del sistema pentagramado (para alinear las opciones)
   if(inner){
     let vb=(inner.getAttribute('viewBox')||'').split(/\s+/).map(parseFloat);
     if(vb.length!==4){ vb=[0,0,parseInt(inner.getAttribute('width'))||520, parseInt(inner.getAttribute('height'))||186]; }
@@ -16556,6 +16725,10 @@ function pintaFichaSVG(host, gen, sol){
     let scale=(H-14)/ih;                          // el pentagrama ocupa casi toda la altura
     if(iw*scale>SCOREW) scale=SCOREW/iw;           // sin invadir la columna de opciones
     const xoff=(SCOREW-iw*scale)/2+2, yoff=(H-ih*scale)/2;
+    sysTop=yoff; sysBot=yoff+ih*scale;             // las opciones ocuparán este mismo alto
+    // PICO DE LA LLAVE = punto medio entre la 1ª línea (clave de sol) y la última (clave de fa)
+    try{ var ys=[]; inner.querySelectorAll('line,rect,path').forEach(function(el){ var b; try{b=el.getBBox();}catch(e){return;} if(b && b.width>=iw*0.25 && b.height<=2) ys.push(b.y+b.height/2); });
+      if(ys.length){ var mn=Math.min.apply(null,ys), mx=Math.max.apply(null,ys); braceMid=yoff+((mn+mx)/2 - vb[1])*scale; } }catch(e){}
     const g=document.createElementNS(NS,'g'); g.setAttribute('fill', inner.getAttribute('fill')||'#000'); g.setAttribute('stroke', inner.getAttribute('stroke')||'#000'); g.setAttribute('transform','translate('+xoff+','+yoff+') scale('+scale+') translate('+(-vb[0])+','+(-vb[1])+')');
     while(inner.firstChild) g.appendChild(inner.firstChild);
     svg.appendChild(g);
@@ -16563,8 +16736,10 @@ function pintaFichaSVG(host, gen, sol){
   try{ document.body.removeChild(tmp); }catch(e){}
   function txt(x,y,s,sz,col,w){ const t=document.createElementNS(NS,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('font-size',sz);t.setAttribute('font-weight',w||'700');t.setAttribute('fill',col||'#25203a');t.setAttribute('stroke','none');t.setAttribute('font-family','Arial,Helvetica,sans-serif'); t.textContent=s; svg.appendChild(t); }
   function box(x,y,mark){ const r=document.createElementNS(NS,'rect'); r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',15);r.setAttribute('height',15);r.setAttribute('rx',3);r.setAttribute('fill','none');r.setAttribute('stroke',mark?'#12a05f':'#5a6488');r.setAttribute('stroke-width',mark?2.4:1.5); svg.appendChild(r); if(mark){ const c=document.createElementNS(NS,'path'); c.setAttribute('d','M'+(x+3)+','+(y+8)+' l3,4 l6,-8'); c.setAttribute('fill','none');c.setAttribute('stroke','#0a7a52');c.setAttribute('stroke-width',2.2); svg.appendChild(c);} }
-  const colX=572, lblX=colX+22, n=TYPE_ORDER.length, rowH=30, y0=(H-n*rowH)/2+rowH/2;
-  TYPE_ORDER.forEach(function(t,i){ const cyy=y0+i*rowH; box(colX, cyy-8, sol && t===gen.type); txt(lblX, cyy+4, TYPE_LABELS[t]+' ('+TYPE_AB[t]+')', 12.5, '#25203a','700'); });
+  // opciones JUNTAS (bloque compacto) centradas en el PICO DE LA LLAVE del sistema
+  const colX=572, lblX=colX+22, n=TYPE_ORDER.length;
+  const rowH=26, sysMid=(braceMid!=null?braceMid:(sysTop+sysBot)/2), y0=sysMid-((n-1)*rowH)/2;
+  TYPE_ORDER.forEach(function(t,i){ const cyy=y0+i*rowH; box(colX, cyy-8, sol && t===gen.type); txt(lblX, cyy+4, TYPE_LABELS[t]+' ('+TYPE_AB[t]+')', 13, '#2d3250','700'); });   // tipografía unificada
 }
 
 window.CAD = {
