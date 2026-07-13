@@ -684,7 +684,25 @@
   @keyframes confFall{ 0%{opacity:1; transform:translateY(-14vh) rotate(0)} 100%{opacity:.12; transform:translateY(98vh) rotate(680deg)} }
   #ppAlumnoSim .conf{ position:fixed;top:0;width:10px;height:14px;border-radius:2px;z-index:6;pointer-events:none;animation:confFall linear forwards }
 
-  @media (prefers-reduced-motion: reduce){ #ppAlumnoSim .sim-slide-in,#ppAlumnoSim .sim-slide-in-l,#ppAlumnoSim .sim-slide-out,#ppAlumnoSim .sim-slide-out-r,#ppAlumnoSim .nota-pop,#ppAlumnoSim .corr-ring,#ppAlumnoSim .corr-bar>i{ animation:none !important } }
+  /* ===== Cartel "Ejercicio N" entre ejercicios ===== */
+  @keyframes cartelPop{ 0%{opacity:0; transform:scale(.55)} 18%{opacity:1} 68%{opacity:1; transform:scale(1)} 100%{opacity:0; transform:scale(1.12)} }
+  #ppAlumnoSim .sim-cartel{ position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;pointer-events:none }
+  #ppAlumnoSim .sim-cartel-in{ text-align:center;animation:cartelPop .76s cubic-bezier(.2,.7,.2,1) both }
+  #ppAlumnoSim .sim-cartel-eyebrow{ font-size:19px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#ff5ccd;margin-bottom:2px }
+  #ppAlumnoSim .sim-cartel-num{ font-size:clamp(84px,16vw,150px);font-weight:900;color:#fff;line-height:1;text-shadow:0 8px 46px rgba(255,46,154,.55) }
+
+  /* ===== Intro de la ficha ===== */
+  @keyframes introUp{ 0%{opacity:0; transform:translateY(16px)} 100%{opacity:1; transform:none} }
+  #ppAlumnoSim .intro-card{ animation:simEnter .5s cubic-bezier(.2,.8,.25,1) both }
+  #ppAlumnoSim .intro-eyebrow{ font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#ff5ccd;margin-bottom:12px }
+  #ppAlumnoSim .intro-title{ font-size:clamp(28px,4.4vw,44px);font-weight:900;color:#f6f3ff;line-height:1.05 }
+  #ppAlumnoSim .intro-sub{ color:#b7bce0;font-size:14.5px;margin-top:12px }
+  #ppAlumnoSim .intro-chips{ display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin:22px auto 6px;max-width:600px }
+  #ppAlumnoSim .intro-chip{ padding:8px 15px;border-radius:99px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#e6e9ff;font-weight:700;font-size:13.5px;opacity:0;animation:introUp .42s cubic-bezier(.2,.8,.25,1) both }
+  #ppAlumnoSim .intro-go{ margin-top:26px;background:linear-gradient(135deg,#ff5ccd,#a974ff);border:none;color:#fff;font-weight:800;font-size:16px;padding:13px 34px;border-radius:14px;cursor:pointer;box-shadow:0 8px 30px rgba(169,116,255,.4);animation:introUp .5s .5s both }
+  #ppAlumnoSim .intro-go:hover{ filter:brightness(1.07) }
+
+  @media (prefers-reduced-motion: reduce){ #ppAlumnoSim .sim-slide-in,#ppAlumnoSim .sim-slide-in-l,#ppAlumnoSim .sim-slide-out,#ppAlumnoSim .sim-slide-out-r,#ppAlumnoSim .nota-pop,#ppAlumnoSim .corr-ring,#ppAlumnoSim .corr-bar>i,#ppAlumnoSim .sim-cartel-in,#ppAlumnoSim .intro-chip,#ppAlumnoSim .intro-go{ animation:none !important } #ppAlumnoSim .intro-chip,#ppAlumnoSim .intro-go{ opacity:1 !important } }
 
   /* el módulo interior, un poco más integrado con la tarjeta glass */
   #ppAlumnoSim .sim-card #simScore{
@@ -1690,7 +1708,7 @@ const PADS=[
   {id:'escalas',nombre:'Escalas',kick:'Teoría',foot:'Menores, mayores y otras',activo:true,open:'openEscalas',sub:'menores · mayores · pentatónica · hexátona · cromática'},
   {id:'grados',nombre:'Grados',kick:'Teoría',foot:'Señala el grado pedido',activo:true,open:'openGrados'},
   {id:'semitonos',nombre:'Semitonos',kick:'Teoría',foot:'Diatónico / cromático',activo:true,open:'openSemitonos',sub:'cromático · diatónico'},
-  {id:'acordes',nombre:'Acordes',kick:'Teoría',foot:'Identificar y construir',activo:true,open:'openAcordes',sub:'tríadas · cuatríadas · inversión · 7ª de dominante'},
+  {id:'acordes',nombre:'Acordes',kick:'Teoría',foot:'Identificar y construir',activo:true,open:'openAcordes',sub:'tríadas · cuatríadas'},
   {id:'inv-acordes',nombre:'Inversión de acordes',kick:'Teoría',foot:'Identifica y construye',activo:true,open:'openInvAcordes'},
   {id:'enarmonias',nombre:'Enarmonías',kick:'Teoría',foot:'Equivalencias',activo:true,open:'openEnarmonias',sub:'de nota · parcial · total · tonalidades enarmónicas'},
   {id:'claves',nombre:'Claves',kick:'Teoría',foot:'Leer notas en claves',activo:true,open:'openClaves'},
@@ -9374,8 +9392,10 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     const sc=document.createElement('div'); sc.style.cssText='position:relative'; host.appendChild(sc);
 
     // panel de respuestas (uno por compás): chip + selector de alteración
+    // VINCULADO al pentagrama: mismo margen lateral (x0=10) y columnas del MISMO ancho que cada compás (wC), sin gap.
+    // La separación entre tarjetas se da con margen interno de cada celda, sin desalinear el centro.
     const panel=document.createElement('div');
-    panel.style.cssText='display:grid;grid-template-columns:repeat('+n+',1fr);gap:10px;margin-top:12px';
+    panel.style.cssText='display:grid;grid-template-columns:repeat('+n+',1fr);gap:0;margin:12px 10px 0;padding:0';
     host.appendChild(panel);
 
     /* GN-UNIF 8-jul-2026 · pila de deshacer + botón: {i, prev} (prev = 2ª nota machacada o null) */
@@ -9398,13 +9418,14 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       const r=new VFx.Renderer(sc, VFx.Renderer.Backends.SVG); r.resize(W,H);
       const ctx=r.getContext();
       const x0=10, usable=W-20, wC=usable/n;
-      geom={ slots:[], yMap:{} };
+      geom={ slots:[], yMap:{}, staves:[] };
       let stave0=null;
       for(let i=0;i<n;i++){
         const stave=new VFx.Stave(x0+i*wC, 18, wC);
         if(i===0) stave.addClef('treble');
         if(i===n-1) stave.setEndBarType(VFx.Barline.type.DOUBLE);
         stave.setContext(ctx).draw();
+        geom.staves[i]=stave;
         if(i===0) stave0=stave;
         // notas: 1ª (dada) + 2ª (si colocada)
         const sd=ej._solData[i];
@@ -9434,8 +9455,34 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       wire(sc.querySelector('svg'), x0, wC);
       pintarPopupsBorrado();
       pintarPanel();
+      alinearPanel();
+      // re-alinear tras asentarse el layout / terminar la animación de entrada (el CTM inicial puede estar desplazado)
+      requestAnimationFrame(()=>requestAnimationFrame(alinearPanel));
+      setTimeout(alinearPanel, 450); setTimeout(alinearPanel, 950);
       undoBtn.disabled = !(estado._undo && estado._undo.length);   /* GN-UNIF 8-jul-2026 */
     }
+
+    // Alinea las columnas del panel con el CENTRO real de cada compás (medido del SVG),
+    // ajustando los márgenes laterales del panel. Así cada tarjeta queda bajo su compás.
+    function alinearPanel(){
+      try{
+        const svg=sc.querySelector('svg'); if(!svg||!geom.staves||!geom.staves.length) return;
+        const ctm=svg.getScreenCTM(); if(!ctm) return;
+        const centroPantalla=(cxSvg)=>{ const p=svg.createSVGPoint(); p.x=cxSvg; p.y=0; return p.matrixTransform(ctm).x; };
+        const m0=centroPantalla(geom.staves[0].getX()+geom.staves[0].getWidth()/2);
+        const mN=centroPantalla(geom.staves[n-1].getX()+geom.staves[n-1].getWidth()/2);
+        const hb=host.getBoundingClientRect();
+        const cs=getComputedStyle(host); const padL=parseFloat(cs.paddingLeft)||0, padR=parseFloat(cs.paddingRight)||0;
+        const innerLeft=hb.left+padL, innerW=hb.width-padL-padR;
+        const colW=(n>1)?((mN-m0)/(n-1)):(mN-m0);
+        const marginL=(m0 - innerLeft) - colW/2;
+        const marginR=innerW - marginL - n*colW;
+        panel.style.marginLeft=Math.max(0,marginL)+'px';
+        panel.style.marginRight=Math.max(0,marginR)+'px';
+      }catch(e){}
+    }
+    // re-alinea cuando el pentagrama obtiene/cambia su tamaño (al mostrarse el ejercicio o al rotar el iPad)
+    try{ if(window.ResizeObserver && !host._alinObs){ host._alinObs=new ResizeObserver(()=>{ alinearPanel(); }); host._alinObs.observe(sc); } }catch(e){}
 
     // botón emergente "×" para borrar, posado sobre cada nota colocada (rosa).
     function pintarPopupsBorrado(){
@@ -9521,7 +9568,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       panel.innerHTML='';
       for(let i=0;i<n;i++){
         const sd=ej._solData[i];
-        const cell=document.createElement('div'); cell.className='ans-cell';
+        const cell=document.createElement('div'); cell.className='ans-cell'; cell.style.margin='0 5px';   // separación visual sin desalinear (centro de la tarjeta = centro del compás)
         const lab=document.createElement('div'); lab.style.cssText='font-size:14px;font-weight:900;color:#dce4f7;text-align:center;margin-bottom:6px';
         lab.innerHTML=sd.num+(ESP[sd.code]||'')+' '+flecha(sd.direccion==='desc'?'desc':'asc');
         cell.appendChild(lab);
@@ -10730,7 +10777,7 @@ function __grados_marker__(){}
     estado.sel = estado.sel || sol.map(()=> ({nota:null, alt:'', modo:null}));
     host.innerHTML='';
     const grid=document.createElement('div');
-    grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:560px';
+    grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:920px;margin:0 auto';   // centrado y ancho: no se apretuja en una mitad en pantallas anchas (iPad)
     host.appendChild(grid);
 
     for(let k=0;k<6;k++){
@@ -11892,7 +11939,7 @@ function __grados_marker__(){}
         '<div style="flex:1">'+
           '<div id="simHead" style="font-size:13px;opacity:.9;margin-bottom:7px;font-weight:600"></div>'+
           '<div style="height:10px;background:#ffffff1f;border-radius:99px;overflow:hidden">'+
-            '<div id="simBar" style="height:100%;width:0%;background:linear-gradient(90deg,#a974ff,#5bd0ff 45%,#ff5ccd);background-size:200% 100%;border-radius:99px;transition:width .55s cubic-bezier(.4,0,.2,1);animation:nebSlide 3s linear infinite"></div>'+
+            '<div id="simBar" style="height:100%;width:0%;background:#ff2e9a;border-radius:99px;transition:width .55s cubic-bezier(.4,0,.2,1)"></div>'+
           '</div>'+
         '</div>'+
       '</div>'+
@@ -12051,7 +12098,7 @@ function __grados_marker__(){}
           const go=()=>{ i++; if(i>maxAvance) maxAvance=i;
             if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e){} }   // FASE 6.7 · punto de guardado
             animDir='fwd'; mostrar(); };
-          if(card && !reduceMotion()){ card.classList.add('sim-slide-out'); setTimeout(go, 172); } else go();
+          if(card && !reduceMotion()){ card.classList.add('sim-slide-out'); setTimeout(()=>cartelEjercicio(i+2, go), 172); } else go();   // cartel "Ejercicio N" entre uno y otro
         } else { enviado=true; try{ sonidoFinal(); }catch(e){} pantallaCorrigiendo(pantallaFinal); }
       };
       main.scrollTop=0;
@@ -12297,11 +12344,40 @@ function __grados_marker__(){}
         }
       }
     }
+    // === Nombre corto del ejercicio (para el vistazo de la intro) ===
+    const AREA_NOMBRE={intervalos:'Intervalos',tonalidades:'Tonalidades',claves:'Claves',escalas:'Escalas',grados:'Grados',acordes:'Acordes',compases:'Compases',enarmonias:'Enarmonías',semitonos:'Semitonos',adorno:'Adornos',abrev:'Abreviaturas',cadencias:'Cadencias',inversiones:'Inversiones','inv-acordes':'Inv. de acordes'};
+    const nombreCortoEj=(it)=>{ if(it.key==='terminos') return 'Términos'; const a=(typeof AREA_DE!=='undefined')?AREA_DE[it.key]:null; return (a&&AREA_NOMBRE[a])||it.label||'Ejercicio'; };
+    // === Cartel "Ejercicio N" entre ejercicios ===
+    function cartelEjercicio(num, cb){
+      if(reduceMotion()){ cb(); return; }
+      const c=document.createElement('div'); c.className='sim-cartel';
+      c.innerHTML='<div class="sim-cartel-in"><div class="sim-cartel-eyebrow">Ejercicio</div><div class="sim-cartel-num">'+num+'</div></div>';
+      main.appendChild(c);
+      setTimeout(()=>{ try{ c.remove(); }catch(e){} cb(); }, 640);
+    }
+    // === Intro de la ficha: número/título + vistazo a los tipos de ejercicio ===
+    function pantallaIntro(cb){
+      if(reduceMotion()){ cb(); return; }
+      head.textContent=tituloFicha(); bar.style.width='0%'; foot.innerHTML='';
+      const vistos={}, chips=[];
+      PP.ficha.forEach((it)=>{ const nm=nombreCortoEj(it); if(!vistos[nm]){ vistos[nm]=1; chips.push(nm); } });
+      const chipHtml=chips.map((t,idx)=>'<span class="intro-chip" style="animation-delay:'+(0.32+idx*0.07).toFixed(2)+'s">'+esc(t)+'</span>').join('');
+      main.innerHTML='<div class="sim-card intro-card" style="max-width:720px;width:100%;align-self:center;text-align:center">'+
+          '<div class="intro-eyebrow">'+esc(tituloFicha())+'</div>'+
+          '<div class="intro-title">¿List@ para empezar?</div>'+
+          '<div class="intro-sub">'+n+' ejercicio'+(n===1?'':'s')+' · esto es lo que vas a practicar:</div>'+
+          '<div class="intro-chips">'+chipHtml+'</div>'+
+          '<button id="introGo" class="intro-go">Empezar ▸</button>'+
+        '</div>';
+      main.scrollTop=0;
+      const arrancar=()=>{ const card=main.querySelector('.intro-card'); const go=()=>{ animDir=null; cb(); }; if(card && !reduceMotion()){ card.classList.add('sim-slide-out'); setTimeout(go, 180); } else go(); };
+      const b=main.querySelector('#introGo'); if(b) b.onclick=()=>{ try{ if(window.SFX) window.SFX.tap(); }catch(e){} arrancar(); };
+    }
     const onKey=(e)=>{ if(e.key==='Escape'){ if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e2){} } cerrar(); }
       else if(!enviado && e.key==='ArrowRight'){ if(i<n-1){ const it=PP.ficha[i]; if(it.ej._interactivo==='grado' && !(it._respuesta && it._respuesta.marca!=null)){ mostrarBannerSim('Tienes que señalar el grado: toca la nota que crees que es la respuesta para rodearla.'); return; } i++; if(i>maxAvance) maxAvance=i; if(esAlumnoProg){ try{ progGuardar(i, maxAvance); }catch(e2){} } mostrar(); } }
       else if(!enviado && e.key==='ArrowLeft'){ if(i>0){ i--; if(esAlumnoProg){ try{ progGuardar(i, maxAvance); }catch(e2){} } mostrar(); } } };
     document.addEventListener('keydown',onKey);
-    mostrar();
+    if(reanudado) mostrar(); else pantallaIntro(mostrar);   // intro de bienvenida solo al empezar de cero
     // FASE 6.7 · aviso de reanudación: el alumno ve claramente que su
     // progreso se ha recuperado y en qué ejercicio estaba.
     if(reanudado){
@@ -12526,16 +12602,21 @@ function __grados_marker__(){}
     // emparejar por ALTURA (orden): comparamos posición a posición
     const N=Math.max(sol.length, alumno.length);
     const tick=[]; const colores=[];
+    const lastAlt={};   // última alteración por (step+octave) -> becuadro de cortesía cuando una natural cancela una alteración previa
+    const needNat=(nb)=>{ const k=nb.step+nb.octave; return (nb.alter||0)===0 && lastAlt[k]!=null && lastAlt[k]!==0; };
+    const remember=(nb)=>{ lastAlt[nb.step+nb.octave]=(nb.alter||0); };
     for(let i=0;i<N;i++){
       const s=sol[i], u=alumno[i];
       if(i<dadas){                                   // nota dada -> negra, no cuenta como acierto ni error
-        const nb=u||s; if(nb) tick.push(mkCorNote(VFx,nb, COR_NEG));
+        const nb=u||s; if(nb){ tick.push(mkCorNote(VFx,nb, COR_NEG, needNat(nb))); remember(nb); }
         continue;
       }
-      if(u){ const ok = s && u.step===s.step && u.octave===s.octave && (u.alter||0)===(s.alter||0);
-        tick.push(mkCorNote(VFx,u, ok?COR_OK:COR_BAD));
-        if(!ok && s) tick.push(mkCorNote(VFx,s, COR_SOL)); }   // correcta AZUL pegada a la roja
-      else if(s){ tick.push(mkCorNote(VFx,s, COR_SOL)); }       // faltó: correcta en azul
+      if(u){ const ok = s && (opts.porAltura
+                ? (midiNota(u.step,u.octave,u.alter||0)===midiNota(s.step,s.octave,s.alter||0))   // enarmonías válidas (por altura)
+                : (u.step===s.step && u.octave===s.octave && (u.alter||0)===(s.alter||0)));
+        tick.push(mkCorNote(VFx,u, ok?COR_OK:COR_BAD, needNat(u))); remember(u);
+        if(!ok && s) tick.push(mkCorNote(VFx,s, COR_SOL)); }   // correcta AZUL pegada a la roja (solo si de verdad falló)
+      else if(s){ tick.push(mkCorNote(VFx,s, COR_SOL, needNat(s))); remember(s); }       // faltó: correcta en azul
     }
     const all=tick;
     try{ const voice=new VFx.Voice({num_beats:all.length*4,beat_value:4}).setStrict(false); voice.addTickables(all);
@@ -12544,7 +12625,7 @@ function __grados_marker__(){}
     const svg=host.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.removeAttribute('width'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.width='100%'; svg.style.height='auto'; }
     return true;
   }
-  function mkCorNote(VFx,nb,col){ const sn=new VFx.StaveNote({keys:[nbKey(nb)],duration:'w',clef:'treble'}); if(nb.alter) sn.addModifier(new VFx.Accidental(nbAcc(nb.alter)),0); sn.setStyle({fillStyle:col,strokeStyle:col}); return sn; }
+  function mkCorNote(VFx,nb,col,forceNat){ const sn=new VFx.StaveNote({keys:[nbKey(nb)],duration:'w',clef:'treble'}); if(nb.alter) sn.addModifier(new VFx.Accidental(nbAcc(nb.alter)),0); else if(forceNat) sn.addModifier(new VFx.Accidental('n'),0); sn.setStyle({fillStyle:col,strokeStyle:col}); return sn; }
   // como mkCorNote pero SOLO dibuja el accidental si difiere de la armadura (armA); si la armadura ya lo cubre, sin símbolo
   function mkCorNoteArm(VFx,nb,col,armA){ const sn=new VFx.StaveNote({keys:[nbKey(nb)],duration:'w',clef:'treble'}); const a=nb.alter||0; if(a!==(armA||0)) sn.addModifier(new VFx.Accidental(nbAcc(a)),0); sn.setStyle({fillStyle:col,strokeStyle:col}); return sn; }
 
@@ -12620,7 +12701,8 @@ function __grados_marker__(){}
       return dibujarEscalaCorrArm(host, sol, alumno, { fifths: spec.fifths||0, alumnoArm: (resp&&resp.arm!=null)?resp.arm:0 });
     }
     // esc_otras (pentatónica/cromática/hexátona): sin armadura -> nota a nota, cabeza (tónica) en negro
-    return dibujarPentaCorr(host, sol, alumno, { fifths: 0, dadas: 1 });
+    // cromática/hexátona: comparar por ALTURA (midi) para dar por buenas las enarmonías (Mi♭ = Re♯)
+    return dibujarPentaCorr(host, sol, alumno, { fifths: 0, dadas: 1, porAltura: !!spec.porAltura });
   }
   // GRADOS: la escala se construye CON armadura -> mismo modelo que mayores/menores + flecha y nombre en el grado.
   function corregirGrado(host, ej, resp){
@@ -13022,17 +13104,25 @@ function __grados_marker__(){}
       var gaps=[]; for(var i=1;i<ys.length;i++){ var g=ys[i]-ys[i-1]; if(g>=4 && g<=30) gaps.push(g); }
       if(!gaps.length) return null; gaps.sort(function(a,b){return a-b;}); return gaps[Math.floor(gaps.length/2)];
     }catch(e){ return null; } }
+  // renderiza SOLO una ilustración (notación) a PNG de alta resolución (4x) -> nitidez; el texto va nativo aparte
+  async function ilustraPng(renderFn){
+    const host=hostOculto(); host.innerHTML=''; const sub=document.createElement('div'); host.appendChild(sub);
+    try{ renderFn(sub); }catch(e){ return null; }
+    await nextPaint();
+    const svg=sub.querySelector('svg'); if(!svg) return null;
+    let w=parseInt(svg.getAttribute('width'),10)||200, h=parseInt(svg.getAttribute('height'),10)||100;
+    try{ const vb=(svg.getAttribute('viewBox')||'').split(/\s+/).map(parseFloat); if(vb.length===4){ w=vb[2]; h=vb[3]; } }catch(e){}
+    try{ svg.querySelectorAll('text').forEach(function(t){ t.setAttribute('stroke','none'); }); }catch(e){}
+    return { png: await svgToPng(svg, Math.round(w*4), Math.round(h*4)), w:w, h:h };
+  }
   async function bloquePng(ej, esSolucion){
     const r=ej.render||{};
     if(ej._quiz){
-      if(!window[ej._quizM]) return null;
-      const host=hostOculto(); host.innerHTML=''; host.style.width='880px';
-      try{ window.quizFichaPinta(ej._quizM, host, ej._quiz, esSolucion); }catch(e){ host.style.width=''; return null; }
-      await nextPaint();
-      { const svg=host.querySelector('svg'); if(!svg){ host.style.width=''; return null; }
-        let w=parseInt(svg.getAttribute('width'),10)||880, h=parseInt(svg.getAttribute('height'),10)||200;
-        try{ const vb=(svg.getAttribute('viewBox')||'').split(/\s+/).map(parseFloat); if(vb.length===4){ w=vb[2]; h=vb[3]; } }catch(e){}
-        host.style.width=''; return { png: await svgToPng(svg, Math.round(w*3), Math.round(h*3)), w, h, lsp: lspDe(svg) }; }
+      const mo=window[ej._quizM]; if(!mo) return null;
+      const g=ej._quiz||{};
+      const il1=await ilustraPng(function(h){ mo.pintaIlustra(h, g.p1&&g.p1.il, true); });
+      const il2=await ilustraPng(function(h){ mo.pintaVF(h, g.p2, true); });
+      return { quiz:true, il1:il1, il2:il2 };
     }
     if(ej._cad){
       if(!window.CAD) return null;
@@ -13210,7 +13300,7 @@ function __grados_marker__(){}
   function dibujarTablaVecinos(doc, v, x, y, w, h, esSolucion){
     if(!v) return; const sol=v.sol, given=v.given;
     const cols=3, rows=2, gap=2;
-    const tw=Math.min(w, 150);                       // no demasiado ancha
+    const tw=w;                                      // ancho fijado por el llamador (= ancho del pentagrama estándar)
     const cw=(tw-gap*(cols-1))/cols, ch=Math.min((h-gap)/rows, 11);
     const y0=y+Math.max(0,(h-(ch*rows+gap))/2);
     for(let k=0;k<6;k++){
@@ -13434,7 +13524,7 @@ function __grados_marker__(){}
 
         if(esVecinos){
           // tabla 3×2 de tonos vecinos (dada en negro; respuestas en rojo solo en la solución)
-          dibujarTablaVecinos(doc, ej._vecinos, M+6, boxTop, boxW, boxH, esSolucion);
+          dibujarTablaVecinos(doc, ej._vecinos, M+15, boxTop, 152, boxH, esSolucion);   // mismo ancho/márgenes que el pentagrama estándar (152 mm en x=M+15)
         } else if(esTerminos){
           // términos en PAPEL, dos columnas: A (unir) izquierda · B (rodear)+C (numerar) derecha.
           const T=ej._terminos||{A:[],B:[],C:{}};
@@ -13452,7 +13542,7 @@ function __grados_marker__(){}
           let ay=boxTop+2;
           bold('A - Une cada término con su categoría:', colIzqX, ay); ay+=6;
           const A=T.A||[];
-          const tX=colIzqX+1, dotAx=colIzqX+colW*0.40, dotBx=colIzqX+colW*0.54, cX=colIzqX+colW*0.58;
+          const tX=colIzqX+1, dotAx=colIzqX+colW*0.36, dotBx=colIzqX+colW*0.62, cX=colIzqX+colW*0.66;   // punto izq más cerca del término y columnas de puntos más separadas (menos cruces)
           const yA0=ay, rowH=Math.max(5.6, Math.min(7.8, (boxBot-yA0-2)/Math.max(1,A.length-1)));   // reparte las filas por todo el módulo
           const catsShuf=A.map(f=>f.label).slice().sort(()=>Math.random()-0.5);
           A.forEach((f,i)=>{ const y=yA0+i*rowH; norm(f.term, tX, y); dot(dotAx, y-1); });
@@ -13476,15 +13566,17 @@ function __grados_marker__(){}
             });
             dy+=5.2;
           });
-          dy+=1;
-          bold('C - Numera del más lento (1) al más rápido:', colDerX, dy); dy+=5.4;
+          // C: su fila de fichas se alinea con la ÚLTIMA fila de A (misma parte baja A=C)
+          const yLastA=yA0+(A.length-1)*rowH;
+          let cyC=Math.max(dy+5, yLastA);
+          bold('C - Numera del más lento (1) al más rápido:', colDerX, cyC-6);
           const barj=(T.C&&T.C.barajado)||[], corr=(T.C&&T.C.correcto)||[];
           let cx=colDerX+1;
           barj.forEach(tp=>{
-            if(cx+7+wOf(tp)>colDerX+colW && cx>colDerX+1){ dy+=6; cx=colDerX+1; }
-            boxN(cx, dy-3.6);
-            if(esSolucion){ doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(RED[0],RED[1],RED[2]); doc.text(String(corr.indexOf(tp)+1), cx+1.7, dy); }
-            norm(tp, cx+7, dy);
+            if(cx+7+wOf(tp)>colDerX+colW && cx>colDerX+1){ cyC+=6; cx=colDerX+1; }
+            boxN(cx, cyC-3.6);
+            if(esSolucion){ doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(RED[0],RED[1],RED[2]); doc.text(String(corr.indexOf(tp)+1), cx+1.7, cyC); }
+            norm(tp, cx+7, cyC);
             cx += 7 + wOf(tp) + 7;
           });
         } else if(esCompas){
@@ -13492,14 +13584,15 @@ function __grados_marker__(){}
           if(img && img.png){
             const ih=Math.min(boxH, 22); let iw=img.w*(ih/img.h); let ih2=ih;
             if(iw>40){ const s=40/iw; iw*=s; ih2*=s; }
-            try{ doc.addImage(img.png,'PNG', M+8, boxTop+1, iw, ih2); }catch(e){}
+            const cy=boxTop+Math.max(1,(boxBot-boxTop-ih2)/2);           // cifra centrada verticalmente (alineada con las preguntas)
+            try{ doc.addImage(img.png,'PNG', M+8, cy, iw, ih2); }catch(e){}
           }
           const lx=M+52;
           const ans=ej.comAns||[]; const figRow=figs[k]||[];
-          // MISMO margen entre TODAS las preguntas (simétrico); rowH uniforme que deja sitio al cuadrado
+          // MISMO margen entre TODAS las preguntas; bloque REPARTIDO y centrado (equidistante arriba/abajo)
           const nQ=labels.length||1;
-          const rowH=Math.max(6.4, Math.min(7.6, (boxBot-boxTop-6)/Math.max(1,nQ-1)));
-          let ly=boxTop+Math.max(3.2,(boxBot-boxTop-(nQ-1)*rowH)/2);      // bloque centrado verticalmente
+          const rowH=Math.max(6.4, Math.min(8.4, (boxBot-boxTop-4)/Math.max(1,nQ-1)));
+          let ly=boxTop+(boxBot-boxTop-(nQ-1)*rowH)/2+1;                 // centrado vertical del bloque de preguntas
           // cuadrados ALINEADOS en una columna (tras la pregunta de figura más larga) -> simétrico
           doc.setFont('helvetica','normal'); doc.setFontSize(9);
           let figColX=0; labels.forEach((l,j)=>{ if(ans[j]&&ans[j].fig) figColX=Math.max(figColX, lx+doc.getTextWidth('• '+l+'  ')); });
@@ -13530,12 +13623,45 @@ function __grados_marker__(){}
             try{ doc.addImage(img.png,'PNG', ixA, iyA, iw, ih); }catch(e){}
           }
         } else if(esQuiz){
-          if(img && img.png){
-            let iw=boxW, ih=iw*(img.h/img.w);
-            if(ih>boxH){ const s=boxH/ih; ih*=s; iw*=s; }
-            const ixA=M+6+(boxW-iw)/2, iyA=boxTop+(boxH-ih)/2;
-            try{ doc.addImage(img.png,'PNG', ixA, iyA, iw, ih); }catch(e){}
-          }
+          // QUIZ NATIVO: pregunta arriba, pentagrama a la izquierda, opciones a la derecha (casilla y texto grandes).
+          // Tipografía UNIFICADA con términos (Helvetica 9, INK). Solo la notación va rasterizada (a 4x).
+          const g=ej._quiz||{};
+          const INK=[45,50,80], GREEN=[16,150,90], GREY=[120,130,150];
+          const midX=M+CW/2;
+          doc.setDrawColor(223,226,238); doc.setLineWidth(0.3);
+          try{ doc.setLineDashPattern([1.2,1.2],0); }catch(e){}
+          doc.line(midX, boxTop+1, midX, boxBot);
+          try{ doc.setLineDashPattern([],0); }catch(e){}
+          const tick=(bx,byy,bs)=>{ doc.setDrawColor(GREEN[0],GREEN[1],GREEN[2]); doc.setLineWidth(0.8);
+            doc.line(bx+bs*0.22, byy+bs*0.55, bx+bs*0.42, byy+bs*0.78); doc.line(bx+bs*0.42, byy+bs*0.78, bx+bs*0.82, byy+bs*0.25); };
+          const subap=(x0,w,qLabel,qText,ilImg,ops,okIdx,esVF,vfV,penFrac)=>{
+            doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(INK[0],INK[1],INK[2]);
+            const qLines=doc.splitTextToSize(qLabel+') '+pdfSafe(qText), w);
+            doc.text(qLines, x0, boxTop+3.5);
+            const qH=qLines.length*3.9+2;
+            const contTop=boxTop+3.5+qH, contBot=boxBot-1, contH=Math.max(6, contBot-contTop);
+            const penW=w*penFrac, opX=x0+penW+2;
+            if(ilImg && ilImg.png && ilImg.w){
+              const s=Math.min((penW-2)/ilImg.w, (contH-1)/ilImg.h); let iw=ilImg.w*s, ih=ilImg.h*s;
+              const ix=x0+(penW-iw)/2, iy=contTop+(contH-ih)/2;
+              try{ doc.addImage(ilImg.png,'PNG', ix, iy, iw, ih); }catch(e){}
+            }
+            const list = esVF ? ['Verdadero','Falso'] : (ops||[]);
+            const nOp=list.length||1, opGap=Math.min(8.5, contH/nOp), bs=5;
+            let oy=contTop+(contH-(nOp-1)*opGap)/2+1.4;
+            list.forEach((op,i)=>{
+              const marca = esSolucion && (esVF ? ((i===0)===!!vfV) : (i===okIdx));
+              const byy=oy-bs+1.3;
+              doc.setDrawColor(marca?GREEN[0]:GREY[0], marca?GREEN[1]:GREY[1], marca?GREEN[2]:GREY[2]); doc.setLineWidth(marca?0.7:0.4);
+              doc.roundedRect(opX, byy, bs, bs, 1, 1, 'S');
+              if(marca) tick(opX, byy, bs);
+              doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(INK[0],INK[1],INK[2]);
+              doc.text(pdfSafe(op), opX+bs+2, oy);
+              oy+=opGap;
+            });
+          };
+          subap(M+6, (midX-3)-(M+6), '1', (g.p1&&g.p1.q)||'', img&&img.il1, (g.p1&&g.p1.ops)||[], g.p1&&g.p1.ok, false, false, 0.56);
+          subap(midX+4, (M+CW-6)-(midX+4), '2', '¿La ejecución es correcta?'+((g.p2&&g.p2.ctx)?' '+g.p2.ctx:''), img&&img.il2, null, null, true, g.p2&&g.p2.esVerdadero, 0.60);
         } else if(esCad){
           // CADENCIAS: grandes, aprovechando toda la tarjeta (antes salían diminutas a 20mm)
           if(img && img.png){
@@ -13557,9 +13683,10 @@ function __grados_marker__(){}
             if(ih>boxH){ const r=boxH/ih; iw*=r; ih*=r; }
             if(iw>boxW){ const r=boxW/iw; iw*=r; ih*=r; }
             ix=M+Math.max(6,(CW-iw)/2);                   // CENTRADO -> márgenes izq/dcha simétricos
-            // sin texto bajo el título: pentagrama centrado en la tarjeta (3ª línea al medio).
+            // sin texto bajo el título: punto INTERMEDIO entre el centro del módulo (más alto)
+            // y el centro de la caja de contenido (más bajo) -> ni pegado al título ni al centro exacto.
             // Con etiquetas/subtítulos: se deja en la caja para dejar hueco al texto de abajo.
-            iy = (!hayEtq && !esRel) ? Math.max(by+10.5, by+blockH/2-ih/2) : boxTop+(boxH-ih)/2;
+            iy = (!hayEtq && !esRel) ? (((by+blockH/2-ih/2) + (boxTop+(boxH-ih)/2))/2) : boxTop+(boxH-ih)/2;
             try{ doc.addImage(img.png,'PNG', ix, iy, iw, ih); }catch(e){}
           }
           // ton_arm_tono: DOS líneas de escritura bajo cada compás (Mayor arriba, relativa menor abajo)
@@ -14643,7 +14770,7 @@ function __grados_marker__(){}
   }
 
   /* rango simple: notas graves La3..Sol5 aprox (una octava cabe con inversión) */
-  var COL_SEL='#e84393', COL_GHOST='#e84393', COL_GREEN='#22c98a', COL_RED='#e11d1d', COL_INK='#1a1a1a';
+  var COL_SEL='#e84393', COL_GHOST='#e84393', COL_GREEN='#22c98a', COL_RED='#e11d1d', COL_INK='#1a1a1a', COL_BLUE='#2f6fe0';
 
   function noteFrom(step,octave,alter){ return {step:step,octave:octave,alter:alter||0}; }
   /* construye un intervalo simple melódico a partir de una entrada del catálogo, con nota grave en rango */
@@ -14888,7 +15015,14 @@ function __grados_marker__(){}
         // compás dado
         ms.push({role:'given', pair:pi, notes:[{n:par.dada[0],col:'#000'},{n:par.dada[1],col:'#000'}], slots:2});
         // compás respuesta (doble barra al cerrar la pareja; hueco entre parejas)
-        var notes=par.user.map(function(u,k){ var col=res?(par._ok?COL_GREEN:COL_RED):((g._sel&&g._sel.p===pi&&g._sel.k===k)?COL_SEL:COL_INK); return {n:u,col:col}; });
+        var notes;
+        if(res && (!par.user || par.user.length===0)){
+          // dejado en BLANCO -> muestra la inversión correcta en AZUL (el alumno debe saber la respuesta)
+          var invS=invSimplePair(par.dada[0],par.dada[1]);
+          notes=[{n:invS[0],col:COL_BLUE},{n:invS[1],col:COL_BLUE}];
+        } else {
+          notes=par.user.map(function(u,k){ var col=res?(par._ok?COL_GREEN:COL_RED):((g._sel&&g._sel.p===pi&&g._sel.k===k)?COL_SEL:COL_INK); return {n:u,col:col}; });
+        }
         ms.push({role:'answer', pair:pi, notes:notes, slots:2, endBar:true, gapAfter:(pi===0?40:0)});
       });
       return ms;
@@ -14971,7 +15105,7 @@ function __grados_marker__(){}
     });
 
     redraw(false);
-    return { corregir:function(){ var e=evaluaSimples(g); g.pares.forEach(function(par){ if(par._solEl0){ var ok0=(par.sel0.num===par.num && par.sel0.esp===ESP_LABEL[par.code]); par._solEl0.innerHTML='<span style="color:'+(ok0?'#22c98a':'#ff5c72')+'">'+(ok0?'✓ '+par.num+ESP_LABEL[par.code]:'Solución: '+par.num+ESP_LABEL[par.code])+'</span>'; } if(par._solEl){ var okA=(par.sel.num===par.invNum && par.sel.esp===ESP_LABEL[par.invCode]); par._solEl.innerHTML='<span style="color:'+(okA?'#22c98a':'#ff5c72')+'">'+(okA?'✓ '+par.invNum+ESP_LABEL[par.invCode]:'Solución: '+par.invNum+ESP_LABEL[par.invCode])+'</span>'; } }); g._sel=null; redraw(true); return e; }, undo:gnUndo, onUndo:function(cb){ undoCb=cb; undoUpd(); } };
+    return { corregir:function(){ var e=evaluaSimples(g); g.pares.forEach(function(par){ if(par._solEl0){ var ok0=(par.sel0.num===par.num && par.sel0.esp===ESP_LABEL[par.code]); par._solEl0.innerHTML='<span style="color:'+(ok0?'#22c98a':COL_BLUE)+'">'+(ok0?'✓ '+par.num+ESP_LABEL[par.code]:'Solución: '+par.num+ESP_LABEL[par.code])+'</span>'; } if(par._solEl){ var okA=(par.sel.num===par.invNum && par.sel.esp===ESP_LABEL[par.invCode]); par._solEl.innerHTML='<span style="color:'+(okA?'#22c98a':COL_BLUE)+'">'+(okA?'✓ '+par.invNum+ESP_LABEL[par.invCode]:'Solución: '+par.invNum+ESP_LABEL[par.invCode])+'</span>'; } }); g._sel=null; redraw(true); return e; }, undo:gnUndo, onUndo:function(cb){ undoCb=cb; undoUpd(); } };
   }
 
   /* ---------------- corrección ---------------- */
@@ -15556,7 +15690,7 @@ function __grados_marker__(){}
     var measures=g.items.map(function(it){ return {
       main:{notes:it.voiced, col:'#000'},
       paren:true, parenNotes: resuelto ? ordenado(it).map(function(n){return {n:n,col:COL_RED};}) : [], parenText:'ordena aquí',
-      subLeft: resuelto ? (TIPOS[it.tipo].lab+' · '+INV_LAB[it.inv]) : 'Acorde: _____________        inv.: ______',
+      subLeft: resuelto ? (TIPOS[it.tipo].lab+' · '+INV_LAB[it.inv]) : 'Acorde  _____________        inv.  ______',
       subLeftCol: resuelto ? COL_RED : '#1a1a1a' }; });
     renderSys(host, measures);
   }
