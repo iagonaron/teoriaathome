@@ -1546,6 +1546,16 @@
 
 <!-- ====== BLOQUE 1: navegación + motor de intervalos ====== -->
 <script>
+/* ELE-W2 · tablet: sin zoom por doble toque + consejos según dispositivo */
+window.ES_TACTIL=(function(){ try{ return matchMedia('(pointer: coarse)').matches; }catch(e){ return ('ontouchstart' in window); } })();
+window.TXT_TIP=function(raton,tactil){ return window.ES_TACTIL?tactil:raton; };
+document.addEventListener('DOMContentLoaded', function(){
+  try{
+    var st=document.createElement('style');
+    st.textContent='html,body{touch-action:manipulation} button,.wheel,svg,.acc-btn,.pbtn{touch-action:manipulation}';
+    document.head.appendChild(st);
+  }catch(e){}
+});
 const VF = Vex.Flow;
 
 /* ============================================================
@@ -1937,7 +1947,7 @@ function tick(){
   try{
     _wheelAudio=_wheelAudio||new (window.AudioContext||window.webkitAudioContext)();
     const o=_wheelAudio.createOscillator(),g=_wheelAudio.createGain();
-    o.frequency.value=520; g.gain.value=0.05; o.connect(g); g.connect(_wheelAudio.destination);
+    o.frequency.value=520; g.gain.value=0.026; o.connect(g); g.connect(_wheelAudio.destination);   /* ELE-W2: más suave */
     o.start(); g.gain.exponentialRampToValueAtTime(0.0001,_wheelAudio.currentTime+0.05);
     o.stop(_wheelAudio.currentTime+0.06);
   }catch(e){}
@@ -3415,7 +3425,7 @@ function renderESC(){
     // hint por tipo
     const hint=document.createElement('p'); hint.className='hint'; hint.style.marginTop='10px';
     hint.innerHTML = (fam==='otras')
-      ? 'Toca el pentagrama para añadir cada nota en orden. Para alterar, tócala y usa ♯/♮/♭. Para borrar, toca la <b>×</b> (o clic derecho).'
+      ? ('Toca el pentagrama para añadir cada nota en orden. Para alterar, tócala y usa ♯/♮/♭. Para borrar, toca la <b>×</b>'+(window.ES_TACTIL?'.':' (o clic derecho).'))
       : 'Toca una nota para seleccionarla y usa ♯/♮/♭ para alterarla.';
     card.appendChild(hint);
 
@@ -11907,17 +11917,13 @@ function __grados_marker__(){}
       '</div>'+
       '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px">'+
         '<button id="mpCancel" style="border:0;background:#eef1f7;color:#16203a;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer">Ahora no</button>'+
-        '<button id="mpOk" style="border:0;background:#1f6df6;color:#fff;border-radius:9px;padding:10px 18px;font-weight:700;cursor:pointer">Abrir y practicar ↗</button>'+
+        '<a id="mpOk" href="'+(location.origin+location.pathname+'?practice='+encodeURIComponent(key))+'" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;border:0;background:#1f6df6;color:#fff;border-radius:9px;padding:10px 18px;font-weight:700;cursor:pointer">Abrir y practicar ↗</a>'+
       '</div>';
     ov.appendChild(card); document.body.appendChild(ov);
     const cerrar=()=>{ try{ document.body.removeChild(ov); }catch(e){} };
     card.querySelector('#mpCancel').onclick=cerrar;
     ov.addEventListener('click',(e)=>{ if(e.target===ov) cerrar(); });
-    card.querySelector('#mpOk').onclick=()=>{
-      try{ const base=location.origin+location.pathname; window.open(base+'?practice='+encodeURIComponent(key), '_blank'); }
-      catch(e){ try{ if(typeof showView==='function') showView('view-'+area); }catch(_){} }
-      cerrar();
-    };
+    card.querySelector('#mpOk').addEventListener('click', ()=>{ setTimeout(cerrar, 60); });   /* ELE-W2: el <a> navega solo (tablet-safe) */
   }
 
   // marca como .penta los SVG anchos (pentagramas) para que SOLO ellos lleven fondo blanco
@@ -12037,7 +12043,7 @@ function __grados_marker__(){}
         : esAco
         ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Identificar: elige el tipo con la rueda y la inversión con los botones. Construir: toca la mitad izquierda para colocar las notas y altera con los botones. El paréntesis es para ordenar.</div>'
         : esInv
-        ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Toca el pentagrama para colocar cada nota, altérala con la cuadrícula (<b>♭ ♯</b>) y analiza con las ruedas. Borra con clic derecho.</div>'
+        ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Toca el pentagrama para colocar cada nota, altérala con la cuadrícula (<b>♭ ♯</b>) y analiza con las ruedas. '+window.TXT_TIP('Borra con clic derecho.','Borra con la ×.')+'</div>'
         : esGrado
         ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Las cabezas ya están escritas. Pon la <b>armadura</b> y altera lo que corresponda (toca una nota y usa <b>♯ ♮ ♭</b>). Para <b>señalar el grado</b>: toca la nota para seleccionarla y tócala otra vez para rodearla.</div>'
         : esCompas
@@ -12051,14 +12057,14 @@ function __grados_marker__(){}
           : escPrecol
             ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Las cabezas ya están escritas. Pon la <b>armadura</b> con la rueda y altera las notas que lo necesiten (toca una nota y usa <b>♯ ♮ ♭</b>).</div>'
             : (esEscala || esNotaB || esEnarm)
-              ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Toca el pentagrama para colocar cada nota. Selecciónala y usa <b>♯ ♮ ♭</b> para alterarla. Borra con clic derecho.</div>'
+              ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Toca el pentagrama para colocar cada nota. Selecciónala y usa <b>♯ ♮ ♭</b> para alterarla. '+window.TXT_TIP('Borra con clic derecho.','Borra con la ×.')+'</div>'
               : esRuedas
                 ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Gira las ruedas para responder cada compás (y usa <b>♯ ♭</b> donde aparezcan).</div>'
                 : '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px;font-style:italic">Simulación: aquí el alumno resolvería el ejercicio (colocar notas, escribir, elegir…).</div>';
       const areaItem = AREA_DE[item.key];
       const practiBtn = areaItem
         ? '<div style="margin-top:16px"><button class="simPracticaLive sim-practica-btn" data-key="'+item.key+'">No lo sé hacer, necesito practicar esto ↗</button></div>'
-        : '<div style="margin-top:16px;color:#c7bff0;font-size:13px;font-weight:600">Ey, soy Iago: <b>revisa los apuntes</b> 📖</div>';   /* ELE-W1: sin pad dedicado */
+        : '<div style="margin-top:16px;color:#c7bff0;font-size:13px;font-weight:600">¿Dudas? <b>Revisa los apuntes</b> 📖</div>';   /* ELE-W2: el «Ey, soy Iago» queda para la corrección */
       const entClass = animDir==='fwd' ? 'sim-slide-in' : (animDir==='back' ? 'sim-slide-in-l' : 'sim-enter'); animDir=null;
       main.innerHTML='<div class="pp-hide-sol sim-card '+entClass+'" style="max-width:min(1120px,95vw);width:100%;align-self:flex-start">'+
           '<div class="sim-eyebrow">Ejercicio '+(i+1)+'</div>'+
@@ -12238,12 +12244,17 @@ function __grados_marker__(){}
         haySimulado=true;
         return Math.floor(Math.random()*101);
       });
-      const media=Math.round(scores.reduce((a,b)=>a+b,0)/Math.max(1,scores.length));
+      /* ELE-W2 · ANULADOS: los ejercicios anulados por el Diario no cuentan en la media */
+      const _anul=(window.__SUITE_ANULADOS||[]);
+      const _esAnulado=(item,k)=>_anul.indexOf(item&&item.n!=null?Number(item.n):(k+1))>=0;
+      const _validos=scores.filter((sc,k)=>!_esAnulado(PP.ficha[k],k));
+      const media=Math.round((_validos.length?_validos:scores).reduce((a,b)=>a+b,0)/Math.max(1,(_validos.length?_validos:scores).length));
       const nota=(media/10).toFixed(1).replace('.',',');
       const notaNum=Math.round((media/10)*100)/100;       // nota sobre 10 (numérica) para el Diario
       const esAlumno=!!window.__SUITE_ALUMNO;              // FASE 6.5: entrada por ?fichaId
       const cuerpo=PP.ficha.map((item,k)=>{
-        const sc=scores[k]; const ok=sc>=50;
+        const sc=scores[k]; let ok=sc>=50;
+        const anulado=_esAnulado(item,k); if(anulado) ok=true;
         const col=ok?'#5bf0c0':'#ff8aa6'; const bg=ok?'rgba(52,211,153,.16)':'rgba(255,92,128,.16)';
         const area=AREA_DE[item.key];
         const practicar = !ok
@@ -12254,7 +12265,7 @@ function __grados_marker__(){}
         return '<div style="border-top:1px solid rgba(255,255,255,.08);padding:16px 0">'+
             '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">'+
               '<div style="font-size:13.5px;color:#e9e5ff;font-weight:700">'+(k+1)+'. '+esc(item.ej.enun||item.label)+'</div>'+
-              '<span style="flex:none;background:'+bg+';color:'+col+';font-weight:800;font-size:13px;padding:5px 11px;border-radius:99px">'+sc+'%</span>'+
+              (anulado?'<span style="flex:none;background:rgba(255,255,255,.12);color:#c7bff0;font-weight:800;font-size:12px;padding:5px 11px;border-radius:99px;letter-spacing:.04em">ANULADO · no cuenta</span>':'<span style="flex:none;background:'+bg+';color:'+col+';font-weight:800;font-size:13px;padding:5px 11px;border-radius:99px">'+sc+'%</span>')+
             '</div>'+
             '<div class="simSolHost" data-k="'+k+'"></div>'+
             practicar+
@@ -12349,7 +12360,7 @@ function __grados_marker__(){}
           ficha_id:ctx.ficha, numero:ctx.numero,
           nota:notaNum, porcentaje:media,
           entregada_en:new Date().toISOString(),
-          ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k] }))
+          ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined }))
         };
         try{
           // p_nota va sobre 10 (escala:10 en construirPayload). Si el Diario
@@ -14182,7 +14193,7 @@ function __grados_marker__(){}
     for(const c of cand){
       if(c && Array.isArray(c.ejercicios) && c.ejercicios.length){
         const num=(c.numero!=null)?c.numero:(data.numero!=null?data.numero:null);
-        return { ejercicios:c.ejercicios, numero:num, payload:c };
+        return { ejercicios:c.ejercicios, numero:num, payload:c, anulados:(c.anulados||data.anulados||[]) };   /* ELE-W2: anulaciones del Diario */
       }
     }
     if(Array.isArray(data.ejercicios) && data.ejercicios.length){
@@ -14244,6 +14255,7 @@ function __grados_marker__(){}
       if(pack.numero!=null && String(pack.numero)!=='') window.__FICHA_NUMERO=pack.numero;
       // contexto de entrega para el final del motor
       window.__SUITE_ALUMNO={ cuenta:cuenta, ficha:fichaId, numero:(pack.numero!=null?pack.numero:(numFallback||null)) };
+      window.__SUITE_ANULADOS=(pack.anulados||[]).map(Number);   /* ELE-W2 */
       PP.ficha=pack.ejercicios.map(e=>({ n:e.n, key:e.key, label:e.label, ej:rehidratarEj(e) }));
       // FASE 6.7 · REANUDAR: si hay progreso guardado de ESTA ficha, se
       // rehidratan las respuestas y se arranca en el ejercicio donde iba.
