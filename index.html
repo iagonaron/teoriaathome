@@ -11184,7 +11184,9 @@ function __grados_marker__(){}
     });
 
     // ---- C · orden de tempos ----
-    var orden=(est&&est.C&&est.C.orden)||[];
+    /* WAVE7: sin arrastrar, su respuesta es el orden mostrado (mismo criterio
+       que comprobarTerminos: no tocar = decisión válida) */
+    var orden=(est&&est.C&&est.C.orden&&est.C.orden.length)?est.C.orden:((D.C&&D.C.barajado)||[]);
     var corr=D.C.correcto||[];
     if(!orden.length){
       fila(cab('C · Orden:')+'<span style="color:'+R+'">✗ sin ordenar</span> <span style="color:'+MUT+'">→</span> '
@@ -11414,7 +11416,7 @@ function __grados_marker__(){}
     ena_a:'Escribe las enarmonías de cada nota.',
     ena_avanzado:'Reescribe la enarmonía parcial y total de cada intervalo y escribe la tonalidad enarmónica.',
     inv_simples:'Clasifica el intervalo, inviértelo y vuelve a clasificarlo.',
-    inv_compuestos:'Aplica el truco AIA (acerca, invierte, aleja) y analiza el intervalo final del intervalo compuesto.',
+    inv_compuestos:'Analiza el intervalo compuesto, inviértelo y vuelve a analizarlo.',
     aco_identificar:'Identifica el tipo de acorde y su inversión (ordena en el paréntesis si te ayuda).',
     aco_construir:'Construye cada acorde en el estado pedido (mitad izquierda del compás).',
     adorno_quiz:'Marca la respuesta correcta: test (a, b o c) y verdadero/falso.',
@@ -11628,39 +11630,7 @@ function __grados_marker__(){}
         '<div class="pp-panel" id="ppSelector"></div>'+
         '<div class="pp-panel" id="ppCesta"></div>'+
       '</div>'+
-      '<div id="ppRevisar"></div>'+
-      '<details id="ppAnulaBox" style="margin-top:16px;border:1px dashed rgba(169,116,255,.45);border-radius:12px;padding:10px 14px;color:#4a4468;background:#fff">'+
-        '<summary style="cursor:pointer;font-weight:800;color:#7a5cd0">🛟 Recalculadora de notas · anular un ejercicio de una ficha ya entregada</summary>'+
-        '<div style="font-size:12.5px;margin-top:8px;line-height:1.55">Si detectas un ejercicio con errores después de que los alumnos entreguen: pega los <b>payload</b> de las entregas (columna <code>payload</code> de Supabase; uno por línea o un array JSON), di qué ejercicio(s) anulas y te devuelvo la nota recalculada de cada alumno — la media se hace SOLO con los ejercicios restantes.</div>'+
-        '<textarea id="ppAnulaIn" style="width:100%;min-height:110px;margin-top:8px;border:1px solid #d8d2f0;border-radius:8px;color:#2a2440;padding:8px;font:12px/1.4 monospace"></textarea>'+
-        '<div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap">'+
-          '<label style="font-size:12.5px;font-weight:700">Anular ejercicio(s) nº <input id="ppAnulaN" style="width:90px;border:1px solid #d8d2f0;border-radius:6px;color:#2a2440;padding:5px 7px" placeholder="3 o 3,7"></label>'+
-          '<button class="pp-btn" id="ppAnulaGo" type="button" style="padding:8px 14px">Recalcular</button>'+
-        '</div>'+
-        '<div id="ppAnulaOut" style="margin-top:10px;font:12.5px/1.65 monospace;white-space:pre-wrap;color:#4a4468"></div>'+
-      '</details>';
-    (function(){
-      var ba=document.getElementById('ppAnulaGo'); if(!ba || ba._fp) return; ba._fp=true;
-      ba.addEventListener('click', function(){
-        var out=document.getElementById('ppAnulaOut'); var raw=(document.getElementById('ppAnulaIn').value||'').trim();
-        var ns=String(document.getElementById('ppAnulaN').value||'').split(/[\s,;]+/).map(function(x){ return parseInt(x,10); }).filter(function(x){ return x>0; });
-        if(!raw){ out.textContent='Pega al menos un payload.'; return; }
-        if(!ns.length){ out.textContent='Indica el nº de ejercicio a anular.'; return; }
-        var rows;
-        try{ var j=JSON.parse(raw); rows=Array.isArray(j)?j:[j]; }
-        catch(e){ rows=raw.split(/\n+/).map(function(l){ l=l.trim().replace(/,$/,''); if(!l) return null; try{ return JSON.parse(l); }catch(e2){ return {__err:true}; } }).filter(Boolean); }
-        var lines=rows.map(function(p,i){
-          if(!p || p.__err || !p.ejercicios || !p.ejercicios.length) return 'fila '+(i+1)+': ⚠ no es un payload válido';
-          var resto=p.ejercicios.filter(function(e2){ return ns.indexOf(e2.n)<0; });
-          if(!resto.length) return 'fila '+(i+1)+': ⚠ no quedan ejercicios que contar';
-          var esCien=resto.some(function(e2){ return (+e2.pct||0)>1.0001; });   // pct 0–100 (elemental) o 0–1 (pro)
-          var media=resto.reduce(function(a,e2){ var v=(+e2.pct||0); return a+(esCien?v/100:v); },0)/resto.length;
-          var nueva=Math.round(media*100)/10;
-          return 'fila '+(i+1)+': '+(p.nota!=null?('nota '+String(p.nota).replace('.',',')+' → '):'')+'NUEVA NOTA '+String(nueva).replace('.',',')+'   ('+resto.length+' ejercicios contados)';
-        });
-        out.textContent='Anulado(s): ejercicio '+ns.join(', ')+'\n'+lines.join('\n');
-      });
-    })();
+      '<div id="ppRevisar"></div>';
     renderSelector();
     renderCesta();
     if(PP.ficha && PP.ficha.length) renderRevisar();
