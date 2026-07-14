@@ -12294,6 +12294,17 @@ function __grados_marker__(){}
             (esAlumno?'<div id="simEntregaEstado" style="margin:16px auto 0;max-width:560px;font-size:14.5px;font-weight:800;padding:12px 20px;border-radius:14px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.18);color:#c7bff0"></div>'+'<button id="simReintentar" type="button" style="display:none;margin:10px auto 0;background:linear-gradient(90deg,#a974ff,#5bd0ff);color:#12082e;border:0;border-radius:10px;padding:10px 18px;font-weight:800;font-size:13.5px;cursor:pointer">↻ Reintentar envío</button>':'')+
           '</div>'+
           '<div style="margin-top:14px">'+cuerpo+'</div>'+
+          (esAlumno?(
+          '<details id="simFbBox" style="margin:26px auto 8px;max-width:680px;background:rgba(255,255,255,.05);border:1px solid rgba(169,116,255,.4);border-radius:14px;padding:12px 16px">'+
+            '<summary style="cursor:pointer;font-weight:800;color:#c9a8ff;font-size:14px;list-style-position:inside">💬 ¿Crees que algún ejercicio está mal corregido o tuviste algún problema con la ficha?</summary>'+
+            '<div style="color:#b6abdf;font-size:12.5px;margin-top:8px">Deja aquí tu comentario y me encargo de solucionarlo. ¡Gracias por la comprensión!</div>'+
+            '<div id="simFbList"></div>'+
+            '<div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">'+
+              '<button id="simFbMas" type="button" style="background:rgba(255,255,255,.08);color:#e9e5ff;border:1px solid rgba(169,116,255,.4);border-radius:10px;padding:8px 13px;font-weight:700;font-size:12.5px;cursor:pointer">＋ Añadir otro ejercicio</button>'+
+              '<button id="simFbSend" type="button" style="background:linear-gradient(90deg,#a974ff,#5bd0ff);color:#12082e;border:0;border-radius:10px;padding:9px 16px;font-weight:800;font-size:13px;cursor:pointer">Enviar comentario</button>'+
+              '<span id="simFbSt" style="font-size:12.5px;font-weight:700"></span>'+
+            '</div>'+
+          '</details>'):'')+
         '</div>';
       main.scrollTop=0;
       // REVELAR la nota: cuenta ascendente + celebración (≥7) o muy sutil (<5)
@@ -12339,6 +12350,49 @@ function __grados_marker__(){}
       // FASE 6.5 · ENTREGA REAL: solo en modo alumno (entrada por ?fichaId).
       // La previsualización del profesor NUNCA envía.
       if(esAlumno){ entregarAlProfesor(); }
+      /* ELE-W4 · buzón de incidencias v2: plegado, varios ejercicios, abajo del todo */
+      (function(){
+        const b=main.querySelector('#simFbSend'); if(!b) return;
+        const lista=main.querySelector('#simFbList');
+        const fila=()=>{
+          const d=document.createElement('div'); d.className='simFbItem';
+          d.style.cssText='margin-top:10px;padding-top:10px;border-top:1px dashed rgba(169,116,255,.3)';
+          d.innerHTML=
+            '<label style="font-size:12px;color:#b6abdf">Ejercicio nº <input class="fbN" type="number" min="1" style="width:60px;background:rgba(0,0,0,.3);border:1px solid #5a4a7a;border-radius:6px;color:#efe9ff;padding:5px 7px"> <span style="opacity:.7">(opcional)</span></label>'+
+            '<textarea class="fbT" placeholder="Cuéntame qué pasó…" style="width:100%;min-height:60px;margin-top:6px;background:rgba(0,0,0,.3);border:1px solid #5a4a7a;border-radius:8px;color:#efe9ff;padding:8px;font:13px/1.45 inherit;box-sizing:border-box"></textarea>';
+          lista.appendChild(d);
+        };
+        fila();
+        const mas=main.querySelector('#simFbMas'); if(mas) mas.addEventListener('click', fila);
+        b.addEventListener('click', async ()=>{
+          const st=main.querySelector('#simFbSt');
+          const items=[];
+          lista.querySelectorAll('.simFbItem').forEach(d=>{
+            const t=(d.querySelector('.fbT').value||'').trim(); if(!t) return;
+            const n=parseInt(d.querySelector('.fbN').value,10);
+            items.push({ n:(isFinite(n)?n:null), texto:t });
+          });
+          if(!items.length){ if(st){ st.textContent='Escribe al menos un comentario.'; st.style.color='#ff9ad8'; } return; }
+          const ctx=window.__SUITE_ALUMNO; const sb=suiteSb();
+          if(!ctx||!sb){ if(st){ st.textContent='(solo disponible en la ficha real)'; st.style.color='#ff9ad8'; } return; }
+          if(st){ st.textContent='Enviando…'; st.style.color='#b6abdf'; }
+          const pay={
+            origin:'teoria_at_home', ficha_id:ctx.ficha, numero:ctx.numero,
+            nota:notaNum, porcentaje:media, entregada_en:new Date().toISOString(),
+            ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined })),
+            respuestas:progSanitizarRespuestas(),
+            estado:PP.ficha.map(it=>sanitEstado(it.ej)),
+            feedback:{ items:items, texto:items.map(i2=>(i2.n!=null?('Ej. '+i2.n+': '):'')+i2.texto).join('\n'), fecha:new Date().toISOString() }
+          };
+          try{
+            const { data, error } = await sb.rpc('suite_ficha_entregar', { p_cuenta_id:ctx.cuenta, p_ficha_id:ctx.ficha, p_nota:notaNum, p_payload:pay });
+            if(error) throw error;
+            if(data && data.ok===false) throw new Error(data.error||'error');
+            if(st){ st.textContent='✓ Comentario enviado a Iago. ¡Gracias!'; st.style.color='#5bf0c0'; }
+            b.disabled=true;
+          }catch(e){ if(st){ st.textContent='No se pudo enviar ('+((e&&e.message)||e)+'). Inténtalo otra vez.'; st.style.color='#ff9ad8'; } }
+        });
+      })();
 
       async function entregarAlProfesor(){
         const ctx=window.__SUITE_ALUMNO; if(!ctx) return;
@@ -12360,7 +12414,9 @@ function __grados_marker__(){}
           ficha_id:ctx.ficha, numero:ctx.numero,
           nota:notaNum, porcentaje:media,
           entregada_en:new Date().toISOString(),
-          ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined }))
+          ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined })),
+          respuestas:progSanitizarRespuestas(),
+          estado:PP.ficha.map(it=>sanitEstado(it.ej))   /* ELE-W5: lo que ingresó el alumno, rastreable */
         };
         try{
           // p_nota va sobre 10 (escala:10 en construirPayload). Si el Diario
@@ -12426,6 +12482,24 @@ function __grados_marker__(){}
       else if(!enviado && e.key==='ArrowRight'){ if(i<n-1){ const it=PP.ficha[i]; if(it.ej._interactivo==='grado' && !(it._respuesta && it._respuesta.marca!=null)){ mostrarBannerSim('Tienes que señalar el grado: toca la nota que crees que es la respuesta para rodearla.'); return; } i++; if(i>maxAvance) maxAvance=i; if(esAlumnoProg){ try{ progGuardar(i, maxAvance); }catch(e2){} } mostrar(); } }
       else if(!enviado && e.key==='ArrowLeft'){ if(i>0){ i--; if(esAlumnoProg){ try{ progGuardar(i, maxAvance); }catch(e2){} } mostrar(); } } };
     document.addEventListener('keydown',onKey);
+    if(window.__REVISION){                      /* ELE-W5 · el profesor entra directo a la corrección */
+      enviado=true;
+      pantallaCorrigiendo(pantallaFinal);
+      setTimeout(()=>{ try{
+        const card=main.querySelector('.sim-card');
+        if(card){
+          const rev=window.__REVISION;
+          const ban=document.createElement('div');
+          ban.style.cssText='margin:0 0 16px;background:rgba(255,184,77,.14);border:1px solid rgba(255,184,77,.55);border-radius:12px;padding:12px 16px;color:#ffd9a0;font-size:13px;line-height:1.55';
+          let fbHtml='';
+          if(rev.feedback){ const its=(rev.feedback.items&&rev.feedback.items.length)?rev.feedback.items:(rev.feedback.texto?[{n:rev.feedback.n,texto:rev.feedback.texto}]:[]);
+            if(its.length) fbHtml='<div style="margin-top:8px;border-top:1px dashed rgba(255,184,77,.4);padding-top:8px">'+its.map(x=>'💬 '+(x.n!=null?('<b>Ej. '+x.n+':</b> '):'')+String(x.texto||'').replace(/</g,'&lt;')).join('<br>')+'</div>'; }
+          ban.innerHTML='<b>🔍 REVISIÓN DEL PROFESOR</b> · Ficha '+(rev.numero!=null?rev.numero:'—')+(rev.nota!=null?(' · nota registrada: <b>'+String(rev.nota).replace('.',',')+'</b>'):'')+' · abajo, la ficha EXACTA que vio el alumno'+fbHtml;
+          card.insertBefore(ban, card.firstChild);
+        }
+      }catch(e){} }, 4300);
+      return;
+    }
     if(reanudado) mostrar(); else pantallaIntro(mostrar);   // intro de bienvenida solo al empezar de cero
     // FASE 6.7 · aviso de reanudación: el alumno ve claramente que su
     // progreso se ha recuperado y en qué ejercicio estaba.
@@ -13964,6 +14038,17 @@ function __grados_marker__(){}
 
   // Serializa PP.ficha[k]._respuesta a JSON plano y seguro:
   // fuera funciones y nodos DOM (por si algún motor cuela referencias).
+  /* ELE-W5 · instantánea COMPLETA de cada ejercicio (revisión del profesor) */
+  function sanitEstado(o){
+    try{
+      return JSON.parse(JSON.stringify(o, (k,v)=>{
+        if(typeof k==='string' && k.indexOf('__')===0) return undefined;
+        if(typeof v==='function') return undefined;
+        if(v && typeof v==='object' && v.nodeType!=null) return undefined;
+        return v;
+      }));
+    }catch(e){ return null; }
+  }
   function progSanitizarRespuestas(){
     return (PP.ficha||[]).map(it=>{
       if(!it || !it._respuesta) return null;
@@ -14231,6 +14316,49 @@ function __grados_marker__(){}
   }
 
   // Arranque: abre la ficha, reconstruye PP.ficha y lanza el motor real.
+  /* ELE-W5 · REVISIÓN DEL PROFESOR: ?revision=<fichaId>:<cuentaId>&s=<secreto>
+     Reconstruye la ficha con el ESTADO que entregó el alumno y salta directo
+     a la pantalla de corrección (solo lectura, no envía nada). */
+  async function revisionProfesor(rev, sec){
+    const ov=pantallaCargaAlumno();
+    const msg=(t)=>{ const el=ov.querySelector('#ppAluMsg'); if(el) el.textContent=t; };
+    try{
+      msg('Cargando revisión…');
+      let intentos=0;
+      while(!(window.supabase && window.supabase.createClient) && intentos<60){ await new Promise(r=>setTimeout(r,100)); intentos++; }
+      const sb=suiteSb(); if(!sb) throw new Error('sin_supabase');
+      const partes=String(rev).split(':'); const fichaId=partes[0], cuenta=partes[1];
+      const { data, error } = await sb.rpc('suite_ficha_revision', { p_secreto:sec, p_ficha_id:fichaId, p_cuenta_id:cuenta });
+      if(error) throw error;
+      if(!data || data.ok!==true) throw new Error((data&&data.error)||'no_disponible');
+      const pl=data.payload||{};
+      const pack=extraerPaqueteFicha({ ejercicios_json:data.ejercicios_json });
+      if(!pack || !pack.ejercicios.length) throw new Error('ficha_vacia');
+      window.__SUITE_ALUMNO=null;               // NUNCA envía
+      window.__SUITE_ANULADOS=(pl.anulados||[]).map(Number);
+      window.__FICHA_NUMERO=(data.numero!=null?data.numero:null);
+      PP.ficha=pack.ejercicios.map((e,k)=>{
+        const it={ n:e.n, key:e.key, label:e.label, ej:rehidratarEj(e) };
+        const est=(Array.isArray(pl.estado)&&pl.estado[k])?pl.estado[k]:null;
+        if(est){ try{ Object.keys(est).forEach(kk=>{ it.ej[kk]=est[kk]; }); }catch(e2){} }   // el estado del alumno pisa el recién generado
+        const r=(Array.isArray(pl.respuestas)&&pl.respuestas[k])?pl.respuestas[k]:null;
+        if(r && typeof r==='object'){
+          const tipoInt=it.ej && it.ej._interactivo;
+          if((tipoInt==='escala'||tipoInt==='grado') && ('sel' in r)) r.sel=null;
+          it._respuesta=r;
+        }
+        return it;
+      });
+      window.__REVISION={ numero:data.numero, nota:(data.nota!=null?+data.nota:null), feedback:pl.feedback||null };
+      previsualizarAlumno();
+      setTimeout(()=>{ try{ ov.remove(); }catch(e){} }, 0);
+    }catch(err){
+      let cont=ov; if(!document.body.contains(ov)) cont=pantallaCargaAlumno();
+      errorCargaAlumno(cont, 'No se pudo cargar la revisión',
+        'Error: '+((err&&err.message)||err)+' — ¿ejecutaste la v4 de anulaciones_supabase.sql (suite_ficha_revision)?');
+    }
+  }
+
   async function arrancarFichaAlumno(cuenta, fichaId, numFallback){
     console.log('[ficha] arranque alumno · fichaId=%s cuenta=%s n=%s', fichaId, cuenta, numFallback);
     // fija ya el número (del ?n del portal) para que el título salga "Ficha N"
@@ -14317,6 +14445,8 @@ function __grados_marker__(){}
       // ?fichaId=<uuid>&cuenta=<uuid> (distinto del ?ficha=N del profesor).
       const fichaIdAl=qs.get('fichaId'), cuentaAl=qs.get('cuenta');
       if(fichaIdAl && cuentaAl){ arrancarFichaAlumno(cuentaAl, fichaIdAl, qs.get('n')||null); return; }
+      const revAl=qs.get('revision'), revSec=qs.get('s');
+      if(revAl && revSec){ revisionProfesor(revAl, revSec); return; }   /* ELE-W5 */
       // FASE 6.1c: token de envío creado por el Diario (un solo uso, vida 45 min)
       const envioTok=qs.get('envio'); if(envioTok){ window.__SUITE_ENVIO_TOKEN=envioTok; window.__SUITE_ENVIO_FICHA=qs.get('ficha')||null; }
       // Número de ficha para el título "Ficha N" (el Diario pasa ?ficha=N numérico).
