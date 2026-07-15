@@ -12349,6 +12349,7 @@ function __grados_marker__(){}
           const pay={
             origin:'teoria_at_home', ficha_id:ctx.ficha, numero:ctx.numero,
             nota:notaNum, porcentaje:media, entregada_en:new Date().toISOString(),
+            tiempo_seg:(window.SuiteTiempo&&window.SuiteTiempo.activo()?window.SuiteTiempo.total():undefined),
             ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined })),
             respuestas:progSanitizarRespuestas(),
             estado:PP.ficha.map(it=>sanitEstado(it.ej)),
@@ -12384,6 +12385,7 @@ function __grados_marker__(){}
           ficha_id:ctx.ficha, numero:ctx.numero,
           nota:notaNum, porcentaje:media,
           entregada_en:new Date().toISOString(),
+            tiempo_seg:(window.SuiteTiempo&&window.SuiteTiempo.activo()?window.SuiteTiempo.total():undefined),
           ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined })),
           respuestas:progSanitizarRespuestas(),
           estado:PP.ficha.map(it=>sanitEstado(it.ej))   /* ELE-W5: lo que ingresó el alumno, rastreable */
@@ -14414,7 +14416,10 @@ function __grados_marker__(){}
       // FASE 6.5: flujo del ALUMNO — abrir la ficha ENVIADA en el motor real.
       // ?fichaId=<uuid>&cuenta=<uuid> (distinto del ?ficha=N del profesor).
       const fichaIdAl=qs.get('fichaId'), cuentaAl=qs.get('cuenta');
-      if(fichaIdAl && cuentaAl){ arrancarFichaAlumno(cuentaAl, fichaIdAl, qs.get('n')||null); return; }
+      if(fichaIdAl && cuentaAl){
+        // TIEMPO DE ACTIVIDAD (15-jul): rastreo de trabajo real en la ficha
+        try{ if(window.SuiteTiempo) window.SuiteTiempo.start(cuentaAl, 'ficha', fichaIdAl); }catch(e){}
+        arrancarFichaAlumno(cuentaAl, fichaIdAl, qs.get('n')||null); return; }
       const revAl=qs.get('revision'), revSec=qs.get('s');
       if(revAl && revSec){ revisionProfesor(revAl, revSec); return; }   /* ELE-W5 */
       // FASE 6.1c: token de envío creado por el Diario (un solo uso, vida 45 min)
@@ -14438,6 +14443,85 @@ function __grados_marker__(){}
 })();
 </script>
 
+
+<script>
+/* ============================================================
+   SUITE · TIEMPO DE ACTIVIDAD · r1 (Iago 15-jul-2026)
+   ------------------------------------------------------------
+   Cuenta SOLO el tiempo real de trabajo del alumno:
+     · pestaña visible (si se va a otra pestaña, no cuenta)
+     · con actividad (ratón/teclado/toque); un hueco de MÁS DE
+       2 MINUTOS sin actividad no se cuenta (baño, distracción…)
+     · acumula entre días y dispositivos (tabla
+       suite_actividad_tiempo vía RPC suite_tiempo_ping — ver
+       suite_tiempo_actividad.sql)
+   El tiempo aparece discretamente en la campana del Diario junto
+   a cada ficha entregada / quiz completado.
+   ============================================================ */
+window.SuiteTiempo=(function(){
+  'use strict';
+  var SB='https://woiptkyrxkbpnvioypit.supabase.co';
+  var AN='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvaXB0a3lyeGticG52aW95cGl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NzI2ODYsImV4cCI6MjA5MjA0ODY4Nn0.B2nKgj5rD0rkdLeMIrd9KgD8lUPWsBT4Y7aCtmnvbjA';
+  var IDLE_S=120, FLUSH_MS=45000;
+  var cuenta=null, tipo=null, ref=null;
+  var last=null, acc=0, enviado=0, previo=0, on=false;
+  function actividad(){
+    if(!on || document.visibilityState!=='visible') return;
+    var now=Date.now();
+    if(last!=null){ var d=(now-last)/1000; if(d>0 && d<IDLE_S) acc+=d; }
+    last=now;
+  }
+  function corta(){ last=null; }
+  function flush(final){
+    if(!on) return;
+    var s=Math.floor(acc); if(s<1) return;
+    acc-=s; enviado+=s;
+    try{
+      fetch(SB+'/rest/v1/rpc/suite_tiempo_ping',{method:'POST', keepalive:!!final,
+        headers:{'Content-Type':'application/json','apikey':AN,'Authorization':'Bearer '+AN},
+        body:JSON.stringify({p_cuenta_id:cuenta, p_tipo:tipo, p_ref:ref, p_secs:s})
+      }).catch(function(){});
+    }catch(e){}
+  }
+  function leerPrevio(){
+    try{
+      fetch(SB+'/rest/v1/suite_actividad_tiempo?select=secs&cuenta_id=eq.'+encodeURIComponent(cuenta)+
+        '&tipo=eq.'+encodeURIComponent(tipo)+'&ref=eq.'+encodeURIComponent(ref),
+        {headers:{'apikey':AN,'Authorization':'Bearer '+AN}})
+      .then(function(r){ return r.ok?r.json():[]; })
+      .then(function(rows){ previo=(rows&&rows[0]&&rows[0].secs)||0; })
+      .catch(function(){});
+    }catch(e){}
+  }
+  function docAttach(doc){
+    if(!doc || doc.__suiteTiempo) return; doc.__suiteTiempo=1;
+    ['pointerdown','pointermove','mousemove','keydown','touchstart','wheel'].forEach(function(ev){
+      try{ doc.addEventListener(ev, actividad, {passive:true, capture:true}); }catch(e){}
+    });
+  }
+  function start(c, t, r){
+    if(on || !c || !r) return;
+    cuenta=String(c); tipo=String(t); ref=String(r); on=true;
+    docAttach(document);
+    document.addEventListener('visibilitychange', function(){
+      if(document.visibilityState!=='visible'){ corta(); flush(); } else { last=Date.now(); }
+    });
+    window.addEventListener('pagehide', function(){ corta(); flush(true); });
+    setInterval(flush, FLUSH_MS);
+    // fases del quiz en iframe (mismo origen): engancharse a su documento
+    setInterval(function(){
+      try{
+        var frs=document.querySelectorAll('iframe');
+        for(var i=0;i<frs.length;i++){ try{ var d=frs[i].contentDocument; if(d) docAttach(d); }catch(e2){} }
+      }catch(e){}
+    }, 2000);
+    leerPrevio();
+    last=Date.now();
+  }
+  function total(){ return Math.round(previo+enviado+acc); }
+  return { start:start, total:total, flush:flush, activo:function(){return on;} };
+})();
+</script>
 
 <script>
 /* FASE 9.1 · tiempo de uso LIBRE (no cuenta la ficha ni el panel del profe) */
