@@ -14146,6 +14146,18 @@ function __grados_marker__(){}
         }
         window.__SUITE_ENVIO_TOKEN=null;   // consumido: un solo uso
         cerrarModal();
+        // (Iago jul-2026) avisar al Diario del Profesor (la pestaña que abrió
+        // este generador) de que la ficha se ENVIÓ de verdad, para que muestre
+        // el visto "Ficha N enviada a los alumnos" en el apartado de clases.
+        try {
+          if (window.opener && !window.opener.closed) {
+            window.opener.postMessage({
+              source:'teoria-at-home', type:'ficha_enviada',
+              ficha:(data && data.numero!=null ? data.numero : window.__SUITE_ENVIO_FICHA),
+              notificados:(data && data.notificados), envio:token, ts:Date.now()
+            }, '*');
+          }
+        } catch(e){}
         alert('\u2713 Ficha '+data.numero+' enviada.\nAlumnos notificados: '+data.notificados+'.\nLa verán el viernes a las 19:00, con el resto de tareas de la semana.');
       }catch(e){
         ok.disabled=false; ok.textContent=prev;
