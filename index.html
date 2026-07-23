@@ -11943,22 +11943,79 @@ function __grados_marker__(){}
         '<span class="neb b4"></span><span class="neb b5"></span>'+
       '</div>'+
       '<div style="position:relative;z-index:2;padding:14px 22px;color:#fff;display:flex;align-items:center;gap:16px">'+
-        '<button id="simSalir" style="background:rgba(255,255,255,.06);border:1px solid #ffffff33;color:#fff;border-radius:10px;padding:8px 14px;cursor:pointer;font-weight:700;backdrop-filter:blur(4px)">✕ Salir</button>'+
         '<div style="flex:1">'+
           '<div id="simHead" style="font-size:13px;opacity:.9;margin-bottom:7px;font-weight:600"></div>'+
           '<div style="height:10px;background:#ffffff1f;border-radius:99px;overflow:hidden">'+
             '<div id="simBar" style="height:100%;width:0%;background:#ff2e9a;border-radius:99px;transition:width .55s cubic-bezier(.4,0,.2,1)"></div>'+
           '</div>'+
         '</div>'+
+        '<button id="simSalir" aria-label="Salir de la ficha" title="Salir de la ficha" style="flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);border:1px solid #ffffff33;color:#fff;border-radius:50%;padding:0;font-size:16px;line-height:1;cursor:pointer;font-weight:700;backdrop-filter:blur(4px)">✕</button>'+
       '</div>'+
       '<div id="simMain" style="position:relative;z-index:2;flex:1;overflow:auto;display:flex;justify-content:center;padding:20px"></div>'+
       '<div id="simFoot" style="position:relative;z-index:2;padding:14px 22px;display:flex;justify-content:space-between;gap:12px"></div>';
     const main=ov.querySelector('#simMain'), foot=ov.querySelector('#simFoot'), bar=ov.querySelector('#simBar'), head=ov.querySelector('#simHead');
-    // FASE 6.7 · "✕ Salir" a mitad de ficha: guarda el punto actual antes de
-    // cerrar (el alumno podrá CONTINUAR desde la campana del portal).
+    // FASE 6.7 · "✕" a mitad de ficha (arriba a la derecha) · v2 (Iago jul-2026):
+    // en modo ALUMNO ya no cierra en seco: abre una ventana de confirmación
+    // que explica que el progreso queda guardado (se retoma desde la campana
+    // del portal), que el profesor no recibe nada hasta completar y enviar,
+    // y recuerda el plazo de entrega (fin normal o semana de recuperación).
+    const PORTAL_ALUMNO_URL='https://iagonaron.github.io/LMEAVathome/';
+    const salirAlPortal=()=>{
+      try{ if(window.SuiteTiempo && window.SuiteTiempo.flush) window.SuiteTiempo.flush(true); }catch(e){}
+      try{ window.location.href=PORTAL_ALUMNO_URL; }catch(e){ cerrar(); }
+    };
+    // plazo de la ficha: llega del portal por URL (&fin=&gracia=) o de la RPC
+    function plazoActual(){
+      const p=window.__SUITE_PLAZO||{};
+      const fin=p.fin?Date.parse(p.fin):NaN, gr=p.gracia?Date.parse(p.gracia):NaN, t=Date.now();
+      if(isFinite(fin) && t<=fin) return { fase:'normal', limite:new Date(fin), restante:fin-t };
+      if(isFinite(gr) && t<=gr)   return { fase:'gracia', limite:new Date(gr), restante:gr-t };
+      return null;
+    }
+    function fmtLimite(d){
+      try{
+        return d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})
+          +' a las '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+      }catch(e){ return ''+d; }
+    }
+    function fmtRestante(ms){
+      const m=Math.max(0,Math.floor(ms/60000)), d=Math.floor(m/1440), h=Math.floor((m%1440)/60), mi=m%60;
+      if(d>0) return d+(d===1?' día':' días')+(h>0?(' y '+h+(h===1?' hora':' horas')):'');
+      if(h>0) return h+(h===1?' hora':' horas')+(mi>0?(' y '+mi+' min'):'');
+      return mi+' min';
+    }
+    function modalSalirFicha(){
+      if(ov.querySelector('#simSalirOv')) return;
+      const st=plazoActual();
+      const plazoHTML = !st ? '' : (st.fase==='gracia'
+        ? '<div style="margin-top:14px;background:rgba(255,45,106,.14);border:1px solid rgba(255,92,128,.55);border-radius:12px;padding:11px 14px;color:#ffc2d1;font-size:13.5px;line-height:1.55">⏰ Estás en la <b>semana de recuperación</b>: recuerda completarla antes del <b>'+fmtLimite(st.limite)+'</b> (te quedan '+fmtRestante(st.restante)+').</div>'
+        : '<div style="margin-top:14px;background:rgba(45,212,191,.10);border:1px solid rgba(45,212,191,.45);border-radius:12px;padding:11px 14px;color:#9ff0e2;font-size:13.5px;line-height:1.55">📅 Recuerda completarla antes del <b>'+fmtLimite(st.limite)+'</b> (te quedan '+fmtRestante(st.restante)+').</div>');
+      const avanceTxt = maxAvance>0 ? (' Llevas <b>'+maxAvance+' de '+n+'</b> ejercicios hechos.') : '';
+      const mo=document.createElement('div'); mo.id='simSalirOv';
+      mo.style.cssText='position:fixed;inset:0;z-index:60;background:rgba(8,5,24,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:22px';
+      mo.innerHTML=
+        '<div class="sim-card sim-enter" style="max-width:470px;width:100%;background:linear-gradient(165deg,#2b2060,#170f3a);border:1px solid rgba(169,116,255,.45);border-radius:18px;padding:26px 26px 22px;box-shadow:0 26px 80px rgba(0,0,0,.55)">'+
+          '<div style="font-size:20px;font-weight:900;color:#f6f3ff">¿Salir de la ficha?</div>'+
+          '<div style="margin-top:10px;color:#d5cdf5;font-size:14px;line-height:1.6">Tranquilo: <b>tu progreso queda guardado</b> y puedes retomar la ficha en otro momento desde la campana del portal, justo donde la dejaste.'+avanceTxt+'</div>'+
+          '<div style="margin-top:12px;color:#c7bff0;font-size:13.5px;line-height:1.6">Eso sí: <b>el profesor no recibirá tu ficha hasta que la completes y la envíes</b>.</div>'+
+          plazoHTML+
+          '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap">'+
+            '<button id="simSalirSi" type="button" style="background:rgba(255,255,255,.07);border:1px solid #ffffff33;color:#e9e5ff;border-radius:10px;padding:11px 16px;font-weight:700;font-size:13.5px;cursor:pointer">Guardar y salir</button>'+
+            '<button id="simSalirNo" type="button" style="border:0;background:linear-gradient(90deg,#a974ff,#5bd0ff);color:#12082e;border-radius:10px;padding:11px 18px;font-weight:800;font-size:13.5px;cursor:pointer">Seguir con la ficha</button>'+
+          '</div>'+
+        '</div>';
+      ov.appendChild(mo);
+      mo.addEventListener('click',(e)=>{ if(e.target===mo) mo.remove(); });
+      mo.querySelector('#simSalirNo').onclick=()=>{ mo.remove(); };
+      mo.querySelector('#simSalirSi').onclick=()=>{
+        try{ progGuardar(i, maxAvance); }catch(e){}
+        mo.remove(); salirAlPortal();
+      };
+    }
     ov.querySelector('#simSalir').onclick=()=>{
-      if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e){} }
-      cerrar();
+      if(esAlumnoProg && !enviado){ modalSalirFicha(); return; }   // alumno a mitad: confirmar
+      if(esAlumnoProg && enviado){ salirAlPortal(); return; }      // ya entregada: al portal
+      cerrar();                                                    // profe / revisión: como siempre
     };
     const btn=(id,txt,primary)=> '<button id="'+id+'" class="'+(primary?'sim-btn-primary':'sim-btn-ghost')+'">'+txt+'</button>';
 
@@ -12450,7 +12507,12 @@ function __grados_marker__(){}
       const arrancar=()=>{ const card=main.querySelector('.intro-card'); const go=()=>{ animDir=null; cb(); }; if(card && !reduceMotion()){ card.classList.add('sim-slide-out'); setTimeout(go, 180); } else go(); };
       const b=main.querySelector('#introGo'); if(b) b.onclick=()=>{ try{ if(window.SFX) window.SFX.tap(); }catch(e){} arrancar(); };
     }
-    const onKey=(e)=>{ if(e.key==='Escape'){ if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e2){} } cerrar(); }
+    const onKey=(e)=>{ if(e.key==='Escape'){
+        const moAb=ov.querySelector('#simSalirOv');
+        if(moAb){ moAb.remove(); return; }                          // 1º Esc con modal abierto: lo cierra
+        if(esAlumnoProg && !enviado){ modalSalirFicha(); return; }  // alumno: misma confirmación que la ✕
+        if(esAlumnoProg && enviado){ salirAlPortal(); return; }
+        cerrar(); }
       else if(!enviado && e.key==='ArrowRight'){ if(i<n-1){ const it=PP.ficha[i]; if(it.ej._interactivo==='grado' && !(it._respuesta && it._respuesta.marca!=null)){ mostrarBannerSim('Tienes que señalar el grado: toca la nota que crees que es la respuesta para rodearla.'); return; } i++; if(i>maxAvance) maxAvance=i; if(esAlumnoProg){ try{ progGuardar(i, maxAvance); }catch(e2){} } mostrar(); } }
       else if(!enviado && e.key==='ArrowLeft'){ if(i>0){ i--; if(esAlumnoProg){ try{ progGuardar(i, maxAvance); }catch(e2){} } mostrar(); } } };
     document.addEventListener('keydown',onKey);
@@ -14365,6 +14427,14 @@ function __grados_marker__(){}
       if(!pack || !Array.isArray(pack.ejercicios) || !pack.ejercicios.length){ const e=new Error('ficha_vacia'); e._cod='ficha_vacia'; throw e; }
       console.log('[ficha] '+pack.ejercicios.length+' ejercicios · numero='+pack.numero);
       if(pack.numero!=null && String(pack.numero)!=='') window.__FICHA_NUMERO=pack.numero;
+      // PLAZO (Iago jul-2026): si la RPC devuelve las fechas de entrega, pisan
+      // a las de la URL (por si el enlace llegó sin &fin= / &gracia=).
+      try{
+        const pzFin=data.fin_normal||data.fecha_fin_normal||(data.ficha&&data.ficha.fin_normal)||null;
+        const pzGra=data.fin_gracia||data.fecha_fin_gracia||(data.ficha&&data.ficha.fin_gracia)||null;
+        const pzPrev=window.__SUITE_PLAZO||{};
+        if(pzFin||pzGra) window.__SUITE_PLAZO={ fin:(pzFin||pzPrev.fin||null), gracia:(pzGra||pzPrev.gracia||null) };
+      }catch(e){}
       // contexto de entrega para el final del motor
       window.__SUITE_ALUMNO={ cuenta:cuenta, ficha:fichaId, numero:(pack.numero!=null?pack.numero:(numFallback||null)) };
       window.__SUITE_ANULADOS=(pack.anulados||[]).map(Number);   /* ELE-W2 */
@@ -14429,6 +14499,9 @@ function __grados_marker__(){}
       // ?fichaId=<uuid>&cuenta=<uuid> (distinto del ?ficha=N del profesor).
       const fichaIdAl=qs.get('fichaId'), cuentaAl=qs.get('cuenta');
       if(fichaIdAl && cuentaAl){
+        // PLAZO (Iago jul-2026): el portal añade &fin= y &gracia= (ISO) al enlace
+        // para que la ventana de "salir a mitad" recuerde la fecha de entrega.
+        window.__SUITE_PLAZO={ fin:qs.get('fin')||null, gracia:qs.get('gracia')||null };
         // TIEMPO DE ACTIVIDAD (15-jul): rastreo de trabajo real en la ficha
         try{ if(window.SuiteTiempo) window.SuiteTiempo.start(cuentaAl, 'ficha', fichaIdAl); }catch(e){}
         arrancarFichaAlumno(cuentaAl, fichaIdAl, qs.get('n')||null); return; }
