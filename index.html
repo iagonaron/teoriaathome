@@ -5525,9 +5525,9 @@ const ENA_TABLA = {
   'F,1':  [['G',-1,0],  ['E',2,0]],
   'G,1':  [['A',-1,0]],                 // Sol#: solo Lab
   'A,1':  [['B',-1,0],  ['C',-2,1]],
-  'D,-1': [['C',1,0],   ['E',-2,0]],
+  'D,-1': [['C',1,0],   ['B',2,-1]],   // FIX 2-ago-2026: Mi𝄫 suena Re♮ (no Re♭); el enarmónico que faltaba es Si𝄪
   'E,-1': [['D',1,0],   ['F',-2,0]],
-  'G,-1': [['F',1,0],   ['A',-2,0]],
+  'G,-1': [['F',1,0],   ['E',2,0]],    // FIX 2-ago-2026: La𝄫 suena Sol♮ (no Sol♭); el enarmónico que faltaba es Mi𝄪
   'A,-1': [['G',1,0]],                  // Lab: solo Sol#
   'B,-1': [['A',1,0],   ['C',-2,1]],
   'E,1':  [['F',0,0],   ['G',-2,0]],
@@ -8929,14 +8929,31 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     if(!estado._dirty){ return { ok:false, pct:0, total:(sol.length+(spec.conArmadura?1:0)), aciertos:0 }; }
     const total = sol.length + (spec.conArmadura?1:0);
     let aciertos = 0;
+    /* FIX 2-ago-2026 · R6 (Iago): la escala vale construida en CUALQUIER octava.
+       Se prueba un desplazamiento GLOBAL de octavas (toda la escala por igual,
+       de -2 a +2) y se puntúa con el mejor. Las precolocadas no cambian (ahí
+       la octava la fija la propia app). */
     if(spec.porAltura){
       const ms = sol.map(midiDe).sort((a,b)=>a-b);
-      const mg = got.map(midiDe).sort((a,b)=>a-b);
-      const usado=new Array(mg.length).fill(false);
-      ms.forEach(m=>{ const j=mg.findIndex((x,idx)=>!usado[idx] && x===m); if(j>=0){ usado[j]=true; aciertos++; } });
+      const mg0 = got.map(midiDe).sort((a,b)=>a-b);
+      let mejor=0;
+      for(let d=-2; d<=2; d++){
+        const mg = mg0.map(x=>x-12*d);
+        const usado=new Array(mg.length).fill(false);
+        let ac=0;
+        ms.forEach(m=>{ const j=mg.findIndex((x,idx)=>!usado[idx] && x===m); if(j>=0){ usado[j]=true; ac++; } });
+        if(ac>mejor) mejor=ac;
+      }
+      aciertos += mejor;
     } else {
       const nmin=Math.min(sol.length, got.length);
-      for(let k=0;k<nmin;k++){ if(got[k].step===sol[k].step && got[k].octave===sol[k].octave && got[k].alter===sol[k].alter) aciertos++; }
+      let mejor=0;
+      for(let d=-2; d<=2; d++){
+        let ac=0;
+        for(let k=0;k<nmin;k++){ if(got[k] && got[k].step===sol[k].step && got[k].octave===sol[k].octave+d && got[k].alter===sol[k].alter) ac++; }
+        if(ac>mejor) mejor=ac;
+      }
+      aciertos += mejor;
     }
     let armOk=true;
     if(spec.conArmadura){ armOk = ((estado.arm||0)===(spec.fifths||0)); if(armOk) aciertos++; }
