@@ -12159,6 +12159,25 @@ function __grados_marker__(){}
       } else {
         try{ pintarBloque(main.querySelector('#simScore'), item.ej, 'alumno'); }catch(e){}
       }
+      /* ANTI-SILENCIO (2-ago-2026, Iago) · Si un ejercicio INTERACTIVO no
+         consiguió montarse (hueco vacío o VexFlow caído), en vez de dejar la
+         barra muda: aviso visible + botón para notificar. El botón SOLO existe
+         cuando la propia app detecta el fallo (garantía de veracidad), y la
+         entrega viaja marcada automáticamente aunque el alumno no pulse. */
+      try{
+        const _sc=main.querySelector('#simScore');
+        if(item.ej._interactivo && _sc && (_sc.innerHTML.length<120 || _sc.innerHTML.indexOf('VexFlow no disponible')>=0)){
+          item._falloCarga=true;
+          _sc.innerHTML='<div style="border:2px dashed #ff8aa6;border-radius:14px;padding:18px 20px;background:rgba(255,92,128,.08);max-width:560px;margin:8px auto;text-align:center">'
+            +'<div style="font-weight:900;font-size:16px;color:#ff9ad8">⚠️ Este ejercicio no se ha podido cargar</div>'
+            +'<div style="font-size:13px;color:#c7bff0;margin:8px 0 12px;line-height:1.5">No es culpa tuya y no debe contar en tu nota. Pulsa el botón para avisar a Iago: el aviso viaja con tu entrega.</div>'
+            +'<button id="simFalloBtn" style="border:0;border-radius:10px;padding:10px 18px;font-weight:800;cursor:pointer;background:linear-gradient(120deg,#ff5ccd,#a974ff);color:#fff">📣 Avisar a Iago: no cargó</button>'
+            +'<div id="simFalloSt" style="margin-top:8px;font-size:12.5px;font-weight:700;min-height:16px;color:#5bf0c0"></div></div>';
+          const _fb=_sc.querySelector('#simFalloBtn');
+          if(_fb) _fb.onclick=function(){ item._falloAvisado=true; _fb.disabled=true; _fb.style.opacity='.55';
+            const st=_sc.querySelector('#simFalloSt'); if(st) st.textContent='✓ Anotado. Iago lo verá con tu entrega y este ejercicio se anulará.'; };
+        }
+      }catch(e){}
       // marca y vigila los pentagramas (se re-marcan aunque el motor recree el SVG)
       try{ const ss=main.querySelector('#simScore'); if(ss){ vigilarPentagramas(ss); requestAnimationFrame(()=>marcarPentagramas(ss)); setTimeout(()=>marcarPentagramas(ss),120); } }catch(e){}
       const liveBtn=main.querySelector('.simPracticaLive');
@@ -12424,7 +12443,7 @@ function __grados_marker__(){}
             origin:'teoria_at_home', ficha_id:ctx.ficha, numero:ctx.numero,
             nota:notaNum, porcentaje:media, entregada_en:new Date().toISOString(),
             tiempo_seg:(window.SuiteTiempo&&window.SuiteTiempo.activo()?window.SuiteTiempo.total():undefined),
-            ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined })),
+            ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined, fallo_carga:it._falloCarga||undefined, fallo_avisado:it._falloAvisado||undefined })),
             respuestas:progSanitizarRespuestas(),
             estado:PP.ficha.map(it=>sanitEstado(it.ej)),
             feedback:{ items:items, texto:items.map(i2=>(i2.n!=null?('Ej. '+i2.n+': '):'')+i2.texto).join('\n'), fecha:new Date().toISOString() }
@@ -12460,7 +12479,7 @@ function __grados_marker__(){}
           nota:notaNum, porcentaje:media,
           entregada_en:new Date().toISOString(),
             tiempo_seg:(window.SuiteTiempo&&window.SuiteTiempo.activo()?window.SuiteTiempo.total():undefined),
-          ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined })),
+          ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined, fallo_carga:it._falloCarga||undefined, fallo_avisado:it._falloAvisado||undefined })),
           respuestas:progSanitizarRespuestas(),
           estado:PP.ficha.map(it=>sanitEstado(it.ej))   /* ELE-W5: lo que ingresó el alumno, rastreable */
         };
