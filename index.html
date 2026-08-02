@@ -7787,7 +7787,7 @@ function openTerminos(){
     // SOLO estos compases en los ejemplos resueltos (criterio de Iago)
     const PERMITIDOS=['2/4','3/4','4/4','6/8','9/8','2/2','3/2'];
     // figura que llena el compás (criterio de Iago para los ejemplos)
-    const COMPAS_FIG={'2/4':'h','3/4':'h.','4/4':'w','6/8':'h.','9/8':'w.','2/2':'w','3/2':'w.'};
+    const COMPAS_FIG={'2/4':'h','3/4':'h.','4/4':'w','6/8':'h.','9/8':null,'2/2':'w','3/2':'w.'};   // FIX 2-ago-2026: 9/8 SIN figura de compás (ninguna figura suma 9 corcheas) — la pregunta se oculta y no puntúa
     const keys=PERMITIDOS.filter(k=>COM_COMPASES[k]);
     const key=pick(keys);
     const c=COM_COMPASES[key];
@@ -16011,11 +16011,22 @@ window.SuiteTiempo=(function(){
 
   /* coloreado de corrección (construir): verde=nota tuya correcta · rojo=nota tuya incorrecta · azul=nota correcta que faltó */
   function colConstruir(it){
+    /* FIX 2-ago-2026 · El corrector (evaluaConstruir) acepta el acorde en
+       CUALQUIER octava (clases de nota + pc del bajo), pero este coloreado
+       comparaba MIDI exacto y teñía de rojo aciertos subidos de octava.
+       Ahora colorea igual que corrige: por clase de nota; el bajo, por su pc. */
+    var pc=function(m){ return ((m%12)+12)%12; };
     var vMidi=(it.voiced||[]).map(midi), uMidi=(it.user||[]).map(midi);
-    var faltan=(it.voiced||[]).filter(function(v){ return uMidi.indexOf(midi(v))<0; });
+    var vPc=vMidi.map(pc), uPc=uMidi.map(pc);
+    var uMin=uMidi.length?Math.min.apply(null,uMidi):null;
+    var bajoOk=(uMin!=null && vMidi.length)?(pc(uMin)===pc(vMidi[0])):false;
+    var faltan=(it.voiced||[]).filter(function(v){ return uPc.indexOf(pc(midi(v)))<0; });
     var combined=(it.user||[]).concat(faltan);
     return { notes:combined, colFn:function(n){ var m=midi(n);
-      if(uMidi.indexOf(m)>=0) return (vMidi.indexOf(m)>=0)?COL_GREEN:COL_RED;
+      if(uMidi.indexOf(m)>=0){
+        if(m===uMin && !bajoOk) return COL_RED;                     // el bajo no es el pedido
+        return (vPc.indexOf(pc(m))>=0)?COL_GREEN:COL_RED;           // acierto en cualquier octava
+      }
       return COL_BLUE; } };
   }
 
@@ -16131,6 +16142,14 @@ window.SuiteTiempo=(function(){
     {code:'apoyatura', nom:'Apoyatura', grace:[U], epoca:true,
       exec:function(){ var ns=seq([[U,'8'],[R,'8']]); try{ ns[0].addModifier(new VF.Articulation('a>').setPosition(3),0); }catch(e){} return {notes:ns, beam:[[0,1]]}; } }
   ];
+  /* FIX 2-ago-2026 · Las fichas viajan por JSON y las FUNCIONES (exec) no
+     sobreviven: al alumno le llegaba el adorno "seco" y el montaje petaba
+     (ejercicio en blanco). Si falta exec pero hay code, se re-engancha al
+     catálogo. Cubre alumno, revisión y PDF. */
+  function hidrataAdorno(o){
+    if(o && !o.exec && o.code){ for(var i=0;i<ADORNOS.length;i++){ if(ADORNOS[i].code===o.code) return ADORNOS[i]; } }
+    return o;
+  }
   function adornoDe(code){ for(var i=0;i<ADORNOS.length;i++) if(ADORNOS[i].code===code) return ADORNOS[i]; return ADORNOS[0]; }
   var CON_EJEC=ADORNOS;
 
@@ -16295,6 +16314,8 @@ window.SuiteTiempo=(function(){
     if(svg){ svg.setAttribute('viewBox', compact?('0 '+(syMid-52)+' '+W+' 104'):('0 6 '+W+' 162')); svg.setAttribute('height',compact?110:150); svg.style.maxWidth='100%'; }
   }
   function renderVF(host, p2, compact){ host.innerHTML='';
+    if(p2&&p2.ejec) p2.ejec=hidrataAdorno(p2.ejec);          /* FIX 2-ago-2026 */
+    if(p2&&p2.signo) p2.signo=hidrataAdorno(p2.signo);        /* FIX 2-ago-2026 */
     if(p2 && p2.modo==='apoyValor'){ return renderApoyValor(host, p2, compact); }
     var mw1=118, gap=34, mw2=214, W=6+mw1+gap+mw2+6, svY=compact?34:42;
     var r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,compact?114:150); var ctx=r.getContext();
