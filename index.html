@@ -921,16 +921,16 @@
   <div class="header-bar">
     <header class="brand">
       <div>
-        <!-- En HOME: marca LMGE (enlace externo). En subapartado: marca TEORÍA (vuelve a home). -->
-        <a class="brandlink" id="brandLMGE" href="https://ge.lmathome.es/">
-          <h1><span class="teo">LM</span><span class="ria">GE</span> <span class="home2">at home</span></h1>
+        <!-- En HOME: marca LM at home (enlace externo). En subapartado: marca TEORÍA (vuelve a home). -->
+        <a class="brandlink" id="brandLM at home" href="https://ge.lmathome.es/">
+          <h1><span style="display:inline-flex;flex-direction:column;vertical-align:middle"><span style="white-space:nowrap"><span class="teo">LM</span> <span class="home2">at home</span></span><span aria-hidden="true" style="display:flex;justify-content:space-between;margin-top:1px;font-size:8px;font-weight:800;line-height:1;letter-spacing:0;color:#7db4ff;font-style:normal"><b>G</b><b>R</b><b>A</b><b>D</b><b>O</b><i style="width:.6em"></i><b>E</b><b>L</b><b>E</b><b>M</b><b>E</b><b>N</b><b>T</b><b>A</b><b>L</b></span></span></h1>
         </a>
         <a class="brandlink" id="brandTeoria" href="#" onclick="goHome();return false;" style="display:none">
           <h1><span class="teo">TEO</span><span class="ria">RÍA</span> <span class="home2">at home</span></h1>
         </a>
-        <div class="brand-sub" id="brandSub">Recursos interactivos LM y EAV desde tu casa</div>
+        
       </div>
-      <a class="lmeav-link" id="lmeavLink" href="https://ge.lmathome.es/" style="display:none">‹ LMGE at home</a>
+      <a class="lmeav-link" id="lmeavLink" href="https://ge.lmathome.es/" style="display:none">‹ LM at home</a>
     </header>
   </div>
 
@@ -1584,8 +1584,8 @@ function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   const enHome = (id==='view-home');
-  // marca: en home LMGE (sin botón derecho); en subapartado TEORÍA + enlace LMGE a la derecha
-  const bL=document.getElementById('brandLMGE'), bT=document.getElementById('brandTeoria'),
+  // marca: en home LM at home (sin botón derecho); en subapartado TEORÍA + enlace LM at home a la derecha
+  const bL=document.getElementById('brandLM at home'), bT=document.getElementById('brandTeoria'),
         ll=document.getElementById('lmeavLink'), bs=document.getElementById('brandSub');
   if(bL) bL.style.display=enHome?'inline-block':'none';
   if(bT) bT.style.display=enHome?'none':'inline-block';
