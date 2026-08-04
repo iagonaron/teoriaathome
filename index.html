@@ -921,16 +921,16 @@
   <div class="header-bar">
     <header class="brand">
       <div>
-        <!-- En HOME: marca LMEAV (enlace externo). En subapartado: marca TEORÍA (vuelve a home). -->
-        <a class="brandlink" id="brandLMEAV" href="https://iagonaron.github.io/LMEAVathome/">
-          <h1><span class="teo">LM</span><span class="ria">EAV</span> <span class="home2">at home</span></h1>
+        <!-- En HOME: marca LMGE (enlace externo). En subapartado: marca TEORÍA (vuelve a home). -->
+        <a class="brandlink" id="brandLMGE" href="https://ge.lmathome.es/">
+          <h1><span class="teo">LM</span><span class="ria">GE</span> <span class="home2">at home</span></h1>
         </a>
         <a class="brandlink" id="brandTeoria" href="#" onclick="goHome();return false;" style="display:none">
           <h1><span class="teo">TEO</span><span class="ria">RÍA</span> <span class="home2">at home</span></h1>
         </a>
         <div class="brand-sub" id="brandSub">Recursos interactivos LM y EAV desde tu casa</div>
       </div>
-      <a class="lmeav-link" id="lmeavLink" href="https://iagonaron.github.io/LMEAVathome/" style="display:none">‹ LMEAV at home</a>
+      <a class="lmeav-link" id="lmeavLink" href="https://ge.lmathome.es/" style="display:none">‹ LMGE at home</a>
     </header>
   </div>
 
@@ -1584,8 +1584,8 @@ function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   const enHome = (id==='view-home');
-  // marca: en home LMEAV (sin botón derecho); en subapartado TEORÍA + enlace LMEAV a la derecha
-  const bL=document.getElementById('brandLMEAV'), bT=document.getElementById('brandTeoria'),
+  // marca: en home LMGE (sin botón derecho); en subapartado TEORÍA + enlace LMGE a la derecha
+  const bL=document.getElementById('brandLMGE'), bT=document.getElementById('brandTeoria'),
         ll=document.getElementById('lmeavLink'), bs=document.getElementById('brandSub');
   if(bL) bL.style.display=enHome?'inline-block':'none';
   if(bT) bT.style.display=enHome?'none':'inline-block';
@@ -11976,7 +11976,7 @@ function __grados_marker__(){}
     // que explica que el progreso queda guardado (se retoma desde la campana
     // del portal), que el profesor no recibe nada hasta completar y enviar,
     // y recuerda el plazo de entrega (fin normal o semana de recuperación).
-    const PORTAL_ALUMNO_URL='https://iagonaron.github.io/LMEAVathome/';
+    const PORTAL_ALUMNO_URL='https://ge.lmathome.es/';
     const salirAlPortal=()=>{
       try{ if(window.SuiteTiempo && window.SuiteTiempo.flush) window.SuiteTiempo.flush(true); }catch(e){}
       try{ window.location.href=PORTAL_ALUMNO_URL; }catch(e){ cerrar(); }
