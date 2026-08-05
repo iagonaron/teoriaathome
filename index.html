@@ -12412,10 +12412,31 @@ function __grados_marker__(){}
       main.scrollTop=0;
       // FASE 6.5 · ENTREGA REAL: solo en modo alumno (entrada por ?fichaId).
       // La previsualización del profesor NUNCA envía.
-      if(esAlumno){ entregarAlProfesor(); }
+      // (6-ago Iago) FICHA «PUNTÚA OPCIONAL»: el alumno decide al corregirse si
+      // su nota cuenta. Por defecto está marcado ENVIAR. Si elige que no cuente,
+      // la entrega llega igual (campana, «entregada», sin cero del barrido),
+      // pero SIN nota: no entra en sus medias.
+      if(esAlumno){
+        const ctxOp=window.__SUITE_ALUMNO;
+        if(ctxOp && ctxOp.opcional){ montarEleccionOpcional(); } else { entregarAlProfesor(); }
+      }
+      function montarEleccionOpcional(){
+        const est=main.querySelector('#simEntregaEstado'); if(!est){ entregarAlProfesor(); return; }
+        est.innerHTML='<div style="font-weight:800;margin-bottom:8px">🕊 Esta ficha es de calentamiento: tú decides si tu nota cuenta.</div>'
+          +'<label style="display:flex;gap:8px;align-items:flex-start;text-align:left;font-weight:700;font-size:13.5px;margin:6px 0;cursor:pointer"><input type="radio" name="simOpc" value="si" checked style="margin-top:2px;accent-color:#a974ff"> Enviar mi nota a Iago</label>'
+          +'<label style="display:flex;gap:8px;align-items:flex-start;text-align:left;font-weight:700;font-size:13.5px;margin:6px 0;cursor:pointer"><input type="radio" name="simOpc" value="no" style="margin-top:2px;accent-color:#a974ff"> Que esta vez no cuente (se entrega sin nota)</label>'
+          +'<button id="simOpcGo" type="button" style="margin-top:10px;background:linear-gradient(90deg,#a974ff,#5bd0ff);color:#12082e;border:0;border-radius:10px;padding:10px 20px;font-weight:800;font-size:13.5px;cursor:pointer">Continuar</button>';
+        const go=est.querySelector('#simOpcGo');
+        if(go) go.onclick=()=>{
+          const np=!!est.querySelector('input[name="simOpc"][value="no"]:checked');
+          window.__FICHA_NO_PUNTUA=np;
+          entregarAlProfesor(np);
+        };
+      }
       /* ELE-W4 · buzón de incidencias v2: plegado, varios ejercicios, abajo del todo */
       (function(){
         const b=main.querySelector('#simFbSend'); if(!b) return;
+        const ctxFb=window.__SUITE_ALUMNO;   // (6-ago) capturado ANTES de entregar (que lo pone a null)
         const lista=main.querySelector('#simFbList');
         const fila=()=>{
           const d=document.createElement('div'); d.className='simFbItem';
@@ -12436,7 +12457,7 @@ function __grados_marker__(){}
             items.push({ n:(isFinite(n)?n:null), texto:t });
           });
           if(!items.length){ if(st){ st.textContent='Escribe al menos un comentario.'; st.style.color='#ff9ad8'; } return; }
-          const ctx=window.__SUITE_ALUMNO; const sb=suiteSb();
+          const ctx=ctxFb||window.__SUITE_ALUMNO; const sb=suiteSb();
           if(!ctx||!sb){ if(st){ st.textContent='(solo disponible en la ficha real)'; st.style.color='#ff9ad8'; } return; }
           if(st){ st.textContent='Enviando…'; st.style.color='#b6abdf'; }
           const pay={
@@ -12446,6 +12467,7 @@ function __grados_marker__(){}
             ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined, fallo_carga:it._falloCarga||undefined, fallo_avisado:it._falloAvisado||undefined })),
             respuestas:progSanitizarRespuestas(),
             estado:PP.ficha.map(it=>sanitEstado(it.ej)),
+            no_puntua:(window.__FICHA_NO_PUNTUA===true)||undefined,   /* (6-ago) conservar la elección */
             feedback:{ items:items, texto:items.map(i2=>(i2.n!=null?('Ej. '+i2.n+': '):'')+i2.texto).join('\n'), fecha:new Date().toISOString() }
           };
           try{
@@ -12458,7 +12480,7 @@ function __grados_marker__(){}
         });
       })();
 
-      async function entregarAlProfesor(){
+      async function entregarAlProfesor(noPuntua){
         const ctx=window.__SUITE_ALUMNO; if(!ctx) return;
         const est=main.querySelector('#simEntregaEstado');
         const btnRe=main.querySelector('#simReintentar');
@@ -12468,7 +12490,7 @@ function __grados_marker__(){}
         const pinta=(txt,col,bg,bd)=>{ if(est){ est.textContent=txt; est.style.color=col||'#c7bff0';
           est.style.background=bg||'rgba(255,255,255,.06)'; est.style.borderColor=bd||'rgba(255,255,255,.18)'; } };
         const reintento=(on)=>{ if(!btnRe) return; btnRe.style.display=on?'block':'none';
-          if(on && !btnRe._wired){ btnRe._wired=true; btnRe.onclick=()=>{ btnRe.style.display='none'; entregarAlProfesor(); }; } };
+          if(on && !btnRe._wired){ btnRe._wired=true; btnRe.onclick=()=>{ btnRe.style.display='none'; entregarAlProfesor(noPuntua); }; } };
         reintento(false);
         pinta('Enviando tu nota a Iago…','#c7bff0');
         const sb=suiteSb();
@@ -12481,7 +12503,8 @@ function __grados_marker__(){}
             tiempo_seg:(window.SuiteTiempo&&window.SuiteTiempo.activo()?window.SuiteTiempo.total():undefined),
           ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined, fallo_carga:it._falloCarga||undefined, fallo_avisado:it._falloAvisado||undefined })),
           respuestas:progSanitizarRespuestas(),
-          estado:PP.ficha.map(it=>sanitEstado(it.ej))   /* ELE-W5: lo que ingresó el alumno, rastreable */
+          estado:PP.ficha.map(it=>sanitEstado(it.ej)),   /* ELE-W5: lo que ingresó el alumno, rastreable */
+          no_puntua:(noPuntua===true)||undefined   /* (6-ago) el alumno eligió que esta ficha no cuente */
         };
         try{
           // p_nota va sobre 10 (escala:10 en construirPayload). Si el Diario
@@ -12491,7 +12514,7 @@ function __grados_marker__(){}
           });
           if(error) throw error;
           if(data && data.ok===false){ const c=data.error||'error'; throw new Error(c); }
-          pinta('✓ Nota enviada a Iago.','#7ef0c0','rgba(52,211,153,.16)','rgba(52,211,153,.55)');
+          pinta(noPuntua===true?'✓ Ficha entregada sin nota: esta vez no cuenta.':'✓ Nota enviada a Iago.','#7ef0c0','rgba(52,211,153,.16)','rgba(52,211,153,.55)');
           // FASE 6.7 · entrega completada → el progreso guardado ya no hace
           // falta (la campana del portal deja de avisar "ficha a medias").
           try{ progMarcarEntregada(ctx.cuenta, ctx.ficha); }catch(e){}
@@ -14213,6 +14236,7 @@ function __grados_marker__(){}
     }
 
     const payload=construirPayload([{via:'diario_token'}], null);
+    if(window.__SUITE_ENVIO_OPCIONAL) payload.puntua_opcional=true;   // (6-ago Iago) el alumno decidirá si su nota cuenta
     const nFicha = window.__SUITE_ENVIO_FICHA;
     const cab = nFicha ? ('Ficha '+esc(nFicha)) : esc(payload.titulo);
     modalShell(
@@ -14220,6 +14244,7 @@ function __grados_marker__(){}
       '<div class="mc-sub">Se enviará a los grupos que fijaste en el Diario. Los alumnos la '+
       'verán el <b>viernes a las 19:00</b>, con el resto de tareas de la semana (no antes).</div>'+
       '<div class="pp-summary">'+cab+' · <b>'+payload.ejercicios.length+'</b> ejercicios</div>'+
+      (payload.puntua_opcional?'<div class="pp-summary" style="margin-top:6px">🕊 <b>PUNTÚA OPCIONAL</b>: al corregirse, cada alumno decidirá si su nota cuenta.</div>':'')+
       '<div class="mc-err" id="ppEnvErr"></div>'+
       '<div class="mc-row">'+
         '<button class="mc-btn" onclick="cerrarModal()">Cancelar</button>'+
@@ -14431,8 +14456,19 @@ function __grados_marker__(){}
         }
         return it;
       });
-      window.__REVISION={ numero:data.numero, nota:(data.nota!=null?+data.nota:null), feedback:pl.feedback||null };
+      window.__REVISION={ numero:data.numero, nota:(data.nota!=null?+data.nota:null), feedback:pl.feedback||null, no_puntua:(pl.no_puntua===true) };
       previsualizarAlumno();
+      // (6-ago) si el alumno eligió «que no cuente», que Iago lo vea claro
+      if(pl.no_puntua===true){ let _int=0; const _chip=setInterval(()=>{ _int++;
+        const nb=document.getElementById('simNotaBadge');
+        if(nb && !document.getElementById('simNoPuntuaChip')){
+          const c=document.createElement('div'); c.id='simNoPuntuaChip';
+          c.style.cssText='margin-top:10px;display:inline-block;background:rgba(255,255,255,.10);border:1px solid rgba(169,116,255,.55);color:#c9a8ff;font-weight:800;font-size:13px;padding:7px 14px;border-radius:99px';
+          c.textContent='🕊 PUNTÚA OPCIONAL · el alumno eligió que NO cuente (entregada sin nota)';
+          nb.insertAdjacentElement('afterend', c);
+        }
+        if(document.getElementById('simNoPuntuaChip')||_int>12) clearInterval(_chip);
+      }, 400); }
       setTimeout(()=>{ try{ ov.remove(); }catch(e){} }, 0);
     }catch(err){
       let cont=ov; if(!document.body.contains(ov)) cont=pantallaCargaAlumno();
@@ -14472,7 +14508,7 @@ function __grados_marker__(){}
         if(pzFin||pzGra) window.__SUITE_PLAZO={ fin:(pzFin||pzPrev.fin||null), gracia:(pzGra||pzPrev.gracia||null) };
       }catch(e){}
       // contexto de entrega para el final del motor
-      window.__SUITE_ALUMNO={ cuenta:cuenta, ficha:fichaId, numero:(pack.numero!=null?pack.numero:(numFallback||null)) };
+      window.__SUITE_ALUMNO={ cuenta:cuenta, ficha:fichaId, numero:(pack.numero!=null?pack.numero:(numFallback||null)), opcional:!!(pack.payload && pack.payload.puntua_opcional) };   /* (6-ago) «puntúa opcional» */
       window.__SUITE_ANULADOS=(pack.anulados||[]).map(Number);   /* ELE-W2 */
       PP.ficha=pack.ejercicios.map(e=>({ n:e.n, key:e.key, label:e.label, ej:rehidratarEj(e) }));
       // FASE 6.7 · REANUDAR: si hay progreso guardado de ESTA ficha, se
@@ -14544,7 +14580,7 @@ function __grados_marker__(){}
       const revAl=qs.get('revision'), revSec=qs.get('s');
       if(revAl && revSec){ revisionProfesor(revAl, revSec); return; }   /* ELE-W5 */
       // FASE 6.1c: token de envío creado por el Diario (un solo uso, vida 45 min)
-      const envioTok=qs.get('envio'); if(envioTok){ window.__SUITE_ENVIO_TOKEN=envioTok; window.__SUITE_ENVIO_FICHA=qs.get('ficha')||null; }
+      const envioTok=qs.get('envio'); if(envioTok){ window.__SUITE_ENVIO_TOKEN=envioTok; window.__SUITE_ENVIO_FICHA=qs.get('ficha')||null; window.__SUITE_ENVIO_OPCIONAL=(qs.get('opcional')==='1'); }   /* (6-ago Iago) ficha «puntúa opcional» */
       // Número de ficha para el título "Ficha N" (el Diario pasa ?ficha=N numérico).
       { const _fq=qs.get('ficha'); if(_fq && /^\d+$/.test(_fq)) window.__FICHA_NUMERO=_fq; }
       if(qs.get('panel')==='profesor' || hash==='profesor'){ abrirPanelProfesor(); return; }
