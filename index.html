@@ -11976,7 +11976,7 @@ function __grados_marker__(){}
     // que explica que el progreso queda guardado (se retoma desde la campana
     // del portal), que el profesor no recibe nada hasta completar y enviar,
     // y recuerda el plazo de entrega (fin normal o semana de recuperación).
-    const PORTAL_ALUMNO_URL='https://ge.lmathome.es/';
+    const PORTAL_ALUMNO_URL='https://ge.lmathome.es/#tareas';   // (Iago 14-sep-2026) con las notificaciones abiertas
     const salirAlPortal=()=>{
       try{ if(window.SuiteTiempo && window.SuiteTiempo.flush) window.SuiteTiempo.flush(true); }catch(e){}
       try{ window.location.href=PORTAL_ALUMNO_URL; }catch(e){ cerrar(); }
@@ -12354,7 +12354,12 @@ function __grados_marker__(){}
               '<span style="color:#2f6df6">● la respuesta correcta</span>'+
             '</div>'+
             notaSimulada+
-            (esAlumno?'<div id="simEntregaEstado" style="margin:16px auto 0;max-width:560px;font-size:14.5px;font-weight:800;padding:12px 20px;border-radius:14px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.18);color:#c7bff0"></div>'+'<button id="simReintentar" type="button" style="display:none;margin:10px auto 0;background:linear-gradient(90deg,#a974ff,#5bd0ff);color:#12082e;border:0;border-radius:10px;padding:10px 18px;font-weight:800;font-size:13.5px;cursor:pointer">↻ Reintentar envío</button>':'')+
+            (esAlumno?'<div id="simEntregaEstado" style="margin:16px auto 0;max-width:560px;font-size:14.5px;font-weight:800;padding:12px 20px;border-radius:14px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.18);color:#c7bff0"></div>'+'<button id="simReintentar" type="button" style="display:none;margin:10px auto 0;background:linear-gradient(90deg,#a974ff,#5bd0ff);color:#12082e;border:0;border-radius:10px;padding:10px 18px;font-weight:800;font-size:13.5px;cursor:pointer">↻ Reintentar envío</button>'+
+            /* (Iago 14-sep-2026) Igual que al acabar el quiz de ritmo: el objetivo
+               es que no se olviden de rematar lo que queda. El botón devuelve al
+               portal con las notificaciones abiertas, donde está TODO lo pendiente. */
+            '<div style="margin:22px auto 0;max-width:560px;color:#c7bff0;font-size:14px;font-weight:700">No te olvides de hacer el resto de tareas que tienes pendientes.</div>'+
+            '<button id="simVolverPortal" type="button" style="margin:12px auto 0;display:block;background:linear-gradient(90deg,#7ef0c0,#5bd0ff 45%,#c9a8ff);color:#0b2233;border:0;border-radius:12px;padding:12px 26px;font-weight:900;font-size:15px;cursor:pointer;box-shadow:0 10px 26px rgba(91,208,255,.3)">Entendido</button>':'')+
           '</div>'+
           '<div style="margin-top:14px">'+cuerpo+'</div>'+
           (esAlumno?(
@@ -12370,6 +12375,7 @@ function __grados_marker__(){}
           '</details>'):'')+
         '</div>';
       main.scrollTop=0;
+      try{ const vb=main.querySelector('#simVolverPortal'); if(vb) vb.onclick=()=>salirAlPortal(); }catch(e){}
       // REVELAR la nota: cuenta ascendente + celebración (≥7) o muy sutil (<5)
       (function(){
         const notaEl=main.querySelector('#simNota'), pctEl=main.querySelector('#simPct');
