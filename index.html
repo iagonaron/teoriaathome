@@ -12365,8 +12365,8 @@ function __grados_marker__(){}
             /* (Iago 14-sep-2026) Igual que al acabar el quiz de ritmo: el objetivo
                es que no se olviden de rematar lo que queda. El botón devuelve al
                portal con las notificaciones abiertas, donde está TODO lo pendiente. */
-            '<div style="margin:22px auto 0;max-width:560px;color:#c7bff0;font-size:14px;font-weight:700">No te olvides de hacer el resto de tareas que tienes pendientes.</div>'+
-            '<button id="simVolverPortal" type="button" style="margin:12px auto 0;display:block;background:linear-gradient(90deg,#7ef0c0,#5bd0ff 45%,#c9a8ff);color:#0b2233;border:0;border-radius:12px;padding:12px 26px;font-weight:900;font-size:15px;cursor:pointer;box-shadow:0 10px 26px rgba(91,208,255,.3)">Entendido</button>':'')+
+            '<div id="simAvisoTareas" style="display:none;margin:22px auto 0;max-width:560px;color:#c7bff0;font-size:14px;font-weight:700">No te olvides de hacer el resto de tareas que tienes pendientes.</div>'+
+            '<button id="simVolverPortal" type="button" style="margin:12px auto 0;display:none;background:linear-gradient(90deg,#7ef0c0,#5bd0ff 45%,#c9a8ff);color:#0b2233;border:0;border-radius:12px;padding:12px 26px;font-weight:900;font-size:15px;cursor:pointer;box-shadow:0 10px 26px rgba(91,208,255,.3)">Entendido</button>':'')+
           '</div>'+
           '<div style="margin-top:14px">'+cuerpo+'</div>'+
           (esAlumno?(
@@ -12382,6 +12382,25 @@ function __grados_marker__(){}
           '</details>'):'')+
         '</div>';
       main.scrollTop=0;
+      // (Iago 14-sep-2026, madrugada) El botón «Entendido» nace OCULTO y solo
+      // aparece cuando la entrega está resuelta. Si estuviera visible desde el
+      // principio, el alumno podría irse al portal ANTES de que la nota
+      // llegara —abortando el envío a medias— o saltarse el paso «Continuar»
+      // de las fichas de puntuación opcional, que no se entregan hasta pulsarlo.
+      function mostrarVolverPortal(entregada){
+        try{
+          const vb=main.querySelector('#simVolverPortal');
+          const av=main.querySelector('#simAvisoTareas');
+          if(av) av.style.display='';
+          if(!vb) return;
+          if(entregada===false){
+            vb.textContent='Salir (tu nota NO se ha enviado)';
+            vb.style.background='linear-gradient(90deg,#ffb4c8,#ff8fb0)';
+            vb.style.color='#3a0d1c';
+          }
+          vb.style.display='block';
+        }catch(e){}
+      }
       try{ const vb=main.querySelector('#simVolverPortal'); if(vb) vb.onclick=()=>salirAlPortal(); }catch(e){}
       // REVELAR la nota: cuenta ascendente + celebración (≥7) o muy sutil (<5)
       (function(){
@@ -12507,7 +12526,7 @@ function __grados_marker__(){}
         reintento(false);
         pinta('Enviando tu nota a Iago…','#c7bff0');
         const sb=suiteSb();
-        if(!sb){ pinta('⚠ NO se pudo enviar la nota (sin conexión). Tu ficha está corregida, pero Iago AÚN NO la tiene.','#ffb4c8','rgba(255,92,128,.14)','rgba(255,92,128,.5)'); reintento(true); return; }
+        if(!sb){ pinta('⚠ NO se pudo enviar la nota (sin conexión). Tu ficha está corregida, pero Iago AÚN NO la tiene.','#ffb4c8','rgba(255,92,128,.14)','rgba(255,92,128,.5)'); reintento(true); try{ mostrarVolverPortal(false); }catch(e){} return; }
         const payload={
           origin:'teoria_at_home',
           ficha_id:ctx.ficha, numero:ctx.numero,
@@ -12528,6 +12547,7 @@ function __grados_marker__(){}
           if(error) throw error;
           if(data && data.ok===false){ const c=data.error||'error'; throw new Error(c); }
           pinta(noPuntua===true?'✓ Ficha entregada sin nota: esta vez no cuenta.':'✓ Nota enviada a Iago.','#7ef0c0','rgba(52,211,153,.16)','rgba(52,211,153,.55)');
+          try{ mostrarVolverPortal(true); }catch(e){}
           // FASE 6.7 · entrega completada → el progreso guardado ya no hace
           // falta (la campana del portal deja de avisar "ficha a medias").
           try{ progMarcarEntregada(ctx.cuenta, ctx.ficha); }catch(e){}
@@ -12547,6 +12567,8 @@ function __grados_marker__(){}
           // ya_entregada/no_validado/fuera_de_plazo no cambian al reintentar.
           if(!mp[c]) reintento(true);
           if(c==='ya_entregada'){ try{ progMarcarEntregada(ctx.cuenta, ctx.ficha); }catch(e2){} window.__SUITE_ALUMNO=null; }
+          // sale igualmente, pero sabiendo que la nota no ha llegado
+          try{ mostrarVolverPortal(esInfo ? true : false); }catch(e){}
         }
       }
     }
