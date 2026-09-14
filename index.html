@@ -11976,7 +11976,14 @@ function __grados_marker__(){}
     // que explica que el progreso queda guardado (se retoma desde la campana
     // del portal), que el profesor no recibe nada hasta completar y enviar,
     // y recuerda el plazo de entrega (fin normal o semana de recuperación).
-    const PORTAL_ALUMNO_URL='https://ge.lmathome.es/#tareas';   // (Iago 14-sep-2026) con las notificaciones abiertas
+    // (Iago 14-sep-2026) La ficha la hacen alumnos de ELEMENTAL y de PROFESIONAL,
+    // y cada uno tiene su portal. Esto estaba fijo a ge.lmathome.es, así que un
+    // alumno de 2º GP acababa en el portal que no es. Ahora se mira de dónde vino.
+    // El #tareas abre las notificaciones al llegar.
+    const PORTAL_ALUMNO_URL=(function(){
+      try{ if(String(document.referrer||'').indexOf('gp.lmathome.es')>=0) return 'https://gp.lmathome.es/#tareas'; }catch(e){}
+      return 'https://ge.lmathome.es/#tareas';
+    })();
     const salirAlPortal=()=>{
       try{ if(window.SuiteTiempo && window.SuiteTiempo.flush) window.SuiteTiempo.flush(true); }catch(e){}
       try{ window.location.href=PORTAL_ALUMNO_URL; }catch(e){ cerrar(); }
