@@ -12254,6 +12254,9 @@ function __grados_marker__(){}
       // puntuación: REAL para ejercicios interactivos; SIMULADA para los que aún no lo son
       let haySimulado=false;
       const scores=PP.ficha.map((item)=>{
+        // (Iago 15-sep-2026) Si el ejercicio no llegó a cargar, la app ya le dijo al
+        // alumno «no debe contar en tu nota»: se excluye de la media (null), no un 0.
+        if(item._falloCarga){ haySimulado=true; return null; }
         const esEscala = item.ej._interactivo==='escala' && item.ej._spec && typeof window.comprobarEscalaInteractiva==='function';
         const esRuedas = item.ej._interactivo==='ruedas' && item.ej._solData && typeof window.comprobarRuedas==='function';
         const esNotaB = item.ej._interactivo==='notaB' && item.ej._solData && typeof window.comprobarIntConstr==='function';
@@ -12341,7 +12344,7 @@ function __grados_marker__(){}
             '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">'+
               '<div style="font-size:13.5px;color:#e9e5ff;font-weight:700">'+(k+1)+'. '+esc(item.ej.enun||item.label)+'</div>'+
               (anulado?'<span style="flex:none;background:rgba(255,255,255,.12);color:#c7bff0;font-weight:800;font-size:12px;padding:5px 11px;border-radius:99px;letter-spacing:.04em">ANULADO · no cuenta</span>'
-               :sinCorr?'<span style="flex:none;background:rgba(255,255,255,.12);color:#c7bff0;font-weight:800;font-size:12px;padding:5px 11px;border-radius:99px;letter-spacing:.04em">SIN CORRECCIÓN AUTOMÁTICA · no cuenta</span>'
+               :sinCorr?'<span style="flex:none;background:rgba(255,255,255,.12);color:#c7bff0;font-weight:800;font-size:12px;padding:5px 11px;border-radius:99px;letter-spacing:.04em">'+(item._falloCarga?'NO CARGÓ':'SIN CORRECCIÓN AUTOMÁTICA')+' · no cuenta</span>'
                :'<span style="flex:none;background:'+bg+';color:'+col+';font-weight:800;font-size:13px;padding:5px 11px;border-radius:99px">'+sc+'%</span>')+
             '</div>'+
             '<div class="simSolHost" data-k="'+k+'"></div>'+
@@ -12349,7 +12352,7 @@ function __grados_marker__(){}
           '</div>';
       }).join('');
       const notaSimulada = haySimulado
-        ? '<div style="margin-top:6px;color:#b6abdf;font-size:11.5px;font-style:italic">Algún ejercicio no tiene corrección automática: Iago lo verá en tus respuestas y no cuenta en la nota.</div>'
+        ? '<div style="margin-top:6px;color:#b6abdf;font-size:11.5px;font-style:italic">Algún ejercicio no cargó o no tiene corrección automática: Iago lo verá con tu entrega y no cuenta en la nota.</div>'
         : '';
       const fest = media>=70;                 // 7 o más -> celebración
       const subtle = media<50;                // menos de 5 -> muy sutil (no ofender)
