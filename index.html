@@ -11950,6 +11950,14 @@ function __grados_marker__(){}
     const ov=document.createElement('div'); ov.id='ppAlumnoSim';
     ov.style.cssText='position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#241a52 0%,#180f3c 38%,#0e0a2c 72%,#080518 100%);display:flex;flex-direction:column;font-family:\'Helvetica Neue\',Arial,sans-serif;overflow:hidden';
     document.body.appendChild(ov);
+    // (Iago 15-sep-2026) AUTOGUARDADO del ejercicio en curso: antes solo se
+    // guardaba al pulsar «Siguiente», así que cerrar a mitad perdía lo escrito.
+    // Ahora, 2,5 s después de la última interacción, se guarda un punto de control.
+    try{
+      let _asT=null;
+      const _as=()=>{ if(!esAlumnoProg || enviado) return; clearTimeout(_asT); _asT=setTimeout(()=>{ try{ if(!enviado) progGuardar(i, maxAvance); }catch(e){} }, 2500); };
+      ['pointerup','keyup','change'].forEach(ev=>ov.addEventListener(ev,_as,true));
+    }catch(e){}
     // SFX · clic suave al pulsar botones (el "Siguiente" ya tiene su arpegio de avance)
     ov.addEventListener('pointerdown', function(e){ try{ var t=e.target; if(t && t.closest && t.closest('button, .acc-btn, .fig-btn, .cad-ans, .ac-invbtn') && !t.closest('#simNext')){ if(window.SFX) window.SFX.tap(); } }catch(_){} }, true);
     const cerrar=()=>{ try{ document.removeEventListener('keydown',onKey); }catch(e){} try{ audioCtx && audioCtx.close && audioCtx.close(); }catch(e){} ov.remove(); };
@@ -11991,7 +11999,8 @@ function __grados_marker__(){}
     // plazo de la ficha: llega del portal por URL (&fin=&gracia=) o de la RPC
     function plazoActual(){
       const p=window.__SUITE_PLAZO||{};
-      const fin=p.fin?Date.parse(p.fin):NaN, gr=p.gracia?Date.parse(p.gracia):NaN, t=Date.now();
+      const pz=(v)=>{ if(!v) return NaN; const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v).trim()); if(m) return new Date(+m[1],+m[2]-1,+m[3],23,59,59).getTime(); return Date.parse(v); };   // (15-sep) solo fecha = fin de ese día en hora local, no 02:00
+      const fin=pz(p.fin), gr=pz(p.gracia), t=Date.now();
       if(isFinite(fin) && t<=fin) return { fase:'normal', limite:new Date(fin), restante:fin-t };
       if(isFinite(gr) && t<=gr)   return { fase:'gracia', limite:new Date(gr), restante:gr-t };
       return null;
@@ -14213,7 +14222,16 @@ function __grados_marker__(){}
         p_cuenta_id:ctx.cuenta, p_ficha_id:ctx.ficha,
         p_ejercicio_actual:iActual|0, p_hechos:hechos|0, p_total:total,
         p_respuestas:respuestas
-      }).then(r=>{ if(r && r.error) console.warn('[progreso] guardar:', r.error.message); })
+      }).then(r=>{ if(r && r.error) console.warn('[progreso] guardar:', r.error.message);
+        // (Iago 15-sep-2026) El servidor ya no deja machacar un progreso hecho con
+        // uno vacío (otro dispositivo que no pudo leerlo). Si lo rechaza, nos
+        // quedamos con el suyo y recargamos UNA vez para retomar donde iba.
+        try{ const d=r&&r.data; if(d && d.ok===false && d.error==='progreso_mas_avanzado' && d.progreso){
+          const p=d.progreso; const pk={ i:p.ejercicio_actual|0, hechos:p.hechos|0, total:p.total|0, respuestas:p.respuestas||null, t:Date.now() };
+          localStorage.setItem(progClaveLS(ctx.cuenta, ctx.ficha), JSON.stringify(pk));
+          const flag='suite_prog_reload_'+ctx.ficha;
+          if(!sessionStorage.getItem(flag)){ sessionStorage.setItem(flag,'1'); alert('Tenías esta ficha más avanzada guardada ('+(p.hechos|0)+' ejercicios). Se recupera ahora.'); location.reload(); }
+        } }catch(e){} })
         .catch(e=>console.warn('[progreso] guardar:', e));
     }catch(e){ console.warn('[progreso] guardar:', e); }
   }
