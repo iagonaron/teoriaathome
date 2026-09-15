@@ -12311,19 +12311,24 @@ function __grados_marker__(){}
         if(esEnaAdv){ try{ const e=window.ENA_ADV.evalua(item.ej._enaAdv); return Math.round((e.val||0)*100); }catch(e){ return 0; } }
         if(esQuiz){ try{ const e=window[item.ej._quizM].evalua(item.ej._quiz); return Math.round((e.val||0)*100); }catch(e){ return 0; } }
         if(esCad){ try{ const e=window.CAD.evalua(item.ej._cad); return Math.round((e.val||0)*100); }catch(e){ return 0; } }
+        // (Iago 15-sep-2026) Antes aquí se devolvía Math.random()*101: un ejercicio
+        // sin corrección automática recibía una nota INVENTADA que entraba en la
+        // media y viajaba al Diario. Ahora devuelve null y se excluye de la media
+        // (igual que los anulados), y el alumno ve «sin corrección automática».
         haySimulado=true;
-        return Math.floor(Math.random()*101);
+        return null;
       });
       /* ELE-W2 · ANULADOS: los ejercicios anulados por el Diario no cuentan en la media */
       const _anul=(window.__SUITE_ANULADOS||[]);
       const _esAnulado=(item,k)=>_anul.indexOf(item&&item.n!=null?Number(item.n):(k+1))>=0;
-      const _validos=scores.filter((sc,k)=>!_esAnulado(PP.ficha[k],k));
-      const media=Math.round((_validos.length?_validos:scores).reduce((a,b)=>a+b,0)/Math.max(1,(_validos.length?_validos:scores).length));
+      const _validos=scores.filter((sc,k)=>sc!=null && !_esAnulado(PP.ficha[k],k));
+      const _base=_validos.length?_validos:scores.filter(sc=>sc!=null);
+      const media=_base.length?Math.round(_base.reduce((a,b)=>a+b,0)/_base.length):0;
       const nota=(media/10).toFixed(1).replace('.',',');
       const notaNum=Math.round((media/10)*100)/100;       // nota sobre 10 (numérica) para el Diario
       const esAlumno=!!window.__SUITE_ALUMNO;              // FASE 6.5: entrada por ?fichaId
       const cuerpo=PP.ficha.map((item,k)=>{
-        const sc=scores[k]; let ok=sc>=50;
+        const sc=scores[k]; const sinCorr=(sc==null); let ok=sinCorr||sc>=50;
         const anulado=_esAnulado(item,k); if(anulado) ok=true;
         const col=ok?'#5bf0c0':'#ff8aa6'; const bg=ok?'rgba(52,211,153,.16)':'rgba(255,92,128,.16)';
         const area=AREA_DE[item.key];
@@ -12335,14 +12340,16 @@ function __grados_marker__(){}
         return '<div style="border-top:1px solid rgba(255,255,255,.08);padding:16px 0">'+
             '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">'+
               '<div style="font-size:13.5px;color:#e9e5ff;font-weight:700">'+(k+1)+'. '+esc(item.ej.enun||item.label)+'</div>'+
-              (anulado?'<span style="flex:none;background:rgba(255,255,255,.12);color:#c7bff0;font-weight:800;font-size:12px;padding:5px 11px;border-radius:99px;letter-spacing:.04em">ANULADO · no cuenta</span>':'<span style="flex:none;background:'+bg+';color:'+col+';font-weight:800;font-size:13px;padding:5px 11px;border-radius:99px">'+sc+'%</span>')+
+              (anulado?'<span style="flex:none;background:rgba(255,255,255,.12);color:#c7bff0;font-weight:800;font-size:12px;padding:5px 11px;border-radius:99px;letter-spacing:.04em">ANULADO · no cuenta</span>'
+               :sinCorr?'<span style="flex:none;background:rgba(255,255,255,.12);color:#c7bff0;font-weight:800;font-size:12px;padding:5px 11px;border-radius:99px;letter-spacing:.04em">SIN CORRECCIÓN AUTOMÁTICA · no cuenta</span>'
+               :'<span style="flex:none;background:'+bg+';color:'+col+';font-weight:800;font-size:13px;padding:5px 11px;border-radius:99px">'+sc+'%</span>')+
             '</div>'+
             '<div class="simSolHost" data-k="'+k+'"></div>'+
             practicar+
           '</div>';
       }).join('');
       const notaSimulada = haySimulado
-        ? '<div style="margin-top:6px;color:#b6abdf;font-size:11.5px;font-style:italic">Algunas puntuaciones aún son simuladas (todos los ejercicios ya se corrigen de verdad).</div>'
+        ? '<div style="margin-top:6px;color:#b6abdf;font-size:11.5px;font-style:italic">Algún ejercicio no tiene corrección automática: Iago lo verá en tus respuestas y no cuenta en la nota.</div>'
         : '';
       const fest = media>=70;                 // 7 o más -> celebración
       const subtle = media<50;                // menos de 5 -> muy sutil (no ofender)
