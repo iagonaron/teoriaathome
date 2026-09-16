@@ -1497,6 +1497,8 @@
   .pp-chip{position:relative}
   .pp-dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 0 2px rgba(0,0,0,.25)}
   .pp-chip .pp-dot{position:absolute;top:-4px;right:-4px}
+  .pp-chip{padding-bottom:12px}
+  .pp-frac{position:absolute;right:6px;bottom:1px;font-size:9px;font-weight:700;color:var(--muted2);letter-spacing:.02em;opacity:.85}
   .pp-dot-verde{background:#22c55e}.pp-dot-amarillo{background:#facc15}.pp-dot-naranja{background:#fb923c}.pp-dot-rojo{background:#ef4444}.pp-dot-gris{background:#8b93a7}
   .pp-prev{font-size:12.5px;color:var(--ink);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:9px 12px;margin:0 0 12px}
   .pp-prev-l{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:6px}
@@ -11666,6 +11668,39 @@ function __grados_marker__(){}
     PP.refuerzo=c.refuerzo.map(r=>{ const ej=fichaBloque(r.key); if(!ej) return null;
       return { n:'★', key:r.key, label:(PP_FLAT[r.key]||{}).label||r.label||r.key, alumnos:r.alumnos||[], ej, refuerzo:true }; }).filter(Boolean);
   }
+  /* (Iago 16-sep-2026) HISTORIAL por tipo: «d / N fichas» = en cuántas de las N fichas anteriores (digitales
+     enviadas + en papel) se preguntó ese tipo. Digital: por key exacta. Papel: el Diario guarda el texto de cada
+     ejercicio (leído del PDF), y aquí se reconoce por estas expresiones (cubren los enunciados de este generador
+     y los títulos del generador PRO, por si la ficha en papel se hizo con él). Si una línea no encaja, no cuenta. */
+  const PAPEL_RE={
+    int_clasif:/clasifica los intervalos|identifica el n[úu]mero y la especie|intervalos\s*[·.]\s*identifica/i,
+    int_constr:/coloca la 2ª nota|construye los intervalos|coloca la nota que forma/i,
+    inv_simples:/inversi[óo]n.*intervalos simples|clasifica el intervalo, invi[ée]rtelo/i,
+    inv_compuestos:/inversi[óo]n.*intervalos compuestos|intervalo compuesto, invi[ée]rtelo/i,
+    com_clasif:/analiza el comp[áa]s|marca el comp[áa]s correcto/i,
+    ton_arm_tono:/tonalidad mayor y su relativ|armadura ?→ ?tonalidad|indica tonalidad/i,
+    ton_tono_arm:/coloca la armadura/i,
+    ton_vecinos:/tonos? vecin|tonalidades vecinas/i,
+    esc_menor:/escala.*\bmenor\b/i, esc_mayor:/escala.*\bmayor\b/i, esc_otras:/pentat[óo]nica|escala crom[áa]tica|escala pedida|tonos enteros/i,
+    gra_senalar:/rodea la nota|grado/i,
+    semitonos:/semitono/i,
+    acordes:/identifica los dos primeros acordes|acordes\s*\(identificar|identifica los siguientes acordes|construye los siguientes acordes/i,
+    aco_identificar:/identifica el tipo de acorde|identifica el acorde y la inversi[óo]n/i,
+    aco_construir:/construye cada acorde en el estado|construye el acorde en la inversi[óo]n/i,
+    ena_a:/enarmon[íi]as? de cada nota|^\s*\d*\.?\s*enarmon[íi]as?\.?\s*$/i,
+    ena_avanzado:/enarmon[íi]a parcial y total/i,
+    cla_a:/nombra cada nota|nombra la nota/i, cla_b:/escribe la clave/i,
+    terminos:/t[ée]rminos/i, adorno_quiz:/adorno/i, abrev_quiz:/abreviatur/i,
+    cadencias_quiz:/cadencia/i
+  };
+  function histDe(key){
+    const c=window.__SUITE_CTX; const h=c&&c.historial; if(!h) return null;
+    let d=(h.digital&&h.digital[key])|0;
+    const re=PAPEL_RE[key];
+    if(re){ (h.papel||[]).forEach(pf=>{ const dig=(h.papel_numeros_digitales||[]).indexOf(pf.numero)>=0; if(dig) return; /* misma ficha en digital y papel: ya contada */
+      if((pf.lineas||[]).some(l=>re.test(String(l)))) d++; }); }
+    return { d, n:h.total|0 };
+  }
   window.__ppRefrescarCtx=function(){ try{ if(document.getElementById('ppSelector')) renderSelector(); }catch(e){} try{ if(PP.ficha&&PP.ficha.length) renderRevisar(); }catch(e){} };
   function render(){
     const root=document.getElementById('profRoot'); if(!root) return;
@@ -11699,7 +11734,8 @@ function __grados_marker__(){}
         const ct=ctxTipo(it.key);
         h+='<span class="pp-chip'+(p>0?' on':'')+dis+'" data-key="'+it.key+'"'+(ct?' title="'+esc(ctxTitulo(ct))+'"':'')+'>'+
              (ct?'<i class="pp-dot pp-dot-'+ctxColor(ct)+'"></i>':'')+
-             it.label+(p>0?'<span class="pp-badge">'+p+'</span>':'')+'</span>';
+             it.label+(p>0?'<span class="pp-badge">'+p+'</span>':'')+
+             (()=>{ const hh=histDe(it.key); return hh?'<span class="pp-frac" title="En cuántas de las fichas anteriores has preguntado este tipo (digitales + papel)">'+hh.d+'/'+hh.n+'</span>':''; })()+'</span>';
       });
       h+='</div>';
     });
