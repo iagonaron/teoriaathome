@@ -11723,7 +11723,9 @@ function __grados_marker__(){}
     const host=document.getElementById('ppCesta');
     const items=PP.config.items;
     const total=sumaPesos();
-    let h='<div class="pp-h">Ficha de esta semana — <span style="color:var(--teoria)">'+total+' / '+TOPE+' ejercicios</span> '+
+    // (Iago 16-sep-2026) objetivo 5 ejercicios: VERDE con ✓ justo en 5; por encima, ámbar (tope 10)
+    const colTot = total===5 ? '#22c55e' : (total>5 ? '#fbbf24' : 'var(--teoria)');
+    let h='<div class="pp-h">Ficha de esta semana — <span style="color:'+colTot+';font-weight:900">'+total+' / 5 ejercicios'+(total===5?' ✓':'')+'</span> <span style="font-weight:600;color:var(--muted2)">(objetivo 5 · tope '+TOPE+')</span> '+
           '<button class="pp-btn small" id="ppDado" title="Rellenar con 10 ejercicios al azar" style="margin-left:8px">🎲 10 al azar</button></div>';
     if(!items.length){
       h+='<div class="pp-cesta-empty">Aún no has añadido tipos. Clica en los de la izquierda; cada clic añade un pentagrama de ese tipo (tope: '+TOPE+').</div>';
