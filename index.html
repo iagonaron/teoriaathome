@@ -11720,12 +11720,7 @@ function __grados_marker__(){}
     const host=document.getElementById('ppSelector');
     const lleno = sumaPesos()>=TOPE;
     let h='<div class="pp-h">Tipos de ejercicio · clic izquierdo para añadir · clic derecho para quitar</div>';
-    const cx=window.__SUITE_CTX;
-    if(cx && cx.ultima){
-      const u=cx.ultima; const tl=(u.tipos||[]).map(t=>'<span class="pp-prev-t"><i class="pp-dot pp-dot-'+ctxColor(t)+'"></i>'+esc(((PP_FLAT[t.key]||{}).label)||t.label||t.key)+(t.n>1?' ×'+t.n:'')+'</span>').join('');
-      h+='<div class="pp-prev"><b>Semana pasada · Ficha '+esc(u.numero)+'</b> · '+(u.entregas|0)+' entrega'+(u.entregas===1?'':'s')+'<div class="pp-prev-l">'+tl+'</div>'+
-         '<div class="pp-prev-leg">Bolita = lo preguntaste la semana pasada · color = % de la clase que lo superó (&gt;50 %): <i class="pp-dot pp-dot-verde"></i>&gt;80 <i class="pp-dot pp-dot-amarillo"></i>60–80 <i class="pp-dot pp-dot-naranja"></i>40–60 <i class="pp-dot pp-dot-rojo"></i>&lt;40 <i class="pp-dot pp-dot-gris"></i>sin corregir</div></div>';
-    }
+    // (Iago 16-sep-2026) sin cabecera ni leyenda: solo las bolitas en cada tipo (el detalle sale al pasar el ratón)
     PP_CAT.forEach(g=>{   // orden del índice (ya no alfabético)
       h+='<div class="pp-cat-grp"><h5>'+g.grupo+'</h5>';
       g.items.forEach(it=>{
