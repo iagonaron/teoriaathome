@@ -12750,7 +12750,7 @@ function __grados_marker__(){}
                   '<button class="pp-btn primary" id="ppEnviar">Preparar envío a alumnos</button>';
     host.appendChild(acc);
     document.getElementById('ppPreviewAlumno').onclick=()=>{ asegurarFicha() && previsualizarAlumno(); };
-    document.getElementById('ppPDF').onclick=()=>{ asegurarFicha() && elegirTipoYGenerarPDF(); };
+    document.getElementById('ppPDF').onclick=()=>{ try{ window.FichasCarpeta && FichasCarpeta.preparar(); }catch(e){} asegurarFicha() && elegirTipoYGenerarPDF(); };   // 16-sep-2026: permiso de la carpeta de fichas en papel con el gesto del clic
     document.getElementById('ppEnviar').onclick=()=>{ asegurarFicha() && preguntarPDFYEnviar(); };
     document.getElementById('ppToggleSol').onclick=()=>{
       PP.mostrarSol=!PP.mostrarSol;
@@ -13796,6 +13796,8 @@ function __grados_marker__(){}
     const btn=document.getElementById('ppPDF'); const prev=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='Generando…'; }
     try{
       const alu=await construirPDF(false);  // ALUMNO (sin respuestas)
+      // (Iago 16-sep-2026) copia automática de la versión ALUMNO en la carpeta de fichas en papel (Dropbox)
+      try{ if(window.FichasCarpeta) await FichasCarpeta.guardar(alu.blob, {grado:'GE', titulo:tituloFicha()}); }catch(e){ console.warn('[fichas-carpeta]', e); }
       const sol=await construirPDF(true);    // SOLUCIÓN (con respuestas en rojo)
       const base=tituloFicha().replace(/[^\wáéíóúñ]+/gi,'_');
       if(window.JSZip){
@@ -17556,5 +17558,7 @@ window.CAD = {
   window.cadCorregir=function(){ if(!window.CAD) return; if(cadApi&&cadApi.corregir){ var e=cadApi.corregir(); var f=$('fbCAD'); if(f){ if(!e){ f.innerHTML='<div style="color:#9aa3c0;font-size:13px">Marca una cadencia antes de corregir.</div>'; } else { f.innerHTML='<div><b style="color:'+(e.val>=0.5?"#22c98a":"#ff5c72")+'">'+Math.round((e.val||0)*100)+'%</b></div>'; } } } };
 })();
 </script>
+<script src="fichas-carpeta.js?v=1"></script>
+<script>try{ FichasCarpeta.montar('ppPDF'); }catch(e){}</script>
 </body>
 </html>
