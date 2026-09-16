@@ -12746,8 +12746,8 @@ function __grados_marker__(){}
     // botones al final: cuando el profesor da por buena la ficha (incluidas las regeneraciones)
     const acc=document.createElement('div'); acc.className='pp-actions'; acc.style.cssText='margin-top:22px;border-top:1px solid #e6ebf5;padding-top:18px';
     acc.innerHTML='<button class="pp-btn" id="ppPreviewAlumno">▶ Previsualizar como alumno</button>'+
-                  '<button class="pp-btn" id="ppPDF">Generar PDF (alumno + solución)</button>'+
-                  '<button class="pp-btn primary" id="ppEnviar">Preparar envío a alumnos</button>';
+                  '<button class="pp-btn" id="ppPDF">🖨 Generar PDF (alumno + solución)</button>'+
+                  '<button class="pp-btn primary" id="ppEnviar">📨 Enviar a alumnos</button>';   // 16-sep-2026: mismo nombre que en GP
     host.appendChild(acc);
     document.getElementById('ppPreviewAlumno').onclick=()=>{ asegurarFicha() && previsualizarAlumno(); };
     document.getElementById('ppPDF').onclick=()=>{ try{ window.FichasCarpeta && FichasCarpeta.preparar(); }catch(e){} asegurarFicha() && elegirTipoYGenerarPDF(); };   // 16-sep-2026: permiso de la carpeta de fichas en papel con el gesto del clic
@@ -13717,8 +13717,10 @@ function __grados_marker__(){}
      copia física. «Sí» reutiliza el flujo normal del PDF (tipo + nº) y,
      al terminar de descargar, sigue solo hacia el envío. */
   async function preguntarPDFYEnviar(){
-    // (16-sep-2026) Con carpeta de fichas en papel configurada, el PDF alumno se guarda solo al enviar: sin pregunta.
-    try{ if(window.FichasCarpeta && await FichasCarpeta.hayCarpeta()){ FichasCarpeta.preparar(); abrirEnvio(); return; } }catch(e){}
+    // (16-sep-2026) Ya no se pregunta por el PDF al enviar: la versión alumno se guarda sola en la
+    // carpeta de fichas en papel (si está elegida) y el PDF completo se saca con «Generar PDF».
+    try{ if(window.FichasCarpeta) FichasCarpeta.preparar(); }catch(e){}
+    abrirEnvio(); return;
     const ov=document.createElement('div');
     ov.style.cssText='position:fixed;inset:0;background:rgba(10,16,32,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
     const card=document.createElement('div');
