@@ -12754,7 +12754,10 @@ function __grados_marker__(){}
       al.innerHTML='<span class="pp-ref-lbl">Para:</span>'+item.alumnos.map(a=>'<span class="pp-ref-chip" title="'+esc(a.ficha||'')+' · '+esc(a.pct)+' %">'+esc(a.nombre)+'</span>').join('')+
         '<button type="button" class="pp-btn small pp-ref-quitar" title="No reforzar este tipo esta semana">✕ Quitar</button>';
       card.appendChild(al);
-      al.querySelector('.pp-ref-quitar').onclick=()=>{ PP.refuerzo=PP.refuerzo.filter(x=>x!==item); const old=document.getElementById('ppRefuerzo'); const nuevo=document.createElement('div'); old.replaceWith(nuevo); const tmp=document.createElement('div'); renderRefuerzo(tmp); nuevo.replaceWith(tmp.firstChild); };
+      const repintar=()=>{ const old=document.getElementById('ppRefuerzo'); const tmp=document.createElement('div'); renderRefuerzo(tmp); if(old&&tmp.firstChild) old.replaceWith(tmp.firstChild); };
+      al.querySelector('.pp-ref-quitar').onclick=()=>{ PP.refuerzo=PP.refuerzo.filter(x=>x!==item); repintar(); };
+      // el ↻ de la tarjeta base la sustituye por una tarjeta «normal» (sin alumnos): aquí regeneramos y repintamos la sección entera
+      const rg=card.querySelector('.pp-regen'); if(rg) rg.onclick=()=>{ const nuevo=fichaBloque(item.key); if(nuevo){ item.ej=nuevo; repintar(); } };
       list.appendChild(card);
     });
     host.appendChild(sec);
