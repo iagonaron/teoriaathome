@@ -1493,6 +1493,22 @@
   .pp-chip.dis{opacity:.38;pointer-events:none;filter:grayscale(.4)}
   .pp-chip .pp-badge{min-width:18px;height:18px;border-radius:9px;background:var(--teoria);color:#fff;font-size:11px;font-weight:900;
     display:inline-flex;align-items:center;justify-content:center;padding:0 5px}
+  /* (16-sep-2026) semana pasada + refuerzo */
+  .pp-chip{position:relative}
+  .pp-dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 0 2px rgba(0,0,0,.25)}
+  .pp-chip .pp-dot{position:absolute;top:-4px;right:-4px}
+  .pp-dot-verde{background:#22c55e}.pp-dot-amarillo{background:#facc15}.pp-dot-naranja{background:#fb923c}.pp-dot-rojo{background:#ef4444}.pp-dot-gris{background:#8b93a7}
+  .pp-prev{font-size:12.5px;color:var(--ink);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:9px 12px;margin:0 0 12px}
+  .pp-prev-l{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:6px}
+  .pp-prev-t{display:inline-flex;align-items:center;gap:6px}
+  .pp-prev-leg{margin-top:7px;font-size:11px;color:var(--muted2);display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+  .pp-ref{margin-top:26px;padding-top:18px;border-top:2px dashed rgba(255,214,120,.45)}
+  .pp-ex-ref{border-color:rgba(255,214,120,.55)!important;box-shadow:0 0 0 1px rgba(255,214,120,.18)}
+  .pp-ref-al{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.12)}
+  .pp-ref-lbl{font-size:12px;font-weight:800;color:#ffd678;margin-right:2px}
+  .pp-ref-chip{font-size:12px;font-weight:700;color:#ffe9a3;background:rgba(255,214,120,.14);border:1px solid rgba(255,214,120,.4);border-radius:999px;padding:3px 9px}
+  .pp-ref-quitar{margin-left:auto}
+  #ppAlumnoSim .sim-refuerzo{background:linear-gradient(90deg,rgba(255,214,120,.22),rgba(255,214,120,.08));border:1px solid rgba(255,214,120,.55);color:#ffe9a3;border-radius:12px;padding:10px 14px;font-size:13.5px;line-height:1.45;margin-bottom:12px}
   .pp-cesta-empty{font-size:13px;color:var(--muted2);padding:8px 2px}
   .pp-cesta-item{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:7px 0;border-top:1px solid rgba(255,255,255,.06)}
   .pp-cesta-item:first-child{border-top:none}
@@ -11639,6 +11655,18 @@ function __grados_marker__(){}
   /* ============================================================
      RENDER PRINCIPAL DEL PANEL (selector + cesta + acciones)
      ============================================================ */
+  /* (Iago 16-sep-2026) contexto del curso: bolitas de «semana pasada» y refuerzo por alumno */
+  function ctxTipo(key){ const c=window.__SUITE_CTX; if(!c||!c.ultima) return null; return (c.ultima.tipos||[]).find(t=>t.key===key)||null; }
+  function ctxColor(t){ if(!t||t.pct_superan==null) return 'gris'; const p=+t.pct_superan; return p>80?'verde':(p>=60?'amarillo':(p>=40?'naranja':'rojo')); }
+  function ctxTitulo(t){ if(!t) return ''; const c=window.__SUITE_CTX; const nf=c&&c.ultima?('Ficha '+c.ultima.numero):'ficha anterior';
+    return nf+' · '+t.n+' ejercicio'+(t.n>1?'s':'')+(t.pct_superan==null?' · aún sin entregas corregidas':(' · lo superó el '+t.pct_superan+'% de la clase ('+t.superan+' de '+t.n_alumnos+')')); }
+  function asegurarRefuerzo(){
+    const c=window.__SUITE_CTX; if(!c||!Array.isArray(c.refuerzo)) return;
+    if(PP.refuerzo) return;
+    PP.refuerzo=c.refuerzo.map(r=>{ const ej=fichaBloque(r.key); if(!ej) return null;
+      return { n:'★', key:r.key, label:(PP_FLAT[r.key]||{}).label||r.label||r.key, alumnos:r.alumnos||[], ej, refuerzo:true }; }).filter(Boolean);
+  }
+  window.__ppRefrescarCtx=function(){ try{ if(document.getElementById('ppSelector')) renderSelector(); }catch(e){} try{ if(PP.ficha&&PP.ficha.length) renderRevisar(); }catch(e){} };
   function render(){
     const root=document.getElementById('profRoot'); if(!root) return;
     root.innerHTML =
@@ -11657,12 +11685,20 @@ function __grados_marker__(){}
     const host=document.getElementById('ppSelector');
     const lleno = sumaPesos()>=TOPE;
     let h='<div class="pp-h">Tipos de ejercicio · clic izquierdo para añadir · clic derecho para quitar</div>';
+    const cx=window.__SUITE_CTX;
+    if(cx && cx.ultima){
+      const u=cx.ultima; const tl=(u.tipos||[]).map(t=>'<span class="pp-prev-t"><i class="pp-dot pp-dot-'+ctxColor(t)+'"></i>'+esc(((PP_FLAT[t.key]||{}).label)||t.label||t.key)+(t.n>1?' ×'+t.n:'')+'</span>').join('');
+      h+='<div class="pp-prev"><b>Semana pasada · Ficha '+esc(u.numero)+'</b> · '+(u.entregas|0)+' entrega'+(u.entregas===1?'':'s')+'<div class="pp-prev-l">'+tl+'</div>'+
+         '<div class="pp-prev-leg">Bolita = lo preguntaste la semana pasada · color = % de la clase que lo superó (&gt;50 %): <i class="pp-dot pp-dot-verde"></i>&gt;80 <i class="pp-dot pp-dot-amarillo"></i>60–80 <i class="pp-dot pp-dot-naranja"></i>40–60 <i class="pp-dot pp-dot-rojo"></i>&lt;40 <i class="pp-dot pp-dot-gris"></i>sin corregir</div></div>';
+    }
     PP_CAT.forEach(g=>{   // orden del índice (ya no alfabético)
       h+='<div class="pp-cat-grp"><h5>'+g.grupo+'</h5>';
       g.items.forEach(it=>{
         const p=pesoDe(it.key);
         const dis=(lleno && p<=0)?' dis':'';
-        h+='<span class="pp-chip'+(p>0?' on':'')+dis+'" data-key="'+it.key+'">'+
+        const ct=ctxTipo(it.key);
+        h+='<span class="pp-chip'+(p>0?' on':'')+dis+'" data-key="'+it.key+'"'+(ct?' title="'+esc(ctxTitulo(ct))+'"':'')+'>'+
+             (ct?'<i class="pp-dot pp-dot-'+ctxColor(ct)+'"></i>':'')+
              it.label+(p>0?'<span class="pp-badge">'+p+'</span>':'')+'</span>';
       });
       h+='</div>';
@@ -12127,7 +12163,8 @@ function __grados_marker__(){}
         : '<div style="margin-top:16px;color:#c7bff0;font-size:13px;font-weight:600">¿Dudas? <b>Revisa los apuntes</b> 📖</div>';   /* ELE-W2: el «Ey, soy Iago» queda para la corrección */
       const entClass = animDir==='fwd' ? 'sim-slide-in' : (animDir==='back' ? 'sim-slide-in-l' : 'sim-enter'); animDir=null;
       main.innerHTML='<div class="pp-hide-sol sim-card '+entClass+'" style="max-width:min(1120px,95vw);width:100%;align-self:flex-start">'+
-          '<div class="sim-eyebrow">Ejercicio '+(i+1)+'</div>'+
+          (item.refuerzo?'<div class="sim-refuerzo">⭐ <b>Ejercicio solo para ti</b> · Vamos a practicar esto porque nos cuesta un poco. Recuerda que en el portal at home, en Teoría, puedes hacer todos los ejercicios de este tipo que quieras. Y también tienes la explicación y ejemplos en el <b>Kit Salvavidas'+(/^4/.test(String(window.__FICHA_CURSO||''))?' 4ºGe':(/^3/.test(String(window.__FICHA_CURSO||''))?' 3ºGe':''))+'</b> que te entregué al principio del curso. Y si quieres, escríbeme un mensaje: te paso más material o agendamos una clase presencial de refuerzo para explicar justo lo que necesitas y que te quedes sin dudas.</div>':'')+
+          '<div class="sim-eyebrow">Ejercicio '+(i+1)+(item.refuerzo?' · refuerzo':'')+'</div>'+
           '<div class="sim-enun">'+esc(item.ej.enun||item.label)+'</div>'+
           '<div id="simScore"></div>'+
           pieFoot+
@@ -12515,7 +12552,7 @@ function __grados_marker__(){}
             origin:'teoria_at_home', ficha_id:ctx.ficha, numero:ctx.numero,
             nota:notaNum, porcentaje:media, entregada_en:new Date().toISOString(),
             tiempo_seg:(window.SuiteTiempo&&window.SuiteTiempo.activo()?window.SuiteTiempo.total():undefined),
-            ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined, fallo_carga:it._falloCarga||undefined, fallo_avisado:it._falloAvisado||undefined })),
+            ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, refuerzo:it.refuerzo||undefined, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined, fallo_carga:it._falloCarga||undefined, fallo_avisado:it._falloAvisado||undefined })),
             respuestas:progSanitizarRespuestas(),
             estado:PP.ficha.map(it=>sanitEstado(it.ej)),
             no_puntua:(window.__FICHA_NO_PUNTUA===true)||undefined,   /* (6-ago) conservar la elección */
@@ -12552,7 +12589,7 @@ function __grados_marker__(){}
           nota:notaNum, porcentaje:media,
           entregada_en:new Date().toISOString(),
             tiempo_seg:(window.SuiteTiempo&&window.SuiteTiempo.activo()?window.SuiteTiempo.total():undefined),
-          ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined, fallo_carga:it._falloCarga||undefined, fallo_avisado:it._falloAvisado||undefined })),
+          ejercicios:PP.ficha.map((it,k)=>({ n:it.n, key:it.key, label:it.label, refuerzo:it.refuerzo||undefined, enun:(it.ej.enun||it.label||''), pct:scores[k], anulado:_esAnulado(it,k)||undefined, fallo_carga:it._falloCarga||undefined, fallo_avisado:it._falloAvisado||undefined })),
           respuestas:progSanitizarRespuestas(),
           estado:PP.ficha.map(it=>sanitEstado(it.ej)),   /* ELE-W5: lo que ingresó el alumno, rastreable */
           no_puntua:(noPuntua===true)||undefined   /* (6-ago) el alumno eligió que esta ficha no cuente */
@@ -12672,6 +12709,7 @@ function __grados_marker__(){}
       '<div id="ppExList" class="'+(PP.mostrarSol?'':'pp-hide-sol')+'"></div>';
     const list=document.getElementById('ppExList');
     PP.ficha.forEach(item=> list.appendChild(cardEjercicio(item)) );
+    try{ renderRefuerzo(host); }catch(e){ console.warn('[refuerzo]', e); }
     // botones al final: cuando el profesor da por buena la ficha (incluidas las regeneraciones)
     const acc=document.createElement('div'); acc.className='pp-actions'; acc.style.cssText='margin-top:22px;border-top:1px solid #e6ebf5;padding-top:18px';
     acc.innerHTML='<button class="pp-btn" id="ppPreviewAlumno">▶ Previsualizar como alumno</button>'+
@@ -12691,6 +12729,35 @@ function __grados_marker__(){}
       renderRevisar();
     };
     try{ if(host.scrollIntoView) host.scrollIntoView({behavior:'smooth', block:'start'}); }catch(e){}
+  }
+
+  /* (Iago 16-sep-2026) REFUERZO ESPECÍFICO: un ejercicio por tipo flojo, solo para
+     los alumnos que sacaron ≤30 % en ese tipo en su última ficha. Va al final de SU
+     ficha y cuenta en su nota. Aquí Iago lo ve, lo regenera o lo quita. */
+  function renderRefuerzo(host){
+    const cx=window.__SUITE_CTX; if(!cx) return;   // solo en modo envío desde el Diario
+    asegurarRefuerzo();
+    const sec=document.createElement('div'); sec.id='ppRefuerzo'; sec.className='pp-ref';
+    const lista=PP.refuerzo||[];
+    let h='<div class="pp-toolbar"><div class="t">🎯 Refuerzo específico · '+lista.length+' ejercicio'+(lista.length===1?'':'s')+'</div></div>';
+    if(!lista.length){
+      h+='<p class="pp-note">Nadie necesita refuerzo esta semana: ningún alumno bajó del 30 % en un tipo de ejercicio en su última ficha.</p>';
+      sec.innerHTML=h; host.appendChild(sec); return;
+    }
+    h+='<p class="pp-note">Cada ejercicio va <b>solo</b> a los alumnos indicados (sacaron ≤30 % en ese tipo en su última ficha). Se añade al final de su ficha, con un aviso «solo para ti», y cuenta en su nota. Los demás alumnos no lo ven.</p>';
+    sec.innerHTML=h;
+    const list=document.createElement('div'); list.className=(PP.mostrarSol?'':'pp-hide-sol'); sec.appendChild(list);
+    lista.forEach((item,idx)=>{
+      const card=cardEjercicio(item);
+      card.classList.add('pp-ex-ref');
+      const al=document.createElement('div'); al.className='pp-ref-al';
+      al.innerHTML='<span class="pp-ref-lbl">Para:</span>'+item.alumnos.map(a=>'<span class="pp-ref-chip" title="'+esc(a.ficha||'')+' · '+esc(a.pct)+' %">'+esc(a.nombre)+'</span>').join('')+
+        '<button type="button" class="pp-btn small pp-ref-quitar" title="No reforzar este tipo esta semana">✕ Quitar</button>';
+      card.appendChild(al);
+      al.querySelector('.pp-ref-quitar').onclick=()=>{ PP.refuerzo=PP.refuerzo.filter(x=>x!==item); const old=document.getElementById('ppRefuerzo'); const nuevo=document.createElement('div'); old.replaceWith(nuevo); const tmp=document.createElement('div'); renderRefuerzo(tmp); nuevo.replaceWith(tmp.firstChild); };
+      list.appendChild(card);
+    });
+    host.appendChild(sec);
   }
 
   /* dibuja la notación de un bloque y superpone etiquetas posicionadas bajo cada compás.
@@ -14103,7 +14170,19 @@ function __grados_marker__(){}
       // --- config reproducible (para regenerar variantes en el futuro) ---
       config:{ items:PP.config.items.map(i=>({key:i.key, peso:i.peso})), total:total, opciones:{...PP.config.opciones} },
       // --- ejercicios MATERIALIZADOS (fuente de verdad robusta para el portal del alumno) ---
-      ejercicios: PP.ficha.map(it=>{
+      ejercicios: PP.ficha.map(materializarItem),
+      // (Iago 16-sep-2026) REFUERZO ESPECÍFICO: mismos campos que un ejercicio normal
+      // + a quién va (cuentas del portal y alumnos canon). El portal lo añade al final
+      // SOLO a esos alumnos; el resto no lo ve.
+      refuerzos: (PP.refuerzo||[]).map(r=>Object.assign(materializarItem(r), {
+        refuerzo:true,
+        alumnos:(r.alumnos||[]).map(a=>a.canon_id),
+        cuentas:[].concat.apply([], (r.alumnos||[]).map(a=>a.cuentas||[])),
+        nombres:(r.alumnos||[]).map(a=>a.nombre)
+      }))
+    };
+  }
+  function materializarItem(it){
         const ej=it.ej||{};
         return {
         n:it.n, key:it.key, label:it.label,
@@ -14144,8 +14223,6 @@ function __grados_marker__(){}
           layout:       ej.layout       || null    // layout del bloque (pintarBloque)
         }
         };
-      })
-    };
   }
 
   /* ---- cliente Supabase (perezoso). El generador es PÚBLICO: usa la anon key
@@ -14306,7 +14383,7 @@ function __grados_marker__(){}
       '<h3>Preparar envío a alumnos</h3>'+
       '<div class="mc-sub">Se enviará a los grupos que fijaste en el Diario. Los alumnos la '+
       'verán el <b>viernes a las 19:00</b>, con el resto de tareas de la semana (no antes).</div>'+
-      '<div class="pp-summary">'+cab+' · <b>'+payload.ejercicios.length+'</b> ejercicios</div>'+
+      '<div class="pp-summary">'+cab+' · <b>'+payload.ejercicios.length+'</b> ejercicios'+((payload.refuerzos&&payload.refuerzos.length)?' · <b>'+payload.refuerzos.length+'</b> de refuerzo (solo para algunos alumnos)':'')+'</div>'+
       (payload.puntua_opcional?'<div class="pp-summary" style="margin-top:6px">🕊 <b>PUNTÚA OPCIONAL</b>: al corregirse, cada alumno decidirá si su nota cuenta.</div>':'')+
       '<div class="mc-err" id="ppEnvErr"></div>'+
       '<div class="mc-row">'+
@@ -14415,6 +14492,15 @@ function __grados_marker__(){}
   // materializado en ejercicios_json. Reengancha los nombres públicos del
   // payload (labels/sol_labels/com_ans/solucion_svg) a los internos del motor
   // (labelsTop/solLabels/comAns/_solSvg) y despliega el bag `motor`.
+  /* (Iago 16-sep-2026) REFUERZO: los ejercicios «solo para ti» de esta cuenta van al final */
+  function anadirRefuerzosDe(payload, cuenta){
+    const refs=(payload && Array.isArray(payload.refuerzos)) ? payload.refuerzos : [];
+    refs.forEach(r=>{
+      const mias=Array.isArray(r.cuentas) && r.cuentas.map(String).indexOf(String(cuenta))>=0;
+      if(!mias) return;
+      PP.ficha.push({ n:PP.ficha.length+1, key:r.key, label:r.label, refuerzo:true, ej:rehidratarEj(r) });
+    });
+  }
   function rehidratarEj(e){
     const m=(e&&e.motor)||{};
     return {
@@ -14504,11 +14590,13 @@ function __grados_marker__(){}
       const pl=data.payload||{};
       const pack=extraerPaqueteFicha({ ejercicios_json:data.ejercicios_json });
       if(!pack || !pack.ejercicios.length) throw new Error('ficha_vacia');
+      // (16-sep-2026) en la revisión, los ejercicios base + los refuerzos de ESTE alumno, en el mismo orden que él los hizo
+      try{ const refs=(pack.payload&&Array.isArray(pack.payload.refuerzos))?pack.payload.refuerzos:[]; refs.forEach(r=>{ if(Array.isArray(r.cuentas)&&r.cuentas.map(String).indexOf(String(cuenta))>=0) pack.ejercicios.push(Object.assign({}, r, { n:pack.ejercicios.length+1 })); }); }catch(e){}
       window.__SUITE_ALUMNO=null;               // NUNCA envía
       window.__SUITE_ANULADOS=(pl.anulados||[]).map(Number);
       window.__FICHA_NUMERO=(data.numero!=null?data.numero:null);
       PP.ficha=pack.ejercicios.map((e,k)=>{
-        const it={ n:e.n, key:e.key, label:e.label, ej:rehidratarEj(e) };
+        const it={ n:e.n, key:e.key, label:e.label, refuerzo:!!e.refuerzo, ej:rehidratarEj(e) };
         const est=(Array.isArray(pl.estado)&&pl.estado[k])?pl.estado[k]:null;
         if(est){ try{ Object.keys(est).forEach(kk=>{ it.ej[kk]=est[kk]; }); }catch(e2){} }   // el estado del alumno pisa el recién generado
         const r=(Array.isArray(pl.respuestas)&&pl.respuestas[k])?pl.respuestas[k]:null;
@@ -14562,6 +14650,7 @@ function __grados_marker__(){}
       if(!pack || !Array.isArray(pack.ejercicios) || !pack.ejercicios.length){ const e=new Error('ficha_vacia'); e._cod='ficha_vacia'; throw e; }
       console.log('[ficha] '+pack.ejercicios.length+' ejercicios · numero='+pack.numero);
       if(pack.numero!=null && String(pack.numero)!=='') window.__FICHA_NUMERO=pack.numero;
+      try{ window.__FICHA_CURSO=data.curso||(pack.payload&&pack.payload.curso)||null; }catch(e){}
       // PLAZO (Iago jul-2026): si la RPC devuelve las fechas de entrega, pisan
       // a las de la URL (por si el enlace llegó sin &fin= / &gracia=).
       try{
@@ -14574,6 +14663,7 @@ function __grados_marker__(){}
       window.__SUITE_ALUMNO={ cuenta:cuenta, ficha:fichaId, numero:(pack.numero!=null?pack.numero:(numFallback||null)), opcional:!!(pack.payload && pack.payload.puntua_opcional) };   /* (6-ago) «puntúa opcional» */
       window.__SUITE_ANULADOS=(pack.anulados||[]).map(Number);   /* ELE-W2 */
       PP.ficha=pack.ejercicios.map(e=>({ n:e.n, key:e.key, label:e.label, ej:rehidratarEj(e) }));
+      try{ anadirRefuerzosDe(pack.payload, cuenta); }catch(e){ console.warn('[ficha] refuerzos', e); }
       // FASE 6.7 · REANUDAR: si hay progreso guardado de ESTA ficha, se
       // rehidratan las respuestas y se arranca en el ejercicio donde iba.
       window.__SUITE_REANUDAR=null;
@@ -14643,7 +14733,17 @@ function __grados_marker__(){}
       const revAl=qs.get('revision'), revSec=qs.get('s');
       if(revAl && revSec){ revisionProfesor(revAl, revSec); return; }   /* ELE-W5 */
       // FASE 6.1c: token de envío creado por el Diario (un solo uso, vida 45 min)
-      const envioTok=qs.get('envio'); if(envioTok){ window.__SUITE_ENVIO_TOKEN=envioTok; window.__SUITE_ENVIO_FICHA=qs.get('ficha')||null; window.__SUITE_ENVIO_OPCIONAL=(qs.get('opcional')==='1'); }   /* (6-ago Iago) ficha «puntúa opcional» */
+      const envioTok=qs.get('envio'); if(envioTok){ window.__SUITE_ENVIO_TOKEN=envioTok; window.__SUITE_ENVIO_FICHA=qs.get('ficha')||null; window.__SUITE_ENVIO_OPCIONAL=(qs.get('opcional')==='1');
+        /* (Iago 16-sep-2026) REFUERZO + «qué pregunté la semana pasada»: contexto del curso (solo lectura) */
+        window.__SUITE_CTX=null;
+        (async()=>{ try{
+          let n=0; while(!(window.supabase && window.supabase.createClient) && n<80){ await new Promise(r=>setTimeout(r,100)); n++; }
+          const sb=suiteSb(); if(!sb) return;
+          const { data, error } = await sb.rpc('suite_ficha_profe_contexto', { p_token: envioTok });
+          if(error) throw error;
+          if(data && data.ok){ window.__SUITE_CTX=data; try{ if(window.__ppRefrescarCtx) window.__ppRefrescarCtx(); }catch(e){} }
+        }catch(e){ console.warn('[ficha] contexto profesor', e); } })();
+      }   /* (6-ago Iago) ficha «puntúa opcional» */
       // Número de ficha para el título "Ficha N" (el Diario pasa ?ficha=N numérico).
       { const _fq=qs.get('ficha'); if(_fq && /^\d+$/.test(_fq)) window.__FICHA_NUMERO=_fq; }
       if(qs.get('panel')==='profesor' || hash==='profesor'){ abrirPanelProfesor(); return; }
