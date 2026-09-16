@@ -16,6 +16,9 @@
    Uso desde el generador:
      FichasCarpeta.preparar()            → al pulsar «Generar PDF» (pide permiso si hace falta)
      FichasCarpeta.guardar(blob, {grado:'GE', titulo:'Ficha 1'})  → tras construir el PDF alumno
+   Además, al ENVIAR la ficha a los alumnos (digital) se guarda sola la
+   versión alumno en la carpeta, sin descargar nada: un solo botón para
+   el día a día (algunos alumnos la quieren en papel).
    ============================================================ */
 (function () {
   'use strict';
@@ -179,5 +182,6 @@
     }
   }
 
-  window.FichasCarpeta = { montar: vigilar, elegir: elegir, quitar: quitar, preparar: preparar, guardar: guardar, nombre: nombreFichero, soportado: soportado };
+  async function hayCarpeta() { return soportado && !!(await handle()); }
+  window.FichasCarpeta = { hayCarpeta: hayCarpeta, montar: vigilar, elegir: elegir, quitar: quitar, preparar: preparar, guardar: guardar, nombre: nombreFichero, soportado: soportado };
 })();

@@ -13716,7 +13716,9 @@ function __grados_marker__(){}
      (alumno + solución) en el ordenador — para no olvidarse de tener la
      copia física. «Sí» reutiliza el flujo normal del PDF (tipo + nº) y,
      al terminar de descargar, sigue solo hacia el envío. */
-  function preguntarPDFYEnviar(){
+  async function preguntarPDFYEnviar(){
+    // (16-sep-2026) Con carpeta de fichas en papel configurada, el PDF alumno se guarda solo al enviar: sin pregunta.
+    try{ if(window.FichasCarpeta && await FichasCarpeta.hayCarpeta()){ FichasCarpeta.preparar(); abrirEnvio(); return; } }catch(e){}
     const ov=document.createElement('div');
     ov.style.cssText='position:fixed;inset:0;background:rgba(10,16,32,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
     const card=document.createElement('div');
@@ -14432,6 +14434,7 @@ function __grados_marker__(){}
     const ok=document.getElementById('ppEnvOk');
     const err=document.getElementById('ppEnvErr');
     ok.onclick=async ()=>{
+      try{ window.FichasCarpeta && FichasCarpeta.preparar(); }catch(e){}   // 16-sep-2026: permiso de la carpeta con el gesto del clic
       const sb=suiteSb();
       if(!sb){ err.textContent='No se pudo cargar Supabase. Revisa la conexión y reintenta.'; return; }
       ok.disabled=true; const prev=ok.textContent; ok.textContent='Enviando…'; err.textContent='';
@@ -14447,6 +14450,8 @@ function __grados_marker__(){}
         }
         window.__SUITE_ENVIO_TOKEN=null;   // consumido: un solo uso
         cerrarModal();
+        // (Iago 16-sep-2026) al enviar, la versión ALUMNO en PDF se guarda sola en la carpeta de fichas en papel
+        try{ if(window.FichasCarpeta && await FichasCarpeta.hayCarpeta()){ const alu=await construirPDF(false); await FichasCarpeta.guardar(alu.blob, {grado:'GE', titulo:'Ficha '+((data&&data.numero!=null)?data.numero:(window.__SUITE_ENVIO_FICHA||''))}); } }catch(e){ console.warn('[fichas-carpeta]', e); }
         // (Iago jul-2026) avisar al Diario del Profesor (la pestaña que abrió
         // este generador) de que la ficha se ENVIÓ de verdad, para que muestre
         // el visto "Ficha N enviada a los alumnos" en el apartado de clases.
@@ -17558,7 +17563,7 @@ window.CAD = {
   window.cadCorregir=function(){ if(!window.CAD) return; if(cadApi&&cadApi.corregir){ var e=cadApi.corregir(); var f=$('fbCAD'); if(f){ if(!e){ f.innerHTML='<div style="color:#9aa3c0;font-size:13px">Marca una cadencia antes de corregir.</div>'; } else { f.innerHTML='<div><b style="color:'+(e.val>=0.5?"#22c98a":"#ff5c72")+'">'+Math.round((e.val||0)*100)+'%</b></div>'; } } } };
 })();
 </script>
-<script src="fichas-carpeta.js?v=1"></script>
+<script src="fichas-carpeta.js?v=2"></script>
 <script>try{ FichasCarpeta.montar('ppPDF'); }catch(e){}</script>
 </body>
 </html>
