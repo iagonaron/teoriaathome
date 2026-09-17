@@ -86,10 +86,27 @@
       .replace(/\s+/g, ' ')
       .trim();
   }
+  // (Iago 17-sep-2026) delante del nombre, entre paréntesis, cuántas copias en
+  // papel hacen falta: los alumnos del grupo que NO están en formato digital.
+  // El número viene en el contexto que el generador ya pide al abrirse
+  // (FP.ctx en GP, window.__SUITE_CTX en GE). Si no lo hay, no se pone nada.
+  function copiasPapel(o) {
+    var n = (o && o.copias != null) ? o.copias : null;
+    if (n == null) {
+      try {
+        var c = (window.FP && window.FP.ctx) || window.__SUITE_CTX || null;
+        if (c && c.copias_papel != null) n = c.copias_papel;
+      } catch (e) {}
+    }
+    n = parseInt(n, 10);
+    return (isFinite(n) && n > 0) ? n : null;
+  }
   function nombreFichero(o) {
     o = o || {};
     var t = limpio(o.titulo || 'Ficha') || 'Ficha';
-    return (o.grado ? limpio(o.grado) + ' · ' : '') + t + ' · ' + hoy() + ' (alumno).pdf';
+    var c = copiasPapel(o);
+    return (c != null ? '(' + c + ') ' : '')
+         + (o.grado ? limpio(o.grado) + ' · ' : '') + t + ' · ' + hoy() + ' (alumno).pdf';
   }
 
   /* ---- UI: botón discreto junto al de «Generar PDF» ---- */
