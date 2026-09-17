@@ -759,6 +759,15 @@ if(window.Sentry && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){
   #ppAlumnoSim #simScore .del-nota:hover{ background:#ff5ccd;color:#fff;border-color:transparent }
   /* fila de alteraciones: ocupa el ancho de la tarjeta y botones grandes (táctil) */
   #ppAlumnoSim #simScore .acc-row{ width:100%; }
+  /* (17-sep-2026, Iago) iPad vertical y iPad mini: las celdas de respuesta van
+     en rejilla de 4 columnas alineadas con los 4 compases, así que NO se pueden
+     reflujar sin desalinearlas. Lo que se hace es dejar que la celda encoja y
+     que su fila de ♯/♭ se parta, en vez de salirse de la tarjeta. */
+  @media (max-width: 860px){
+    #ppAlumnoSim #simScore .ans-cell{ min-width:0; padding:8px 3px; }
+    #ppAlumnoSim #simScore .ans-cell > div{ flex-wrap:wrap; justify-content:center; max-width:100%; }
+    #ppAlumnoSim #simScore .ans-cell .acc-btn{ min-width:30px; }
+  }
   #ppAlumnoSim #simScore .acc-btn.acc-big{
     min-height:48px; height:48px; border-radius:12px; font-weight:800;
   }
@@ -15284,7 +15293,7 @@ window.SuiteTiempo=(function(){
     var nGaps=Math.max(1, cols.length-1);
     var gapB=Math.min(150, Math.max(40, Math.round((SPREAD_W - margin*2 - totalCols)/nGaps)));
     var W=margin*2 + totalCols + gapB*nGaps;
-    var d1=document.createElement('div'); d1.className='enaadv-fila'; d1.style.cssText='background:#fff;width:'+W+'px'; host.appendChild(d1);
+    var d1=document.createElement('div'); d1.className='enaadv-fila'; d1.style.cssText='background:#fff;width:'+W+'px;max-width:100%'; host.appendChild(d1);
     var r=new VF.Renderer(d1,VF.Renderer.Backends.SVG); r.resize(W,220); var ctx=r.getContext();
     var x=margin, colX=[], stA=null, stB=null, st0=null;
     cols.forEach(function(c,ci){ colX[ci]=x;
@@ -15827,7 +15836,7 @@ window.SuiteTiempo=(function(){
     var mw, W;
     if(opts.fill){ var CW=(host.clientWidth||860); mw=(CW-margin*2-gapTotal)/cols.length; W=CW; }
     else { mw=opts.mw||120; W=margin*2 + cols.length*mw + gapTotal; }
-    var d=document.createElement('div'); d.className='enaadv-fila'; d.style.cssText='background:#fff;width:'+W+'px'; host.appendChild(d);
+    var d=document.createElement('div'); d.className='enaadv-fila'; d.style.cssText='background:#fff;width:'+W+'px;max-width:100%'; host.appendChild(d);
     var r=new VF.Renderer(d,VF.Renderer.Backends.SVG); r.resize(W,180); var ctx=r.getContext();
     var x=margin, st0=null, xs=[], ws=[];
     cols.forEach(function(c,ci){ xs[ci]=x; ws[ci]=mw; var st=new VF.Stave(x,yS,mw,{spacing_between_lines_px:LSP}); if(ci===0) st.addClef('treble'); if(c.endBar) st.setEndBarType(VF.Barline.type.DOUBLE); st.setContext(ctx).draw(); if(!st0) st0=st;
@@ -15873,7 +15882,7 @@ window.SuiteTiempo=(function(){
   function drawGrandCols(host, cols, opts){ opts=opts||{}; host.innerHTML='';
     var CW=(host.clientWidth||860), margin=26, clefExtra=30, yT=54, yB=152, LSP=10;   // sistema único, ancho completo (margen izq. para que la llave no se corte)
     var baseW=(CW - margin*2 - clefExtra)/cols.length, W=CW;
-    var d=document.createElement('div'); d.className='enaadv-fila'; d.style.cssText='background:#fff;width:'+W+'px'; host.appendChild(d);
+    var d=document.createElement('div'); d.className='enaadv-fila'; d.style.cssText='background:#fff;width:'+W+'px;max-width:100%'; host.appendChild(d);
     var r=new VF.Renderer(d,VF.Renderer.Backends.SVG); r.resize(W,244); var ctx=r.getContext();
     var x=margin, xs=[], ws=[], t0=null,b0=null;
     cols.forEach(function(c,ci){ xs[ci]=x; var w=baseW+(ci===0?clefExtra:0); ws[ci]=w;
