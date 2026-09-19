@@ -1,23 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<!-- Sentry (17-sep-2026): errores JS en produccion. Sin datos personales: solo el id anonimo de la cuenta como etiqueta. -->
-<script src="https://browser.sentry-cdn.com/10.70.0/bundle.min.js" crossorigin="anonymous"></script>
-<script>
-if(window.Sentry && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){
-  Sentry.init({ dsn:'https://c2f1bb8373171bd486ca2ec64d472b33@o4512064125861888.ingest.de.sentry.io/4512064142704720',
-    release:'teoriaathome@2026-09-17', environment:'production', sendDefaultPii:false,
-    initialScope:{ tags:{ app:'teoriaathome' } },
-    ignoreErrors:['ResizeObserver loop','Non-Error promise rejection','AbortError','Load failed','NetworkError','Failed to fetch'],
-    beforeSend:function(ev){
-      try{ var s=(JSON.parse(localStorage.getItem('lmeav_session')||localStorage.getItem('lmpro_session')||'null')||window.__LM_SES||null); if(s&&s.id){ ev.tags=ev.tags||{}; ev.tags.cuenta=String(s.id); } }catch(e){}
-      if(ev.user) delete ev.user;
-      return ev;
-    }
-  });
-}
-</script>
-
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TEORÍA at home</title>
@@ -759,15 +742,6 @@ if(window.Sentry && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){
   #ppAlumnoSim #simScore .del-nota:hover{ background:#ff5ccd;color:#fff;border-color:transparent }
   /* fila de alteraciones: ocupa el ancho de la tarjeta y botones grandes (táctil) */
   #ppAlumnoSim #simScore .acc-row{ width:100%; }
-  /* (17-sep-2026, Iago) iPad vertical y iPad mini: las celdas de respuesta van
-     en rejilla de 4 columnas alineadas con los 4 compases, así que NO se pueden
-     reflujar sin desalinearlas. Lo que se hace es dejar que la celda encoja y
-     que su fila de ♯/♭ se parta, en vez de salirse de la tarjeta. */
-  @media (max-width: 860px){
-    #ppAlumnoSim #simScore .ans-cell{ min-width:0; padding:8px 3px; }
-    #ppAlumnoSim #simScore .ans-cell > div{ flex-wrap:wrap; justify-content:center; max-width:100%; }
-    #ppAlumnoSim #simScore .ans-cell .acc-btn{ min-width:30px; }
-  }
   #ppAlumnoSim #simScore .acc-btn.acc-big{
     min-height:48px; height:48px; border-radius:12px; font-weight:800;
   }
@@ -5181,8 +5155,15 @@ function marcarSolucionIdEnRuedas(i, e){
   if(e._wN){
     e.selNota=nomES; e.selAlt=altSol;
     const acc=altSol==='#'?'♯':altSol==='b'?'♭':'';
-    const items=NOTAS_ES.map(n=> n===nomES ? (n+acc):n).concat(['—']);
-    e._wN.setItems(items,true); e._wN.setIndex(NOTAS_ES.indexOf(nomES),true);
+    /* (19-sep-2026, Iago) BUG: «puse Do y me lo daba como incorrecto».
+       La rueda de nombre se monta, se lee y se repinta SIEMPRE con
+       NOTAS_ES_REV (Si, La, Sol... y Do justo encima del guion). Aqui, al
+       ensenar la solucion, se rehacia con NOTAS_ES — el orden del reves. A
+       partir de ese momento la rueda ENSENABA una nota y GUARDABA la
+       simetrica: donde ponia Do se registraba Si. Por eso fallaba el nombre
+       aunque estuviera bien elegido, y no tenia nada que ver con la octava. */
+    const items=NOTAS_ES_REV.map(n=> n===nomES ? (n+acc):n).concat(['—']);
+    e._wN.setItems(items,true); e._wN.setIndex(NOTAS_ES_REV.indexOf(nomES),true);
   }
   // fijar rueda de tipo
   if(e._wT){
@@ -12772,11 +12753,11 @@ function __grados_marker__(){}
     // botones al final: cuando el profesor da por buena la ficha (incluidas las regeneraciones)
     const acc=document.createElement('div'); acc.className='pp-actions'; acc.style.cssText='margin-top:22px;border-top:1px solid #e6ebf5;padding-top:18px';
     acc.innerHTML='<button class="pp-btn" id="ppPreviewAlumno">▶ Previsualizar como alumno</button>'+
-                  '<button class="pp-btn" id="ppPDF">🖨 Generar PDF (alumno + solución)</button>'+
-                  '<button class="pp-btn primary" id="ppEnviar">📨 Enviar a alumnos</button>';   // 16-sep-2026: mismo nombre que en GP
+                  '<button class="pp-btn" id="ppPDF">Generar PDF (alumno + solución)</button>'+
+                  '<button class="pp-btn primary" id="ppEnviar">Preparar envío a alumnos</button>';
     host.appendChild(acc);
     document.getElementById('ppPreviewAlumno').onclick=()=>{ asegurarFicha() && previsualizarAlumno(); };
-    document.getElementById('ppPDF').onclick=()=>{ try{ window.FichasCarpeta && FichasCarpeta.preparar(); }catch(e){} asegurarFicha() && elegirTipoYGenerarPDF(); };   // 16-sep-2026: permiso de la carpeta de fichas en papel con el gesto del clic
+    document.getElementById('ppPDF').onclick=()=>{ asegurarFicha() && elegirTipoYGenerarPDF(); };
     document.getElementById('ppEnviar').onclick=()=>{ asegurarFicha() && preguntarPDFYEnviar(); };
     document.getElementById('ppToggleSol').onclick=()=>{
       PP.mostrarSol=!PP.mostrarSol;
@@ -13742,11 +13723,7 @@ function __grados_marker__(){}
      (alumno + solución) en el ordenador — para no olvidarse de tener la
      copia física. «Sí» reutiliza el flujo normal del PDF (tipo + nº) y,
      al terminar de descargar, sigue solo hacia el envío. */
-  async function preguntarPDFYEnviar(){
-    // (16-sep-2026) Ya no se pregunta por el PDF al enviar: la versión alumno se guarda sola en la
-    // carpeta de fichas en papel (si está elegida) y el PDF completo se saca con «Generar PDF».
-    try{ if(window.FichasCarpeta) FichasCarpeta.preparar(); }catch(e){}
-    abrirEnvio(); return;
+  function preguntarPDFYEnviar(){
     const ov=document.createElement('div');
     ov.style.cssText='position:fixed;inset:0;background:rgba(10,16,32,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
     const card=document.createElement('div');
@@ -13826,8 +13803,6 @@ function __grados_marker__(){}
     const btn=document.getElementById('ppPDF'); const prev=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='Generando…'; }
     try{
       const alu=await construirPDF(false);  // ALUMNO (sin respuestas)
-      // (Iago 16-sep-2026) copia automática de la versión ALUMNO en la carpeta de fichas en papel (Dropbox)
-      try{ if(window.FichasCarpeta) await FichasCarpeta.guardar(alu.blob, {grado:'GE', titulo:tituloFicha()}); }catch(e){ console.warn('[fichas-carpeta]', e); }
       const sol=await construirPDF(true);    // SOLUCIÓN (con respuestas en rojo)
       const base=tituloFicha().replace(/[^\wáéíóúñ]+/gi,'_');
       if(window.JSZip){
@@ -13850,27 +13825,48 @@ function __grados_marker__(){}
     const { jsPDF }=window.jspdf;
     const doc=new jsPDF({unit:'mm', format:'a4'});
     const W=210, H=297, M=14, CW=W-2*M;
-    const titulo=tituloFicha()+(esSolucion?' — Solución':'');
+    const tituloBase=tituloFicha();
+    const titulo=tituloBase+(esSolucion?' — Solución':'');   // nombre del archivo
+    const CURSO_FICHA='4º GE';   // el curso que va arriba a la derecha
     const n=PP.ficha.length;
     const yBot=H-10;
-    const topDe=(page)=> page===1?33:16;                // carilla 2+ sin encabezado: empieza arriba
+    const topDe=(page)=> page===1?36:16;                // carilla 2+ sin encabezado: empieza arriba
     // MÓDULOS INTERCAMBIABLES: alto de tarjeta FIJO, igual con 5, 7, 10 ó 24 ejercicios.
     // 5 caben en la carilla 1 (con encabezado); 6 ejercicios = 5 + 1 módulo en la 2ª carilla.
     const POR_PAGINA=5;
-    const MOD_H=(yBot-33)/POR_PAGINA;                   // ~50,8 mm fijo
+    const MOD_H=(yBot-36)/POR_PAGINA;                   // alto fijo por ejercicio
     const porPagina=POR_PAGINA;
     const nPaginas=Math.max(1, Math.ceil(n/porPagina));
     const blockHDe=(page)=> MOD_H;                       // mismo alto en TODAS las páginas
 
+    /* (19-sep-2026, Iago) CABECERA UNIFICADA — la misma en elemental y en
+       profesional. «Las fichas me las van a ir entregando y las voy dejando en
+       una bandeja; necesito saber de un golpe de vista cuales son de un curso
+       y cuales de otro.» Por eso:
+         arriba izquierda  -> QUE FICHA ES, en mayusculas (y «(solucion)» al lado)
+         debajo            -> CMUS A CORUNA, pequenito, solo membrete
+         arriba derecha    -> EL CURSO, en grande: es lo que se lee de canto
+         filete de color   -> rosa en elemental, dorado en profesional
+         debajo            -> Nombre, con sitio de sobra
+       Fuera la fecha (profesional) y el «TEORIA at home» (elemental): ese hueco
+       es justo el que ocupa ahora el curso. */
     function cabecera(page){
       if(page!==1){ return; }                            // solo la primera carilla lleva título y nombre
-      doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(20,24,48);
-      doc.text(titulo, M, 16);
-      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(120,120,140);
-      doc.text('TEORÍA at home', W-M, 16, {align:'right'});
-      doc.setDrawColor(232,67,147); doc.setLineWidth(0.6); doc.line(M,19,W-M,19);
+      doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(20,24,48);
+      const _t = String(tituloBase||'').toUpperCase();
+      doc.text(_t, M, 16);
+      if(esSolucion){
+        const _w = doc.getTextWidth(_t);
+        doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(200,40,70);
+        doc.text('(solución)', M + _w + 3, 16);
+      }
+      doc.setFont('helvetica','bold'); doc.setFontSize(26); doc.setTextColor(232,67,147);
+      doc.text(CURSO_FICHA, W-M, 18.5, {align:'right'});
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(138,138,160);
+      doc.text('CMUS A CORUÑA', M, 21);
+      doc.setDrawColor(232,67,147); doc.setLineWidth(0.6); doc.line(M,23.5,W-M,23.5);
       doc.setTextColor(40,40,60); doc.setFontSize(9.5);
-      doc.text('Nombre: ______________________________', M, 25);
+      doc.text('Nombre: ______________________________________', M, 30);
     }
 
     // pre-render de imágenes con el motor real de cada apartado
@@ -14462,7 +14458,6 @@ function __grados_marker__(){}
     const ok=document.getElementById('ppEnvOk');
     const err=document.getElementById('ppEnvErr');
     ok.onclick=async ()=>{
-      try{ window.FichasCarpeta && FichasCarpeta.preparar(); }catch(e){}   // 16-sep-2026: permiso de la carpeta con el gesto del clic
       const sb=suiteSb();
       if(!sb){ err.textContent='No se pudo cargar Supabase. Revisa la conexión y reintenta.'; return; }
       ok.disabled=true; const prev=ok.textContent; ok.textContent='Enviando…'; err.textContent='';
@@ -14478,8 +14473,6 @@ function __grados_marker__(){}
         }
         window.__SUITE_ENVIO_TOKEN=null;   // consumido: un solo uso
         cerrarModal();
-        // (Iago 16-sep-2026) al enviar, la versión ALUMNO en PDF se guarda sola en la carpeta de fichas en papel
-        try{ if(window.FichasCarpeta && await FichasCarpeta.hayCarpeta()){ const alu=await construirPDF(false); await FichasCarpeta.guardar(alu.blob, {grado:'GE', titulo:'Ficha '+((data&&data.numero!=null)?data.numero:(window.__SUITE_ENVIO_FICHA||''))}); } }catch(e){ console.warn('[fichas-carpeta]', e); }
         // (Iago jul-2026) avisar al Diario del Profesor (la pestaña que abrió
         // este generador) de que la ficha se ENVIÓ de verdad, para que muestre
         // el visto "Ficha N enviada a los alumnos" en el apartado de clases.
@@ -15293,7 +15286,7 @@ window.SuiteTiempo=(function(){
     var nGaps=Math.max(1, cols.length-1);
     var gapB=Math.min(150, Math.max(40, Math.round((SPREAD_W - margin*2 - totalCols)/nGaps)));
     var W=margin*2 + totalCols + gapB*nGaps;
-    var d1=document.createElement('div'); d1.className='enaadv-fila'; d1.style.cssText='background:#fff;width:'+W+'px;max-width:100%'; host.appendChild(d1);
+    var d1=document.createElement('div'); d1.className='enaadv-fila'; d1.style.cssText='background:#fff;width:'+W+'px'; host.appendChild(d1);
     var r=new VF.Renderer(d1,VF.Renderer.Backends.SVG); r.resize(W,220); var ctx=r.getContext();
     var x=margin, colX=[], stA=null, stB=null, st0=null;
     cols.forEach(function(c,ci){ colX[ci]=x;
@@ -15836,7 +15829,7 @@ window.SuiteTiempo=(function(){
     var mw, W;
     if(opts.fill){ var CW=(host.clientWidth||860); mw=(CW-margin*2-gapTotal)/cols.length; W=CW; }
     else { mw=opts.mw||120; W=margin*2 + cols.length*mw + gapTotal; }
-    var d=document.createElement('div'); d.className='enaadv-fila'; d.style.cssText='background:#fff;width:'+W+'px;max-width:100%'; host.appendChild(d);
+    var d=document.createElement('div'); d.className='enaadv-fila'; d.style.cssText='background:#fff;width:'+W+'px'; host.appendChild(d);
     var r=new VF.Renderer(d,VF.Renderer.Backends.SVG); r.resize(W,180); var ctx=r.getContext();
     var x=margin, st0=null, xs=[], ws=[];
     cols.forEach(function(c,ci){ xs[ci]=x; ws[ci]=mw; var st=new VF.Stave(x,yS,mw,{spacing_between_lines_px:LSP}); if(ci===0) st.addClef('treble'); if(c.endBar) st.setEndBarType(VF.Barline.type.DOUBLE); st.setContext(ctx).draw(); if(!st0) st0=st;
@@ -15882,7 +15875,7 @@ window.SuiteTiempo=(function(){
   function drawGrandCols(host, cols, opts){ opts=opts||{}; host.innerHTML='';
     var CW=(host.clientWidth||860), margin=26, clefExtra=30, yT=54, yB=152, LSP=10;   // sistema único, ancho completo (margen izq. para que la llave no se corte)
     var baseW=(CW - margin*2 - clefExtra)/cols.length, W=CW;
-    var d=document.createElement('div'); d.className='enaadv-fila'; d.style.cssText='background:#fff;width:'+W+'px;max-width:100%'; host.appendChild(d);
+    var d=document.createElement('div'); d.className='enaadv-fila'; d.style.cssText='background:#fff;width:'+W+'px'; host.appendChild(d);
     var r=new VF.Renderer(d,VF.Renderer.Backends.SVG); r.resize(W,244); var ctx=r.getContext();
     var x=margin, xs=[], ws=[], t0=null,b0=null;
     cols.forEach(function(c,ci){ xs[ci]=x; var w=baseW+(ci===0?clefExtra:0); ws[ci]=w;
@@ -17589,51 +17582,6 @@ window.CAD = {
   window.openCadencias=function(){ showView('view-cadencias'); if(!cadMounted) cadMount(); };
   window.cadNuevo=function(){ cadMount(); };
   window.cadCorregir=function(){ if(!window.CAD) return; if(cadApi&&cadApi.corregir){ var e=cadApi.corregir(); var f=$('fbCAD'); if(f){ if(!e){ f.innerHTML='<div style="color:#9aa3c0;font-size:13px">Marca una cadencia antes de corregir.</div>'; } else { f.innerHTML='<div><b style="color:'+(e.val>=0.5?"#22c98a":"#ff5c72")+'">'+Math.round((e.val||0)*100)+'%</b></div>'; } } } };
-})();
-</script>
-<script src="fichas-carpeta.js?v=2"></script>
-<script>try{ FichasCarpeta.montar('ppPDF'); }catch(e){}</script>
-<!-- (17-sep-2026, Iago) PENTAGRAMAS QUE CABEN. VexFlow dibuja el pentagrama con un
-     ancho fijo metido en el propio SVG (style="width:920px"), que pisa al CSS. En iPad en
-     vertical la caja es mas estrecha y tiene el desplazamiento bloqueado, asi que las
-     ultimas notas quedaban cortadas y sin forma de llegar a ellas (lo que una alumna
-     describio como "no me deja avanzar a la derecha", 16-sep-2026). Aqui se le quita ese
-     ancho fijo y se deja que el viewBox escale el MISMO dibujo al ancho que haya.
-     Solo toca los SVG grandes: los iconos (24 px) no se tocan. -->
-<script>
-(function(){
-  function ajusta(sv){
-    try{
-      if(!sv || !sv.style) return;
-      var w=parseFloat(sv.getAttribute('width')||sv.style.width||0);
-      if(!w || w < 300) return;                       // iconos y cosas pequenas, fuera
-      if(!sv.getAttribute('viewBox')){
-        var h=parseFloat(sv.getAttribute('height')||sv.style.height||0);
-        if(!h) return;
-        sv.setAttribute('viewBox','0 0 '+w+' '+h);
-      }
-      sv.setAttribute('preserveAspectRatio','xMinYMin meet');
-      sv.removeAttribute('width'); sv.removeAttribute('height');
-      sv.style.width='100%'; sv.style.height='auto'; sv.style.maxWidth='100%';
-    }catch(e){}
-  }
-  function pasada(){ try{ document.querySelectorAll('svg').forEach(ajusta); }catch(e){} }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',pasada); else pasada();
-  addEventListener('load',pasada);
-  try{
-    new MutationObserver(function(ms){
-      for(var i=0;i<ms.length;i++){
-        var m=ms[i];
-        if(m.type==='attributes'){ if(m.target && String(m.target.tagName).toLowerCase()==='svg') ajusta(m.target); continue; }
-        var a=m.addedNodes;
-        for(var j=0;j<a.length;j++){
-          var n=a[j]; if(!n || n.nodeType!==1) continue;
-          if(String(n.tagName).toLowerCase()==='svg') ajusta(n);
-          else if(n.querySelectorAll) n.querySelectorAll('svg').forEach(ajusta);
-        }
-      }
-    }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['width','height','style']});
-  }catch(e){}
 })();
 </script>
 </body>
