@@ -3363,7 +3363,18 @@ function escNombreVar(f){
   return f==='hexatona'?'hexátona':'cromática';
 }
 function escItemVariable(fam){
-  const ton=pick(ESC_TONICAS);
+  let ton=pick(ESC_TONICAS);
+  /* (19-sep-2026, repaso) La hexatona sobre La, Si o Mi pide dobles sostenidos
+     (en Si: fa## y sol##) y el panel de alteraciones solo tiene ♯, ♮ y ♭: no
+     habia forma de acertarla. Se sortea otra tonica. Do, Re, Fa y Sol salen
+     todas con alteraciones simples. */
+  if(fam==='hexatona'){
+    for(let t=0;t<40;t++){
+      const prueba=escVarNotas('hexatona',ton.s,ton.o)||[];
+      if(!prueba.some(n=>Math.abs(n.alter||0)>1)) break;
+      ton=pick(ESC_TONICAS);
+    }
+  }
   let subfam=fam, etiqueta='';
   if(fam==='pentatonica'){
     subfam = chance(0.5)?'pentatonica_may':'pentatonica_men';
@@ -3700,16 +3711,34 @@ function corregirESCVar(e,i,cell){
   const sol=e.notasSol;
   let got=e.userSeq.filter(n=>!n._opt);   // excluir 8ª opcional
   let notasOk = got.length===sol.length;
+  /* (19-sep-2026, repaso) LA OCTAVA NO CUENTA EN ESTAS ESCALAS.
+     Es la regla R6 que ya aplica el motor de la ficha desde el 2-ago-2026
+     («la escala vale construida en CUALQUIER octava»), pero esta tarjeta suelta
+     nunca la recibio. Como el enunciado no dice ninguna octava y aqui no hay
+     ninguna cabeza dada que la ancle, la pentatonica de La sorteada en La3 se
+     daba TODA por mala si el alumno la escribia, perfecta, en La4.
+     Se prueba un desplazamiento GLOBAL de -2 a +2 octavas (toda la escala por
+     igual, nunca nota a nota) y vale si alguno cuadra. En las precolocadas no
+     se toca nada: alli la octava la fija la propia app. */
+  const octLibre = (e._precolocada!==true);
   if(notasOk){
     if(porAltura){
       // comparar por ALTURA, ordenando ambas secuencias (acepta enarmonías y orden libre)
       const midis = arr=>arr.map(x=> x.midi!=null?x.midi:midiNota(x.step,x.octave,x.alter)).sort((a,b)=>a-b);
-      const ms=midis(sol), mg=midis(got);
-      for(let k=0;k<ms.length;k++){ if(ms[k]!==mg[k]){ notasOk=false; break; } }
-    } else {
-      for(let k=0;k<sol.length;k++){
-        if(got[k].step!==sol[k].step||got[k].octave!==sol[k].octave||got[k].alter!==sol[k].alter){ notasOk=false; break; }
+      const ms=midis(sol), mg0=midis(got);
+      let cuadra=false;
+      for(let d=(octLibre?-2:0); d<=(octLibre?2:0) && !cuadra; d++){
+        cuadra = ms.every((m,k)=> m === mg0[k]-12*d);
       }
+      notasOk = cuadra;
+    } else {
+      let cuadra=false;
+      for(let d=(octLibre?-2:0); d<=(octLibre?2:0) && !cuadra; d++){
+        cuadra = sol.every((s,k)=> got[k] && got[k].step===s.step
+                                 && got[k].octave===s.octave+d
+                                 && (got[k].alter||0)===(s.alter||0));
+      }
+      notasOk = cuadra;
     }
   }
   // armadura: se evalúa en precolocadas y en pentatónica
@@ -4049,9 +4078,14 @@ function nuevoGR(){
   const usadas=new Set();
   for(let i=0;i<1;i++){   // un solo grado por ejercicio
     let ton,grado,key,intentos=0;
+    /* (19-sep-2026, repaso) NO sortear un grado que exija doble alteracion: la
+       sensible de Sol#m es fa doble sostenido, y la fila de botones solo tiene
+       ♭ y ♯ (alternan entre -1, 0 y +1). Salia ~1 de cada 100 ejercicios y era
+       literalmente imposible de acertar. Si sale, se vuelve a sortear. */
+    const dobleAlteracion = (t,g) => Math.abs((grNotaDelGrado(t,g.n)||{}).alter||0) > 1;
     do{
       ton=grSorteaTon(); grado=pick(GR_GRADOS); key=ton.nom+'|'+grado.n; intentos++;
-    }while(usadas.has(key)&&intentos<40);
+    }while((usadas.has(key)||dobleAlteracion(ton,grado))&&intentos<40);
     usadas.add(key);
     const cab=grCabecitas(ton);
     const sol=grNotaDelGrado(ton,grado.n);
@@ -9118,7 +9152,15 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       const wEsp=document.createElement('div'); wEsp.className='wheel'; wEsp.style.cssText='height:90px';
       dual.appendChild(wNum); dual.appendChild(wEsp);
       cell.appendChild(dual); zona.appendChild(cell);
-      const numItems=numerosDisponibles(false).map(String);
+      /* (19-sep-2026, repaso) Las ruedas tienen que ofrecer lo MISMO que se ha
+         generado. El ejercicio lo crea nuevoA(), que usa el interruptor global
+         `compuestos` (el de «Habilitar intervalos compuestos» de la tarjeta de
+         Intervalos), pero aqui las ruedas se montaban siempre en modo simple:
+         si el alumno habia encendido los compuestos y luego abria la ficha, le
+         podia salir una 11ª Aum. y NO tenia como contestarla — ni el numero ni
+         la especie estaban en la rueda. Se da por fallada sola. */
+      const _comp = (typeof compuestos !== 'undefined' && !!compuestos);
+      const numItems=numerosDisponibles(_comp).map(String);
       let espApi=null;
       // restaurar selección previa
       const prev=estado.sel[i];
@@ -9126,12 +9168,12 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       const numApi=makeWheel(wNum, numItems, numInicial<0?idxGuionNum(numItems):numInicial, (idx)=>{
         const raw=numItems[idx]; const num=(raw==='—')?null:parseInt(raw,10);
         estado.sel[i].num=num; estado._dirty=true;
-        const esps=especiesParaNumero(num,false);
+        const esps=especiesParaNumero(num,_comp);
         espApi.setItems(esps,true);
         const gi=idxGuion(esps); espApi.setIndex(gi,true);
         estado.sel[i].esp=esps[gi]; estado._dirty=true;
       }, false);
-      const espInit = (prev && prev.num!=null) ? especiesParaNumero(prev.num,false) : especiesParaNumero(null,false);
+      const espInit = (prev && prev.num!=null) ? especiesParaNumero(prev.num,_comp) : especiesParaNumero(null,_comp);
       let espIdx = idxGuion(espInit);
       if(prev && prev.esp && prev.esp!=='—'){ const j=espInit.indexOf(prev.esp); if(j>=0) espIdx=j; }
       espApi=makeWheel(wEsp, espInit, espIdx, ()=>{ estado.sel[i].esp=espApi.getValue(); estado._dirty=true; }, false);
@@ -15038,7 +15080,13 @@ window.SuiteTiempo=(function(){
     'F,0':[['E',1,0],['G',-2,0]],'G,0':[['F',2,0],['A',-2,0]],'A,0':[['G',2,0],['B',-2,0]],
     'B,0':[['C',-1,1],['A',2,0]],'C,1':[['D',-1,0],['B',2,-1]],'D,1':[['E',-1,0],['F',-2,0]],
     'F,1':[['G',-1,0],['E',2,0]],'G,1':[['A',-1,0]],'A,1':[['B',-1,0],['C',-2,1]],
-    'D,-1':[['C',1,0],['E',-2,0]],'E,-1':[['D',1,0],['F',-2,0]],'G,-1':[['F',1,0],['A',-2,0]],
+    /* (19-sep-2026, repaso) Mismo arreglo que ya llevaba la tarjeta de enarmonias
+       de elemental desde el 2-ago-2026: Mi doble bemol suena Re natural (no Re bemol)
+       y La doble bemol suena Sol natural (no Sol bemol). Los enarmonicos que faltaban
+       son Si doble sostenido y Mi doble sostenido. Tal como estaba, el alumno que
+       escribia lo correcto sacaba cero en ese apartado, y encima se le ensenaba como
+       solucion una nota que no es. */
+    'D,-1':[['C',1,0],['B',2,-1]],'E,-1':[['D',1,0],['F',-2,0]],'G,-1':[['F',1,0],['E',2,0]],
     'A,-1':[['G',1,0]],'B,-1':[['A',1,0],['C',-2,1]],'E,1':[['F',0,0],['G',-2,0]],
     'B,1':[['C',0,1],['D',-2,1]],'F,-1':[['E',0,0],['D',2,0]],'C,-1':[['B',0,-1],['A',2,-1]]
   };
