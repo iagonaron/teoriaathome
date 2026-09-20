@@ -13863,7 +13863,9 @@ function __grados_marker__(){}
   /* PDF en DOS CARILLAS (un folio). Hasta 10 ejercicios (a veces menos).
      Reparte ceil(n/2) por carilla; la altura de bloque se ajusta para que
      SIEMPRE quepa en 2 páginas, dando a la notación el máximo espacio legible. */
-  async function construirPDF(esSolucion){
+  async function construirPDF(esSolucion, copias){
+    /* (20-sep-2026) copias: la ficha de ALUMNO repetida N veces en un solo PDF. */
+    copias = Math.max(1, parseInt(copias, 10) || 1);
     const { jsPDF }=window.jspdf;
     const doc=new jsPDF({unit:'mm', format:'a4'});
     const W=210, H=297, M=14, CW=W-2*M;
@@ -13921,8 +13923,9 @@ function __grados_marker__(){}
       }
     }
 
+    for(let __cop=0; __cop<copias; __cop++){
     for(let page=1; page<=nPaginas; page++){
-      if(page>1) doc.addPage();
+      if(page>1 || __cop>0) doc.addPage();
       cabecera(page);
       const yTop=topDe(page), blockH=blockHDe(page);
       const desde=(page-1)*porPagina, hasta=Math.min(n, page*porPagina);
@@ -14224,6 +14227,7 @@ function __grados_marker__(){}
           doc.text(pdfSafe('Solución: '+ej.resp), M+6, by+blockH-3, {maxWidth:CW-12});
         }
       }
+    }
     }
     const base=tituloFicha().replace(/[^\wáéíóúñ]+/gi,'_');
     return { name:(esSolucion?'(solucion) ':'(alumno) ')+base+'.pdf', blob:doc.output('blob') };
@@ -14528,6 +14532,19 @@ function __grados_marker__(){}
           }
         } catch(e){}
         alert('\u2713 Ficha '+data.numero+' enviada.\nAlumnos notificados: '+data.notificados+'.\nLa verán el viernes a las 19:00, con el resto de tareas de la semana.');
+        try {
+          /* (20-sep-2026, Iago) FICHAS EN PAPEL: al enviar, ofrecer guardar un
+             solo PDF con la ficha de alumno repetida tantas veces como alumnos
+             van en papel. El modulo vive al final del fichero. */
+          window.__PAPEL_CFG = {
+            tipo: 'GE', curso: '4 GE', sb: suiteSb,
+            construir: function (n) { return construirPDF(false, n).then(function (r) { return r.blob; }); }
+          };
+          if (window.PapelFichas) window.PapelFichas.ofrecer({
+            numero: (data && data.numero != null ? data.numero : window.__SUITE_ENVIO_FICHA),
+            titulo: (typeof tituloFicha === 'function' ? tituloFicha() : '')
+          });
+        } catch (e) { console.warn('[papel]', e); }
       }catch(e){
         ok.disabled=false; ok.textContent=prev;
         err.textContent = (e && e.message) ? e.message : 'Error de red al enviar. Reintenta.';
@@ -17632,5 +17649,209 @@ window.CAD = {
   window.cadCorregir=function(){ if(!window.CAD) return; if(cadApi&&cadApi.corregir){ var e=cadApi.corregir(); var f=$('fbCAD'); if(f){ if(!e){ f.innerHTML='<div style="color:#9aa3c0;font-size:13px">Marca una cadencia antes de corregir.</div>'; } else { f.innerHTML='<div><b style="color:'+(e.val>=0.5?"#22c98a":"#ff5c72")+'">'+Math.round((e.val||0)*100)+'%</b></div>'; } } } };
 })();
 </script>
+<script>
+/* ============================================================
+   FICHAS EN PAPEL  ·  Iago, 20-sep-2026
+   ------------------------------------------------------------
+   Al ENVIAR la ficha a los alumnos se ofrece guardar, de una vez,
+   UN SOLO PDF con la version de ALUMNO repetida tantas veces como
+   alumnos van en papel: los que aun no estan vinculados al portal
+   MAS los vinculados que eligieron «Papel». Ese numero lo da la
+   propia base de datos (suite_papel_copias_grupos), no se escribe
+   a mano, asi que baja solo segun se van vinculando.
+   La carpeta (FICHAS TEORIA, en Dropbox) se elige UNA vez y se
+   recuerda; el nombre del fichero lleva el numero y el curso.
+   ============================================================ */
+(function () {
+  'use strict';
+  function C() { return window.__PAPEL_CFG || {}; }   /* se rellena al enviar, desde el ambito del generador */
+
+  var CARPETA = 'FICHAS TEORÍA';
+  var DB = 'papel-fichas', ALM = 'handles', LLAVE = 'carpeta';
+
+  /* ---- recordar la carpeta entre sesiones (IndexedDB) ---- */
+  function idb() {
+    return new Promise(function (ok, no) {
+      var r = indexedDB.open(DB, 1);
+      r.onupgradeneeded = function () { r.result.createObjectStore(ALM); };
+      r.onsuccess = function () { ok(r.result); };
+      r.onerror = function () { no(r.error); };
+    });
+  }
+  function leerHandle() {
+    return idb().then(function (d) {
+      return new Promise(function (ok) {
+        var q = d.transaction(ALM, 'readonly').objectStore(ALM).get(LLAVE);
+        q.onsuccess = function () { ok(q.result || null); };
+        q.onerror = function () { ok(null); };
+      });
+    }).catch(function () { return null; });
+  }
+  function guardarHandle(h) {
+    return idb().then(function (d) {
+      return new Promise(function (ok) {
+        var t = d.transaction(ALM, 'readwrite');
+        t.objectStore(ALM).put(h, LLAVE);
+        t.oncomplete = function () { ok(true); };
+        t.onerror = function () { ok(false); };
+      });
+    }).catch(function () { return false; });
+  }
+
+  /* ---- cuantas copias en papel ---- */
+  function copias() {
+    var sb = C().sb && C().sb();
+    if (!sb) return Promise.reject(new Error('sin conexion con Supabase'));
+    return sb.from('grupos_canon').select('id,curso_escolar,tipo').eq('tipo', C().tipo)
+      .then(function (r) {
+        if (r.error) throw r.error;
+        var filas = r.data || [];
+        if (!filas.length) throw new Error('no encuentro los grupos de ' + C().tipo);
+        var ce = filas.map(function (f) { return f.curso_escolar; }).sort().pop();
+        var ids = filas.filter(function (f) { return f.curso_escolar === ce; })
+                       .map(function (f) { return f.id; });
+        return sb.rpc('suite_papel_copias_grupos', { p_grupos: ids }).then(function (r2) {
+          if (r2.error) throw r2.error;
+          return { n: parseInt(r2.data, 10) || 0, grupos: ids.length, curso_escolar: ce };
+        });
+      });
+  }
+
+  /* ---- nombre del fichero: numero + curso, como pidio Iago ---- */
+  function nombre(info, n) {
+    var num = (info && info.numero != null && String(info.numero) !== '') ? String(info.numero) : null;
+    var cab = num ? ('Ficha ' + num) : ((info && info.titulo) || 'Ficha');
+    return (cab + ' · ' + C().curso + ' · ' + n + ' copias.pdf').replace(/[\\/:*?"<>|]/g, '-');
+  }
+
+  /* ---- carpeta: la elegida, y dentro FICHAS TEORIA ---- */
+  function carpeta(h) {
+    var base = Promise.resolve(h);
+    if (!h) {
+      if (!window.showDirectoryPicker) return Promise.reject(new Error('sin_api'));
+      base = window.showDirectoryPicker({ id: 'fichas-teoria', mode: 'readwrite' })
+        .then(function (d) { return guardarHandle(d).then(function () { return d; }); });
+    }
+    return base.then(function (d) {
+      if (!d) throw new Error('sin_carpeta');
+      if (String(d.name || '').toUpperCase() === CARPETA) return d;
+      return d.getDirectoryHandle(CARPETA, { create: true }).catch(function () { return d; });
+    });
+  }
+  function permiso(h) {
+    if (!h || !h.queryPermission) return Promise.resolve(true);
+    return h.queryPermission({ mode: 'readwrite' }).then(function (p) {
+      if (p === 'granted') return true;
+      return h.requestPermission({ mode: 'readwrite' }).then(function (p2) { return p2 === 'granted'; });
+    }).catch(function () { return false; });
+  }
+
+  /* ---- ventana ---- */
+  function ventana(html, acciones) {
+    var ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(10,16,32,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+    var c = document.createElement('div');
+    c.style.cssText = 'background:#fff;color:#16203a;border-radius:18px;max-width:440px;width:100%;padding:24px 26px;box-shadow:0 24px 70px #00000050';
+    c.innerHTML = html;
+    ov.appendChild(c); document.body.appendChild(ov);
+    var cerrar = function () { try { document.body.removeChild(ov); } catch (e) {} };
+    (acciones || []).forEach(function (a) {
+      var b = c.querySelector('#' + a.id);
+      if (b) b.onclick = function () { a.fn(c, cerrar); };
+    });
+    return { card: c, cerrar: cerrar };
+  }
+  function fila(txt) {
+    return '<div style="font-size:13.5px;color:#8a93a8;margin-bottom:16px;line-height:1.5">' + txt + '</div>';
+  }
+  function btn(id, txt, primario) {
+    return '<button id="' + id + '" style="border:0;border-radius:9px;padding:11px 17px;font-weight:700;cursor:pointer;' +
+      (primario ? 'background:#1f6df6;color:#fff' : 'background:#eef1f7;color:#16203a') + '">' + txt + '</button>';
+  }
+
+  /* ---- lo que se llama al terminar el envio ---- */
+  function ofrecer(info) {
+    copias().then(function (c) {
+      if (!c.n) {
+        ventana('<div style="font-size:17px;font-weight:800;margin-bottom:6px">Nadie en papel</div>' +
+          fila('Ahora mismo no hay ningún alumno de ' + C().curso + ' en formato papel: todos están vinculados y en digital. No hace falta imprimir nada.') +
+          '<div style="display:flex;justify-content:flex-end">' + btn('pOk', 'Vale', true) + '</div>',
+          [{ id: 'pOk', fn: function (c2, cerrar) { cerrar(); } }]);
+        return;
+      }
+      leerHandle().then(function (h) {
+        var donde = h ? ('Se guardará en la carpeta que elegiste (' + CARPETA + ').')
+                      : ('La primera vez tienes que elegir la carpeta: escoge tu carpeta de Dropbox y dentro se usará <b>' + CARPETA + '</b>.');
+        ventana('<div style="font-size:17px;font-weight:800;margin-bottom:6px">📄 Versión en papel</div>' +
+          fila('Hay <b>' + c.n + '</b> alumno(s) de ' + C().curso + ' en papel. Se prepara <b>un solo PDF</b> con la ficha del alumno repetida ' + c.n + ' veces, lista para imprimir de una tirada.<br>' + donde) +
+          '<div id="pEstado" style="font-size:13px;font-weight:700;color:#1f6df6;min-height:18px;margin-bottom:10px"></div>' +
+          '<div style="display:flex;gap:10px;justify-content:flex-end">' +
+          btn('pNo', 'Ahora no') + btn('pSi', '📁 Guardar ' + c.n + ' copias', true) + '</div>',
+          [
+            { id: 'pNo', fn: function (c2, cerrar) { cerrar(); } },
+            { id: 'pSi', fn: function (c2, cerrar) { hacer(info, c.n, c2, cerrar); } }
+          ]);
+      });
+    }).catch(function (e) {
+      console.warn('[papel]', e);
+      ventana('<div style="font-size:17px;font-weight:800;margin-bottom:6px">No pude contar los de papel</div>' +
+        fila('La ficha se envió bien; lo único que ha fallado es el contador de copias: ' + ((e && e.message) || e) + '.') +
+        '<div style="display:flex;justify-content:flex-end">' + btn('pOk', 'Vale', true) + '</div>',
+        [{ id: 'pOk', fn: function (c2, cerrar) { cerrar(); } }]);
+    });
+  }
+
+  function hacer(info, n, card, cerrar) {
+    var est = card.querySelector('#pEstado');
+    var si = card.querySelector('#pSi');
+    if (si) si.disabled = true;
+    var di = function (t) { if (est) est.textContent = t; };
+    di('Preparando el PDF con ' + n + ' copias…');
+    Promise.resolve()
+      .then(function () { return C().construir(n); })          // -> Blob
+      .then(function (blob) {
+        di('Guardando…');
+        return leerHandle().then(function (h) {
+          return (h ? permiso(h) : Promise.resolve(true)).then(function (ok) {
+            return carpeta(ok ? h : null);
+          });
+        }).then(function (dir) {
+          return permiso(dir).then(function (ok) {
+            if (!ok) throw new Error('sin_permiso');
+            return dir.getFileHandle(nombre(info, n), { create: true });
+          });
+        }).then(function (fh) {
+          return fh.createWritable().then(function (w) {
+            return w.write(blob).then(function () { return w.close(); });
+          });
+        }).then(function () {
+          di('✓ Guardado: ' + nombre(info, n));
+          setTimeout(cerrar, 1800);
+        });
+      })
+      .catch(function (e) {
+        console.warn('[papel]', e);
+        var msg = (e && e.message) || String(e);
+        if (msg === 'sin_api' || msg === 'sin_carpeta' || msg === 'sin_permiso' || /abort/i.test(msg)) {
+          di('No se pudo guardar en la carpeta: te lo descargo.');
+          C().construir(n).then(function (blob) {
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = nombre(info, n);
+            document.body.appendChild(a); a.click();
+            setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+            di('✓ Descargado: ' + nombre(info, n));
+            setTimeout(cerrar, 2200);
+          });
+        } else {
+          di('Error: ' + msg);
+          if (si) si.disabled = false;
+        }
+      });
+  }
+
+  window.PapelFichas = { ofrecer: ofrecer, copias: copias };
+})();
+</script>
+
 </body>
 </html>
