@@ -1921,27 +1921,25 @@ function flechaDir(dir){
 
 <!-- ====== BLOQUE 2: selectores iOS + estado ====== -->
 <script>
-/* especies que ofrece la rueda para un número, en orden visual de abajo (grave)
-   hacia arriba (agudo). El guion "—" va EN MEDIO (sin especie elegida).
-   Justos (J) solo para 4,5,8,11,12,15. compuestos añade dobles en los extremos. */
+/* especies que ofrece la rueda. El guion "—" va EN MEDIO (sin especie elegida).
+   compuestos añade dobles en los extremos.
+   (22-sep-2026, Iago) Antes la lista dependía del número (J solo en 4,5,8,11,12,15);
+   ahora es fija: ver especiesParaNumero. NUM_JUSTOS se conserva por si se usa en otro sitio. */
 const NUM_JUSTOS=new Set([4,5,8,11,12,15]);
 /* La rueda pinta el array de ARRIBA (idx 0) hacia ABAJO.
    Arriba = grande (Aum., M...), abajo = pequeño (m, Dis...).
-   - Justos (4,5,8,11,12,15): SIN guion, por defecto "J" (centro).
-   - Resto: guion "—" en el centro como "sin elegir". */
+   (22-sep-2026, Iago) RUEDA DE ESPECIE FIJA: ya no depende del número. Ofrece
+   SIEMPRE todas las especies, con el guion "—" en el centro (sin elegir) y, hacia
+   arriba, M · J · Aum.; hacia abajo, m · Dis. Con compuestos, las dobles en los
+   extremos (D.Aum. arriba, D.Dis. abajo). El alumno decide la especie entre todas
+   las posibilidades; si elige una imposible para ese número, el corrector la da
+   por MAL (compara etiquetas, no listas de posibles). El parámetro `num` se
+   conserva por compatibilidad pero se ignora. */
 function especiesParaNumero(num,compuestos){
-  if(num==null) return ["—"];
-  if(NUM_JUSTOS.has(num)){
-    // arriba->abajo: D.Aum, Aum, J(def), Dis, D.Dis
-    let arr=["Aum.","J","Dis."];
-    if(compuestos) arr=["D.Aum."].concat(arr).concat(["D.Dis."]);
-    return arr;
-  } else {
-    // arriba->abajo: D.Aum, Aum, M, —, m, Dis, D.Dis
-    let arriba=["Aum.","M"], abajo=["m","Dis."];
-    if(compuestos){ arriba=["D.Aum."].concat(arriba); abajo=abajo.concat(["D.Dis."]); }
-    return arriba.concat(["—"]).concat(abajo);
-  }
+  // arriba->abajo: [D.Aum.], Aum., J, M, —, m, Dis., [D.Dis.]
+  let arriba=["Aum.","J","M"], abajo=["m","Dis."];
+  if(compuestos){ arriba=["D.Aum."].concat(arriba); abajo=abajo.concat(["D.Dis."]); }
+  return arriba.concat(["—"]).concat(abajo);
 }
 /* índice por defecto: guion si existe; si no (justos), el "J" central */
 function idxDefecto(items){
@@ -2236,12 +2234,10 @@ function renderAnswersA(){
     const numApi=makeWheel(wNum,numItems,idxGuionNum(numItems),(idx)=>{
       const raw=numItems[idx]; const num=(raw==="—")?null:parseInt(raw,10);
       selA[i].num=num;
-      const esps=especiesParaNumero(num,compuestos);
-      espApi.setItems(esps,true);
-      const gi=idxGuion(esps); espApi.setIndex(gi,true);
-      selA[i].esp=esps[gi];   // "—" hasta que el alumno elija
+      /* (22-sep-2026, Iago) la rueda de especie NO se mueve al tocar la de número:
+         se queda donde esté (empieza en "—") y ofrece siempre todas las especies. */
     });
-    const espInit=especiesParaNumero(null,compuestos);
+    const espInit=especiesParaNumero(null,compuestos);   /* lista fija: Aum. J M — m Dis. (+dobles si compuestos) */
     espApi=makeWheel(wEsp,espInit,idxGuion(espInit),()=>{ selA[i].esp=espApi.getValue(); });
     selA[i].esp="—";
   });
@@ -9168,12 +9164,10 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       const numApi=makeWheel(wNum, numItems, numInicial<0?idxGuionNum(numItems):numInicial, (idx)=>{
         const raw=numItems[idx]; const num=(raw==='—')?null:parseInt(raw,10);
         estado.sel[i].num=num; estado._dirty=true;
-        const esps=especiesParaNumero(num,_comp);
-        espApi.setItems(esps,true);
-        const gi=idxGuion(esps); espApi.setIndex(gi,true);
-        estado.sel[i].esp=esps[gi]; estado._dirty=true;
+        /* (22-sep-2026, Iago) la rueda de especie NO se mueve al tocar la de número:
+           se queda donde esté (empieza en "—") y ofrece siempre todas las especies. */
       }, false);
-      const espInit = (prev && prev.num!=null) ? especiesParaNumero(prev.num,_comp) : especiesParaNumero(null,_comp);
+      const espInit = especiesParaNumero(null,_comp);   /* (22-sep-2026) lista fija, no depende del número */
       let espIdx = idxGuion(espInit);
       if(prev && prev.esp && prev.esp!=='—'){ const j=espInit.indexOf(prev.esp); if(j>=0) espIdx=j; }
       espApi=makeWheel(wEsp, espInit, espIdx, ()=>{ estado.sel[i].esp=espApi.getValue(); estado._dirty=true; }, false);
@@ -12166,6 +12160,7 @@ function __grados_marker__(){}
     ov.querySelector('#simSalir').onclick=()=>{
       if(esAlumnoProg && !enviado){ modalSalirFicha(); return; }   // alumno a mitad: confirmar
       if(esAlumnoProg && enviado){ salirAlPortal(); return; }      // ya entregada: al portal
+      if(window.__REVISION && window.__REVISION.alumno){ salirAlPortal(); return; }   /* (22-sep-2026) revisión del alumno: al portal */
       cerrar();                                                    // profe / revisión: como siempre
     };
     const btn=(id,txt,primary)=> '<button id="'+id+'" class="'+(primary?'sim-btn-primary':'sim-btn-ghost')+'">'+txt+'</button>';
@@ -12471,7 +12466,7 @@ function __grados_marker__(){}
         return '<div style="border-top:1px solid rgba(255,255,255,.08);padding:16px 0">'+
             '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">'+
               '<div style="font-size:13.5px;color:#e9e5ff;font-weight:700">'+(k+1)+'. '+esc(item.ej.enun||item.label)+'</div>'+
-              (anulado?'<span style="flex:none;background:rgba(255,255,255,.12);color:#c7bff0;font-weight:800;font-size:12px;padding:5px 11px;border-radius:99px;letter-spacing:.04em">ANULADO · no cuenta</span>'
+              (anulado?'<span style="flex:none;background:rgba(255,255,255,.12);color:#c7bff0;font-weight:800;font-size:12px;padding:5px 11px;border-radius:99px;letter-spacing:.04em">ANULADO · no cuenta'+((window.__REVISION&&window.__REVISION.alumno)?' para la nota':'')+'</span>'
                :sinCorr?'<span style="flex:none;background:rgba(255,255,255,.12);color:#c7bff0;font-weight:800;font-size:12px;padding:5px 11px;border-radius:99px;letter-spacing:.04em">'+(item._falloCarga?'NO CARGÓ':'SIN CORRECCIÓN AUTOMÁTICA')+' · no cuenta</span>'
                :'<span style="flex:none;background:'+bg+';color:'+col+';font-weight:800;font-size:13px;padding:5px 11px;border-radius:99px">'+sc+'%</span>')+
             '</div>'+
@@ -12492,6 +12487,8 @@ function __grados_marker__(){}
           '<div style="text-align:center;margin-bottom:8px">'+
             '<div style="font-size:30px;font-weight:900;color:#f6f3ff">'+titulo2+'</div>'+
             '<div id="simNotaBadge" class="'+(fest?'nota-pop nota-ring':'nota-pop')+'" style="margin-top:14px;display:inline-block;'+aproboBadge+';font-weight:900;font-size:22px;padding:12px 30px;border-radius:99px;box-shadow:0 12px 30px rgba(169,116,255,.4)">Puntuación: <span id="simNota">0,0</span> / 10 · <span id="simPct">0</span>%</div>'+
+            /* (22-sep-2026) RECLAMACIONES: enlace discreto bajo la nota que lleva al buzón de abajo */
+            (esAlumno?'<div id="simReclamaLinea" style="margin-top:10px;color:#b6abdf;font-size:12.5px">¿Crees que hay algún ejercicio mal corregido? <button id="simReclamar" type="button" style="background:rgba(169,116,255,.14);border:1px solid rgba(169,116,255,.55);color:#c9a8ff;border-radius:99px;padding:4px 12px;font-weight:800;font-size:12.5px;cursor:pointer;font-family:inherit">Reclámalo</button></div>':'')+
             '<div style="margin-top:12px;color:#c7bff0;font-size:13.5px">Resumen de tus respuestas. Los ejercicios con menos del 50% tienen un enlace para practicar.</div>'+
             '<div style="margin-top:10px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:12.5px;font-weight:700">'+
               '<span style="color:#16a34a">● lo que hiciste bien</span>'+
@@ -12510,7 +12507,7 @@ function __grados_marker__(){}
           (esAlumno?(
           '<details id="simFbBox" style="margin:26px auto 8px;max-width:680px;background:rgba(255,255,255,.05);border:1px solid rgba(169,116,255,.4);border-radius:14px;padding:12px 16px">'+
             '<summary style="cursor:pointer;font-weight:800;color:#c9a8ff;font-size:14px;list-style-position:inside">💬 ¿Crees que algún ejercicio está mal corregido o tuviste algún problema con la ficha?</summary>'+
-            '<div style="color:#b6abdf;font-size:12.5px;margin-top:8px">Deja aquí tu comentario y me encargo de solucionarlo. ¡Gracias por la comprensión!</div>'+
+            '<div style="color:#b6abdf;font-size:12.5px;margin-top:8px">Deja aquí tu comentario y me encargo de solucionarlo. Si hay un problema con el ejercicio, te lo marca mal y no ha sido culpa tuya, lo eliminaré y tu nota se recalculará sin él. ¡Gracias por la comprensión!</div>'+
             '<div id="simFbList"></div>'+
             '<div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">'+
               '<button id="simFbMas" type="button" style="background:rgba(255,255,255,.08);color:#e9e5ff;border:1px solid rgba(169,116,255,.4);border-radius:10px;padding:8px 13px;font-weight:700;font-size:12.5px;cursor:pointer">＋ Añadir otro ejercicio</button>'+
@@ -12612,12 +12609,20 @@ function __grados_marker__(){}
           const d=document.createElement('div'); d.className='simFbItem';
           d.style.cssText='margin-top:10px;padding-top:10px;border-top:1px dashed rgba(169,116,255,.3)';
           d.innerHTML=
-            '<label style="font-size:12px;color:#b6abdf">Ejercicio nº <input class="fbN" type="number" min="1" style="width:60px;background:rgba(0,0,0,.3);border:1px solid #5a4a7a;border-radius:6px;color:#efe9ff;padding:5px 7px"> <span style="opacity:.7">(opcional)</span></label>'+
+            /* (22-sep-2026) el nº de ejercicio es lo que Iago usa para ANULARLO: más visible que antes («opcional») */
+            '<label style="font-size:12.5px;color:#e9e5ff;font-weight:700;display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Ejercicio nº <input class="fbN" type="number" min="1" style="width:64px;background:rgba(0,0,0,.3);border:1.5px solid #a974ff;border-radius:6px;color:#efe9ff;padding:5px 7px;font-weight:800"> <span style="font-weight:600;color:#c9a8ff">(dime el nº para poder anularlo)</span></label>'+
             '<textarea class="fbT" placeholder="Cuéntame qué pasó…" style="width:100%;min-height:60px;margin-top:6px;background:rgba(0,0,0,.3);border:1px solid #5a4a7a;border-radius:8px;color:#efe9ff;padding:8px;font:13px/1.45 inherit;box-sizing:border-box"></textarea>';
           lista.appendChild(d);
         };
         fila();
         const mas=main.querySelector('#simFbMas'); if(mas) mas.addEventListener('click', fila);
+        /* (22-sep-2026) «Reclámalo» (bajo la nota): abre el buzón, baja suave y enfoca el primer comentario */
+        try{ const rb=main.querySelector('#simReclamar'); if(rb) rb.addEventListener('click', ()=>{
+          const box=main.querySelector('#simFbBox'); if(!box) return;
+          box.open=true;
+          try{ box.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){ box.scrollIntoView(); }
+          setTimeout(()=>{ try{ const ta=box.querySelector('textarea.fbT'); if(ta) ta.focus({ preventScroll:true }); }catch(e){} }, 520);
+        }); }catch(e){}
         b.addEventListener('click', async ()=>{
           const st=main.querySelector('#simFbSt');
           const items=[];
@@ -12744,6 +12749,7 @@ function __grados_marker__(){}
         if(moAb){ moAb.remove(); return; }                          // 1º Esc con modal abierto: lo cierra
         if(esAlumnoProg && !enviado){ modalSalirFicha(); return; }  // alumno: misma confirmación que la ✕
         if(esAlumnoProg && enviado){ salirAlPortal(); return; }
+        if(window.__REVISION && window.__REVISION.alumno){ salirAlPortal(); return; }   /* (22-sep-2026) */
         cerrar(); }
       else if(!enviado && e.key==='ArrowRight'){ if(i<n-1){ const it=PP.ficha[i]; if(it.ej._interactivo==='grado' && !(it._respuesta && it._respuesta.marca!=null)){ mostrarBannerSim('Tienes que señalar el grado: toca la nota que crees que es la respuesta para rodearla.'); return; } i++; if(i>maxAvance) maxAvance=i; if(esAlumnoProg){ try{ progGuardar(i, maxAvance); }catch(e2){} } mostrar(); } }
       else if(!enviado && e.key==='ArrowLeft'){ if(i>0){ i--; if(esAlumnoProg){ try{ progGuardar(i, maxAvance); }catch(e2){} } mostrar(); } } };
@@ -12751,6 +12757,46 @@ function __grados_marker__(){}
     if(window.__REVISION){                      /* ELE-W5 · el profesor entra directo a la corrección */
       enviado=true;
       pantallaCorrigiendo(pantallaFinal);
+      if(window.__REVISION.alumno){
+        /* (22-sep-2026) REVISIÓN DEL ALUMNO (?revision=…&alu=1): misma ficha corregida,
+           pero sin banner ni controles de profesor: rótulo «Tu ficha N corregida · nota X»,
+           anulados y reclamación (si la hay). El botón de abajo devuelve al portal. */
+        const rev=window.__REVISION;
+        const fmt2=(v)=>(v==null||!isFinite(+v))?null:(+v).toFixed(2).replace('.',',');
+        let _ri=0; const _rt=setInterval(()=>{ _ri++;
+          const card=main.querySelector('.sim-card'), nb=main.querySelector('#simNotaBadge');
+          if(card && nb && !main.querySelector('#simRevAlu')){
+            try{
+              const anul=(window.__SUITE_ANULADOS||[]).slice().sort((a,b)=>a-b);
+              const notaTxt=fmt2(rev.nota);
+              let h='<div style="font-size:15px;font-weight:900;color:#f6f3ff">✅ Tu ficha '+(rev.numero!=null?esc(String(rev.numero)):'')+' corregida'+(notaTxt!=null?(' · nota <span style="color:#7ef0c0">'+notaTxt+'</span>'):' · sin nota (esta vez no cuenta)')+'</div>';
+              if(anul.length) h+='<div style="margin-top:6px;font-size:12.5px;color:#c7bff0">'+(anul.length===1?'El ejercicio <b>'+anul[0]+'</b> está anulado: no cuenta para la nota.':'Los ejercicios <b>'+anul.join(', ')+'</b> están anulados: no cuentan para la nota.')+'</div>';
+              const rc=rev.reclamacion;
+              if(rc && rc.estado){
+                const ok=(rc.estado==='aceptada'); const a=fmt2(rc.nota_antes), d=fmt2(rc.nota_despues);
+                h+='<div style="margin-top:6px;font-size:12.5px;color:#b6abdf">'+(ok?'✔':'✖')+' Reclamación <b style="color:'+(ok?'#7ef0c0':'#ffb4c8')+'">'+(ok?'aceptada':'denegada')+'</b>'+(rc.n!=null?(' (ej. '+esc(String(rc.n))+')'):'')+((a!=null&&d!=null)?(' · nota '+a+' → '+d):'')+(rc.mensaje?('<div style="margin-top:3px;font-style:italic;opacity:.85">«'+esc(String(rc.mensaje))+'»</div>'):'')+'</div>';
+              }
+              const ban=document.createElement('div'); ban.id='simRevAlu';
+              ban.style.cssText='margin:0 0 16px;background:rgba(169,116,255,.14);border:1px solid rgba(169,116,255,.55);border-radius:12px;padding:12px 16px;line-height:1.5;text-align:center';
+              ban.innerHTML=h;
+              card.insertBefore(ban, card.firstChild);
+              // la nota que manda es la REGISTRADA (ya recalculada sin anulados / tras la reclamación):
+              // el badge la muestra a ella, no a la media local, para que el alumno no vea dos notas distintas
+              if(notaTxt!=null){
+                const nv=+rev.nota;
+                nb.innerHTML='Puntuación: <span>'+notaTxt+'</span> / 10';
+                nb.style.background=(nv>=5)?'linear-gradient(120deg,#34d399,#5bd0ff)':'linear-gradient(120deg,#ff9ad8,#c9a8ff)';
+                nb.style.color=(nv>=5)?'#06311f':'#2a0b2e';
+                const tt=nb.previousElementSibling; if(tt) tt.textContent=(nv>=7)?'¡Genial! 🎉':(nv<5?'¡Buen intento! Sigue practicando 💪':'¡Bien hecho! 👍');
+              }
+              const cb=ov.querySelector('#simCerrar'); if(cb){ cb.textContent='Volver al portal'; cb.onclick=()=>salirAlPortal(); }
+              try{ head.textContent=tituloFicha()+' · corregida'; }catch(e){}
+            }catch(e){}
+            clearInterval(_rt);
+          } else if(_ri>80) clearInterval(_rt);
+        }, 150);
+        return;
+      }
       setTimeout(()=>{ try{
         const card=main.querySelector('.sim-card');
         if(card){
@@ -14698,16 +14744,22 @@ function __grados_marker__(){}
   /* ELE-W5 · REVISIÓN DEL PROFESOR: ?revision=<fichaId>:<cuentaId>&s=<secreto>
      Reconstruye la ficha con el ESTADO que entregó el alumno y salta directo
      a la pantalla de corrección (solo lectura, no envía nada). */
-  async function revisionProfesor(rev, sec){
+  /* (22-sep-2026) + REVISIÓN DEL ALUMNO: ?revision=<fichaId>:<cuentaId>&alu=1 (sin secreto).
+     Usa suite_ficha_revision_alumno (misma respuesta; solo la cuenta dueña de la
+     entrega validada) y pinta la misma ficha corregida sin controles de profesor. */
+  async function revisionProfesor(rev, sec, alu){
     const ov=pantallaCargaAlumno();
     const msg=(t)=>{ const el=ov.querySelector('#ppAluMsg'); if(el) el.textContent=t; };
     try{
-      msg('Cargando revisión…');
+      msg(alu?'Cargando tu ficha corregida…':'Cargando revisión…');
       let intentos=0;
       while(!(window.supabase && window.supabase.createClient) && intentos<60){ await new Promise(r=>setTimeout(r,100)); intentos++; }
       const sb=suiteSb(); if(!sb) throw new Error('sin_supabase');
       const partes=String(rev).split(':'); const fichaId=partes[0], cuenta=partes[1];
-      const { data, error } = await sb.rpc('suite_ficha_revision', { p_secreto:sec, p_ficha_id:fichaId, p_cuenta_id:cuenta });
+      if(!fichaId || !cuenta) throw new Error('enlace_invalido');
+      const { data, error } = alu
+        ? await sb.rpc('suite_ficha_revision_alumno', { p_cuenta_id:cuenta, p_ficha_id:fichaId })
+        : await sb.rpc('suite_ficha_revision', { p_secreto:sec, p_ficha_id:fichaId, p_cuenta_id:cuenta });
       if(error) throw error;
       if(!data || data.ok!==true) throw new Error((data&&data.error)||'no_disponible');
       const pl=data.payload||{};
@@ -14730,10 +14782,11 @@ function __grados_marker__(){}
         }
         return it;
       });
-      window.__REVISION={ numero:data.numero, nota:(data.nota!=null?+data.nota:null), feedback:pl.feedback||null, no_puntua:(pl.no_puntua===true) };
+      window.__REVISION={ numero:data.numero, nota:(data.nota!=null?+data.nota:null), feedback:pl.feedback||null, no_puntua:(pl.no_puntua===true),
+                          alumno:!!alu, reclamacion:(alu && pl.reclamacion && typeof pl.reclamacion==='object')?pl.reclamacion:null };
       previsualizarAlumno();
       // (6-ago) si el alumno eligió «que no cuente», que Iago lo vea claro
-      if(pl.no_puntua===true){ let _int=0; const _chip=setInterval(()=>{ _int++;
+      if(pl.no_puntua===true && !alu){ let _int=0; const _chip=setInterval(()=>{ _int++;
         const nb=document.getElementById('simNotaBadge');
         if(nb && !document.getElementById('simNoPuntuaChip')){
           const c=document.createElement('div'); c.id='simNoPuntuaChip';
@@ -14746,8 +14799,13 @@ function __grados_marker__(){}
       setTimeout(()=>{ try{ ov.remove(); }catch(e){} }, 0);
     }catch(err){
       let cont=ov; if(!document.body.contains(ov)) cont=pantallaCargaAlumno();
-      errorCargaAlumno(cont, 'No se pudo cargar la revisión',
-        'Error: '+((err&&err.message)||err)+' — ¿ejecutaste la v4 de anulaciones_supabase.sql (suite_ficha_revision)?');
+      if(alu){
+        errorCargaAlumno(cont, 'No se pudo abrir tu ficha corregida',
+          'Error: '+((err&&err.message)||err)+'. Si el enlace es de tu correo, comprueba que lo abres entero; si sigue fallando, avisa a Iago.');
+      } else {
+        errorCargaAlumno(cont, 'No se pudo cargar la revisión',
+          'Error: '+((err&&err.message)||err)+' — ¿ejecutaste la v4 de anulaciones_supabase.sql (suite_ficha_revision)?');
+      }
     }
   }
 
@@ -14855,6 +14913,7 @@ function __grados_marker__(){}
         arrancarFichaAlumno(cuentaAl, fichaIdAl, qs.get('n')||null); return; }
       const revAl=qs.get('revision'), revSec=qs.get('s');
       if(revAl && revSec){ revisionProfesor(revAl, revSec); return; }   /* ELE-W5 */
+      if(revAl && qs.get('alu')==='1'){ revisionProfesor(revAl, null, true); return; }   /* (22-sep-2026) revisión del ALUMNO, sin secreto ni sesión */
       // FASE 6.1c: token de envío creado por el Diario (un solo uso, vida 45 min)
       const envioTok=qs.get('envio'); if(envioTok){ window.__SUITE_ENVIO_TOKEN=envioTok; window.__SUITE_ENVIO_FICHA=qs.get('ficha')||null; window.__SUITE_ENVIO_OPCIONAL=(qs.get('opcional')==='1');
         /* (Iago 16-sep-2026) REFUERZO + «qué pregunté la semana pasada»: contexto del curso (solo lectura) */
@@ -15478,7 +15537,10 @@ window.SuiteTiempo=(function(){
   function invNum(num, comp){ return (comp?23:9)-num; }
 
   var NUM_JUSTOS=new Set([4,5,8,11,12,15]);
-  function especiesParaNumero(num,comp){ if(num==null) return ['—']; if(NUM_JUSTOS.has(num)){ var a=['Aum.','J','Dis.']; if(comp) a=['D.Aum.'].concat(a).concat(['D.Dis.']); return a; } var arr=['Aum.','M'], ab=['m','Dis.']; if(comp){ arr=['D.Aum.'].concat(arr); ab=ab.concat(['D.Dis.']); } return arr.concat(['—']).concat(ab); }
+  /* (22-sep-2026, Iago) RUEDA DE ESPECIE FIJA: ya no depende del número. Siempre todas las especies:
+     arriba->abajo [D.Aum.], Aum., J, M, —, m, Dis., [D.Dis.] (dobles solo con compuestos). `num` se ignora.
+     Elegir una especie imposible para ese número se corrige como MAL (el corrector compara etiquetas). */
+  function especiesParaNumero(num,comp){ var arr=['Aum.','J','M'], ab=['m','Dis.']; if(comp){ arr=['D.Aum.'].concat(arr); ab=ab.concat(['D.Dis.']); } return arr.concat(['—']).concat(ab); }
   function numerosDisponibles(comp){ var nums=comp?[15,14,13,12,11,10,9,8,7,6,5,4,3,2]:[8,7,6,5,4,3,2]; return nums.concat(['—']); }
   function idxGuion(items){ var g=items.indexOf('—'); if(g>=0) return g; var j=items.indexOf('J'); if(j>=0) return j; return Math.floor(items.length/2); }
   function idxGuionNum(items){ var i=items.indexOf('—'); return i<0?0:i; }
@@ -15669,7 +15731,7 @@ window.SuiteTiempo=(function(){
       var sol=document.createElement('div'); sol.className='wsol'; cell.appendChild(sol);
       var numItems=numerosDisponibles(true).map(String), espApi=null;
       var nStart=(sel.num!=null && numItems.indexOf(String(sel.num))>=0)?numItems.indexOf(String(sel.num)):idxGuionNum(numItems);   // restaura si ya había respuesta (fichas: al navegar)
-      window.makeWheel(wN,numItems,nStart,function(ix){ var raw=numItems[ix]; sel.num=(raw==='—')?null:parseInt(raw,10); var esps=especiesParaNumero(sel.num,true); espApi.setItems(esps,true); var gi=idxGuion(esps); espApi.setIndex(gi,true); sel.esp=esps[gi]; });
+      window.makeWheel(wN,numItems,nStart,function(ix){ var raw=numItems[ix]; sel.num=(raw==='—')?null:parseInt(raw,10); /* (22-sep-2026, Iago) la rueda de especie NO se mueve al tocar la de número */ });
       var espInit=especiesParaNumero(sel.num,true); var eStart=(sel.esp!=null && sel.esp!=='—' && espInit.indexOf(sel.esp)>=0)?espInit.indexOf(sel.esp):idxGuion(espInit);
       espApi=window.makeWheel(wE,espInit,eStart,function(){ sel.esp=espApi.getValue(); }); sel.esp=espInit[eStart];
       return {cell:cell, sol:sol};
@@ -15804,7 +15866,7 @@ window.SuiteTiempo=(function(){
       var sol0=document.createElement('div'); sol0.className='wsol'; cell0.appendChild(sol0); par._solEl0=sol0;
       var numItems0=numerosDisponibles(false).map(String), espApi0=null;
       var nStart0=(par.sel0.num!=null && numItems0.indexOf(String(par.sel0.num))>=0)?numItems0.indexOf(String(par.sel0.num)):idxGuionNum(numItems0);
-      window.makeWheel(wN0,numItems0,nStart0,function(ix){ var raw=numItems0[ix]; par.sel0.num=(raw==='—')?null:parseInt(raw,10); var esps=especiesParaNumero(par.sel0.num,false); espApi0.setItems(esps,true); var gi=idxGuion(esps); espApi0.setIndex(gi,true); par.sel0.esp=esps[gi]; });
+      window.makeWheel(wN0,numItems0,nStart0,function(ix){ var raw=numItems0[ix]; par.sel0.num=(raw==='—')?null:parseInt(raw,10); /* (22-sep-2026, Iago) la rueda de especie NO se mueve al tocar la de número */ });
       var espInit0=especiesParaNumero(par.sel0.num,false); var eStart0=(par.sel0.esp!=null && par.sel0.esp!=='—' && espInit0.indexOf(par.sel0.esp)>=0)?espInit0.indexOf(par.sel0.esp):idxGuion(espInit0);
       espApi0=window.makeWheel(wE0,espInit0,eStart0,function(){ par.sel0.esp=espApi0.getValue(); }); par.sel0.esp=espInit0[eStart0];
       /* COLUMNA 2: analiza la INVERSIÓN */
@@ -15823,7 +15885,7 @@ window.SuiteTiempo=(function(){
       var sol=document.createElement('div'); sol.className='wsol'; cell.appendChild(sol); par._solEl=sol;
       var numItems=numerosDisponibles(false).map(String), espApi=null;
       var nStart=(par.sel.num!=null && numItems.indexOf(String(par.sel.num))>=0)?numItems.indexOf(String(par.sel.num)):idxGuionNum(numItems);   // restaura si ya había respuesta (fichas: al navegar)
-      window.makeWheel(wN,numItems,nStart,function(ix){ var raw=numItems[ix]; par.sel.num=(raw==='—')?null:parseInt(raw,10); var esps=especiesParaNumero(par.sel.num,false); espApi.setItems(esps,true); var gi=idxGuion(esps); espApi.setIndex(gi,true); par.sel.esp=esps[gi]; });
+      window.makeWheel(wN,numItems,nStart,function(ix){ var raw=numItems[ix]; par.sel.num=(raw==='—')?null:parseInt(raw,10); /* (22-sep-2026, Iago) la rueda de especie NO se mueve al tocar la de número */ });
       var espInit=especiesParaNumero(par.sel.num,false); var eStart=(par.sel.esp!=null && par.sel.esp!=='—' && espInit.indexOf(par.sel.esp)>=0)?espInit.indexOf(par.sel.esp):idxGuion(espInit);
       espApi=window.makeWheel(wE,espInit,eStart,function(){ par.sel.esp=espApi.getValue(); }); par.sel.esp=espInit[eStart];
       pairCell.appendChild(cell0); pairCell.appendChild(cell); wheels.appendChild(pairCell);
