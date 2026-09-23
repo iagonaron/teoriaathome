@@ -1570,7 +1570,8 @@ window.TXT_TIP=function(raton,tactil){ return window.ES_TACTIL?tactil:raton; };
 document.addEventListener('DOMContentLoaded', function(){
   try{
     var st=document.createElement('style');
-    st.textContent='html,body{touch-action:manipulation} button,.wheel,svg,.acc-btn,.pbtn{touch-action:manipulation}';
+    /* (23-sep-2026, Iago) .wheel FUERA de esta regla: con touch-action:manipulation la tablet hacía scroll de página mientras se giraba la rueda. */
+    st.textContent='html,body{touch-action:manipulation} button,svg,.acc-btn,.pbtn{touch-action:manipulation}';
     document.head.appendChild(st);
   }catch(e){}
 });
@@ -1960,6 +1961,8 @@ function catToSel(it){ return {num:it.num, esp:ESP_LABEL[it.code]}; }
 /* ===== WHEEL tipo iOS ===== */
 let _wheelAudio=null;
 function tick(){
+  /* (23-sep-2026, Iago) como mucho un tick cada 55 ms (nada de «metralleta») */
+  const _now=performance.now(); if(window.__wheelTickT && _now-window.__wheelTickT<55) return; window.__wheelTickT=_now;
   try{
     _wheelAudio=_wheelAudio||new (window.AudioContext||window.webkitAudioContext)();
     const o=_wheelAudio.createOscillator(),g=_wheelAudio.createGain();
@@ -1980,6 +1983,11 @@ function makeWheel(host, items, startIdx, onChange, invert){
   let state={items:items.slice(), idx:startIdx||0};
   // offset continuo (px) respecto a la posición "asentada" en state.idx
   let dragOffset=0;
+  /* (23-sep-2026, Iago) ARMADURAS PASO A PASO: en las ruedas de nº de alteraciones
+     («3♯», «0», «2♭») la armadura se repinta en cada paso mientras se arrastra. */
+  const esArm=/[♯♭]/.test(state.items.join('')) && state.items.length>=8;
+  let liveRaf=null;
+  function previewLive(c){ if(!esArm || !onChange) return; if(liveRaf) cancelAnimationFrame(liveRaf); liveRaf=requestAnimationFrame(()=>{ liveRaf=null; try{ onChange(c); }catch(e){} }); }
   function paint(){
     strip.innerHTML='';
     state.items.forEach((it,i)=>{
@@ -2005,7 +2013,7 @@ function makeWheel(host, items, startIdx, onChange, invert){
     strip.style.transform='translateY('+(ITEM_H-state.idx*ITEM_H+dragOffset)+'px)';
     // resaltar el ítem más cercano al centro mientras se arrastra
     const near=clampIdx(Math.round(state.idx - dragOffset/ITEM_H));
-    if(near!==lastIdxFired){ lastIdxFired=near; tick();
+    if(near!==lastIdxFired){ lastIdxFired=near; tick(); previewLive(near);
       strip.querySelectorAll('.item').forEach((el,i)=>el.classList.toggle('sel',i===near)); }
   }
   function down(y){ dragging=true; startY=y; lastY=y; dragStartIdx=state.idx; vel=0; lastT=performance.now(); lastIdxFired=state.idx; stopMomentum(); }
