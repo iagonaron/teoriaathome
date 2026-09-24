@@ -8989,7 +8989,10 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
 
     // VARIABLE (pentatónica/hexátona/cromática): el alumno escribe cada cabeza -> puntúa lo que escribe.
     // Aquí sí exigimos que haya escrito algo (las cabezas no vienen dadas).
-    if(!estado._dirty){ return { ok:false, pct:0, total:(sol.length+(spec.conArmadura?1:0)), aciertos:0 }; }
+    /* (24-sep-2026, Iago) PENTATÓNICAS: la armadura vale el 50 % (como en mayores y menores), aunque
+       no se haya escrito ninguna nota; y si la escala no lleva alteraciones (Do M / La m), no poner
+       nada deliberadamente ya da ese 50 %. El otro 50 % son las notas, proporcional. */
+    if(!estado._dirty && !spec.conArmadura){ return { ok:false, pct:0, total:sol.length, aciertos:0 }; }
     const total = sol.length + (spec.conArmadura?1:0);
     let aciertos = 0;
     /* FIX 2-ago-2026 · R6 (Iago): la escala vale construida en CUALQUIER octava.
@@ -9019,8 +9022,13 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
       aciertos += mejor;
     }
     let armOk=true;
-    if(spec.conArmadura){ armOk = ((estado.arm||0)===(spec.fifths||0)); if(armOk) aciertos++; }
-    const notasOk = (got.length===sol.length) && (aciertos - (armOk&&spec.conArmadura?1:0)) === sol.length;
+    if(spec.conArmadura){
+      armOk = ((estado.arm||0)===(spec.fifths||0));
+      const notasOkP = (got.length===sol.length) && aciertos===sol.length;
+      const pctP = Math.round((armOk?50:0) + (sol.length ? 50*aciertos/sol.length : 0));
+      return { ok: notasOkP && armOk, pct: pctP, total:2, aciertos:(armOk?1:0)+(notasOkP?1:0) };
+    }
+    const notasOk = (got.length===sol.length) && aciertos === sol.length;
     const ok = notasOk && armOk;
     const pct = total ? Math.round((aciertos/total)*100) : 0;
     return { ok, pct, total, aciertos };
