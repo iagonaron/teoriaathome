@@ -8977,14 +8977,36 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     const got = (estado.seq||[]).slice();
     const precol = spec.precolocada===true;
 
+    /* (24-sep-2026, Iago) PUNTUACIÓN DE ESCALAS MAYORES, MENORES Y PENTATÓNICAS · GRADO ELEMENTAL
+       · ARMADURA correcta = 50 % del ejercicio, aunque luego las alteraciones accidentales falten o
+         estén mal.
+       · ALTERACIONES ACCIDENTALES = el otro 50 %. Se miran solo las notas que llevan (o deberían
+         llevar) una alteración escrita respecto a la armadura: cada una bien puesta suma su parte;
+         una alteración que sobra resta. Si la solución no lleva ninguna alteración accidental y el
+         alumno no ha puesto ninguna, esa mitad está BIEN (no poner nada es una respuesta válida). */
+    const PESO_ARM = 0.5;
+    if(precol && spec.conArmadura){
+      const fSol = spec.fifths||0, fAlu = estado.arm||0;
+      const armOk = (fAlu===fSol);
+      let crit=0, bien=0;
+      for(let k=0;k<sol.length;k++){
+        const s0=sol[k], g0=got[k]||{step:s0.step,octave:s0.octave,alter:armAlterDe(s0.step,fAlu)};
+        const accSol = (s0.alter||0)!==armAlterDe(s0.step,fSol);   // la solución escribe alteración aquí
+        const accAlu = (g0.alter||0)!==armAlterDe(g0.step,fAlu);   // el alumno ha escrito alteración aquí
+        if(!accSol && !accAlu) continue;
+        crit++;
+        if(accSol && accAlu && (g0.alter||0)===(s0.alter||0)) bien++;
+      }
+      const fracAcc = crit ? bien/crit : 1;
+      const pct = Math.round(100*((armOk?PESO_ARM:0) + (1-PESO_ARM)*fracAcc));
+      const ok = armOk && fracAcc===1;
+      return { ok, pct, total:2, aciertos:(armOk?1:0)+(fracAcc===1?1:0) };
+    }
     if(precol){
-      // PRECOLOCADA (menores/mayores): 50% armadura + 50% grafía completa. No tocar nada es
-      // válido si la escala no lleva alteraciones (p.ej. Do M: arm 0 y cabezas naturales = 100%).
-      const armOk = ((estado.arm||0)===(spec.fifths||0));
+      // PRECOLOCADA sin armadura propia (otros usos): grafía completa, todo o nada.
       let notasOk = (got.length===sol.length);
       if(notasOk){ for(let k=0;k<sol.length;k++){ if(!(got[k] && got[k].step===sol[k].step && got[k].octave===sol[k].octave && (got[k].alter||0)===(sol[k].alter||0))){ notasOk=false; break; } } }
-      let pct=0; if(armOk) pct+=50; if(notasOk) pct+=50;
-      return { ok: armOk && notasOk, pct, total:2, aciertos:(armOk?1:0)+(notasOk?1:0) };
+      return { ok: notasOk, pct: notasOk?100:0, total:1, aciertos:notasOk?1:0 };
     }
 
     // VARIABLE (pentatónica/hexátona/cromática): el alumno escribe cada cabeza -> puntúa lo que escribe.
@@ -9025,7 +9047,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     if(spec.conArmadura){
       armOk = ((estado.arm||0)===(spec.fifths||0));
       const notasOkP = (got.length===sol.length) && aciertos===sol.length;
-      const pctP = Math.round((armOk?50:0) + (sol.length ? 50*aciertos/sol.length : 0));
+      const pctP = Math.round(100*((armOk?PESO_ARM:0) + (1-PESO_ARM)*(sol.length ? Math.min(1, aciertos/Math.max(sol.length, got.length)) : 0)));
       return { ok: notasOkP && armOk, pct: pctP, total:2, aciertos:(armOk?1:0)+(notasOkP?1:0) };
     }
     const notasOk = (got.length===sol.length) && aciertos === sol.length;
