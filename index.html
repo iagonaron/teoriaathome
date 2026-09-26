@@ -1756,6 +1756,7 @@ function renderPads(){
   PADS.forEach(p=>{
     const d=document.createElement('div');
     d.className='pad'+(p.activo?'':' soon');
+    d.setAttribute('data-pad', p.id);   /* (26-sep-2026, Iago) para colgar «VER APUNTES» en cada tarjeta */
     d.innerHTML='<div class="edge"></div>'+(p.activo?'':'<div class="badge">Próx.</div>')+
       '<div class="pad-main"><h3>'+p.nombre+'</h3></div>'+
       (p.sub?'<div class="pad-sub">'+p.sub+'</div>':'');
@@ -18029,6 +18030,36 @@ window.CAD = {
   }
 
   window.PapelFichas = { ofrecer: ofrecer, copias: copias };
+})();
+</script>
+
+<!-- (26-sep-2026, Iago) VER APUNTES: apuntes del Kit salvavidas 4GE re-creados con la estética at home.
+     Solo para alumnos con cuenta validada (de momento, solo la cuenta Tester, para revisarlos).
+     Para quitarlo: borrar este bloque (y los ficheros apuntes.js / apuntes-kit.js). -->
+<script>window.APX_CFG={tema:'ge', soloTester:true};</script>
+<script src="apuntes.js?v=1"></script>
+<script src="apuntes-kit.js?v=1"></script>
+<script>
+(function(){
+  if(!window.APX || new URLSearchParams(location.search).get('fichaId')) return;
+  var T=[
+    ['intervalos','Intervalos',['intervalos','int-comp']],
+    ['inversiones','Inversión de intervalos',['inv-simples','inv-comp']],
+    ['compases','Compases',['compases']],
+    ['tonalidades','Tonalidades',['relativos','tonalidad','armadura','vecinas']],
+    ['escalas','Escalas',['esc-menores','esc-mayores','esc-otras']],
+    ['grados','Grados',['grados']],
+    ['semitonos','Semitonos',['semitonos']],
+    ['acordes','Acordes',['acordes']],
+    ['inv-acordes','Inversión de acordes',['inv-acordes']],
+    ['enarmonias','Enarmonías',['enarmonias']],
+    ['claves','Claves',['claves']],
+    ['terminos','Términos',['terminos']],
+    ['adorno','Notas de adorno',['adorno']],
+    ['abrev','Abreviaciones',['abrev']],
+    ['cadencias','Cadencias',['cadencias']]
+  ];
+  window.APX.montar(T.map(function(t){ return {sel:'#padGrid .pad[data-pad="'+t[0]+'"]', nombre:t[1], temas:t[2]}; }), {obs:'#padGrid'});
 })();
 </script>
 
