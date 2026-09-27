@@ -12353,9 +12353,10 @@ function __grados_marker__(){}
                 ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Gira las ruedas para responder cada compás (y usa <b>♯ ♭</b> donde aparezcan).</div>'
                 : '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px;font-style:italic">Simulación: aquí el alumno resolvería el ejercicio (colocar notas, escribir, elegir…).</div>';
       const areaItem = AREA_DE[item.key];
+      /* (27-sep-2026, Iago) APUNTES EN LAS FICHAS: class="sim-ayuda" marca esta fila para colgarle «APUNTES» (bloque ApxFicha, al final) */
       const practiBtn = areaItem
-        ? '<div style="margin-top:16px"><button class="simPracticaLive sim-practica-btn" data-key="'+item.key+'">No lo sé hacer, necesito practicar esto ↗</button></div>'
-        : '<div style="margin-top:16px;color:#c7bff0;font-size:13px;font-weight:600">¿Dudas? <b>Revisa los apuntes</b> 📖</div>';   /* ELE-W2: el «Ey, soy Iago» queda para la corrección */
+        ? '<div class="sim-ayuda" style="margin-top:16px"><button class="simPracticaLive sim-practica-btn" data-key="'+item.key+'">No lo sé hacer, necesito practicar esto ↗</button></div>'
+        : '<div class="sim-ayuda" style="margin-top:16px;color:#c7bff0;font-size:13px;font-weight:600">¿Dudas? <b>Revisa los apuntes</b> 📖</div>';   /* ELE-W2: el «Ey, soy Iago» queda para la corrección */
       const entClass = animDir==='fwd' ? 'sim-slide-in' : (animDir==='back' ? 'sim-slide-in-l' : 'sim-enter'); animDir=null;
       main.innerHTML='<div class="pp-hide-sol sim-card '+entClass+'" style="max-width:min(1120px,95vw);width:100%;align-self:flex-start">'+
           (item.refuerzo?'<div class="sim-refuerzo">⭐ <b>Ejercicio solo para ti</b> · Vamos a practicar esto porque nos cuesta un poco. Recuerda que en el portal at home, en Teoría, puedes hacer todos los ejercicios de este tipo que quieras. Y también tienes la explicación y ejemplos en el <b>Kit Salvavidas'+(/^4/.test(String(window.__FICHA_CURSO||''))?' 4ºGe':(/^3/.test(String(window.__FICHA_CURSO||''))?' 3ºGe':''))+'</b> que te entregué al principio del curso. Y si quieres, escríbeme un mensaje: te paso más material o agendamos una clase presencial de refuerzo para explicar justo lo que necesitas y que te quedes sin dudas.</div>':'')+
@@ -12430,6 +12431,7 @@ function __grados_marker__(){}
       try{ const ss=main.querySelector('#simScore'); if(ss){ vigilarPentagramas(ss); requestAnimationFrame(()=>marcarPentagramas(ss)); setTimeout(()=>marcarPentagramas(ss),120); } }catch(e){}
       const liveBtn=main.querySelector('.simPracticaLive');
       if(liveBtn){ liveBtn.onclick=()=>{ modalPracticar(liveBtn.dataset.key); }; }
+      try{ if(window.ApxFicha) window.ApxFicha.pinta(main.querySelector('.sim-ayuda'), item.key); }catch(e){}   /* (27-sep-2026, Iago) APUNTES EN LAS FICHAS */
       foot.innerHTML = btn('simPrev','‹ Anterior') + btn('simNext', i===n-1?'Enviar y ver puntuación ✓':'Siguiente ›', true);
       const p=ov.querySelector('#simPrev'); p.style.visibility=(i===0?'hidden':'visible'); p.onclick=()=>{ if(i>0){ if(window.SFX) window.SFX.back();
         const card=main.querySelector('.sim-card');
@@ -18135,6 +18137,199 @@ window.CAD = {
     ['cadencias','Cadencias',['cadencias']]
   ];
   window.APX.montar(T.map(function(t){ return {sel:'#padGrid .pad[data-pad="'+t[0]+'"]', nombre:t[1], temas:t[2]}; }), {obs:'#padGrid'});
+})();
+</script>
+
+<!-- (27-sep-2026, Iago) APUNTES EN LAS FICHAS: en cada ejercicio de la ficha del alumno, al lado de «No lo sé hacer,
+     necesito practicar esto» sale «APUNTES» (abre el tema de ESE ejercicio en el mismo visor que «VER APUNTES») y
+     «VER VÍDEO» si ese tipo de ejercicio tiene vídeo (hoy, en GE, ninguno). En los ejercicios tipo test (adornos y
+     abreviaciones: test + V/F) y en los que no tienen práctica (términos) sale solo «¿Dudas? Ver APUNTES».
+     MISMA PUERTA que «VER APUNTES» (APX_CFG.soloTester, arriba): hoy solo lo ve la cuenta Tester; el día que se abran
+     los apuntes a todos (soloTester:false) aparece a la vez. Si el ejercicio no tiene tema de apuntes, la fila se queda
+     como estaba.
+     Abrir los apuntes no toca la ficha: el visor va por encima y, mientras está abierto, la ficha queda «inert» (ni
+     clics ni tabulador) y no le llegan Esc ni ←/→ (Esc cierra los apuntes en vez de abrir «¿Salir de la ficha?» y las
+     flechas no cambian de ejercicio).
+     Para quitarlo: borrar este bloque y las dos marcas «(27-sep-2026, Iago) APUNTES EN LAS FICHAS» de
+     previsualizarAlumno (class="sim-ayuda" y la línea de ApxFicha.pinta). -->
+<script>
+(function(){
+  'use strict';
+  if(!window.APX || !new URLSearchParams(location.search).get('fichaId')) return;   /* solo en la ficha del alumno */
+
+  /* ---- lo propio de GE ---- */
+  /* tipo de ejercicio → temas (el mismo reparto que las tarjetas del bloque VER APUNTES de arriba); el 3.er dato es
+     la pestaña que se abre primero. Solo se usan los temas que existan en APX_TEMAS. */
+  function G(nombre, temas, primero){ return {nombre:nombre, temas:temas, primero:primero||temas[0]}; }
+  var INT=['intervalos','int-comp'], INV=['inv-simples','inv-comp'], TON=['relativos','tonalidad','armadura','vecinas'],
+      ESC=['esc-menores','esc-mayores','esc-otras'];
+  var MAPA={
+    int_clasif:G('Intervalos',INT), int_constr:G('Intervalos',INT),
+    inv_simples:G('Inversión de intervalos',INV), inv_compuestos:G('Inversión de intervalos',INV,'inv-comp'),
+    com_clasif:G('Compases',['compases']),
+    ton_arm_tono:G('Tonalidades',TON,'tonalidad'), ton_tono_arm:G('Tonalidades',TON,'armadura'), ton_vecinos:G('Tonalidades',TON,'vecinas'),
+    esc_menor:G('Escalas',ESC,'esc-menores'), esc_mayor:G('Escalas',ESC,'esc-mayores'), esc_otras:G('Escalas',ESC,'esc-otras'),
+    gra_senalar:G('Grados',['grados']), semitonos:G('Semitonos',['semitonos']), acordes:G('Acordes',['acordes']),
+    aco_identificar:G('Inversión de acordes',['inv-acordes']), aco_construir:G('Inversión de acordes',['inv-acordes']),
+    ena_a:G('Enarmonías',['enarmonias']), ena_avanzado:G('Enarmonías',['enarmonias']),
+    cla_a:G('Claves',['claves']), cla_b:G('Claves',['claves']),
+    terminos:G('Términos',['terminos']),
+    adorno_quiz:G('Notas de adorno',['adorno']), abrev_quiz:G('Abreviaciones',['abrev']),
+    cadencias_quiz:G('Cadencias',['cadencias'])
+  };
+  function esTest(k){ return k==='adorno_quiz' || k==='abrev_quiz'; }   /* test a/b/c + V/F */
+  var VIDEO={};   /* tipo de ejercicio → vídeo (ruta de esta web, p. ej. 'intros/…/index.html'). Hoy no hay ninguno en GE. */
+  var SEL_PRACTICA='.simPracticaLive', CLASE_BOTON='sim-practica-btn', ACENTO='#e84393';
+  var CSS_PROPIO=
+    '#ppAlumnoSim .sim-ayuda.apxf-fila{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px}'+
+    /* mismo tamaño que «No lo sé hacer…» (misma clase sim-practica-btn); aquí solo cambia el color: liso y opaco */
+    '#ppAlumnoSim .sim-practica-btn.apxf-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;max-width:100%;background:#e84393;border-color:#e84393;color:#fff}'+
+    '#ppAlumnoSim .sim-practica-btn.apxf-btn:hover{background:#f0579f;border-color:#f0579f;color:#fff}'+
+    '#ppAlumnoSim .sim-practica-btn.apxf-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}';
+
+  /* ---- a partir de aquí, igual en GE y en GP ---- */
+  var ICO_LIBRO='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5C5.5 4.3 8.5 4.3 12 6c3.5-1.7 6.5-1.7 9-.5v13c-2.5-1.2-5.5-1.2-9 .5-3.5-1.7-6.5-1.7-9-.5z"/><path d="M12 6v13.5"/></svg>';
+  var ICO_PLAY='<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.2 1.1v9.8L10.6 6z" fill="currentColor"/></svg>';
+  var cssPuesto=false;
+  function css(){
+    if(cssPuesto) return; cssPuesto=true;
+    var s=document.createElement('style'); s.id='apxf-css';
+    s.textContent=CSS_PROPIO+
+      '.apxf-btn svg{flex:none;display:block}'+
+      '.apxf-vid{position:fixed;inset:0;z-index:2147482000;background:#050403;display:flex;align-items:center;justify-content:center}'+
+      '.apxf-vid-caja{position:relative;width:min(92vw,calc(86vh*16/9));height:min(51.75vw,86vh);background:#000;border:1px solid '+ACENTO+';border-radius:14px;overflow:hidden}'+
+      '.apxf-vid-caja iframe{position:absolute;inset:0;width:100%;height:100%;border:0}'+
+      '.apxf-vid-x{position:fixed;top:14px;right:16px;z-index:1;width:40px;height:40px;border-radius:10px;border:1px solid #5c5c5c;background:#161616;color:#fff;font:600 16px/1 system-ui,sans-serif;cursor:pointer}'+
+      '.apxf-vid-x:hover,.apxf-vid-x:focus-visible{border-color:'+ACENTO+';outline:none}';
+    document.head.appendChild(s);
+  }
+
+  /* ---- puerta: la misma que «VER APUNTES» (APX.montar): cuenta validada y, mientras soloTester, cuenta de prueba ---- */
+  var ok=null, pend=null;   /* ok: null = todavía preguntando */
+  window.ApxFicha={ pinta:function(cont, key){
+    if(!cont) return;
+    if(ok===null){ pend={c:cont, k:key}; return; }
+    if(ok) decora(cont, key);
+  } };
+  try{
+    window.APX.comprobar(function(info){
+      var solo=!(window.APX_CFG && window.APX_CFG.soloTester===false);
+      ok=!!(info && info.validado && (info.tester || !solo));
+      var p=pend; pend=null;
+      if(ok && p && document.body.contains(p.c)) decora(p.c, p.k);
+    });
+  }catch(e){ ok=false; }
+
+  function grupo(key){
+    var m=MAPA[key]; if(!m) return null;
+    var T=window.APX_TEMAS||{};
+    var temas=m.temas.filter(function(t){ return !!T[t]; });
+    if(!temas.length) return null;
+    return {nombre:m.nombre, temas:temas, idx:Math.max(0, temas.indexOf(m.primero))};
+  }
+  function boton(txt, ico, aria, fn){
+    var b=document.createElement('button'); b.type='button'; b.className=CLASE_BOTON+' apxf-btn';
+    b.innerHTML=ico+'<span>'+txt+'</span>'; b.setAttribute('aria-label', aria);
+    b.addEventListener('click', function(ev){ ev.preventDefault(); fn(b); });
+    return b;
+  }
+  function decora(cont, key){
+    if(!cont || cont.getAttribute('data-apxf')) return;
+    var g=grupo(key), vid=VIDEO[key]||null;
+    var prac=cont.querySelector(SEL_PRACTICA);
+    var soloDudas=!prac || esTest(key);             /* test, o ejercicio sin práctica: solo «¿Dudas? Ver APUNTES» */
+    if(soloDudas ? !g : !(g || vid)) return;        /* sin apuntes (ni vídeo): la fila se queda como estaba */
+    css();
+    cont.setAttribute('data-apxf','1');
+    cont.classList.add('apxf-fila');
+    if(soloDudas){
+      /* lo que había («¿Dudas? Revisa los apuntes 📖» o, en los test, el botón de practicar) queda oculto, sin borrarlo */
+      var antes=document.createElement('span'); antes.className='apxf-antes'; antes.hidden=true; antes.style.display='none';
+      while(cont.firstChild) antes.appendChild(cont.firstChild);
+      cont.appendChild(antes);
+      cont.appendChild(boton('¿Dudas? Ver APUNTES', ICO_LIBRO, 'Ver los apuntes de '+g.nombre, function(b){ abrirApuntes(g, b); }));
+      return;
+    }
+    if(g) cont.appendChild(boton('APUNTES', ICO_LIBRO, 'Ver los apuntes de '+g.nombre, function(b){ abrirApuntes(g, b); }));
+    if(vid) cont.appendChild(boton('VER VÍDEO', ICO_PLAY, 'Ver el vídeo de introducción', function(b){ abrirVideo(vid, b); }));
+  }
+
+  /* ---- mientras hay algo abierto encima (apuntes o vídeo), la ficha no se toca ---- */
+  var abierto=null, inertes=[];
+  function bloquea(excepto){
+    [].forEach.call(document.body.children, function(n){
+      if(excepto.indexOf(n)>=0 || n.hasAttribute('inert') || /^(SCRIPT|STYLE|LINK)$/.test(n.tagName)) return;
+      n.setAttribute('inert',''); inertes.push(n);
+    });
+  }
+  function alCerrar(){
+    var a=abierto; abierto=null;
+    inertes.forEach(function(n){ n.removeAttribute('inert'); }); inertes=[];
+    if(a && a.boton && document.body.contains(a.boton)){ try{ a.boton.focus({preventScroll:true}); }catch(e){} }
+  }
+  /* el visor de apuntes se cierra solo (✕, «Volver», Esc, atrás del navegador): se nota porque sale del <body> */
+  new MutationObserver(function(){
+    if(abierto && !abierto.nodos.some(function(n){ return document.body.contains(n); })) alCerrar();
+  }).observe(document.body, {childList:true});
+  /* Esc y ←/→ no pasan a la ficha (Esc = «¿Salir de la ficha?», ←/→ = cambiar de ejercicio); Esc cierra lo de encima */
+  window.addEventListener('keydown', function(e){
+    if(!abierto) return;
+    var k=e.key;
+    if(k==='Escape' || k==='Esc' || k==='ArrowLeft' || k==='ArrowRight'){
+      e.stopPropagation();
+      if(k==='Escape' || k==='Esc'){ e.preventDefault(); abierto.cerrar(); }
+    }
+  }, true);
+
+  function abrirApuntes(g, b){
+    if(abierto) return;
+    var antes=[].slice.call(document.body.children);
+    try{ window.APX.abrir({nombre:g.nombre, temas:g.temas}, g.idx, b); }catch(e){ console.warn('[apuntes ficha]', e); return; }
+    var nuevos=[].filter.call(document.body.children, function(n){ return antes.indexOf(n)<0; });
+    if(!nuevos.length) return;
+    abierto={ nodos:nuevos, boton:b, cerrar:function(){
+      var x=nuevos[0].querySelector('.apx-x');
+      if(x) x.click(); else { try{ history.back(); }catch(e){} }
+    } };
+    bloquea(nuevos);
+  }
+
+  function abrirVideo(src, b){
+    if(abierto) return;
+    css();
+    var tok='apxf'+Date.now(), ovAntes=document.documentElement.style.overflow;
+    var ov=document.createElement('div'); ov.className='apxf-vid';
+    ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','Vídeo de introducción');
+    ov.innerHTML='<div class="apxf-vid-caja"></div><button type="button" class="apxf-vid-x" aria-label="Cerrar el vídeo" title="Cerrar el vídeo">✕</button>';
+    var f=document.createElement('iframe'); f.title='Vídeo de introducción';
+    f.setAttribute('allow','autoplay; fullscreen');
+    f.setAttribute('sandbox','allow-scripts allow-same-origin');   /* sin allow-top-navigation: el vídeo no puede sacar de la ficha */
+    f.addEventListener('load', function(){
+      /* al final del vídeo, «Ir a ejercicios» solo lo cierra: el alumno ya está en sus ejercicios */
+      try{ f.contentDocument.addEventListener('click', function(ev){ var t=ev.target; if(t && t.closest && t.closest('#irEjercicios')){ ev.preventDefault(); ev.stopPropagation(); cierra(false); } }, true); }catch(e){}
+      try{ f.contentWindow.focus(); }catch(e){}
+    });
+    f.src=src+(src.indexOf('?')<0 ? '?' : '&')+'auto&embed';
+    ov.querySelector('.apxf-vid-caja').appendChild(f);
+    function alMensaje(e){ if(e.source===f.contentWindow && e.data && e.data.intro==='salir') cierra(false); }   /* «Salir» del vídeo */
+    function alAtras(e){ if(e && e.state && e.state.apxf===tok) return; cierra(true); }                          /* atrás del navegador/móvil */
+    function cierra(porAtras){
+      if(!abierto || abierto.nodos[0]!==ov) return;
+      window.removeEventListener('message', alMensaje); window.removeEventListener('popstate', alAtras);
+      ov.remove();   /* fuera el iframe: se para el sonido */
+      document.documentElement.style.overflow=ovAntes;
+      if(!porAtras){ try{ if(history.state && history.state.apxf===tok) history.back(); }catch(e){} }
+      alCerrar();
+    }
+    document.body.appendChild(ov); document.documentElement.style.overflow='hidden';
+    abierto={ nodos:[ov], boton:b, cerrar:function(){ cierra(false); } };
+    bloquea([ov]);
+    ov.querySelector('.apxf-vid-x').addEventListener('click', function(){ cierra(false); });
+    window.addEventListener('message', alMensaje);
+    try{ history.pushState({apxf:tok}, ''); }catch(e){}
+    window.addEventListener('popstate', alAtras);
+    try{ ov.querySelector('.apxf-vid-x').focus({preventScroll:true}); }catch(e){}
+  }
 })();
 </script>
 
