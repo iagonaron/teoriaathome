@@ -14560,11 +14560,68 @@ function __grados_marker__(){}
     });
   }
 
+  /* (27-sep-2026, Iago) FIX fichas: inversión de intervalos (_inv), inversión de acordes (_aco), enarmonía
+     avanzada (_enaAdv), cadencias (_cad) y test de adornos/abreviaciones (_quiz) guardan lo que contesta el
+     alumno DENTRO de item.ej y no en item._respuesta. El punto de control solo guardaba _respuesta, así que
+     esos ejercicios se guardaban como null y al retomar la ficha volvían EN BLANCO (pasaba en la ficha 2 de
+     4ºGE, ejercicio 6). Ahora el punto de control lleva también una copia saneada de ese estado (sin
+     funciones, nodos ni claves «__») en _ejEstado dentro de la respuesta de ESE ejercicio, y al retomar
+     (arrancarFichaAlumno) se devuelve a item.ej. La entrega y la corrección no cambian.
+     Para quitarlo: en progGuardar volver a «progSanitizarRespuestas()», borrar este bloque y el bloque
+     «FIX fichas» de arrancarFichaAlumno (los progresos con _ejEstado se siguen leyendo sin problema). */
+  const PROG_EJ_ESTADO={ inv:'_inv', aco:'_aco', ena_adv:'_enaAdv', cad:'_cad', quiz:'_quiz' };
+  function progRespuestasConEstado(){
+    const resp=progSanitizarRespuestas();
+    (PP.ficha||[]).forEach((it,k)=>{
+      try{
+        const campo=it && it.ej && PROG_EJ_ESTADO[it.ej._interactivo];
+        if(!campo || !it.ej[campo] || typeof it.ej[campo]!=='object') return;
+        const v=sanitEstado(it.ej[campo]); if(!v) return;
+        const r=(resp[k] && typeof resp[k]==='object') ? resp[k] : {};
+        r._ejEstado={ campo:campo, key:it.key||null, v:v };
+        resp[k]=r;
+      }catch(e){}
+    });
+    return resp;
+  }
+  // JSON con las claves ordenadas y sin las internas («_…», funciones): huella estable del ENUNCIADO
+  function progCanon(x){
+    if(x===null || typeof x!=='object') return JSON.stringify(x===undefined?null:x);
+    if(Array.isArray(x)) return '['+x.map(progCanon).join(',')+']';
+    return '{'+Object.keys(x).filter(k=>k.charAt(0)!=='_' && typeof x[k]!=='function' && x[k]!==undefined).sort()
+      .map(k=>JSON.stringify(k)+':'+progCanon(x[k])).join(',')+'}';
+  }
+  function progFirmaEj(campo, o){
+    try{
+      let f=null;
+      if(campo==='_inv') f=[o.tipo, o.pares ? o.pares.map(p=>[p.dada,p.num,p.code]) : [o.dada,o.num,o.code]];
+      else if(campo==='_aco') f=[o.tipo, (o.items||[]).map(it=>[it.tipo,it.inv,it.voiced])];
+      else if(campo==='_enaAdv') f=[o.mode, (o.items||[]).map(it=>[it.tipo,it.dada]), o.ton?o.ton.dada:null];
+      else if(campo==='_cad') f=[o.type, o.keyName, o.mode, (o.events||[]).map(e=>e&&e.midi)];
+      else if(campo==='_quiz') f=[o.tema, o.p1?[o.p1.q,o.p1.ops,o.p1.ok]:null, o.p2?o.p2.esVerdadero:null];
+      return progCanon(f);
+    }catch(e){ return null; }
+  }
+  // Devuelve a item.ej el estado guardado, SOLO si es del mismo ejercicio (mismo tipo, clave y enunciado).
+  function progRestaurarEjEstado(item, ee){
+    if(!item || !item.ej || !ee || typeof ee!=='object') return false;
+    const campo=PROG_EJ_ESTADO[item.ej._interactivo];
+    if(!campo || ee.campo!==campo || !ee.v || typeof ee.v!=='object' || !item.ej[campo]) return false;
+    if(ee.key && item.key && ee.key!==item.key) return false;
+    const fG=progFirmaEj(campo, ee.v), fA=progFirmaEj(campo, item.ej[campo]);
+    if(fG==null || fG!==fA) return false;               // otro enunciado: mejor en blanco que mezclado
+    const v=ee.v;
+    if(campo==='_cad') delete v._corrected;              // en cadencias _sel ES la respuesta (se conserva)
+    else v._sel=null;                                    // nota seleccionada (índices): no es respuesta
+    item.ej[campo]=v;
+    return true;
+  }
+
   // Guarda un punto de control. Fire-and-forget: nunca bloquea la navegación.
   function progGuardar(iActual, hechos){
     const ctx=window.__SUITE_ALUMNO; if(!ctx) return;
     const total=(PP.ficha||[]).length;
-    const respuestas=progSanitizarRespuestas();
+    const respuestas=progRespuestasConEstado();   /* (27-sep-2026, Iago) FIX fichas: antes progSanitizarRespuestas() */
     const pack={ i:iActual|0, hechos:hechos|0, total:total, respuestas:respuestas, t:Date.now() };
     try{ localStorage.setItem(progClaveLS(ctx.cuenta, ctx.ficha), JSON.stringify(pack)); }catch(e){}
     const sb=suiteSb(); if(!sb) return;
@@ -14807,6 +14864,10 @@ function __grados_marker__(){}
       _acoTipo:m._acoTipo||null,
       _quiz:m._quiz||null,
       _quizM:m._quizM||null,
+      /* (27-sep-2026, Iago) FIX fichas: las CADENCIAS viajan en ejercicios_json (motor._cad) pero aquí no se
+         copiaban, así que en la ficha del alumno salían SIEMPRE como «Este ejercicio no se ha podido cargar».
+         Para quitarlo: borrar esta línea. */
+      _cad:m._cad||null,
       sig:m.sig||null, layout:m.layout||null
     };
   }
@@ -14973,6 +15034,15 @@ function __grados_marker__(){}
            && (prog.total|0)===PP.ficha.length){
           prog.respuestas.forEach((r,k)=>{
             if(r && typeof r==='object' && PP.ficha[k]){
+              /* (27-sep-2026, Iago) FIX fichas: estado de inversiones/acordes/enarmonía avanzada/cadencias/test
+                 guardado en el punto de control → vuelve a item.ej. No se deja en _respuesta (esos tipos no la
+                 usan): si no había nada más, el ejercicio queda sin _respuesta, igual que antes. Los progresos
+                 antiguos (sin _ejEstado) no pasan por aquí. */
+              if(r._ejEstado!==undefined){
+                const ee=r._ejEstado; delete r._ejEstado;
+                try{ if(!progRestaurarEjEstado(PP.ficha[k], ee)) console.warn('[progreso] ejercicio '+(k+1)+': el estado guardado no corresponde a este ejercicio; no se aplica'); }catch(e){}
+                if(!Object.keys(r).length) return;
+              }
               // BUG 2-jul (Iago): 'sel' solo es un PUNTERO de selección en
               // escalas/grados (referencia a un objeto de seq que el JSON
               // rompe) → ahí se anula al rehidratar. En ruedas/semitonos-id/
@@ -15414,7 +15484,11 @@ window.SuiteTiempo=(function(){
         function seg(title){ var s=document.createElement('div'); s.className='ena-ton-seg'; var h=document.createElement('div'); h.className='ena-hint'; h.textContent=title; var body=document.createElement('div'); body.style.cssText='display:flex;gap:6px;align-items:center;justify-content:center'; s.appendChild(h); s.appendChild(body); s._body=body; return s; }
         var wn=document.createElement('div'); wn.className='wheel'; wn.style.cssText='height:90px;width:46px';
         var notas=['Do','Re','Mi','Fa','Sol','La','Si'], natInv=notas.slice().reverse().concat(['—']);
-        window.makeWheel(wn,natInv,natInv.length-1,function(ix){ g.ton.sel.step=(ix<notas.length)?ES2L[notas[notas.length-1-ix]]:null; refr(); });
+        /* (27-sep-2026, Iago) FIX fichas: al volver a este ejercicio (o al retomar la ficha) las dos ruedas de la
+           tonalidad enarmónica arrancaban en «—» aunque ya hubiera respuesta (solo se veía en «Tu respuesta»).
+           Ahora arrancan en lo elegido. Para quitarlo: volver a natInv.length-1 y al índice de '—' (armV). */
+        var _stN=natInv.length-1; if(g.ton.sel && g.ton.sel.step){ var _jN=notas.indexOf(ES[g.ton.sel.step]); if(_jN>=0) _stN=notas.length-1-_jN; }
+        window.makeWheel(wn,natInv,_stN,function(ix){ g.ton.sel.step=(ix<notas.length)?ES2L[notas[notas.length-1-ix]]:null; refr(); });
         var accC=document.createElement('div'); accC.style.cssText='display:flex;flex-direction:column;gap:6px';
         var bb=document.createElement('button'); bb.className='ena-tbtn'; bb.textContent='♭'; var bs=document.createElement('button'); bs.className='ena-tbtn'; bs.textContent='♯';
         bb.onclick=function(){ g.ton.sel.alter=(g.ton.sel.alter===-1)?0:-1; pa(); refr(); }; bs.onclick=function(){ g.ton.sel.alter=(g.ton.sel.alter===1)?0:1; pa(); refr(); }; accC.appendChild(bb); accC.appendChild(bs);
@@ -15423,7 +15497,8 @@ window.SuiteTiempo=(function(){
         bM.onclick=function(){ g.ton.sel.mode='M'; pa(); refr(); }; bm.onclick=function(){ g.ton.sel.mode='m'; pa(); refr(); }; mC.appendChild(bM); mC.appendChild(bm);
         var wa=document.createElement('div'); wa.className='wheel'; wa.style.cssText='height:90px;width:48px';
         var armV=[]; for(var s=7;s>=1;s--) armV.push({f:s,t:s+'♯'}); armV.push({f:null,t:'—'}); for(var b2=1;b2<=7;b2++) armV.push({f:-b2,t:b2+'♭'});
-        window.makeWheel(wa,armV.map(function(o){return o.t;}),armV.findIndex(function(o){return o.f===null;}),function(ix){ g.ton.sel.f=armV[ix].f||0; refr(); });
+        var _stA=armV.findIndex(function(o){return o.f===null;}); if(g.ton.sel && g.ton.sel.f){ var _jA=armV.findIndex(function(o){return o.f===g.ton.sel.f;}); if(_jA>=0) _stA=_jA; }   /* (27-sep-2026, Iago) FIX fichas: ver arriba */
+        window.makeWheel(wa,armV.map(function(o){return o.t;}),_stA,function(ix){ g.ton.sel.f=armV[ix].f||0; refr(); });
         var segT=seg('Tonalidad'); segT._body.appendChild(wn); segT._body.appendChild(accC); segT._body.appendChild(mC);
         var segA=seg('Armadura'); segA._body.appendChild(wa);
         sel.appendChild(segT); sel.appendChild(segA); tb.appendChild(sel);
