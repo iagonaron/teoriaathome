@@ -39,7 +39,7 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   intros/indica-la-tonalidad/index.html). Si añadís una intro a `INTROS`, añadidla también a `VIDEO`.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 28-sep 08:20 · Intros didácticas · EN CURSO · crea este fichero · intros/la-tonalidad/ e
+- 28-sep 08:20 · Intros didácticas · HECHO · commits a6f1c39 (la-tonalidad), 5135e51 (indica-la-tonalidad), 2211aa3 (index.html) · crea este fichero · intros/la-tonalidad/ e
   intros/indica-la-tonalidad/ (dos vídeos) · index.html: aviso tras `<meta charset>`, bloque
   «VÍDEOS DE INTRODUCCIÓN» antes de </body> y `VIDEO` de «APUNTES EN LAS FICHAS» (una línea).
   No toca nada más.
