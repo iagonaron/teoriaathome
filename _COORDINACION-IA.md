@@ -68,7 +68,15 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   pestaña y manda al padre postMessage({intro: 'abrir', slug, src}); si queréis que funcione ahí, añadid «allow-popups
   allow-popups-to-escape-sandbox» a ese iframe o atended ese mensaje.
 
+- (28-sep, Intros didácticas) COPIAS EN TEORÍA PRO: intros/intervalos/, intervalos-compuestos/, inversion-intervalos/,
+  inversion-compuestos/, indica-la-tonalidad/, indica-la-armadura/, tonalidades-vecinas/, escalas-menores/, escalas-mayores/,
+  otras-escalas/ y la-tonalidad/ están copiadas TAL CUAL en teoriapro/intros/ (tarjetas de repaso de Grado Profesional;
+  allí solo cambia `INTRO_CFG` del index.html). Si cambiáis uno de esos vídeos aquí, copiadlo también allí (y apuntadlo en
+  el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
+
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 28-sep 20:33 · Intros didácticas · HECHO · solo este fichero: aviso de que 11 carpetas de intros/ tienen copia en
+  teoriapro (vídeos GE en las tarjetas de repaso de Teoría PRO, EN PRUEBA; commits de teoriapro 9b5a04c … d915f15).
 - 28-sep 19:55 · Intros didácticas · HECHO · commits f5b5598 (escalas-menores), dca78a2 (escalas-mayores), 0f7e26c (otras-escalas),
   b550a5e (grados), fead664 (semitonos), c9f077e (intervalos), 79d74cc (inversion-intervalos), 19a83eb (inversion-compuestos),
   e43606b (indica-la-armadura), 2b689c9 (tonalidades-vecinas), aa85a72 (la-tonalidad), 2ad0b7d (indica-la-tonalidad), f7a0f14 (index.html)
