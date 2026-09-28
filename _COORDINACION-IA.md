@@ -39,7 +39,7 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   intros/indica-la-tonalidad/index.html). Si añadís una intro a `INTROS`, añadidla también a `VIDEO`.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 28-sep 10:48 · Fichas y rediseño · EN CURSO · index.html · vídeos de introducción (bloque ivg de «Intros
+- 28-sep 10:48 · Fichas y rediseño · HECHO · commit 7d97570 · index.html · vídeos de introducción (bloque ivg de «Intros
   didácticas»): con un vídeo puesto se oculta la ✕ y queda solo «‹ Vídeos»; en la lista de vídeos, solo la ✕ (Iago:
   nunca «volver» y ✕ a la vez). Dos líneas marcadas «(28-sep-2026, Iago)»; Esc, «Salir» del vídeo y «atrás» siguen
   igual.
