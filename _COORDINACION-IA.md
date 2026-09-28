@@ -39,7 +39,7 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   intros/indica-la-tonalidad/index.html). Si añadís una intro a `INTROS`, añadidla también a `VIDEO`.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 28-sep 08:46 · Fichas y rediseño · EN CURSO · index.html: generador (alumnos con ejercicios específicos legibles;
+- 28-sep 08:46 · Fichas y rediseño · HECHO · commit 909b816 · index.html: generador (alumnos con ejercicios específicos legibles;
   «Preparar envío» ya no pide el ZIP), autoguardado también al girar una rueda con la rueda del ratón, sin el texto
   «Simulación…» de relleno, apuntes nuevos con las respuestas de Iago (?v=2: apuntes.js, apuntes-kit.js; solo Tester)
   y la línea «LM piel» tras `<meta charset>` (no hace nada sin la cuenta de prueba). No toca las tarjetas, `ivg-*`
