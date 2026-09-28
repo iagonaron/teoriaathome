@@ -495,8 +495,10 @@
       TS.forEach((v, i) => {
         const G = N.group(g);
         const xa = XS_ESC[i] + 22, xb = XS_ESC[i + 1] + 22, yb = 668;
-        N.el('path', { d: `M${xa + 10},${yb - 14} Q${(xa + xb) / 2},${yb + 6} ${xb - 10},${yb - 14}`, fill: 'none', stroke: v === 'S' ? C.rosa : C.suave, 'stroke-width': 3 }, G);
-        texto(G, v, (xa + xb) / 2, yb + 36, { anchor: 'middle', size: 28, peso: 800, fill: v === 'S' ? C.rosa : C.suave });
+        // (28-sep, norma de Iago) tono = arco redondo; semitono = pico en V; siempre por debajo
+        const dS = v === 'S' ? `M${xa + 10},${yb - 14} L${(xa + xb) / 2},${yb + 4} L${xb - 10},${yb - 14}` : `M${xa + 10},${yb - 14} Q${(xa + xb) / 2},${yb + 6} ${xb - 10},${yb - 14}`;
+        N.el('path', { d: dS, fill: 'none', stroke: v === 'S' ? C.rosa : C.suave, 'stroke-width': 3, 'stroke-linejoin': 'miter' }, G);
+        texto(G, v === 'S' ? 'st' : v, (xa + xb) / 2, yb + 36, { anchor: 'middle', size: 28, peso: 800, fill: v === 'S' ? C.rosa : C.suave });
         mostrarEn(s, G, tTS + i * 0.12, tFam - 0.1, .25, .3);
       });
     });
