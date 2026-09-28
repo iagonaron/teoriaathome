@@ -37,8 +37,23 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
 - intros/la-tonalidad/ e intros/indica-la-tonalidad/ son autónomas (no cargan nada del portal).
 - Bloque «APUNTES EN LAS FICHAS»: su `VIDEO` tiene ya «indica la tonalidad» (ton_arm_tono →
   intros/indica-la-tonalidad/index.html). Si añadís una intro a `INTROS`, añadidla también a `VIDEO`.
+- (28-sep, Intros didácticas) VÍDEOS EN PRUEBA: en `INTROS` los vídeos con `prueba: true` solo los ve la cuenta
+  Tester (APX.comprobar → validado y tester), con la etiqueta «EN PRUEBA»; por eso ahora hay ▶ también en las
+  tarjetas «Intervalos», «Inversión de intervalos» y «Compases» (data-pad intervalos, inversiones, compases), solo
+  para Tester. `EJERCICIOS` tiene una función por tarjeta y cada vídeo dice a qué tarjeta de ejercicios lleva
+  (card: cardTA/cardTB/cardTC/cardA/cardCOM; en Inversión, inv: simples/compuestos).
+  Los vídeos EN PRUEBA NO están en `VIDEO` de «APUNTES EN LAS FICHAS» (a propósito: si los apuntes se abren a todos,
+  no deben verse). AL PUBLICARLOS (solo cuando Iago lo diga): quitar `prueba: true` y añadirlos a `VIDEO`:
+  int_clasif → intros/intervalos/, inv_simples → intros/inversion-intervalos/, inv_compuestos →
+  intros/inversion-compuestos/, com_clasif → intros/compases/, ton_tono_arm → intros/indica-la-armadura/,
+  ton_vecinos → intros/tonalidades-vecinas/ (cada una con /index.html).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 28-sep 11:55 · Intros didácticas · EN CURSO · 7 vídeos GE nuevos EN PRUEBA (solo la cuenta Tester): carpetas
+  nuevas intros/intervalos/, intros/inversion-intervalos/, intros/intervalos-compuestos/, intros/inversion-compuestos/,
+  intros/compases/, intros/indica-la-armadura/, intros/tonalidades-vecinas/ · index.html: solo el bloque «VÍDEOS DE
+  INTRODUCCIÓN» (ivg-*): INTROS con «prueba: true», puerta Tester, ▶ en Intervalos / Inversión / Compases, EJERCICIOS
+  por tarjeta y CSS para 3–4 vídeos. Parto de c832ac2 (incluye el cambio de «Fichas y rediseño» en la ✕ / «‹ Vídeos»).
 - 28-sep 10:48 · Fichas y rediseño · HECHO · commit 7d97570 · index.html · vídeos de introducción (bloque ivg de «Intros
   didácticas»): con un vídeo puesto se oculta la ✕ y queda solo «‹ Vídeos»; en la lista de vídeos, solo la ✕ (Iago:
   nunca «volver» y ✕ a la vez). Dos líneas marcadas «(28-sep-2026, Iago)»; Esc, «Salir» del vídeo y «atrás» siguen
