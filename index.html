@@ -18524,7 +18524,9 @@ window.CAD = {
     background:#e84393;border-radius:6px;padding:.25em .6em}
   @container (max-width:560px){ .ivg-sub,.ivg-bar{display:none} .ivg-kick{font-size:9px} .ivg-op{flex-basis:44cqw;gap:3cqh;border-radius:10px} }
   @container (max-width:560px){ .ivg-opciones.ivg-muchas .ivg-op{flex-basis:37cqw;gap:1.5cqh} .ivg-muchas .ivg-num{display:none}
-    .ivg-prueba{top:4%;left:3%;padding:.1em .4em;font-size:8px;letter-spacing:.06em} .ivg-ok{font-size:13px;right:3%;bottom:4%} }   /* (28-sep-2026) móvil con 3–4 vídeos */
+    .ivg-prueba{top:4%;left:3%;padding:.1em .4em;font-size:8px;letter-spacing:.06em} .ivg-ok{font-size:13px;right:3%;bottom:4%}
+    .ivg-muchas .ivg-prueba{font-size:0;letter-spacing:0;padding:0;width:9px;height:9px;border-radius:50%;background:#e84393;border:0;top:7%;left:6%}
+    .ivg-muchas .ivg-prueba.ok{background:#4ade80} }   /* (28-sep-2026) móvil con 3–4 vídeos · (tarde) «EN PRUEBA» = punto, para no tapar el título */
   .ivg-cerrar,.ivg-volver{position:fixed;top:14px;z-index:10000;height:40px;box-sizing:border-box;border-radius:10px;border:1px solid rgba(255,255,255,.3);
     background:rgba(0,0,0,.45);color:#fff;font:600 16px/1 system-ui,sans-serif;cursor:pointer;opacity:0;transition:opacity .3s,border-color .2s}
   .ivg-cerrar{right:16px;width:40px}
@@ -18555,6 +18557,18 @@ window.CAD = {
     ] },
     compases: { nombre: 'Compases', lista: [
       { src: 'intros/compases/index.html', tit: 'Compases', sub: 'Pulsos · Subdivisión · Figuras', dur: '2:23', card: 'cardCOM', prueba: true }
+    ] },
+    /* (28-sep-2026, tarde) grabación «Guiones 9-14»: EN PRUEBA (solo Tester y Protester) */
+    escalas: { nombre: 'Escalas', lista: [
+      { src: 'intros/escalas-menores/index.html', tit: 'Escalas menores', sub: 'Natural · Armónica · Melódica · Dórica', dur: '3:26', practica: 'esc_menor', prueba: true },
+      { src: 'intros/escalas-mayores/index.html', tit: 'Escalas Mayores', sub: 'Tipo 1 · Tipo 2 · Tipo 3 · Tipo 4', dur: '3:00', practica: 'esc_mayor', prueba: true },
+      { src: 'intros/otras-escalas/index.html', tit: 'Otras escalas', sub: 'Pentatónicas · Hexátona · Cromática', dur: '3:31', practica: 'esc_otras', prueba: true }
+    ] },
+    grados: { nombre: 'Grados', lista: [
+      { src: 'intros/grados/index.html', tit: 'Grados', sub: 'Nombres · Tonales y modales · Dos ejercicios', dur: '2:56', card: 'cardGR', prueba: true }
+    ] },
+    semitonos: { nombre: 'Semitonos', lista: [
+      { src: 'intros/semitonos/index.html', tit: 'Semitono cromático y diatónico', sub: 'Cromático = copia · Diatónico = distinto', dur: '2:10', card: 'cardSEM', prueba: true }
     ] }
   };
   /* «Ir a ejercicios» del final del vídeo: se cierra y se abren los ejercicios de esa tarjeta (sin recargar) */
@@ -18566,7 +18580,10 @@ window.CAD = {
     tonalidades: function(v){ abreEj('openTonalidades', (v && v.card) || 'cardTA', 'ton_arm_tono'); },
     intervalos: function(v){ abreEj('openIntervalos', (v && v.card) || 'cardA', 'int_clasif'); },
     inversiones: function(v){ abreEj('openInversiones', null, 'inv_simples'); try { if (v && v.inv && window.invTab) window.invTab(v.inv); } catch (e) {} },
-    compases: function(v){ abreEj('openCompases', (v && v.card) || 'cardCOM', 'com_clasif'); }
+    compases: function(v){ abreEj('openCompases', (v && v.card) || 'cardCOM', 'com_clasif'); },
+    escalas: function(v){ abreEj('openEscalas', null, (v && v.practica) || 'esc_menor'); },          /* (28-sep-2026, tarde) */
+    grados: function(v){ abreEj('openGrados', (v && v.card) || 'cardGR', 'gra_senalar'); },
+    semitonos: function(v){ abreEj('openSemitonos', (v && v.card) || 'cardSEM', 'semitonos'); }
   };
   /* (28-sep-2026) quién puede ver cada vídeo: sin marca, todos (los dos primeros de Tonalidades); alumnos: true, solo cuentas
      validadas (alumnos logueados y vinculados; nunca invitados); prueba: true, solo Tester y Protester (APX.comprobar) */
