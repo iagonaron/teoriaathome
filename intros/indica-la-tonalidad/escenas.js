@@ -338,8 +338,10 @@
       TS.forEach((v, i) => {
         const G = N.group(g);
         const xa = xs[i] + 22, xb = xs[i + 1] + 22, yb = 668;
-        N.el('path', { d: `M${xa + 10},${yb - 14} Q${(xa + xb) / 2},${yb + 6} ${xb - 10},${yb - 14}`, fill: 'none', stroke: v === 'S' ? C.rosa : C.suave, 'stroke-width': 3 }, G);
-        texto(G, v, (xa + xb) / 2, yb + 36, { anchor: 'middle', size: 28, peso: 800, fill: v === 'S' ? C.rosa : C.suave });
+        // (28-sep, norma de Iago) tono = arco redondo; semitono = pico en V; siempre por debajo
+        const dS = v === 'S' ? `M${xa + 10},${yb - 14} L${(xa + xb) / 2},${yb + 4} L${xb - 10},${yb - 14}` : `M${xa + 10},${yb - 14} Q${(xa + xb) / 2},${yb + 6} ${xb - 10},${yb - 14}`;
+        N.el('path', { d: dS, fill: 'none', stroke: v === 'S' ? C.rosa : C.suave, 'stroke-width': 3, 'stroke-linejoin': 'miter' }, G);
+        texto(G, v === 'S' ? 'st' : v, (xa + xb) / 2, yb + 36, { anchor: 'middle', size: 28, peso: 800, fill: v === 'S' ? C.rosa : C.suave });
         mostrarEn(s, G, tTS + i * 0.14, b - 0.3, .25, .3);
       });
       // «uno de los más populares»: la tarjeta de la escala mayor del vídeo anterior
