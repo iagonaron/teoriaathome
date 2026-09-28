@@ -39,6 +39,11 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   intros/indica-la-tonalidad/index.html). Si añadís una intro a `INTROS`, añadidla también a `VIDEO`.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 28-sep 09:19 · Fichas y rediseño · EN CURSO · index.html: (1) ficha del alumno, APUNTES: antes una ventana
+  «¿Necesitas mirar los apuntes?» y, abiertos, «‹ Volver» bloqueado 1 minuto, sin ✕ (bloque «APUNTES EN LAS FICHAS»;
+  solo Tester); (2) VER APUNTES sin la ✕ de la derecha (un <style> al final); (3) tarjeta Tonalidades que gira con ▶:
+  un <style> APARTE al final (no toca el bloque ivg-*) que quita el desenfoque y el ▶/«VER APUNTES» de la copia que
+  gira, desvanece la cara de delante al girar y hace que la ✕ responda al primer clic con la estética nueva.
 - 28-sep 08:46 · Fichas y rediseño · HECHO · commit 909b816 · index.html: generador (alumnos con ejercicios específicos legibles;
   «Preparar envío» ya no pide el ZIP), autoguardado también al girar una rueda con la rueda del ratón, sin el texto
   «Simulación…» de relleno, apuntes nuevos con las respuestas de Iago (?v=2: apuntes.js, apuntes-kit.js; solo Tester)
