@@ -385,6 +385,98 @@
     return G;
   }
 
+  // ================================================================ (28-sep, tarde) NORMAS DE IAGO · código estándar de todos los vídeos
+  // TONO = arco redondo · SEMITONO = pico en V · SIEMPRE por DEBAJO de las notas (como en el Kit salvavidas).
+  /** Punto de partida bajo la cabeza de una redonda creada con nota(): {x, y}. lado −1 = mitad izquierda, +1 = derecha. */
+  function bajoCabeza(n, lado) {
+    const w = n.w || 30;
+    return { x: n.cx + (lado || 0) * w * 0.22, y: n.y + SP * 0.72 };
+  }
+  /** Tono entre dos puntos (bajo las cabezas): arco redondo por debajo. o.txt = rótulo bajo el arco («T», «1T»…). */
+  function arcoTono(parent, x1, y1, x2, y2, o) {
+    o = o || {};
+    const G = N.group(parent, 'tono');
+    const prof = o.prof || Math.min(44, Math.max(16, Math.abs(x2 - x1) * 0.26));
+    const mx = (x1 + x2) / 2, yb = Math.max(y1, y2) + prof;
+    // cuadrática cuyo punto más bajo queda en yb
+    const cy = 2 * yb - (y1 + y2) / 2;
+    N.el('path', { d: `M${x1.toFixed(1)},${y1.toFixed(1)} Q${mx.toFixed(1)},${cy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`, fill: 'none', stroke: 'currentColor', 'stroke-width': o.w || 3.2, 'stroke-linecap': 'round' }, G);
+    if (o.txt) texto(G, o.txt, mx, yb + (o.dyTxt || 30), { anchor: 'middle', size: o.size || 24, peso: 800, fill: 'currentColor' });
+    G._yb = yb;
+    return G;
+  }
+  /** Semitono entre dos puntos (bajo las cabezas): pico en V por debajo. */
+  function picoSemitono(parent, x1, y1, x2, y2, o) {
+    o = o || {};
+    const G = N.group(parent, 'semitono');
+    const prof = o.prof || Math.min(38, Math.max(14, Math.abs(x2 - x1) * 0.22));
+    const mx = (x1 + x2) / 2, yb = Math.max(y1, y2) + prof;
+    N.el('path', { d: `M${x1.toFixed(1)},${y1.toFixed(1)} L${mx.toFixed(1)},${yb.toFixed(1)} L${x2.toFixed(1)},${y2.toFixed(1)}`, fill: 'none', stroke: 'currentColor', 'stroke-width': o.w || 3.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'miter' }, G);
+    if (o.txt) texto(G, o.txt, mx, yb + (o.dyTxt || 28), { anchor: 'middle', size: o.size || 24, peso: 800, fill: 'currentColor' });
+    G._yb = yb;
+    return G;
+  }
+  /** Tono ('T') o semitono ('st') entre dos redondas de nota(): siempre por debajo. o.txt opcional. */
+  function distancia(parent, n1, n2, tipo, o) {
+    const a = bajoCabeza(n1, +1), b = bajoCabeza(n2, -1);
+    return (tipo === 'st' ? picoSemitono : arcoTono)(parent, a.x, a.y, b.x, b.y, o);
+  }
+  /** Movimiento de una nota (p. ej., cambio de octava al invertir): arco discontinuo con punta, como en el Kit.
+   *  curv > 0 abomba hacia ARRIBA (por defecto). o.dash, o.w, o.cab. */
+  function arcoMovimiento(parent, x1, y1, x2, y2, o) {
+    o = o || {};
+    const G = N.group(parent, 'movimiento');
+    const curv = o.curv != null ? o.curv : 70;
+    const mx = (x1 + x2) / 2, my = Math.min(y1, y2) - curv;
+    N.el('path', { d: `M${x1.toFixed(1)},${y1.toFixed(1)} Q${mx.toFixed(1)},${my.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`, fill: 'none', stroke: 'currentColor', 'stroke-width': o.w || 3, 'stroke-linecap': 'round', 'stroke-dasharray': o.dash || '9 8' }, G);
+    const ang = Math.atan2(y2 - my, x2 - mx), cab = o.cab || 14;
+    const p = a => `${(x2 - Math.cos(ang + a) * cab).toFixed(1)},${(y2 - Math.sin(ang + a) * cab).toFixed(1)}`;
+    N.el('polygon', { points: `${x2.toFixed(1)},${y2.toFixed(1)} ${p(0.42)} ${p(-0.42)}`, fill: 'currentColor' }, G);
+    G._curva = t => {   // punto de la curva en t∈[0,1] (para mover una cabeza por el arco)
+      const u = 1 - t;
+      return { x: u * u * x1 + 2 * u * t * mx + t * t * x2, y: u * u * y1 + 2 * u * t * my + t * t * y2 };
+    };
+    return G;
+  }
+  /** Cabeza rosa que VIAJA por un arco de movimiento entre ta y tb (y se queda en el destino).
+   *  Úsala con arcoMovimiento(...)._curva. dib(G) dibuja la cabeza centrada en (0,0). */
+  function viaja(s, G, curva, ta, tb) {
+    s.on(t => {
+      const k = ease(ramp(t, ta, tb));
+      const p = curva(k);
+      G.setAttribute('transform', `translate(${p.x.toFixed(1)},${p.y.toFixed(1)})`);
+    });
+  }
+  /** (28-sep, Iago) Los carteles que remiten a OTRO vídeo se pueden pulsar: abren ese vídeo en una pestaña nueva
+   *  (y paran este). slug = carpeta del otro vídeo dentro de intros/ (p. ej. 'inversion-intervalos'). */
+  function enlaceVideo(g, slug) {
+    g.style.cursor = 'pointer';
+    g.setAttribute('role', 'link'); g.setAttribute('tabindex', '0');
+    g.setAttribute('aria-label', 'Abrir el vídeo en una pestaña nueva');
+    const abre = ev => {
+      ev.stopPropagation(); ev.preventDefault();
+      const url = new URL('../' + slug + '/index.html', location.href).href;
+      let w = null;
+      try { w = window.open(url, '_blank'); } catch (e) { }
+      if (w) { try { w.opener = null; } catch (e) { } }
+      else { try { parent.postMessage({ intro: 'abrir', slug: slug, src: 'intros/' + slug + '/index.html' }, '*'); } catch (e) { } }
+      try { if (document.body.classList.contains('sonando')) document.getElementById('botonPausa').click(); } catch (e) { }
+    };
+    g.addEventListener('click', abre);
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') abre(e); });
+    g.addEventListener('mouseenter', () => { g.style.filter = 'brightness(1.25)'; });
+    g.addEventListener('mouseleave', () => { g.style.filter = ''; });
+    return g;
+  }
+  /** Pequeño icono «abrir en pestaña nueva» (↗ en un cuadrado) para ponerlo en la esquina de esas tarjetas. */
+  function icoAbrir(parent, x, y, sz) {
+    sz = sz || 26;
+    const G = N.group(parent, 'icoAbrir');
+    N.el('rect', { x: x, y: y, width: sz, height: sz, rx: sz * 0.22, fill: 'none', stroke: 'currentColor', 'stroke-width': 2.4 }, G);
+    N.el('path', { d: `M${x + sz * 0.35},${y + sz * 0.65} L${x + sz * 0.72},${y + sz * 0.28} M${x + sz * 0.42},${y + sz * 0.28} H${x + sz * 0.72} V${y + sz * 0.58}`, fill: 'none', stroke: 'currentColor', 'stroke-width': 2.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, G);
+    return G;
+  }
+
   // ================================================================ E4 · INVERSIÓN DE INTERVALOS COMPUESTOS
   const TITULO = { kicker: 'TEORÍA  ·  INTERVALOS', lineas: ['INVERSIÓN DE', 'INTERVALOS COMPUESTOS'], sub: 'Me acerco · Invierto · Me alejo' };
   const WN = N.M.noteheadWhole.adv * SP;                 // ancho de una redonda
@@ -401,6 +493,106 @@
     g.setAttribute('clip-path', `url(#${id})`);
     s.on(t => r.setAttribute('width', (w * eo(ramp(t, ta, ta + (d || .45)))).toFixed(1)));
   }
+
+  // ================================================================ (28-sep, Iago) EL CAMBIO DE OCTAVA SE VE, COMO EN EL KIT
+  // En TODAS las inversiones: la nota que cambia de octava no se reescribe de golpe. De su sitio SALE una cabeza rosa
+  // (con su alteración, si la lleva) que VIAJA por un arco discontinuo con punta hasta su octava nueva; el arco se va
+  // dibujando detrás de ella y se queda. La cabeza viajera va sin líneas adicionales: la nota de llegada, con las
+  // suyas, aparece cuando llega. Grafía de arcoMovimiento (trazo 3,2 · discontinuo 9/8 · punta de 14), en curva
+  // cúbica para poder salir del intervalo sin pisar la otra nota y llegar por el lado contrario a la que se queda.
+  // (Mismo código que en «Inversión de intervalos».)
+  const ALT_GL = { '#': 'accidentalSharp', b: 'accidentalFlat', n: 'accidentalNatural' };
+  const altDe = n => { const m = /^([A-G])([#bn]?)(\d)$/.exec(n); return m && m[2] ? ALT_GL[m[2]] : null; };
+  /** Cabeza de redonda suelta, centrada en (0, 0), con su alteración si la lleva: la que viaja. */
+  function cabezaSuelta(parent, n) {
+    const G = N.group(parent, 'cabezaViajera');
+    N.glyph(G, 'noteheadWhole', -WN / 2, 0, SP);
+    const gl = altDe(n);
+    if (gl) N.glyph(G, gl, -WN / 2 - (N.M[gl].adv + 0.22) * SP, 0, SP);
+    return G;
+  }
+  /** Zonas que el arco no pisa alrededor de una nota q = {n, x, y} (centro de la cabeza): cabeza y alteración. */
+  function zonasNota(q, m) {
+    m = m == null ? 5 : m;
+    const Z = [{ e: 1, cx: q.x, cy: q.y, rx: WN / 2 + m, ry: SP / 2 + m }];
+    const gl = altDe(q.n);
+    if (gl) {
+      const B = N.M[gl], x0 = q.x - WN / 2 - (B.adv + 0.22) * SP;
+      Z.push({ x0: x0 + B.sw[0] * SP - m, x1: x0 + B.ne[0] * SP + m, y0: q.y - B.ne[1] * SP - m, y1: q.y - B.sw[1] * SP + m });
+    }
+    return Z;
+  }
+  const pisa = (p, Z) => Z.some(z => z.e ? Math.pow((p.x - z.cx) / z.rx, 2) + Math.pow((p.y - z.cy) / z.ry, 2) < 1
+    : p.x > z.x0 && p.x < z.x1 && p.y > z.y0 && p.y < z.y1);
+  /** Camino (Bézier cúbica) de centro de cabeza a centro de cabeza. dy1: cómo sale (− hacia arriba, + hacia abajo,
+   *  0 en horizontal si hay otra nota pegada); dy2: por dónde llega (− desde arriba, + desde abajo). */
+  function caminoOctava(p1, p2, o) {
+    const L = p2.x - p1.x, a = o.a || 0.4, b = o.b || 0.3;
+    const P = [p1.x, p1.y, p1.x + a * L, p1.y + (o.dy1 || 0), p2.x - b * L, p2.y + (o.dy2 || 0), p2.x, p2.y];
+    const f = k => {
+      const u = 1 - k, c0 = u * u * u, c1 = 3 * u * u * k, c2 = 3 * u * k * k, c3 = k * k * k;
+      return { x: c0 * P[0] + c1 * P[2] + c2 * P[4] + c3 * P[6], y: c0 * P[1] + c1 * P[3] + c2 * P[5] + c3 * P[7] };
+    };
+    f.der = k => {
+      const u = 1 - k, c0 = 3 * u * u, c1 = 6 * u * k, c2 = 3 * k * k;
+      return { x: c0 * (P[2] - P[0]) + c1 * (P[4] - P[2]) + c2 * (P[6] - P[4]), y: c0 * (P[3] - P[1]) + c1 * (P[5] - P[3]) + c2 * (P[7] - P[5]) };
+    };
+    return f;
+  }
+  /** CAMBIO DE OCTAVA. o: {org, dest: {n, x, y} (centros de cabeza), otras: notas junto a la de salida, fijas: notas
+   *  junto a la de llegada, ta, tb (viaje), dy1, dy2, a, b, capaArco, capaCabeza (encima de todo),
+   *  rotulo ('octava', opcional), apaga (instante en que el arco pasa a gris suave, opcional)}. Devuelve {A, H, R, f}. */
+  function cambioOctava(s, o) {
+    const f = caminoOctava(o.org, o.dest, o);
+    const Zo = [], Zd = [];
+    [o.org].concat(o.otras || []).forEach(q => Zo.push(...zonasNota(q)));
+    [o.dest].concat(o.fijas || []).forEach(q => Zd.push(...zonasNota(q)));
+    const PASO = 1 / 800;
+    let k0 = 0, k1 = 1;
+    for (let k = 0; k <= 0.6; k += PASO) if (pisa(f(k), Zo)) k0 = k + PASO;          // empieza fuera del intervalo de salida
+    for (let k = k0; k <= 1; k += PASO) if (pisa(f(k), Zd)) { k1 = k - PASO; break; }  // y la punta toca la nota que llega
+    const A = N.group(o.capaArco, 'movimiento'); color(A, C.rosa);
+    const NP = 160, pts = [];
+    for (let i = 0; i <= NP; i++) { const q = f(k0 + (k1 - k0) * i / NP); pts.push(q.x.toFixed(1) + ',' + q.y.toFixed(1)); }
+    const lin = N.el('polyline', { points: '', fill: 'none', stroke: 'currentColor', 'stroke-width': o.w || 3.2,
+      'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-dasharray': '9 8' }, A);
+    const pt = f(k1), dv = f.der(k1), ang = Math.atan2(dv.y, dv.x), cab = 14;
+    const ala = d => `${(pt.x - Math.cos(ang + d) * cab).toFixed(1)},${(pt.y - Math.sin(ang + d) * cab).toFixed(1)}`;
+    const punta = N.el('polygon', { points: `${pt.x.toFixed(1)},${pt.y.toFixed(1)} ${ala(0.42)} ${ala(-0.42)}`, fill: 'currentColor' }, A);
+    // rótulo («octava») por fuera del lomo del arco, sobre un fondo oscuro para que se lea encima de las líneas
+    let R = null, kR = 1;
+    if (o.rotulo) {
+      const p0 = f(k0), p1 = f(k1), cl = Math.hypot(p1.x - p0.x, p1.y - p0.y), nx = -(p1.y - p0.y) / cl, ny = (p1.x - p0.x) / cl;
+      let best = 0;
+      for (let i = 0; i <= 100; i++) { const k = k0 + (k1 - k0) * i / 100, q = f(k), d = (q.x - p0.x) * nx + (q.y - p0.y) * ny; if (Math.abs(d) > Math.abs(best)) { best = d; kR = k; } }
+      const sg = best >= 0 ? 1 : -1, q = f(kR), dd = o.rotuloDist || 34;
+      const rx = q.x + nx * sg * dd, ry = q.y + ny * sg * dd;
+      R = N.group(o.capaArco, 'rotulo');
+      const tt = texto(R, o.rotulo, rx, ry + 9, { anchor: 'middle', size: 26, peso: 800, fill: C.rosa });
+      const w = D.medir(tt) + 22;
+      R.insertBefore(N.el('rect', { x: (rx - w / 2).toFixed(1), y: (ry - 19).toFixed(1), width: w.toFixed(1), height: 38, rx: 8, fill: '#0b1320', opacity: 0.88 }), tt);
+    }
+    // la cabeza que viaja (rosa, con su alteración)
+    const H = cabezaSuelta(o.capaCabeza, o.org.n); color(H, C.rosa);
+    viaja(s, H, f, o.ta, o.tb);
+    s.on(t => {
+      const k = ease(ramp(t, o.ta, o.tb));                 // el mismo avance que usa viaja
+      const kv = Math.min(k, k1);
+      if (kv <= k0) lin.setAttribute('points', '');
+      else {
+        const n = Math.min(NP, Math.floor((kv - k0) / (k1 - k0) * NP)), q = f(kv);
+        lin.setAttribute('points', pts.slice(0, n + 1).join(' ') + ' ' + q.x.toFixed(1) + ',' + q.y.toFixed(1));
+      }
+      opa(punta, ramp(k, k1 - 0.02, k1));
+      opa(H, win(t, o.ta - 0.06, o.tb + 0.22, .06, .16));
+      const kA = o.apaga != null ? ease(ramp(t, o.apaga, o.apaga + 0.4)) : 0;
+      if (o.apaga != null) { color(A, mezcla(C.rosa, C.suave, kA)); A.setAttribute('opacity', (1 - 0.55 * kA).toFixed(3)); }
+      if (R) opa(R, Math.min(ease(ramp(k, kR, Math.min(1, kR + 0.15))), 1 - kA));
+    });
+    return { A, H, R, f };
+  }
+  /** Nota {n, x, y} de un pentagrama (centro de cabeza), para cambioOctava. */
+  const pto = (n, x, yMid) => ({ n, x, y: yNota(n, yMid) });
 
   /** Letra en un círculo (los pasos A · I · A). */
   function letraCirc(parent, L, x, y, r, size) {
@@ -513,36 +705,44 @@
         opa(St, lerp(0.4, 1, hecho));
       });
     }
+    // (28-sep, Iago) cada paso: la nota que cambia de octava SALE del compás anterior (cabeza rosa) y VIAJA por su
+    // arco hasta el compás nuevo, donde ya espera la que se queda. Arcos y cabezas van encima de todo.
+    const capaArc = N.group(G), capaCab = N.group(G);
+    const notas = [];                                      // por compás: {nota: grupo}
     E.pasos.forEach((p, i) => {
       const M = N.group(G);
       const tm = E.tm[i], tNext = i < 3 ? E.tm[i + 1] - 0.15 : E.tFin;
       const fija = redondaEn(M, p.fija, xc(i), yM);
-      mostrarEn(s, fija, tm - 0.15, 1e9, .3);
-      if (!p.vieja) { const otra = redondaEn(M, p.nueva, xc(i), yM); mostrarEn(s, otra, tm - 0.15, 1e9, .3); }
-      else {
-        // la nota que cambia de octava: se queda su sombra, una flecha de octava y aparece en rosa en su sitio nuevo
-        const som = redondaEn(M, p.vieja, xc(i), yM);
+      notas[i] = { [p.fija]: fija };
+      if (!p.vieja) {
+        mostrarEn(s, fija, tm - 0.15, 1e9, .3);
+        const otra = redondaEn(M, p.nueva, xc(i), yM); mostrarEn(s, otra, tm - 0.15, 1e9, .3);
+        notas[i][p.nueva] = otra;
+      } else {
+        const ta = tm - 0.1, tb = ta + 0.85;
+        mostrarEn(s, fija, ta - 0.3, 1e9, .3);             // la que se queda ya está en el compás nuevo
+        const nv = redondaEn(M, p.nueva, xc(i), yM);       // la que llega, con sus líneas adicionales, al llegar la cabeza
         s.on(t => {
-          const k = ease(ramp(t, tm + 0.15, tm + 0.55));
-          opa(som, win(t, tm - 0.15, tNext + 0.4, .3, .4) * lerp(1, 0.35, k));
-          color(som, mezcla(C.blanco, C.suave, k));
-        });
-        const nv = redondaEn(M, p.nueva, xc(i), yM);
-        s.on(t => {
-          opa(nv, ease(ramp(t, tm + 0.3, tm + 0.7)));
+          opa(nv, ease(ramp(t, tb - 0.08, tb + 0.08)));
           color(nv, mezcla(C.rosa, C.blanco, ease(ramp(t, tNext, tNext + 0.4))));
         });
-        const fl = N.group(M); color(fl, C.rosa);
-        const y1 = yNota(p.vieja, yM), y2 = yNota(p.nueva, yM), xa = xc(i) + WN / 2 + 14;
-        arcoLado(fl, xa, y1, y2, 50, { dash: '2 9', w: 4 });
-        const ym = (y1 + y2) / 2;
-        N.el('rect', { x: xa + 42, y: ym - 19, width: 92, height: 36, rx: 8, fill: '#0b1320', opacity: 0.9 }, fl);
-        texto(fl, 'octava', xa + 88, ym + 8, { anchor: 'middle', size: 24, peso: 800, fill: C.rosa });
-        mostrarEn(s, fl, tm + 0.2, tNext + 0.4, .35, .4);
+        notas[i][p.nueva] = nv;
+        // de dónde sale: la misma nota en el compás anterior (siempre la que allí se quedaba) se enciende al salir
+        const org = notas[i - 1][p.vieja];
+        s.on(t => color(org, mezcla(C.blanco, C.rosa, win(t, ta - 0.3, tb + 0.35, .25, .4))));
+        const prev = E.pasos[i - 1], otra = prev.fija === p.vieja ? prev.nueva : prev.fija;
+        const yv = yNota(p.vieja, yM), yn = yNota(p.nueva, yM), yf = yNota(p.fija, yM), yo = yNota(otra, yM);
+        // llega por el lado contrario a la que se queda; sale en horizontal si la otra nota está pegada (una 3ª)
+        const sube = yn < yv, fijaArriba = yf < yn, pegada = Math.abs(yo - yv) <= SP + 1 && (sube ? yo < yv : yo > yv);
+        const dy2 = fijaArriba ? 110 : -80;
+        const dy1 = pegada ? 0 : (dy2 > 0 ? (sube ? 40 : 90) : -60);
+        cambioOctava(s, { capaArco: capaArc, capaCabeza: capaCab, ta, tb, dy1, dy2, rotulo: 'octava', apaga: tNext,
+          org: pto(p.vieja, xc(i - 1), yM), otras: [pto(otra, xc(i - 1), yM)], dest: pto(p.nueva, xc(i), yM), fijas: [pto(p.fija, xc(i), yM)] });
       }
       const ch = N.group(G); chipInt(ch, E.ints[i], xc(i), yCh, { size: 34 });
       pop(s, ch, E.tc[i] - 0.12, 1e9, xc(i), yCh);
     });
+    G.appendChild(capaArc); G.appendChild(capaCab);
   }
   function escenaEjemplo1() {
     const a = F0('B1') - 0.1, b = F0('C1') + 0.2;
@@ -664,7 +864,12 @@
       // recordatorio: en los simples sumaban 9 · los compuestos, 23
       const yK = 490;
       const k1 = N.group(g);
-      texto(k1, [['simples: ', C.suave], ['9', C.suave]], CX - 60, yK, { anchor: 'end', size: 36, peso: 700 });
+      // (28-sep, Iago) remite al vídeo de los simples («¿te acuerdas?»): se puede pulsar (↗ = se abre en otra pestaña)
+      const tS = texto(k1, [['simples: ', C.suave], ['9', C.suave]], CX - 96, yK, { anchor: 'end', size: 36, peso: 700 });
+      const wS = D.medir(tS);
+      const ia = N.group(k1); icoAbrir(ia, CX - 84, yK - 27, 26); color(ia, C.rosa);
+      k1.insertBefore(N.el('rect', { x: (CX - 110 - wS).toFixed(1), y: yK - 44, width: (wS + 66).toFixed(1), height: 62, rx: 10, fill: 'rgba(0,0,0,0)' }), k1.firstChild);   // zona que se puede pulsar
+      enlaceVideo(k1, 'inversion-intervalos');
       aparece(s, k1, Wd('S2', 'simples') - 0.2, b - 0.2, { dy: 6 });
       const sep = N.group(g); N.line(sep, CX, yK - 36, CX, yK + 8, 2, { stroke: C.tenue }); mostrarEn(s, sep, Wd('S2', 'compuestos') - 0.2, b - 0.2);
       const k2 = N.group(g);
