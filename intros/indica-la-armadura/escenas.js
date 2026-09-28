@@ -385,6 +385,98 @@
     return G;
   }
 
+  // ================================================================ (28-sep, tarde) NORMAS DE IAGO · código estándar de todos los vídeos
+  // TONO = arco redondo · SEMITONO = pico en V · SIEMPRE por DEBAJO de las notas (como en el Kit salvavidas).
+  /** Punto de partida bajo la cabeza de una redonda creada con nota(): {x, y}. lado −1 = mitad izquierda, +1 = derecha. */
+  function bajoCabeza(n, lado) {
+    const w = n.w || 30;
+    return { x: n.cx + (lado || 0) * w * 0.22, y: n.y + SP * 0.72 };
+  }
+  /** Tono entre dos puntos (bajo las cabezas): arco redondo por debajo. o.txt = rótulo bajo el arco («T», «1T»…). */
+  function arcoTono(parent, x1, y1, x2, y2, o) {
+    o = o || {};
+    const G = N.group(parent, 'tono');
+    const prof = o.prof || Math.min(44, Math.max(16, Math.abs(x2 - x1) * 0.26));
+    const mx = (x1 + x2) / 2, yb = Math.max(y1, y2) + prof;
+    // cuadrática cuyo punto más bajo queda en yb
+    const cy = 2 * yb - (y1 + y2) / 2;
+    N.el('path', { d: `M${x1.toFixed(1)},${y1.toFixed(1)} Q${mx.toFixed(1)},${cy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`, fill: 'none', stroke: 'currentColor', 'stroke-width': o.w || 3.2, 'stroke-linecap': 'round' }, G);
+    if (o.txt) texto(G, o.txt, mx, yb + (o.dyTxt || 30), { anchor: 'middle', size: o.size || 24, peso: 800, fill: 'currentColor' });
+    G._yb = yb;
+    return G;
+  }
+  /** Semitono entre dos puntos (bajo las cabezas): pico en V por debajo. */
+  function picoSemitono(parent, x1, y1, x2, y2, o) {
+    o = o || {};
+    const G = N.group(parent, 'semitono');
+    const prof = o.prof || Math.min(38, Math.max(14, Math.abs(x2 - x1) * 0.22));
+    const mx = (x1 + x2) / 2, yb = Math.max(y1, y2) + prof;
+    N.el('path', { d: `M${x1.toFixed(1)},${y1.toFixed(1)} L${mx.toFixed(1)},${yb.toFixed(1)} L${x2.toFixed(1)},${y2.toFixed(1)}`, fill: 'none', stroke: 'currentColor', 'stroke-width': o.w || 3.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'miter' }, G);
+    if (o.txt) texto(G, o.txt, mx, yb + (o.dyTxt || 28), { anchor: 'middle', size: o.size || 24, peso: 800, fill: 'currentColor' });
+    G._yb = yb;
+    return G;
+  }
+  /** Tono ('T') o semitono ('st') entre dos redondas de nota(): siempre por debajo. o.txt opcional. */
+  function distancia(parent, n1, n2, tipo, o) {
+    const a = bajoCabeza(n1, +1), b = bajoCabeza(n2, -1);
+    return (tipo === 'st' ? picoSemitono : arcoTono)(parent, a.x, a.y, b.x, b.y, o);
+  }
+  /** Movimiento de una nota (p. ej., cambio de octava al invertir): arco discontinuo con punta, como en el Kit.
+   *  curv > 0 abomba hacia ARRIBA (por defecto). o.dash, o.w, o.cab. */
+  function arcoMovimiento(parent, x1, y1, x2, y2, o) {
+    o = o || {};
+    const G = N.group(parent, 'movimiento');
+    const curv = o.curv != null ? o.curv : 70;
+    const mx = (x1 + x2) / 2, my = Math.min(y1, y2) - curv;
+    N.el('path', { d: `M${x1.toFixed(1)},${y1.toFixed(1)} Q${mx.toFixed(1)},${my.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`, fill: 'none', stroke: 'currentColor', 'stroke-width': o.w || 3, 'stroke-linecap': 'round', 'stroke-dasharray': o.dash || '9 8' }, G);
+    const ang = Math.atan2(y2 - my, x2 - mx), cab = o.cab || 14;
+    const p = a => `${(x2 - Math.cos(ang + a) * cab).toFixed(1)},${(y2 - Math.sin(ang + a) * cab).toFixed(1)}`;
+    N.el('polygon', { points: `${x2.toFixed(1)},${y2.toFixed(1)} ${p(0.42)} ${p(-0.42)}`, fill: 'currentColor' }, G);
+    G._curva = t => {   // punto de la curva en t∈[0,1] (para mover una cabeza por el arco)
+      const u = 1 - t;
+      return { x: u * u * x1 + 2 * u * t * mx + t * t * x2, y: u * u * y1 + 2 * u * t * my + t * t * y2 };
+    };
+    return G;
+  }
+  /** Cabeza rosa que VIAJA por un arco de movimiento entre ta y tb (y se queda en el destino).
+   *  Úsala con arcoMovimiento(...)._curva. dib(G) dibuja la cabeza centrada en (0,0). */
+  function viaja(s, G, curva, ta, tb) {
+    s.on(t => {
+      const k = ease(ramp(t, ta, tb));
+      const p = curva(k);
+      G.setAttribute('transform', `translate(${p.x.toFixed(1)},${p.y.toFixed(1)})`);
+    });
+  }
+  /** (28-sep, Iago) Los carteles que remiten a OTRO vídeo se pueden pulsar: abren ese vídeo en una pestaña nueva
+   *  (y paran este). slug = carpeta del otro vídeo dentro de intros/ (p. ej. 'inversion-intervalos'). */
+  function enlaceVideo(g, slug) {
+    g.style.cursor = 'pointer';
+    g.setAttribute('role', 'link'); g.setAttribute('tabindex', '0');
+    g.setAttribute('aria-label', 'Abrir el vídeo en una pestaña nueva');
+    const abre = ev => {
+      ev.stopPropagation(); ev.preventDefault();
+      const url = new URL('../' + slug + '/index.html', location.href).href;
+      let w = null;
+      try { w = window.open(url, '_blank'); } catch (e) { }
+      if (w) { try { w.opener = null; } catch (e) { } }
+      else { try { parent.postMessage({ intro: 'abrir', slug: slug, src: 'intros/' + slug + '/index.html' }, '*'); } catch (e) { } }
+      try { if (document.body.classList.contains('sonando')) document.getElementById('botonPausa').click(); } catch (e) { }
+    };
+    g.addEventListener('click', abre);
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') abre(e); });
+    g.addEventListener('mouseenter', () => { g.style.filter = 'brightness(1.25)'; });
+    g.addEventListener('mouseleave', () => { g.style.filter = ''; });
+    return g;
+  }
+  /** Pequeño icono «abrir en pestaña nueva» (↗ en un cuadrado) para ponerlo en la esquina de esas tarjetas. */
+  function icoAbrir(parent, x, y, sz) {
+    sz = sz || 26;
+    const G = N.group(parent, 'icoAbrir');
+    N.el('rect', { x: x, y: y, width: sz, height: sz, rx: sz * 0.22, fill: 'none', stroke: 'currentColor', 'stroke-width': 2.4 }, G);
+    N.el('path', { d: `M${x + sz * 0.35},${y + sz * 0.65} L${x + sz * 0.72},${y + sz * 0.28} M${x + sz * 0.42},${y + sz * 0.28} H${x + sz * 0.72} V${y + sz * 0.58}`, fill: 'none', stroke: 'currentColor', 'stroke-width': 2.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, G);
+    return G;
+  }
+
   // ================================================================ E7 · INDICA LA ARMADURA (el camino de vuelta de «Indica la tonalidad»)
   const TITULO = { kicker: 'TEORÍA  ·  TONALIDADES', lineas: ['INDICA LA ARMADURA'], sub: 'Paso cero · Bemoles · Sostenidos' };
 
@@ -554,7 +646,11 @@
       const tDic = Wd('I3', 'dictado') - 0.2, tSab = Wd('I4', 'sabes') - 0.15, tPon = Wd('I4', 'poner') - 0.15;
       // de qué vídeo venimos… y en cuál estamos
       const video = (G, c) => N.el('polygon', { points: `${c._x - 34},${230 - 12} ${c._x - 34},${230 + 12} ${c._x - 13},230`, fill: C.rosa }, G);   // ▶ = un vídeo
-      const k1 = N.group(g); video(k1, chip(k1, 'INDICA LA TONALIDAD', CX + 20, 230, { size: 26, anchor: 'middle', relleno: false }));
+      const k1 = N.group(g); const c1 = chip(k1, 'INDICA LA TONALIDAD', CX + 20, 230, { size: 26, anchor: 'middle', relleno: false }); video(k1, c1);
+      // (28-sep, Iago) el cartel del otro vídeo se puede pulsar: lo abre en una pestaña nueva
+      c1._rect.setAttribute('fill', 'rgba(8,22,40,0.01)');
+      const ic1 = N.group(k1); color(ic1, C.rosa); icoAbrir(ic1, c1._x + c1._w + 12, 230 - 13, 26);
+      enlaceVideo(k1, 'indica-la-tonalidad');
       pop(s, k1, tInd, tVue + 0.15, CX, 230);
       const k2 = N.group(g); video(k2, chip(k2, 'INDICA LA ARMADURA', CX + 20, 230, { size: 26, anchor: 'middle' }));
       pop(s, k2, tVue + 0.05, fin, CX, 230);
