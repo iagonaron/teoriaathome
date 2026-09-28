@@ -58,14 +58,23 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   cerrar_copia_fichas_protester_20260927; el deshacer va en el propio SQL). Se siguen leyendo por SQL (dueño postgres).
   OJO: el disparador auto_rls_grants_trg da políticas «todo permitido» (anon y authenticated) a TODA tabla nueva de
   public; si creáis una copia de seguridad, quitadle esas dos políticas al crearla.
+- (28-sep tarde, Intros didácticas) NUEVAS TARJETAS CON ▶ (solo Tester): data-pad escalas (3 vídeos), grados (cardGR) y semitonos
+  (cardSEM). AL PUBLICARLOS, en `VIDEO` de «APUNTES EN LAS FICHAS»: esc_menor → intros/escalas-menores/, esc_mayor →
+  intros/escalas-mayores/, esc_otras → intros/otras-escalas/, gra_senalar → intros/grados/, semitonos → intros/semitonos/.
+- (28-sep tarde, NORMAS DE IAGO para TODOS los vídeos) tono = arco redondo y semitono = pico en V, SIEMPRE por debajo de las
+  notas (como en su Kit salvavidas); al invertir, la nota viaja a su octava por un arco discontinuo con punta (nunca se
+  reescribe el intervalo); los carteles que remiten a otro vídeo se pueden pulsar y lo abren en una pestaña nueva.
+  Si el vídeo va dentro de un iframe con sandbox sin «allow-popups» (el de «APUNTES EN LAS FICHAS»), el cartel no puede abrir
+  pestaña y manda al padre postMessage({intro: 'abrir', slug, src}); si queréis que funcione ahí, añadid «allow-popups
+  allow-popups-to-escape-sandbox» a ese iframe o atended ese mensaje.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 28-sep 19:35 · Intros didácticas · EN CURSO · 5 vídeos GE nuevos EN PRUEBA (solo Tester y Protester): carpetas nuevas
-  intros/escalas-menores/, intros/escalas-mayores/, intros/otras-escalas/, intros/grados/, intros/semitonos/ · cambios que pidió
-  Iago en el escenas.js de intros/intervalos/, inversion-intervalos/, inversion-compuestos/, indica-la-armadura/, tonalidades-vecinas/
-  y de las públicas la-tonalidad/ e indica-la-tonalidad/ (tono = arco redondo, semitono = pico en V, por debajo; carteles de
-  otro vídeo pulsables) · index.html: solo el bloque «VÍDEOS DE INTRODUCCIÓN» (ivg-*): INTROS escalas / grados / semitonos,
-  EJERCICIOS de esas tres tarjetas y el punto de «EN PRUEBA» en móvil. Parto de 1580b6a.
+- 28-sep 19:55 · Intros didácticas · HECHO · commits f5b5598 (escalas-menores), dca78a2 (escalas-mayores), 0f7e26c (otras-escalas),
+  b550a5e (grados), fead664 (semitonos), c9f077e (intervalos), 79d74cc (inversion-intervalos), 19a83eb (inversion-compuestos),
+  e43606b (indica-la-armadura), 2b689c9 (tonalidades-vecinas), aa85a72 (la-tonalidad), 2ad0b7d (indica-la-tonalidad), f7a0f14 (index.html)
+  · 5 vídeos GE nuevos EN PRUEBA (solo Tester y Protester) · en los ya subidos, solo su escenas.js (cambios que pidió Iago)
+  · index.html: solo el bloque «VÍDEOS DE INTRODUCCIÓN» (ivg-*): INTROS escalas / grados / semitonos, EJERCICIOS de esas
+  tres tarjetas y, en móvil con 3–4 vídeos, «EN PRUEBA» como un punto rosa (verde si está revisado). Partí de 1580b6a.
 - 28-sep 16:40 · Intros didácticas · HECHO · commits 1795e0d (intervalos), fd9e6a2 (inversion-intervalos), e56106f (intervalos-compuestos), 56b2695 (inversion-compuestos), 4ea29f8 (compases), aa859be (indica-la-armadura), 6f3c478 (tonalidades-vecinas), c8d5d46 (index.html) · 7 vídeos GE nuevos EN PRUEBA (solo Tester y
   Protester) en intros/<carpeta>/ · index.html: solo el bloque «VÍDEOS DE INTRODUCCIÓN» (ivg-*): INTROS con «prueba: true»,
   niveles de acceso (sin marca = todos · «alumnos: true» = solo cuentas validadas · «prueba: true» = Tester/Protester),
