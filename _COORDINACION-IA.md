@@ -39,6 +39,11 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   intros/indica-la-tonalidad/index.html). Si añadís una intro a `INTROS`, añadidla también a `VIDEO`.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 28-sep 08:46 · Fichas y rediseño · EN CURSO · index.html: generador (alumnos con ejercicios específicos legibles;
+  «Preparar envío» ya no pide el ZIP), autoguardado también al girar una rueda con la rueda del ratón, sin el texto
+  «Simulación…» de relleno, apuntes nuevos con las respuestas de Iago (?v=2: apuntes.js, apuntes-kit.js; solo Tester)
+  y la línea «LM piel» tras `<meta charset>` (no hace nada sin la cuenta de prueba). No toca las tarjetas, `ivg-*`
+  ni intros/.
 - 28-sep 08:20 · Intros didácticas · HECHO · commits a6f1c39 (la-tonalidad), 5135e51 (indica-la-tonalidad), 2211aa3 (index.html) · crea este fichero · intros/la-tonalidad/ e
   intros/indica-la-tonalidad/ (dos vídeos) · index.html: aviso tras `<meta charset>`, bloque
   «VÍDEOS DE INTRODUCCIÓN» antes de </body> y `VIDEO` de «APUNTES EN LAS FICHAS» (una línea).
