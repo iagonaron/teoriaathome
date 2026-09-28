@@ -39,7 +39,7 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   intros/indica-la-tonalidad/index.html). Si añadís una intro a `INTROS`, añadidla también a `VIDEO`.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 28-sep 09:19 · Fichas y rediseño · EN CURSO · index.html: (1) ficha del alumno, APUNTES: antes una ventana
+- 28-sep 09:19 · Fichas y rediseño · HECHO · commit a3bc4d1 · index.html: (1) ficha del alumno, APUNTES: antes una ventana
   «¿Necesitas mirar los apuntes?» y, abiertos, «‹ Volver» bloqueado 1 minuto, sin ✕ (bloque «APUNTES EN LAS FICHAS»;
   solo Tester); (2) VER APUNTES sin la ✕ de la derecha (un <style> al final); (3) tarjeta Tonalidades que gira con ▶:
   un <style> APARTE al final (no toca el bloque ivg-*) que quita el desenfoque y el ▶/«VER APUNTES» de la copia que
