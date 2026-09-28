@@ -18177,7 +18177,11 @@ window.CAD = {
      clics ni tabulador) y no le llegan Esc ni ←/→ (Esc cierra los apuntes en vez de abrir «¿Salir de la ficha?» y las
      flechas no cambian de ejercicio).
      Para quitarlo: borrar este bloque y las dos marcas «(27-sep-2026, Iago) APUNTES EN LAS FICHAS» de
-     previsualizarAlumno (class="sim-ayuda" y la línea de ApxFicha.pinta). -->
+     previsualizarAlumno (class="sim-ayuda" y la línea de ApxFicha.pinta).
+     (28-sep-2026, Iago) Antes de abrir los apuntes sale una ventana pequeña («¿Necesitas mirar los apuntes?»); una
+     vez abiertos, «‹ Volver» queda bloqueado un minuto (cuenta atrás), no hay ✕, y Esc y «atrás» tampoco los cierran
+     durante ese minuto. El botón APUNTES lleva «>1min» abajo a la derecha. Para volver a abrirlos directamente:
+     en abrirApuntes, llamar a abrirApuntesYa(g, b) en vez de confirmar(…), y poner ESPERA_MS a 0. -->
 <script>
 (function(){
   'use strict';
@@ -18217,6 +18221,30 @@ window.CAD = {
   var ICO_LIBRO='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5C5.5 4.3 8.5 4.3 12 6c3.5-1.7 6.5-1.7 9-.5v13c-2.5-1.2-5.5-1.2-9 .5-3.5-1.7-6.5-1.7-9-.5z"/><path d="M12 6v13.5"/></svg>';
   var ICO_PLAY='<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.2 1.1v9.8L10.6 6z" fill="currentColor"/></svg>';
   var cssPuesto=false;
+  /* (28-sep-2026, Iago) ventana «¿Necesitas mirar los apuntes?», «>1min» en el botón y «‹ Volver» con cuenta atrás */
+  var ESPERA_MS=60000;
+  var CSS_MINUTO=
+    '.apxf-btn.apxf-con-min{position:relative;padding-right:40px !important}'+
+    '.apxf-btn .apxf-min{position:absolute !important;right:7px;bottom:4px;margin:0 !important;padding:0 !important;font-size:9px !important;line-height:1 !important;font-weight:700;letter-spacing:.02em;opacity:.72;pointer-events:none;font-variant-numeric:tabular-nums;white-space:nowrap}'+
+    '.apxf-conf{position:fixed;inset:0;z-index:2147482500;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(3,5,12,.66);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);opacity:0;transition:opacity .18s ease}'+
+    '.apxf-conf.on{opacity:1}'+
+    '.apxf-conf-caja{width:min(460px,100%);box-sizing:border-box;background:#0d1222;color:#fff;border:1px solid var(--apxf-acc);border-radius:16px;padding:24px 24px 20px;text-align:left;font-family:inherit}'+
+    '.apxf-conf-t{margin:0 0 10px;font-family:inherit;font-size:20px;line-height:1.25;font-weight:800;letter-spacing:.01em;color:#fff;text-wrap:balance}'+
+    '.apxf-conf-p{margin:0 0 20px;font-family:inherit;font-size:15px;line-height:1.55;font-weight:400;color:rgba(255,255,255,.86)}'+
+    '.apxf-conf-bot{display:grid;grid-template-columns:1fr 1fr;gap:10px}'+
+    '.apxf-conf-bot button{min-height:44px;box-sizing:border-box;border-radius:12px;padding:10px 12px;font-family:inherit;font-size:14px;font-weight:700;line-height:1.2;cursor:pointer;margin:0}'+
+    '.apxf-conf-no{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.38)}'+
+    '.apxf-conf-no:hover,.apxf-conf-no:focus-visible{border-color:#fff;outline:none}'+
+    '.apxf-conf-si{background:var(--apxf-acc);color:var(--apxf-ink);border:1px solid var(--apxf-acc)}'+
+    '.apxf-conf-si:hover{filter:brightness(1.08)}'+
+    '.apxf-conf-si:focus-visible{outline:2px solid #fff;outline-offset:2px}'+
+    '@media (max-width:420px){.apxf-conf-caja{padding:20px 18px 16px}.apxf-conf-bot{grid-template-columns:1fr}}'+
+    '@media (prefers-reduced-motion:reduce){.apxf-conf{transition:none}}'+
+    '#apx-ov.apxf-en-ficha .apx-x{visibility:hidden}'+
+    '#apx-ov.apxf-en-ficha .apx-volver:disabled{opacity:.6;cursor:not-allowed}'+
+    '#apx-ov.apxf-en-ficha .apx-volver:disabled:hover{border-color:rgba(255,255,255,.16)}'+
+    '#apx-ov.apxf-en-ficha .apxf-cuenta{font-variant-numeric:tabular-nums;font-weight:800;margin-left:3px}'+
+    '#apx-ov.apxf-en-ficha:focus{outline:none}';
   function css(){
     if(cssPuesto) return; cssPuesto=true;
     var s=document.createElement('style'); s.id='apxf-css';
@@ -18226,7 +18254,7 @@ window.CAD = {
       '.apxf-vid-caja{position:relative;width:min(92vw,calc(86vh*16/9));height:min(51.75vw,86vh);background:#000;border:1px solid '+ACENTO+';border-radius:14px;overflow:hidden}'+
       '.apxf-vid-caja iframe{position:absolute;inset:0;width:100%;height:100%;border:0}'+
       '.apxf-vid-x{position:fixed;top:14px;right:16px;z-index:1;width:40px;height:40px;border-radius:10px;border:1px solid #5c5c5c;background:#161616;color:#fff;font:600 16px/1 system-ui,sans-serif;cursor:pointer}'+
-      '.apxf-vid-x:hover,.apxf-vid-x:focus-visible{border-color:'+ACENTO+';outline:none}';
+      '.apxf-vid-x:hover,.apxf-vid-x:focus-visible{border-color:'+ACENTO+';outline:none}'+CSS_MINUTO;
     document.head.appendChild(s);
   }
 
@@ -18253,9 +18281,9 @@ window.CAD = {
     if(!temas.length) return null;
     return {nombre:m.nombre, temas:temas, idx:Math.max(0, temas.indexOf(m.primero))};
   }
-  function boton(txt, ico, aria, fn){
-    var b=document.createElement('button'); b.type='button'; b.className=CLASE_BOTON+' apxf-btn';
-    b.innerHTML=ico+'<span>'+txt+'</span>'; b.setAttribute('aria-label', aria);
+  function boton(txt, ico, aria, fn, min){   /* min: «>1min» abajo a la derecha (28-sep-2026, Iago) */
+    var b=document.createElement('button'); b.type='button'; b.className=CLASE_BOTON+' apxf-btn'+(min?' apxf-con-min':'');
+    b.innerHTML=ico+'<span>'+txt+'</span>'+(min?'<span class="apxf-min" aria-hidden="true">&gt;1min</span>':''); b.setAttribute('aria-label', aria);
     b.addEventListener('click', function(ev){ ev.preventDefault(); fn(b); });
     return b;
   }
@@ -18273,10 +18301,10 @@ window.CAD = {
       var antes=document.createElement('span'); antes.className='apxf-antes'; antes.hidden=true; antes.style.display='none';
       while(cont.firstChild) antes.appendChild(cont.firstChild);
       cont.appendChild(antes);
-      cont.appendChild(boton('¿Dudas? Ver APUNTES', ICO_LIBRO, 'Ver los apuntes de '+g.nombre, function(b){ abrirApuntes(g, b); }));
+      cont.appendChild(boton('¿Dudas? Ver APUNTES', ICO_LIBRO, 'Ver los apuntes de '+g.nombre+' (al menos un minuto)', function(b){ abrirApuntes(g, b); }, true));
       return;
     }
-    if(g) cont.appendChild(boton('APUNTES', ICO_LIBRO, 'Ver los apuntes de '+g.nombre, function(b){ abrirApuntes(g, b); }));
+    if(g) cont.appendChild(boton('APUNTES', ICO_LIBRO, 'Ver los apuntes de '+g.nombre+' (al menos un minuto)', function(b){ abrirApuntes(g, b); }, true));
     if(vid) cont.appendChild(boton('VER VÍDEO', ICO_PLAY, 'Ver el vídeo de introducción', function(b){ abrirVideo(vid, b); }));
   }
 
@@ -18297,6 +18325,17 @@ window.CAD = {
   new MutationObserver(function(){
     if(abierto && !abierto.nodos.some(function(n){ return document.body.contains(n); })) alCerrar();
   }).observe(document.body, {childList:true});
+  /* (28-sep-2026, Iago) «atrás» del navegador o del iPad: durante el minuto de los apuntes no los cierra (se vuelve a
+     poner la entrada del historial y no pasa a nadie más); con la ventanita «¿Necesitas mirar los apuntes?» abierta,
+     la cierra y sigue como siempre. Va en captura y se registra antes que el visor: se entera el primero. */
+  window.addEventListener('popstate', function(e){
+    if(!abierto) return;
+    if(abierto.conf){ abierto.cerrar(); return; }
+    if(abierto.bloqueado && abierto.bloqueado()){
+      e.stopImmediatePropagation();
+      try{ history.pushState(abierto.estado, ''); }catch(err){}
+    }
+  }, true);
   /* Esc y ←/→ no pasan a la ficha (Esc = «¿Salir de la ficha?», ←/→ = cambiar de ejercicio); Esc cierra lo de encima */
   window.addEventListener('keydown', function(e){
     if(!abierto) return;
@@ -18309,12 +18348,76 @@ window.CAD = {
 
   function abrirApuntes(g, b){
     if(abierto) return;
+    confirmar(b, function(){ abrirApuntesYa(g, b); });   /* (28-sep-2026, Iago) primero la ventanita */
+  }
+
+  /* (28-sep-2026, Iago) ventana pequeña antes de abrir los apuntes (texto de Iago). «Seguir con la ficha», Esc, clic
+     fuera o «atrás» la cierran sin abrir nada; «Abrir los apuntes» los abre. Colores: los del botón pulsado. */
+  function confirmar(b, siAbre){
+    css();
+    var cs=getComputedStyle(b), acc=cs.backgroundColor, ink=cs.color;
+    if(!acc || acc==='transparent' || /^rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\)$/.test(acc)){ acc=ACENTO; ink='#fff'; }
+    var f=document.createElement('div'); f.className='apxf-conf';
+    f.setAttribute('role','dialog'); f.setAttribute('aria-modal','true');
+    f.setAttribute('aria-labelledby','apxfConfT'); f.setAttribute('aria-describedby','apxfConfP');
+    f.style.setProperty('--apxf-acc', acc); f.style.setProperty('--apxf-ink', ink);
+    f.innerHTML='<div class="apxf-conf-caja">'+
+      '<h2 class="apxf-conf-t" id="apxfConfT">¿Necesitas mirar los apuntes?</h2>'+
+      '<p class="apxf-conf-p" id="apxfConfP">Cuando los apuntes se abran no podrás regresar a la ficha hasta que pase al menos un minuto. '+
+      'Esto lo hacemos para pararnos a entenderlo y recordarlo bien antes de, simplemente, cubrir la ficha. '+
+      'Pero por supuesto que puedes consultarlos, para eso están :)</p>'+
+      '<div class="apxf-conf-bot"><button type="button" class="apxf-conf-no">Seguir con la ficha</button>'+
+      '<button type="button" class="apxf-conf-si">Abrir los apuntes</button></div></div>';
+    function cierra(abre){
+      if(!abierto || abierto.nodos[0]!==f) return;
+      f.remove();
+      if(abre){ suelta(); siAbre(); } else alCerrar();
+    }
+    document.body.appendChild(f);
+    abierto={ nodos:[f], boton:b, conf:true, cerrar:function(){ cierra(false); } };
+    bloquea([f]);
+    f.querySelector('.apxf-conf-no').addEventListener('click', function(){ cierra(false); });
+    f.querySelector('.apxf-conf-si').addEventListener('click', function(){ cierra(true); });
+    f.addEventListener('click', function(e){ if(e.target===f) cierra(false); });
+    requestAnimationFrame(function(){ f.classList.add('on'); });
+    try{ f.querySelector('.apxf-conf-si').focus({preventScroll:true}); }catch(e){}
+  }
+  function suelta(){ abierto=null; inertes.forEach(function(n){ n.removeAttribute('inert'); }); inertes=[]; }
+
+  /* los apuntes, en el visor de siempre (misma pestaña). (28-sep-2026, Iago) Sin ✕; «‹ Volver» bloqueado ESPERA_MS
+     con cuenta atrás (Esc y «atrás» tampoco cierran mientras tanto); después, «‹ Volver a la ficha». */
+  function abrirApuntesYa(g, b){
+    if(abierto) return;
     var antes=[].slice.call(document.body.children);
     try{ window.APX.abrir({nombre:g.nombre, temas:g.temas}, g.idx, b); }catch(e){ console.warn('[apuntes ficha]', e); return; }
     var nuevos=[].filter.call(document.body.children, function(n){ return antes.indexOf(n)<0; });
     if(!nuevos.length) return;
-    abierto={ nodos:nuevos, boton:b, cerrar:function(){
-      var x=nuevos[0].querySelector('.apx-x');
+    var ov=nuevos[0], estado=history.state, hasta=Date.now()+ESPERA_MS, reloj=null, ultimo=-1;
+    var vol=ov.querySelector('.apx-volver');
+    function bloqueado(){ return Date.now()<hasta; }
+    ov.classList.add('apxf-en-ficha');
+    function pinta(){
+      if(!document.body.contains(ov)){ clearInterval(reloj); return; }
+      if(!vol) return;
+      var q=Math.max(0, Math.ceil((hasta-Date.now())/1000));
+      if(q===ultimo) return; ultimo=q;
+      if(q>0){
+        vol.disabled=true; vol.setAttribute('aria-disabled','true');
+        vol.innerHTML='‹ Volver <span class="apxf-cuenta">'+Math.floor(q/60)+':'+String(q%60).padStart(2,'0')+'</span>';
+        vol.title='Podrás volver a la ficha dentro de '+q+' s';
+        vol.setAttribute('aria-label','Volver a la ficha (dentro de '+q+' segundos)');
+      } else {
+        clearInterval(reloj);
+        vol.disabled=false; vol.removeAttribute('aria-disabled');
+        vol.textContent='‹ Volver a la ficha'; vol.removeAttribute('title'); vol.setAttribute('aria-label','Volver a la ficha');
+        ov.classList.add('apxf-libre');
+      }
+    }
+    pinta(); reloj=setInterval(pinta, 250);
+    try{ ov.setAttribute('tabindex','-1'); ov.focus({preventScroll:true}); }catch(e){}   /* el botón bloqueado no puede tener el foco */
+    abierto={ nodos:nuevos, boton:b, estado:estado, bloqueado:bloqueado, cerrar:function(){
+      if(bloqueado()) return;                      /* Esc durante el minuto: nada */
+      var x=ov.querySelector('.apx-x');
       if(x) x.click(); else { try{ history.back(); }catch(e){} }
     } };
     bloquea(nuevos);
@@ -18582,6 +18685,28 @@ window.CAD = {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arranca); else arranca();
 })();
 </script>
+
+<!-- (28-sep-2026, Iago) TARJETA QUE GIRA con el botón ▶ («Tonalidades», bloque de los vídeos de arriba):
+     · al empezar a girar, la cara de delante desaparece y solo se ve la de detrás (antes, en algunos ordenadores, la
+       tarjeta se veía del revés a mitad del giro, con el ▶ y el «VER APUNTES» en espejo); al cerrar, vuelve a aparecer
+       cuando ya está de cara. La copia que gira va sin desenfoque de fondo y sin ▶ ni «VER APUNTES».
+     · la ✕ de arriba a la derecha responde al primer clic también con la estética nueva (que le pone un icono dentro).
+     Solo CSS: no toca el bloque de los vídeos. Para quitarlo: borrar este bloque. -->
+<style>
+html body .ivg-caja .ivg-cara .pad{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.ivg-cara .ivg-play,.ivg-cara .apx-btn,.ivg-cara .apx-back{display:none!important}
+.ivg-delante{animation:lmGiroFuera .11s linear both}
+.ivg-fondo[style*="opacity: 0"]+.ivg-caja .ivg-delante{animation:lmGiroDentro .16s linear .26s both}
+.ivg-cerrar *,.ivg-volver *{pointer-events:none}
+@keyframes lmGiroFuera{from{opacity:1}to{opacity:0}}
+@keyframes lmGiroDentro{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.ivg-delante,.ivg-fondo[style*="opacity: 0"]+.ivg-caja .ivg-delante{animation:none}}
+</style>
+
+<!-- (28-sep-2026, Iago) VER APUNTES: arriba a la izquierda ya está «‹ Volver», así que la ✕ de la derecha sobraba.
+     No se ve (su hueco se queda, para que el título siga centrado). Esc y «atrás» siguen cerrando los apuntes.
+     Para quitarlo: borrar este bloque. -->
+<style>#apx-ov .apx-x{visibility:hidden}</style>
 
 </body>
 </html>
