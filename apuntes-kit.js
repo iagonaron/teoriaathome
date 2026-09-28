@@ -1,4 +1,4 @@
-/* (26-sep-2026, Iago) VER APUNTES · datos del Kit salvavidas 4GE (re-creados para la web). Generado a partir de kit/*.js */
+/* (27-sep-2026, Iago) VER APUNTES · datos del Kit salvavidas 4GE (re-creados para la web, piel común LM at home, con las respuestas de Iago). Generado a partir de kit/*.js */
 /* ---- kit/tonalidades.js ---- */
 /* Kit salvavidas 4GE · TONALIDADES (relativos, indica la tonalidad, indica la armadura, tonalidades vecinas) */
 (window.APX_TEMAS=window.APX_TEMAS||{});
@@ -8,14 +8,15 @@ Object.assign(window.APX_TEMAS, {
     titulo:'Relativos', corto:'Relativos', fuente:'Kit salvavidas 4GE · Relativos (p. 7)',
     bloques:[
       {intro:'Dos tonalidades son relativas si comparten la misma armadura'},
+      /* (26-sep-2026, Iago) como en el papel: el la♭ lleva su ♭ escrito y los rótulos con su puntuación exacta */
       {penta:{ txt:'Ejemplo 1: Calcula el relativo de LabM', ks:'Ab', c:[
-        {n:[{k:'ab/4', d:'w', id:'a1', ab:'La distancia siempre es 3m'}], w:1.2},
-        {n:[{k:['f/4','ab/4'], d:'w', id:'a2', colK:[0], flecha:'der-abajo', ab:'Como la que tenemos es Mayor,\nqueremos su relativo menor.\nLa 3m la tenemos que bajar.\nNos da «fa»'}], w:1.5},
+        {n:[{k:'ab/4', d:'w', acc:'b', id:'a1', ab:'La distancia siempre es 3m'}], w:1.2, fin:' '},   /* sin barras intermedias, como en el papel */
+        {n:[{k:['f/4','ab/4'], d:'w', acc:[false,'b'], id:'a2', colK:[0], flecha:'der-abajo', ab:'Como la que tenemos es Mayor\nqueremos su relativo menor\nLa 3m la tenemos que bajar.\nNos da "fa"'}], w:1.5, fin:' '},
         {n:[{k:'b/4', d:'w', inv:true, ab:{t:'Respuesta: Fam', col:'acc', fw:800, fs:14}}], w:1}
       ] }},
       {penta:{ txt:'Ejemplo 2: Calcula el relativo de Mim', ks:'G', c:[
-        {n:[{k:'e/4', d:'w', ab:'La distancia siempre es 3m'}], w:1.2},
-        {n:[{k:['e/4','g/4'], d:'w', colK:[1], flecha:'der-arriba', ab:'Como la que tenemos es menor,\nqueremos su relativo Mayor.\nLa 3m la tenemos que subir.\nNos da «sol»'}], w:1.5},
+        {n:[{k:'e/4', d:'w', ab:'La distancia siempre es 3m'}], w:1.2, fin:' '},
+        {n:[{k:['e/4','g/4'], d:'w', colK:[1], flecha:'der-arriba', ab:'Como la que tenemos es menor\nqueremos su relativo Mayor\nLa 3m la tenemos que subir.\nNos da "sol"'}], w:1.5, fin:' '},
         {n:[{k:'b/4', d:'w', inv:true, ab:{t:'Respuesta: SolM', col:'acc', fw:800, fs:14}}], w:1}
       ] }}
     ]
@@ -30,19 +31,20 @@ Object.assign(window.APX_TEMAS, {
         {ks:'Bb', n:[{k:'b/4', d:'w', inv:true}], ab:'Respuesta:  SibM / Solm', abCol:'acc'}
       ]}},
       {h:'Procedimiento'},
+      /* (26-sep-2026, Iago) como en el papel: pentagrama SIN notas (solo la armadura, la flecha y los rótulos, con su puntuación exacta) */
       {h4:'Cuando hay sostenidos'},
-      {penta:{ c:[
-        {ks:'A', n:[{k:'b/4', d:'w', inv:true}], ksFlecha:{i:2, txt:''}, ksCol:[2], ab:'Nos fijamos en el último ♯: sol♯', w:1},
-        {n:[{k:'g#/4', d:'w', col:'gris', id:'s1'},{k:'a/4', d:'w', col:'acc', id:'s2'}], ab:'Subimos un semitono para calcular el M: LaM', w:1.2},
-        {n:[{k:'a/4', d:'w', id:'s3'},{k:'f#/4', d:'w', col:'acc', id:'s4'}], ab:'Bajamos una 3m para su relativo: Fa♯m', w:1.2}
-      ], fin:'|.' }},
-      {h4:'Cuando hay bemoles'},
-      {penta:{ c:[
-        {ks:'Bb', n:[{k:'b/4', d:'w', inv:true}], ksFlecha:{i:0, txt:''}, ksCol:[0], ab:'Nos fijamos en el penúltimo ♭: sib', w:1},
-        {n:[{k:'bb/4', d:'w', col:'acc'}], ab:'Lo llamamos tal cual para el M: SibM', w:1.2},
-        {n:[{k:'bb/4', d:'w'},{k:'g/4', d:'w', col:'acc'}], ab:'Bajamos una 3m para su relativo: Solm', w:1.2}
+      {penta:{ fin:'|', c:[
+        {ks:'A', n:[{k:'b/4', d:'w', inv:true}], ksFlecha:{i:2, txt:''}, ksCol:[2], ab:'Nos fijamos en el <u>último ♯</u> : sol♯', w:1, fin:' '},
+        {n:[{k:'b/4', d:'w', inv:true}], ab:'Subimos un semitono para calcular el M: LaM', w:1.2, fin:' '},
+        {n:[{k:'b/4', d:'w', inv:true}], ab:'Bajamos una 3m para su relativo : Fa♯m', w:1.2}
       ] }},
-      {ojo:'Tenemos que saber de memoria…', dentro:{penta:{ c:[
+      {h4:'Cuando hay bemoles'},
+      {penta:{ fin:'|', c:[
+        {ks:'Bb', n:[{k:'b/4', d:'w', inv:true}], ksFlecha:{i:0, txt:''}, ksCol:[0], ab:'Nos fijamos en el <u>penúltimo ♭</u> : sib', w:1, fin:' '},
+        {n:[{k:'b/4', d:'w', inv:true}], ab:'Lo llamamos tal cual para el M: SibM', w:1.2, fin:' '},
+        {n:[{k:'b/4', d:'w', inv:true}], ab:'Bajamos una 3m para su relativo : Solm', w:1.2}
+      ] }},
+      {ojo:'Tenemos que saber de memoria...', lab:'Ojo!', dentro:{penta:{ c:[
         {n:[{k:'b/4', d:'w', inv:true}], ab:'DoM / Lam', fin:'||'},
         {ks:'F', n:[{k:'b/4', d:'w', inv:true}], ab:'FaM / Rem'}
       ]}}}
@@ -61,8 +63,8 @@ Object.assign(window.APX_TEMAS, {
       {h:'Procedimiento'},
       {pasos:[{n:'Paso 0', t:'Primero conseguimos la tonalidad <b>mayor</b>: si la tonalidad es <b>menor</b>, pasamos a su <b>relativo mayor</b>; si ya es mayor, seguimos.'}]},
       {penta:{ c:[
-        {n:[{k:'c/4', d:'w', id:'r1'},{k:'eb/4', d:'w', col:'acc', id:'r2'}], ab:'Caso 1: Dom → necesitamos el mayor: MibM', abCol:'acc', fin:'||', w:1},
-        {n:[{k:'e/4', d:'w'}], ab:'Caso 2: MiM → no hace falta hacer nada', w:1}
+        {n:[{k:'c/4', d:'w', id:'r1'},{k:'eb/4', d:'w', col:'acc', id:'r2'}], ab:'Caso 1: Dom → necesitamos el mayor: MibM', abCol:'acc', abY:8, fin:'||', w:1},   /* abY: aire entre el do (línea adicional) y el rótulo */
+        {n:[{k:'e/4', d:'w'}], ab:'Caso 2: MiM → no hace falta hacer nada', abY:8, w:1}
       ]}},
       {arbol:{ raiz:'Ya tenemos la tonalidad <b>mayor</b>. ¿Tiene un <b>♭ en el nombre</b>?', ramas:[
         { tit:'Sí: MibM, SibM, LabM…', pasos:[
@@ -97,19 +99,24 @@ Object.assign(window.APX_TEMAS, {
   },
 
   'vecinas': {
-    titulo:'Tonalidades vecinas', corto:'Tonalidades vecinas', fuente:'Kit salvavidas 4GE · Tonalidades vecinas (p. 10)',
+    titulo:'Tonalidades Vecinas', corto:'Tonalidades vecinas', fuente:'Kit salvavidas 4GE · Tonalidades vecinas (p. 10)',
     bloques:[
-      {intro:'Las tonalidades vecinas son las que tienen armaduras vecinas (+1 y −1 alteración) además del relativo, ¡claro!'},
-      {p:'En total tienen que ser 6, incluyendo la que te da el enunciado.', i:true},
+      /* (26-sep-2026, Iago) textos y puntuación exactamente como en el papel */
+      {intro:'Las tonalidades vecinas son las que tienen armaduras vecinas (+1 y -1 alteración) además del relativo, claro!'},
+      {p:'En total tienen que ser 6 incluyendo la que te da el enunciado', i:true},
       {penta:{ txt:'Ejemplo 1: indica las tonalidades vecinas de MibM', c:[
-        {ks:'Eb', n:[{k:'b/4', d:'w', inv:true}], ab:'↑ Calculamos la armadura: 3♭\ny anotamos el relativo: Dom', w:1.6, fin:'||'},
+        {ks:'Eb', n:[{k:'b/4', d:'w', inv:true}], ab:'↑ Calculamos la armadura: 3♭\ny anotamos el relativo Dom', w:1.6},   /* barra sencilla, como en el papel */
         {ks:'Ab', ar:'Armaduras vecinas', arIt:true, n:[{k:'b/4', d:'w', inv:true}], ab:'4♭', abCol:'acc', w:0.8},
         {ks:'Bb', n:[{k:'b/4', d:'w', inv:true}], ab:'2♭', abCol:'acc', w:0.8},
         {n:[{k:'b/4', d:'w', inv:true}], ab:'Respuesta:\n3♭ MibM / Dom\n4♭ LabM / Fam\n2♭ SibM / Solm', abCol:'acc', w:1.3}
       ], bot:92 }},
-      {p:'Otra forma típica de ejercicio:'},
-      {tabla:{ cab:['2♭','3♭','4♭'], filas:[['SibM','MibM','LabM'],['Solm','Dom','Fam']], resalta:[[0,1]] }},
-      {ojo:'Si la tonalidad del enunciado no tiene alteraciones, sus armaduras vecinas serían 1♯ y 1♭.'}
+      /* «otra forma típica de ejercicio» con su flecha hacia la tabla, como en el papel */
+      {html:'<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;margin:12px 0">'+
+            '<p class="apx-p" style="margin:0">otra forma<br>típica de ejercicio <span class="apx-acc" style="font-size:1.2em">➜</span></p>'+
+            '<div class="apx-tabla-wrap" style="margin:0"><table class="apx-tabla"><thead><tr><th>2♭</th><th>3♭</th><th>4♭</th></tr></thead><tbody>'+
+            '<tr><td><i>SibM</i></td><td class="on">MibM</td><td><i>LabM</i></td></tr>'+
+            '<tr><td><i>Solm</i></td><td><i>Dom</i></td><td><i>Fam</i></td></tr></tbody></table></div></div>'},
+      {ojo:'Si la tonalidad del enunciado no tiene alteraciones sus armaduras vecinas serían 1♯ y 1♭', lab:'Ojo!'}
     ]
   }
 });
@@ -153,7 +160,7 @@ Object.assign(window.APX_TEMAS, {
         {t:'arco', de:'s3a', a:'s3b', lado:'abajo', alto:7},
         {t:'arco', de:'s3b', a:'s3c', lado:'abajo', alto:7},
         {t:'arco', de:'s3d', a:'s3e', lado:'abajo', alto:7},
-        {t:'v', de:'s3e', a:'s3f', raiz:true}
+        {t:'v', de:'s3e', a:'s3f', une:true}   /* (27-sep-2026, Iago) antes raiz:true (parecía un «visto» ✓); ahora la «V» une el sol que no existe (2ª línea) con el la♭ */
       ], pie:DER('* &gt;2T = Aum<br>&lt;1T+1st = Dism') }},
 
       {penta:{ tit:'4ªs', txt:'Son J si se apellidan igual...', c:[
@@ -167,7 +174,7 @@ Object.assign(window.APX_TEMAS, {
         {n:[{k:'d/4', d:'w'},{k:'a/4', d:'w'}], ab:'5J', abIt:true},
         {n:[{k:'bb/4', d:'w'},{k:'eb/4', d:'w'}], ab:'5J', abIt:true},
         {n:[{k:'c#/4', d:'w'},{k:'g#/4', d:'w'}], ab:'5J', abIt:true, fin:'||'},
-        {ar:'...Excepto', arIt:true, n:[{k:'b/3', d:'w'},{k:'f/4', d:'w'}], ab:'5D', abIt:true}   /* en el papel pone «5A»: si–fa es 5ª disminuida */
+        {ar:'...Excepto', arIt:true, n:[{k:'b/3', d:'w'},{k:'f/4', d:'w'}], ab:'5D', abIt:true}   /* (26-sep-2026, Iago) en el papel pone «5A»; Iago: si→fa ascendente = 5ª disminuida (5D) */
       ] }},
 
       {penta:{ tit:'6ªs', txt:'Las invertimos para convertir en 3ªs', c:[
@@ -193,7 +200,7 @@ Object.assign(window.APX_TEMAS, {
       ] }},
 
       {p:'*Las 4ª, 5ª y 8ª que no se apelliden igual serán Aumentadas o Disminuidas.', i:true},
-      {truco:'Recomiendo truco de manos para comprobar si el intervalo es más grande o más pequeño.', lab:'Consejo'}
+      {truco:'Recomiendo truco de manos para comprobar si el intervalo es más grande o más pequeño.', lab:''}   /* (26-sep-2026, Iago) en el papel, recuadro sin etiqueta */
     ]
   },
 
@@ -342,7 +349,7 @@ Object.assign(window.APX_TEMAS, {
       bloques:[
         {intro:'Los compases se clasifican de varias formas'},
 
-        {h:'Según su número de pulsos', sub:'Ejemplos:'},
+        {h:'Según su número de pulsos.', sub:'Ejemplos:'},   /* (26-sep-2026, Iago) con su punto, como en el papel */
         {penta:{ c:[
           {ts:'2/4',  n:F('q',2),  ab:'BINARIOS', abC:false, abIt:true, abCol:'acc'},
           {ts:'6/8',  n:F('q.',2)},
@@ -358,7 +365,7 @@ Object.assign(window.APX_TEMAS, {
           {ts:'5/4',  n:F('q',5),  ab:'QUINARIOS', abC:false, abIt:true, abCol:'acc'}
         ], pie:'<div style="text-align:right;padding-right:6px">etc.</div>' }},
 
-        {h:'Según su subdivisión', sub:'Ejemplos:'},
+        {h:'Según su subdivisión.', sub:'Ejemplos:'},
         {penta:{ c:[
           {ts:'2/4', n:F('8',4,{0:Object.assign({id:'sb1'},AC),2:AC}), ab:'SUB. BINARIA O SIMPLES', abC:false, abIt:true, abCol:'acc', abY:12},
           {ts:'3/4', n:F('8',6,{0:AC,2:AC,4:AC})},
@@ -372,15 +379,14 @@ Object.assign(window.APX_TEMAS, {
 
         {p:'Por último, hay que fijarse bien qué figura ocupa un pulso (F. Pulso), una subdivisión (F. Subdivisión) y la que ocupa el compás completo. (F. Compás)'},
 
+        /* (26-sep-2026, Iago) como en el papel: «Compás: Binario» y «Subdivisión: Ternaria» en la misma línea; «F. Subdivisión» sin dos puntos */
         {penta:{ txt:'Ejemplo de ejercicio resuelto:', c:[
-          {ts:'6/8', n:[{k:'b/4', d:'q.', inv:true, id:'e1', ab:{t:'Compás:', col:INK}},
-                        {k:'b/4', d:'q.', inv:true, id:'e2', ab:{t:'Subdivisión:', col:INK}}], w:2.4},
+          {ts:'6/8', n:[{k:'b/4', d:'q.', inv:true, id:'e1', ab:{t:'Compás: <c><i>Binario</i></c>', col:INK}},
+                        {k:'b/4', d:'q.', inv:true, id:'e2', ab:{t:'Subdivisión: <c><i>Ternaria</i></c>', col:INK}}], w:2.4},
           {n:[{k:'g/4', d:'q.', id:'e3', ab:{t:'F. Pulso:', col:INK}}], w:1},
-          {n:[{k:'g/4', d:'8',  id:'e4', ab:{t:'F. Subdivisión:', col:INK}}], w:1},
+          {n:[{k:'g/4', d:'8',  id:'e4', ab:{t:'F. Subdivisión', col:INK}   /* (26-sep-2026, Iago) en el papel, sin dos puntos */}], w:1},
           {n:[{k:'g/4', d:'h.', id:'e5', ab:{t:'F. Compás:', col:INK}}], w:1}
         ], a:[
-          {t:'txt', de:'e1', txt:'Binario', it:true, col:'acc', fw:800, fs:13, dy:39},
-          {t:'txt', de:'e2', txt:'Ternaria', it:true, col:'acc', fw:800, fs:13, dy:39},
           {t:'txt', de:'e3', txt:'negra con\npuntillo', it:true, col:'acc', fw:800, fs:13, dy:29},
           {t:'txt', de:'e4', txt:'corchea', it:true, col:'acc', fw:800, fs:13, dy:29},
           {t:'txt', de:'e5', txt:'blanca con\npuntillo', it:true, col:'acc', fw:800, fs:13, dy:29}
@@ -416,7 +422,8 @@ Object.assign(window.APX_TEMAS, {
     {n:'Paso 2', t:'<i>'+p2+'</i>'},
     {n:'Paso 3', t:'<i>'+p3+'</i>'}
   ]}; };
-  var OJO = {ojo:'No olvidarse de comprobar la armadura (<i>mirar por el retrovisor</i>) antes de poner la nueva alteración.'};
+  /* (26-sep-2026, Iago) como en el papel: «Ojo, no olvidarse…» (todo en cursiva) */
+  var OJO = {ojo:'<i>no olvidarse de comprobar la armadura (mirar por el retrovisor) antes de poner la nueva alteración.</i>', lab:'Ojo'};
 
   /* pentatónicas · tipo 1: 7 casillas con los grados debajo; las que faltan, vacías y con el número tachado */
   function grado(g){ return {t:String(g), fw:600, fs:14, col:'#16203a'}; }
@@ -454,7 +461,8 @@ Object.assign(window.APX_TEMAS, {
         escala8('Dórica 6↑', '('+ACC('Do')+'mada)', 'F',
           [W('d/4'),W('e/4'),W('f/4'),W('g/4'),W('a/4'),sube('bn/4'),W('c/5'),W('d/5')]),
         {h:'Mi recomendación para estos ejercicios'},
-        PASOS('poner la armadura adecuada. Recuerda calcular el mayor y hacerle la pregunta...',
+        /* (26-sep-2026, Iago) Paso 2 NUEVO (sustituye a «Recuerda calcular el mayor y hacerle la pregunta...»): remite al método nuevo de «Indica la armadura» */
+        PASOS('poner la armadura adecuada. Recuerda el método de «Indica la armadura»: pasamos al relativo mayor; si tiene ♭ en el nombre, contamos en el orden de bemoles y le regalamos uno extra; si no, contamos en el orden de sostenidos hasta la sensible (DoM no tiene armadura y FaM tiene un ♭).',
               'modificar las notas según la variante de escala (subiendo semitono).'),
         OJO
       ]
@@ -464,16 +472,18 @@ Object.assign(window.APX_TEMAS, {
       titulo:'Escalas mayores', corto:'Escalas mayores', fuente:'Kit salvavidas 4GE · Escalas mayores (p. 12)',
       bloques:[
         {intro:'Hay 4 variantes de escalas mayores.', introNota:'Ejemplo con Re M'},
-        escala8('Tipo 1', '(Natural)', 'D',
+        /* (26-sep-2026, Iago) el cuadernillo completo tapa los rótulos «(Natural)»…; se sigue el cuadernillo */
+        escala8('Tipo 1', '', 'D',   /* (26-sep-2026, Iago) en el cuadernillo, sin «(Natural)» */
           [W('d/4'),W('e/4'),W('f#/4'),W('g/4'),W('a/4'),W('b/4'),W('c#/5'),W('d/5')]),
-        escala8('Tipo 2 &nbsp;6↓', '(Armónica)', 'D',
+        escala8('Tipo 2 &nbsp;6↓', '', 'D',
           [W('d/4'),W('e/4'),W('f#/4'),W('g/4'),W('a/4'),baja('bb/4',6),W('c#/5'),W('d/5')]),
-        escala8('Tipo 3 &nbsp;6↓ 7↓', '(Melódica)', 'D',
+        escala8('Tipo 3 &nbsp;6↓ 7↓', '', 'D',
           [W('d/4'),W('e/4'),W('f#/4'),W('g/4'),W('a/4'),baja('bb/4',6),baja('cn/5',7),W('d/5')]),
-        escala8('Tipo 4 &nbsp;7↓', '(Mixolidia)', 'D',
+        escala8('Tipo 4 &nbsp;7↓', '', 'D',
           [W('d/4'),W('e/4'),W('f#/4'),W('g/4'),W('a/4'),W('b/4'),baja('cn/5',7),W('d/5')]),
         {h:'Mi recomendación para estos ejercicios'},
-        PASOS('poner la armadura adecuada. Recuerda el interrogatorio (¿amigo o enemigo?)...',
+        /* (26-sep-2026, Iago) Paso 2 NUEVO (sustituye a «Recuerda el interrogatorio (¿amigo o enemigo?)...»); aquí sin el Paso 0 porque la escala ya es mayor */
+        PASOS('poner la armadura adecuada. Recuerda el método de «Indica la armadura»: si tiene ♭ en el nombre, contamos en el orden de bemoles y le regalamos uno extra; si no, contamos en el orden de sostenidos hasta la sensible (DoM no tiene armadura y FaM tiene un ♭).',
               'modificar las notas según la variante de escala (bajando semitono).'),
         OJO
       ]
@@ -523,6 +533,7 @@ Object.assign(window.APX_TEMAS, {
         ], bot:44 }},
         {h4:'Cromática', sub4:'<b><i>(12 sonidos: solo semitonos, sin armadura)</i></b>'},
         {p:'Además tiene 6 tipos dependiendo de si usamos sostenidos o bemoles.', i:true},
+        {p:'No es necesario que te lo memorices, pero sí que lo entiendas.', i:true},   /* (26-sep-2026, Iago) línea del cuadernillo que faltaba */
         cromatica('Tipo 1 · 5♯ 0♭', '(solo usando sostenidos)',
           ['d/4','d#/4','e/4','f/4','f#/4','g/4','g#/4','a/4','a#/4','b/4','c/5','c#/5'], 'c1'),
         cromatica('Tipo 2 · 4♯ 1♭', '',
@@ -589,7 +600,7 @@ Object.assign(window.APX_TEMAS, {
     titulo:'Semitono Cromático/Diatónico', corto:'Semitono cromático/diatónico', fuente:'Kit salvavidas 4GE · Semitono Cromático/Diatónico (p. 16)',
     bloques:[
       {intro:'<i>El semitono cromático se produce entre dos notas de igual nombre</i>'},
-      {truco:'<i>Recuerda el truco <b style="font-size:1.3em">C</b>romático <b style="font-size:1.3em">C</b>opia</i>'},
+      {truco:'<i>Recuerda el truco <b style="font-size:1.3em">C</b>romático <b style="font-size:1.3em">C</b>opia</i>', lab:''},   /* (26-sep-2026, Iago) recuadro sin etiqueta, como en el papel */
       {penta:{ txt:'Ejemplos de semitonos cromáticos', c:[
         {n:[{k:'f/4', d:'w'},{k:'f#/4', d:'w'}], minW:150},
         {n:[{k:'a/4', d:'w'},{k:'ab/4', d:'w'}], minW:150},
@@ -597,7 +608,7 @@ Object.assign(window.APX_TEMAS, {
         {n:[{k:'db/5', d:'w'},{k:'d/5', d:'w', acc:'n'}], minW:150}
       ] }},
       {intro:'<i>El semitono diatónico se produce entre dos notas de distinto nombre</i>'},
-      {truco:'<i>Recuerda el truco <b style="font-size:1.3em">D</b>iatónico <b style="font-size:1.3em">D</b>istinto</i>'},
+      {truco:'<i>Recuerda el truco <b style="font-size:1.3em">D</b>iatónico <b style="font-size:1.3em">D</b>istinto</i>', lab:''},
       {penta:{ txt:'Ejemplos de semitonos diatónicos', c:[
         {n:[{k:'f/4', d:'w'},{k:'e/4', d:'w'}], minW:150},
         {n:[{k:'g/4', d:'w'},{k:'ab/4', d:'w'}], minW:150},
@@ -684,9 +695,9 @@ Object.assign(window.APX_TEMAS, {
             {k:['g/4','bb/4','d/5'], d:'q', guia:true, plica:false, parG:true, ab:{t:'5J\n3m\nsol', it:true, fw:500}}]},
         {ar:'Paso 2\nla 2ª inv. empieza en la 5ª: re', arC:true, arIt:true, arFw:500, arY:36,
          n:[{k:'d/4', d:'w', flecha:'arriba', ab:{t:'el bajo será el re (da igual octava)', it:true, fw:500, dy:14}}]},
-        {ar:'Paso 3\ncompleto las notas que faltan', arC:true, arIt:true, arFw:500, arY:36, marco:true,
-         n:[{k:['d/4','g/4','bb/4'], d:'w', plica:'arriba', colK:[1,2]}], ab:'añado el sol y el si♭', abIt:true, abFw:500, abY:12}
-      ] }}
+        {ar:'Paso 3\ncompleto las notas que faltan', arC:true, arIt:true, arFw:500, arY:36,
+         n:[{k:['d/4','g/4','bb/4'], d:'w', plica:'arriba', colK:[1,2], id:'p3c'}], ab:'añado el sol y el si♭', abIt:true, abFw:500, abY:12}
+      ], a:[ {t:'caja', de:'p3c', a:'p3c', dx1:-30, dx2:17, y1:-40, y2:15, rx:1, grosor:1.4} ] }}   /* (26-sep-2026, Iago) el acorde dentro de un recuadro, como en el papel */
     ]
   },
 
@@ -751,7 +762,7 @@ Object.assign(window.APX_TEMAS, {
         {clef:'baritone-f', n:[{k:'g#/3', d:'w'}]},
         {clef:'tenor', n:[{k:'g/3', d:'w'}]}
       ] }},
-      {h4:'Ejercicio tipo 2. Pon la clave adecuada para que las siguientes notas se llamen así:'},
+      {h4:'Ejercicio tipo 2. Pon la clave adecuada para que las siguientes notas se llamen así:'},   /* «la siguientes» → «las siguientes» (errata de tecleo) */
       /* sin clave (la pone el alumno); cada nota se coloca con la clave que la resuelve (n.clef) */
       {penta:{ clef:'no', c:[
         {n:[{k:'a#/2', d:'w', clef:'bass', ab:{t:'La♯', it:true}}]},
@@ -762,7 +773,7 @@ Object.assign(window.APX_TEMAS, {
         {n:[{k:'a/3', d:'w', clef:'tenor', ab:{t:'La', it:true}}]},
         {n:[{k:'bb/3', d:'w', clef:'mezzo-soprano', ab:{t:'Si♭', it:true}}]}
       ] }},
-      {p:'También te puedo preguntar que indiques cuál es la nota más aguda ↑ y la más grave ↓ de cada ejercicio.', i:true}
+      {p:'También te puedo preguntar que indiques cual es la nota más aguda ↑ y la más grave ↓ de cada ejercicio.', i:true}   /* (26-sep-2026, Iago) literal del papel */
     ]
   }
 });
@@ -790,7 +801,8 @@ Object.assign(window.APX_TEMAS, {
   'terminos': {
     titulo:'Términos', corto:'Términos', fuente:'Kit salvavidas 4GE · Términos y Términos de movimiento (pp. 21–22)',
     bloques:[
-      {intro:'Casi todos los términos musicales están escritos en italiano.', introNota:'Los de movimiento, en la página siguiente.'},
+      /* (26-sep-2026, Iago) en la web no hay páginas: «en la página siguiente» → «más abajo» (nota roja para Iago) */
+      {intro:'Casi todos los términos musicales están escritos en italiano.', introNota:'Los de movimiento, más abajo.'},
       {cols:[
         [ {glosario:{tit:'Dinámica', items:[
             ['Pianissimo (pp)','muy suave'],
@@ -929,8 +941,9 @@ Object.assign(window.APX_TEMAS, {
           M({n:[{k:'e/4',d:'8'},{k:'f/4',d:'8',col:'acc',flecha:'arriba'},{k:'g/4',d:'8'}], bm:[[0,2]], abY:14}, 'nota de paso: une dos notas por grados conjuntos')
         ], bot:60 }}},
 
-      {intro:'Son notas sin valor propio que se intercalan para embellecer y enriquecer la melodía.', introNota:'Apoyatura, trino, mordente y grupeto.'},
-      {ojo:'La forma de tocarlas ha ido cambiando a lo largo de la historia y según el estilo de cada compositor. Investiga la época de tu obra, mira las anotaciones del autor al principio de la partitura y consulta con tu profe de instrumento la ejecución más adecuada.'},
+      /* (26-sep-2026, Iago) como en el papel: la frase sin subrayar y lo subrayado es «Apoyatura, trino, mordente y grupeto.» */
+      {html:'<p class="apx-intro">Son notas sin valor propio que se intercalan para embellecer y enriquecer la melodía. <em class="apx-nota"><u>Apoyatura, trino, mordente y grupeto.</u></em></p>'},
+      {ojo:'la forma de tocarlas ha ido cambiando a lo largo de la historia y según el estilo de cada compositor. Investiga la época de tu obra, mira las anotaciones del autor al principio de la partitura y consulta con tu profe de instrumento la ejecución más adecuada.', lab:'Ojo'},
 
       /* ---------- Apoyatura ---------- */
       {h:'Apoyatura', sub:'notita que se apoya en la nota real y le roba parte de su valor; puede venir de arriba (superior) o de abajo (inferior)'},
@@ -967,11 +980,11 @@ Object.assign(window.APX_TEMAS, {
 
       {h4:'Preparación y resolución '+ico('upmordent')+ico('downprall')+ico('prallup'), sub4:'si la nota dura lo suficiente, el trino puede arrancar con un giro y terminar con otro'},
       {penta:{ txt:'con preparación (giro de entrada)', c:[
-        {n:[{k:'g/4',d:'h',orn:'upmordent'}], centrar:true},
+        {n:[{k:'g/4',d:'h',orn:{t:'upmordent', lel:'ornamentPrecompSlideTrillBach', esc:0.028}}], centrar:true},   /* (26-sep-2026, Iago) el signo exacto del Kit (Leland) */
         M({n:[{k:'f/4',d:'32',col:'acc'},{k:'g/4',d:'32'},{k:'a/4',d:'32'},{k:'g/4',d:'32'},{k:'a/4',d:'32'},{k:'g/4',d:'32',id:'tp1'}], bm:[[0,5]]}, 'ejecución real')
       ], a:[pts('tp1')] }},
       {penta:{ txt:'con resolución (giro de salida)', c:[
-        {n:[{k:'g/4',d:'h',orn:'prallup'}], centrar:true},
+        {n:[{k:'g/4',d:'h',orn:{t:'prallup', lel:'ornamentPrecompTrillSuffixDandrieu', esc:0.028}}], centrar:true},   /* (26-sep-2026, Iago) el signo exacto del Kit (Leland) */
         M({n:[{k:'g/4',d:'32'},{k:'a/4',d:'32'},{k:'g/4',d:'32'},{k:'a/4',d:'32'},{k:'g/4',d:'32'},{k:'f/4',d:'32',col:'acc'},{k:'g/4',d:'32',col:'acc'}], bm:[[0,6]]}, 'ejecución real')
       ] }},
 
@@ -986,17 +999,17 @@ Object.assign(window.APX_TEMAS, {
       ], a:[{t:'liga',de:'mo1',a:'mo2'}] }},
       {p:'Por anticipación, la notita suena antes del compás; hoy es la ejecución más utilizada.', i:true},
 
-      {h4:'Mordente de dos notas '+ico('semis')+ico('mordente'), sub4:'dos notitas que se deslizan hacia la nota real: por terceras, por grados conjuntos o con la real entre ambas'},
+      {h4:'Mordente de dos notas '+ico('semis')+ico('mordente-k'), sub4:'dos notitas que se deslizan hacia la nota real: por terceras, por grados conjuntos o con la real entre ambas'},
       {penta:{ txt:'superior (ascendente)', c:[
         {n:[{k:'g/4',d:'q',gr:[{k:'g/4',d:'16'},{k:'a/4',d:'16'}]}], fin:'¦', ar:'escritura (y abreviatura)', arY:40},
-        {n:[{k:'g/4',d:'q',orn:{t:'mordent',pos:'abajo'}}], w:0.7},
+        {n:[{k:'g/4',d:'q',orn:{t:'mordent',pos:'abajo', lel:'ornamentShortTrill', esc:0.032}}], w:0.7},   /* (26-sep-2026, Iago) signo exacto del Kit, debajo */
         {n:[{k:'g/4',d:'32',art:'>'},{k:'a/4',d:'32'},{k:'g/4',d:'8.'}], bm:[[0,2]], w:1.3, ar:'ejecución real clásica', arY:40},
         {n:[{k:'g/4',d:'32'},{k:'a/4',d:'32'}], bm:[[0,1]], w:0.8, ar:'ejecución real por anticipación', arY:40},
         {n:[{k:'g/4',d:'q',art:'>'}], w:0.6}
       ], top:74, bot:52 }},
       {penta:{ txt:'inferior (descendente)', c:[
         {n:[{k:'g/4',d:'q',gr:[{k:'g/4',d:'16'},{k:'f/4',d:'16'}]}], fin:'¦'},
-        {n:[{k:'g/4',d:'q',orn:{t:'mordent_inverted',pos:'abajo'}}], w:0.7},
+        {n:[{k:'g/4',d:'q',orn:{t:'mordent_inverted',pos:'abajo', lel:'ornamentMordent', esc:0.032}}], w:0.7},
         {n:[{k:'g/4',d:'32',art:'>'},{k:'f/4',d:'32'},{k:'g/4',d:'8.'}], bm:[[0,2]], w:1.3},
         {n:[{k:'g/4',d:'32'},{k:'f/4',d:'32'}], bm:[[0,1]], w:0.8},
         {n:[{k:'g/4',d:'q',art:'>'}], w:0.6}
@@ -1027,11 +1040,11 @@ Object.assign(window.APX_TEMAS, {
       ], bot:52 }},
       {p:'Por anticipación, las notitas suenan antes del compás; hoy es la ejecución más utilizada.', i:true},
 
-      {h4:'Mordente con alteraciones '+ico('prall-b')+ico('mordente-s'), sub4:'la alteración afecta a la nota auxiliar: encima del signo para la superior, debajo para la inferior'},
+      {h4:'Mordente con alteraciones '+ico('prall-bk')+ico('mordente-sk'), sub4:'la alteración afecta a la nota auxiliar: encima del signo para la superior, debajo para la inferior'},
       {penta:{ c:[
-        M({n:[{k:'g/4',d:'q',orn:{t:'mordent',arriba:'b'}}], centrar:true}, 'escritura'),
+        M({n:[{k:'g/4',d:'q',orn:{t:'mordent',arriba:'b', lel:'ornamentShortTrill', esc:0.030}}], centrar:true}, 'escritura'),
         M({n:[{k:'g/4',d:'32',art:'>'},{k:'ab/4',d:'32',col:'acc'},{k:'g/4',d:'8.'}], bm:[[0,2]]}, 'ejecución real'),
-        M({n:[{k:'g/4',d:'q',orn:{t:'mordent_inverted',abajo:'#'}}], centrar:true}, 'escritura'),
+        M({n:[{k:'g/4',d:'q',orn:{t:'mordent_inverted',abajo:'#', lel:'ornamentMordent', esc:0.030}}], centrar:true}, 'escritura'),
         M({n:[{k:'g/4',d:'32',art:'>'},{k:'f#/4',d:'32',col:'acc'},{k:'g/4',d:'8.'}], bm:[[0,2]]}, 'ejecución real')
       ], top:70 }},
 
@@ -1116,7 +1129,7 @@ Object.assign(window.APX_TEMAS, {
       {h:'Compás o parte iguales al anterior', sub:'signos de repetición de fragmentos'},
       {penta:{ c:[
         M({n:[{k:'g/4',d:'8'},{k:'a/4',d:'8'},{k:'b/4',d:'q'}], bm:[[0,1]]}, 'un compás'),
-        M({n:[{k:'b/4',d:'w',rep:'1'}], centrar:false}, '% : compás igual al anterior'),
+        M({n:[{k:'b/4',d:'w',rep:'1'}], centrar:false}, '{g:repeat1Bar} : compás igual al anterior'),   /* (26-sep-2026, Iago) el signo de repetición de compás de verdad (no un «%») */
         M({n:[{k:'g/4',d:'8'},{k:'a/4',d:'8'},{k:'b/4',d:'q',rep:'slash'}], bm:[[0,1]]}, '/ : la parte se repite'),
         M({n:[{k:'g/4',d:'8'},{k:'a/4',d:'8'},{k:'g/4',d:'8'},{k:'a/4',d:'8'}], bm:[[0,1],[2,3]]}, 'equivale a')
       ] }},
@@ -1142,7 +1155,7 @@ Object.assign(window.APX_TEMAS, {
         M({n:[{k:'c/6',d:'q'},{k:'d/6',d:'q'}], centrar:true, abY:30}, 'ejecución real'),
         M({n:[{k:'e/4',d:'q',id:'ob1'},{k:'f/4',d:'q',id:'ob2'}], centrar:true, abY:30}, 'con 8ª bassa'),
         M({n:[{k:'e/3',d:'q'},{k:'f/3',d:'q'}], centrar:true, abY:30}, 'ejecución real')
-      ], a:[{t:'8va', de:'oa1', a:'oa2', lado:'arriba'},{t:'8va', de:'ob1', a:'ob2', lado:'abajo'}], top:62, bot:78 }},
+      ], a:[{t:'8va', de:'oa1', a:'oa2', lado:'arriba', lel:'ottavaAlta'},{t:'8va', de:'ob1', a:'ob2', lado:'abajo', lel:'ottavaBassa'}], top:62, bot:78 }},   /* (26-sep-2026, Iago) los rótulos exactos del Kit: arriba «8va» con la «va» volada; abajo «8va» en línea */
       {p:'«Loco» significa «en su lugar»: se vuelve a tocar lo escrito. «Simile»: se sigue igual.', i:true},
 
       {h:'Glissando y portamento', sub:'pasar de un sonido a otro recorriendo los sonidos intermedios'},
@@ -1161,7 +1174,9 @@ Object.assign(window.APX_TEMAS, {
   'cadencias': {
     titulo:'Cadencias <small>(introducción)</small>', corto:'Cadencias', fuente:'Kit salvavidas 4GE · Cadencias (introducción) (p. 29)',
     bloques:[
-      {intro:'La cadencia es el momento en que la música se detiene a respirar. Funciona como la puntuación cuando escribimos: unas frases se cierran del todo, como con un punto, y otras se quedan esperando, como con una coma.', introNota:'Auténtica, plagal, semicadencia y rota.'},
+      /* (26-sep-2026, Iago) nota roja solo en TEORÍA PRO */
+      /* (26-sep-2026, Iago) como en el papel: el párrafo sin subrayar y lo subrayado es «Auténtica, plagal, semicadencia y rota.» */
+      {html:'<p class="apx-intro">La cadencia es el momento en que la música se detiene a respirar. Funciona como la puntuación cuando escribimos: unas frases se cierran del todo, como con un punto, y otras se quedan esperando, como con una coma. <em class="apx-nota"><u>Auténtica, plagal, semicadencia y rota.</u></em></p>'},
       {p:'<u>Fíjate siempre en el bajo</u> —la voz más grave— y en el acorde con el que acaba la música: son ellos los que mandan. Aquí las tienes en <b>Sol mayor</b>.', i:true},
 
       {grid:[

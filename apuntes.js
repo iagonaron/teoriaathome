@@ -13,6 +13,12 @@
    ampliaciones hechas en paralelo para intervalos, compases/escalas,
    grados/claves, términos/cadencias y los apuntes 2GP (una única
    implementación de cada cosa; copia del motor anterior: apuntes.base.js).
+   (26-sep-2026, Iago) PIEL común LM at home (la del Diario): foto del
+   conservatorio desenfocada con velo, cristal oscuro, texto blanco y el
+   rosa de Teoría en GE y en GP (el dorado, solo en «GRADO PROFESIONAL»).
+   Además: el cambio de clave se escribe ANTES de la barra (clave pequeña al
+   final del compás anterior), notas rojas de duda para Iago ({duda:'…'},
+   solo con APX_CFG.dudas===true) y flechas entre pentagramas (grupoFlechas).
    ===================================================================== */
 (function(){
   'use strict';
@@ -22,15 +28,18 @@
   var CFG = window.APX_CFG || {};
   var TEMA = CFG.tema === 'gp' ? 'gp' : 'ge';
   var SOLO_TESTER = (CFG.soloTester !== false);   /* (26-sep) primero solo tester, para revisar */
-  var PAL = TEMA === 'gp'
-    ? { acc:'#d4af37', accP:'#a8791a', accInk:'#1a1407', accSoft:'rgba(212,175,55,.16)', ink:'#fbf7ec', muted:'#d8caa6', muted2:'#a8966a',
-        bg:'radial-gradient(1100px 500px at 50% -5%, #4d3a0b 0%, transparent 60%),linear-gradient(180deg,#4d3a0b 0%,#2e2308 32%,#160f04 70%,#0a0702 100%)',
-        panel:'#1d1406', line:'rgba(212,175,55,.35)', card:'#d4af37', cardInk:'#1a1407' }
-    : { acc:'#e84393', accP:'#d6337f', accInk:'#fff', accSoft:'rgba(232,67,147,.14)', ink:'#e9edff', muted:'#8b97c4', muted2:'#5e6a98',
-        bg:'linear-gradient(180deg,#0b1f4d 0%,#0a1430 32%,#060a18 70%,#02030a 100%)',
-        panel:'#0d142e', line:'rgba(255,255,255,.12)', card:'#e84393', cardInk:'#fff' };
-  var PAPER = '#f3f5ff', PINK_ON_PAPER = PAL.accP, INK_P = '#16203a', MUTED_P = '#56607e';
-  var FONT = '"Helvetica Neue",Arial,system-ui,sans-serif';
+  /* (26-sep-2026, Iago) notas rojas «DUDA PARA IAGO»: SOLO si la página lo pide (la web de los alumnos nunca las enseña) */
+  var DUDAS = (CFG.dudas === true);
+  /* (26-sep-2026, Iago) fotos de fondo de la piel común (carpeta piel/ del portal GE); se puede cambiar con APX_CFG.fondo */
+  var FONDO = String(CFG.fondo || 'https://ge.lmathome.es/piel/').replace(/\/?$/,'/');
+  /* (26-sep-2026, Iago) PIEL común: el mismo rosa de Teoría en GE y GP (#ec4899 sobre oscuro, #db2777 sobre el papel blanco).
+     El dorado queda SOLO para el rótulo «GRADO PROFESIONAL». */
+  var PAL = { acc:'#ec4899', accP:'#db2777', accInk:'#fff', accSoft:'rgba(236,72,153,.16)', ink:'#fff', muted:'rgba(255,255,255,.74)', muted2:'rgba(255,255,255,.52)',
+              vidrio:'rgba(11,19,32,.72)', vidrioO:'rgba(11,19,32,.86)', velo:'rgba(8,22,40,.56)', base:'#0b1320',
+              line:'rgba(255,255,255,.12)', card:'#db2777', cardInk:'#fff', marco:'rgba(219,39,119,.13)',
+              grado: TEMA==='gp' ? '#d4af37' : '#fff', gradoTxt: TEMA==='gp' ? 'Grado profesional' : 'Grado elemental' };
+  var PAPER = '#ffffff', PINK_ON_PAPER = PAL.accP, INK_P = '#16203a', MUTED_P = '#56607e';
+  var FONT = '"Helvetica Neue",Helvetica,Arial,system-ui,sans-serif';
 
   function vf(){ return (window.Vex && window.Vex.Flow) ? window.Vex.Flow : null; }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
@@ -78,7 +87,28 @@
     if(n.w) w = Math.max(w, n.w);
     return w;
   }
-  function maxLin(t){ return String(t).replace(/<\/?[bi]>/g,'').split('\n')   /* (26-sep-2026, Iago) sin contar <b>/<i> */
+  /* (26-sep-2026, Iago) SIGNOS COPIADOS DEL KIT: el Kit salvavidas está grabado con la tipografía musical Leland
+     (la de MuseScore) y algunos signos no son iguales en la de la web (Bravura). Estos son los contornos exactos
+     sacados del propio PDF del Kit (unidades SMuFL: 1000 = 4 espacios de pentagrama), para dibujarlos idénticos:
+     preparación / resolución del trino, mordentes y los rótulos de octava alta y baja. */
+  var LELAND = {
+    ornamentPrecompSlideTrillBach:{bb:[0,-158,662,321], d:'M579 115 638 210 662 196 545 7Q542 0 533 0Q525 0 521 7L443 133L439 127V-58Q439 -72 425 -72H416Q402 -72 402 -58V68L365 7Q362 0 353 0Q345 0 341 7L263 132L190 7Q187 0 178 0Q170 0 166 7L91 132L72 100Q29 29 29 -35Q29 -85 58 -137Q60 -141 60 -144Q60 -149 56 -154Q51 -158 46 -158Q38 -158 34 -151Q0 -92 0 -34Q0 35 48 114L125 242Q128 248 137 248Q140 248 144 246H146V245H147L148 244V243Q148 243 148 242Q149 242 149 241L224 119L297 242Q301 249 309 249Q317 249 320 242L399 115L402 120V307Q402 321 416 321H425Q439 321 439 307V180L458 210V211L477 242Q480 248 489 248Q496 248 500 242Z'},
+    ornamentPrecompMordentUpperPrefix:{bb:[-1,0,702,389], d:'M360 242Q361 241 369 228Q377 214 389 196Q401 177 412 158Q424 140 432 128Q439 115 439 115L517 242Q521 248 529 248Q537 248 541 242L619 115L678 210L702 196L585 7Q582 0 573 0Q566 0 561 7L483 133Q483 133 476 120Q468 108 456 90Q445 71 434 52Q422 34 414 21Q406 8 405 7Q400 0 394 0Q391 0 388 2Q384 3 381 7Q380 9 368 28Q356 47 341 71Q326 95 314 113Q303 131 303 131Q303 131 296 119Q289 107 278 89Q267 71 256 52Q245 34 238 21Q230 8 229 7Q226 0 218 0Q210 0 206 7Q205 8 198 21Q190 34 179 52Q168 71 157 89Q146 107 139 119Q132 131 132 131Q132 131 124 117Q115 103 104 84Q92 65 83 50Q74 35 73 33Q69 27 61 27Q55 27 50 32Q49 34 36 54Q23 74 11 111Q-1 148 -1 200Q-1 250 14 299Q30 348 64 385Q68 389 73 389Q87 389 87 375Q87 369 84 366Q54 333 40 289Q26 245 26 200Q26 163 35 128Q44 93 60 66Q60 66 70 84Q81 101 96 126Q112 152 128 178Q143 205 154 223Q164 241 165 242Q169 248 177 248Q185 248 189 242Q190 241 198 228Q205 215 216 197Q227 179 238 161Q249 143 256 131Q264 119 264 119Q264 119 274 137Q285 155 299 178Q313 202 324 221Q336 240 337 242Q340 248 348 248Q356 248 360 242Z'},
+    ornamentPrecompTrillSuffixDandrieu:{bb:[0,0,662,406], d:'M628 399Q662 340 662 282Q662 214 614 134L537 6Q534 0 525 0Q516 0 512 9L438 129L365 7Q362 0 353 0Q345 0 342 6L263 133L185 7Q182 0 173 0Q169 0 166 2Q164 4 162 7L83 133L24 38L0 53L117 242Q120 248 129 248Q138 248 141 242L219 116L297 242Q300 248 309 248Q318 248 321 242L399 117L472 242Q475 248 484 248Q493 248 496 242L571 116L590 148Q633 219 633 283Q633 333 604 385Q602 389 602 392Q602 397 606 402Q611 406 616 406Q625 406 628 399Z'},
+    ornamentShortTrill:{bb:[0,0,473,248], d:'M449 210 473 195 356 7Q353 0 344 0Q335 0 332 6L254 131L181 7Q178 0 169 0Q161 0 157 7L83 131L24 33L0 48L117 241Q122 248 129 248Q138 248 141 241L215 119L287 241Q291 248 299 248Q307 248 310 241L390 115Z'},
+    ornamentMordent:{bb:[0,-77,473,316], d:'M449 210 473 195 356 7Q353 0 344 0Q336 0 332 7L254 131L252 128V-63Q252 -77 238 -77H230Q216 -77 216 -63V66L181 7Q178 0 169 0Q161 0 157 7L83 131L24 33L0 48L117 241Q121 248 129 248Q138 248 141 241L215 119L216 120V302Q216 316 230 316H238Q252 316 252 302V182L287 241Q291 248 298 248Q307 248 310 241L390 115Z'},
+    ottavaAlta:{bb:[0,0,846,400], d:'M67 93Q67 63 86 45Q104 27 135 27Q167 27 188 45Q208 63 208 90Q208 127 158 157Q155 159 152 160Q149 162 133 170Q128 172 126 173Q123 174 117 178Q67 148 67 93ZM244 310Q244 339 228 355Q212 371 184 371Q156 371 139 355Q122 339 122 313Q122 295 130 284Q138 272 159 259Q165 255 172 252Q180 248 203 236Q225 253 234 270Q244 286 244 310ZM706 374Q688 374 675 360Q662 345 653 324Q644 302 640 280Q635 259 635 245Q635 209 663 209Q679 209 692 224Q705 240 714 262Q723 285 728 307Q733 329 733 342Q733 356 726 365Q718 374 706 374ZM280 123Q280 69 237 34Q194 0 124 0Q69 0 34 25Q0 50 0 90Q0 134 30 158Q60 182 96 196Q74 216 64 235Q54 254 54 279Q54 332 94 366Q133 399 194 399Q244 399 275 375Q306 351 306 311Q306 251 225 220Q280 185 280 123ZM452 400 419 288Q412 257 410 250Q408 243 408 236Q408 226 416 218Q424 210 433 210Q452 210 468 230Q485 250 496 276Q506 301 506 317Q506 324 504 328Q501 332 487 345Q473 357 473 371Q473 384 482 392Q490 400 504 400Q520 400 530 388Q540 377 540 360Q540 335 531 304Q522 272 505 244Q488 215 464 196Q440 178 410 178Q379 178 360 196Q340 213 340 244Q340 252 342 262Q344 272 345 279L360 328Q367 352 367 358Q367 366 362 369Q356 372 339 372H328L332 394ZM754 394H824L780 243Q776 227 776 225Q776 216 782 216Q787 216 802 232Q816 247 829 266L846 255Q837 239 822 221Q808 203 790 190Q773 178 752 178Q722 178 715 203Q714 205 714 207Q713 209 713 217Q684 178 640 178Q606 178 584 200Q562 223 562 259Q562 295 580 327Q598 359 628 379Q657 399 690 399Q731 399 747 372Z'},
+    ottavaBassa:{bb:[0,0,838,399], d:'M67 93Q67 63 86 45Q104 27 135 27Q167 27 188 45Q208 63 208 90Q208 127 158 157Q155 159 152 160Q149 162 133 170Q128 172 126 173Q123 174 117 178Q67 148 67 93ZM244 310Q244 339 228 355Q212 371 184 371Q156 371 139 355Q122 339 122 313Q122 295 130 284Q138 272 159 259Q165 255 172 252Q180 248 203 236Q225 253 234 270Q244 286 244 310ZM698 196Q680 196 667 182Q654 167 645 146Q636 124 632 102Q627 81 627 67Q627 31 655 31Q671 31 684 46Q697 62 706 84Q715 107 720 129Q725 151 725 164Q725 178 718 187Q710 196 698 196ZM280 123Q280 69 237 34Q194 0 124 0Q69 0 34 25Q0 50 0 90Q0 134 30 158Q60 182 96 196Q74 216 64 235Q54 254 54 279Q54 332 94 366Q133 399 194 399Q244 399 275 375Q306 351 306 311Q306 251 225 220Q280 185 280 123ZM444 222 411 110Q404 79 402 72Q400 65 400 58Q400 48 408 40Q416 32 425 32Q444 32 460 52Q477 72 488 98Q498 123 498 139Q498 146 496 150Q493 154 479 167Q465 179 465 193Q465 206 474 214Q482 222 496 222Q512 222 522 210Q532 199 532 182Q532 157 523 126Q514 94 497 66Q480 37 456 18Q432 0 402 0Q371 0 352 18Q332 35 332 66Q332 74 334 84Q336 94 337 101L352 150Q359 174 359 180Q359 188 354 191Q348 194 331 194H320L324 216ZM746 216H816L772 65Q768 49 768 47Q768 38 774 38Q779 38 794 54Q808 69 821 88L838 77Q829 61 814 43Q800 25 782 12Q765 0 744 0Q714 0 707 25Q706 27 706 29Q705 31 705 39Q676 0 632 0Q598 0 576 22Q554 45 554 81Q554 117 572 149Q590 181 620 201Q649 221 682 221Q723 221 739 194Z'}
+  };
+  /* dibuja un signo Leland en el grupo g: x = centro, yBase = línea base del signo; esc = px por unidad */
+  function pathLeland(nombre, esc, color){ var G=LELAND[nombre]; if(!G) return null;
+    var p=document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d',G.d); p.setAttribute('fill',color||'#000');
+    p.__bb=G.bb; p.__esc=esc; return p; }
+  function colocaLeland(p, cx, yAbajo){ /* centra en cx y apoya la parte de abajo del signo en yAbajo; devuelve su caja en pantalla */
+    var bb=p.__bb, e=p.__esc, x=cx-(bb[0]+bb[2])/2*e, yb=yAbajo+bb[1]*e;
+    p.setAttribute('transform','translate('+x.toFixed(2)+' '+yb.toFixed(2)+') scale('+e+' '+(-e)+')');
+    return {x:cx-(bb[2]-bb[0])/2*e, y:yAbajo-(bb[3]-bb[1])*e, width:(bb[2]-bb[0])*e, height:(bb[3]-bb[1])*e}; }
+  function maxLin(t){ return String(t).replace(/<\/?[biuc]>/g,'').replace(/\{g:[A-Za-z0-9]+\}/g,'%%').split('\n')   /* (26-sep-2026, Iago) sin contar <b>/<i>/<u>; un signo {g:…} cuenta como dos letras */
     .reduce(function(a,l){ return Math.max(a,l.length); },0); }
   /* (26-sep-2026, Iago) COMPASES «RAROS» (mixtos, decimales, fraccionarios) que VexFlow no sabe escribir.
      c.tsL = lista de piezas: {n:'2', d:'4'} (fracción), {n:'2’5', d:'4'} (decimal), {n:'2', sup:'1/2', d:'4'}
@@ -95,11 +125,13 @@
     var w = 26;
     (c.n||[]).forEach(function(n){ w += anchoMin(n); });
     if(c.n2){ var w2=26; c.n2.forEach(function(n){ w2+=anchoMin(n); }); w=Math.max(w,w2); }
+    /* (27-sep-2026, Iago) las segundas voces (v2 arriba, v2b abajo) también cuentan para el ancho mínimo (corales a 4 voces) */
+    [c.v2, c.v2b].forEach(function(vv){ if(vv && vv.length){ var w4=26; vv.forEach(function(n){ w4+=anchoMin(n); }); w=Math.max(w,w4); } });
     if(c.ks!=null) w += ksCount(c.ks)*10.5 + 10;
     if(c.ts) w += 26;
     if(c.tsL) w += tsLAncho(c.tsL) + 24;   /* (26-sep-2026, Iago) compás «raro» dibujado a mano */
     if(c.pad) w += c.pad;                  /* (26-sep-2026, Iago) aire antes de la primera nota */
-    if(c.clef && !primero) w += 34;       /* (26-sep-2026, Iago) cambio de clave a mitad de línea */
+    if(c.clef && c.clefIni && !primero) w += 34;   /* (26-sep-2026, Iago) clave al principio del compás (c.clefIni); el cambio normal va al final del compás anterior */
     if(primero) w += clefW;
     if(c.minW) w = Math.max(w, c.minW);
     if(c.ab && maxLin(c.ab)*6.5+12 > w) w = maxLin(c.ab)*6.5+12;
@@ -120,6 +152,13 @@
     var CLEFW = sinClave ? 4 : 40;
     var clefAct = clef;   /* (26-sep-2026, Iago) clave vigente: cambia con c.clef a mitad de línea */
     var comps = S.c||[];
+    /* (26-sep-2026, Iago) CAMBIO DE CLAVE ANTES DE LA BARRA (como en una partitura grabada): si un compás cambia de clave,
+       la nueva clave se escribe PEQUEÑA al final del compás anterior, antes de su barra (y, si hay salto de línea, también
+       a tamaño normal al empezar la línea nueva). c.clefIni:true = la clave va al principio de su propio compás, a tamaño
+       normal (p. ej. el transporte «de cabeza», justo después de la clave tachada). */
+    var clefFin = [];
+    (function(){ var cv = clef; comps.forEach(function(c,i){ if(c.clef && c.clef!==cv && !c.clefIni && i>0) clefFin[i-1]=c.clef; if(c.clef) cv=c.clef; }); })();
+    function extraFin(i){ return clefFin[i] ? 24 : 0; }
     /* ---- reparte compases en sistemas ---- */
     /* (26-sep-2026, Iago) con sistema doble dejamos sitio a la llave (antes quedaba cortada a la izquierda); sin llave (llave:false) no hace falta */
     var X0 = (clef2 && S.llave!==false) ? 22 : 8, ANCHO = L - X0 - 8;
@@ -131,16 +170,16 @@
         var primero = cur.length===0;
         var cc = c; var extra=0;
         if(primero && c.ks==null && ksVig!=null) extra += ksCount(ksVig)*10.5+10;
-        var mw = compasMin(cc, primero, CLEFW) + extra;
+        var mw = compasMin(cc, primero, CLEFW) + extra + extraFin(i);
         var forzar = S.porLinea && cur.length>=S.porLinea;
         if(cur.length && (acc+mw>lim || c.salto || forzar)){
           /* (26-sep-2026, Iago) junto:true → este compás no se separa del anterior (una flecha o un arco los une).
              Si el anterior ya está solo en su línea, se quedan los dos en ella y la línea se comprime (ver «compr»). */
           if(c.junto && !c.salto && !forzar && cur.length===1){ /* se queda en esta línea */ }
           else if(c.junto && !c.salto && !forzar){ var prev=cur.pop(); sis.push(cur);
-            var mwp = compasMin(prev.c,true,CLEFW) + ((prev.c.ks==null && prev.ksAntes!=null)?ksCount(prev.ksAntes)*10.5+10:0);
+            var mwp = compasMin(prev.c,true,CLEFW) + ((prev.c.ks==null && prev.ksAntes!=null)?ksCount(prev.ksAntes)*10.5+10:0) + extraFin(prev.i);
             cur=[{c:prev.c, i:prev.i, min:mwp, ksAntes:prev.ksAntes}]; acc=mwp; }
-          else { sis.push(cur); cur=[]; acc=0; primero=true; mw = compasMin(cc,true,CLEFW) + ((c.ks==null && ksVig!=null)?ksCount(ksVig)*10.5+10:0); }
+          else { sis.push(cur); cur=[]; acc=0; primero=true; mw = compasMin(cc,true,CLEFW) + ((c.ks==null && ksVig!=null)?ksCount(ksVig)*10.5+10:0) + extraFin(i); }
         }
         cur.push({c:c, i:i, min:mw, ksAntes:ksVig}); acc+=mw;
         if(c.ks!=null) ksVig=c.ks; if(c.ts) tsVig=c.ts;
@@ -175,31 +214,46 @@
     var ksAct = (S.ks!=null)?S.ks:null, tsAct=S.ts||null;
 
     /* (26-sep-2026, Iago) etiqueta con trozos en negrita/cursiva: «<b>E.F.</b>: en el bajo…» */
-    function txtRico(e, li){ var bb=false, ii=false;
-      li.split(/(<\/?[bi]>)/).forEach(function(p){
-        if(p==='<b>') bb=true; else if(p==='</b>') bb=false; else if(p==='<i>') ii=true; else if(p==='</i>') ii=false;
-        else if(p){ var ts=document.createElementNS(NS,'tspan'); if(bb) ts.setAttribute('font-weight','900'); if(ii) ts.setAttribute('font-style','italic'); ts.textContent=p; e.appendChild(ts); } });
+    function txtRico(e, li){ var bb=false, ii=false, uu=false, cc=false;   /* (26-sep-2026, Iago) también <u> (subrayado, como en el papel) y <c> (color de acento: la respuesta) */
+      li.split(/(<\/?[biuc]>)/).forEach(function(p){
+        if(p==='<b>') bb=true; else if(p==='</b>') bb=false; else if(p==='<i>') ii=true; else if(p==='</i>') ii=false; else if(p==='<u>') uu=true; else if(p==='</u>') uu=false; else if(p==='<c>') cc=true; else if(p==='</c>') cc=false;
+        else if(p){ var ts=document.createElementNS(NS,'tspan'); if(bb) ts.setAttribute('font-weight','900'); if(ii) ts.setAttribute('font-style','italic'); if(uu) ts.setAttribute('text-decoration','underline'); if(cc){ ts.setAttribute('fill',PINK_ON_PAPER); ts.setAttribute('font-weight','800'); } ts.textContent=p; e.appendChild(ts); } });
     }
     function txt(x,y,t,o){
       o=o||{}; var lines=String(t).split('\n');
       /* (26-sep-2026, Iago) caja:'bloque' → un solo recuadro alrededor de todas las líneas (p. ej. «5J / 3M» del cifrado) */
       var bloque = (o.caja==='bloque'), els=[];
       lines.forEach(function(li,k){
+        /* (26-sep-2026, Iago) {g:NOMBRE} al principio de la línea → signo musical de verdad (SMuFL) delante del texto,
+           p. ej. «{g:repeat1Bar} : compás igual al anterior» (el signo de repetición de compás, no un «%») */
+        var mg=/^\{g:([A-Za-z0-9]+)\}\s?/.exec(li), glifo=null; if(mg){ glifo=mg[1]; li=li.slice(mg[0].length); }
         var e=document.createElementNS(NS,'text');
         e.setAttribute('x',x); e.setAttribute('y',y+k*(o.lh||14)); e.setAttribute('text-anchor',o.anchor||'middle');
         e.setAttribute('font-family',FONT); e.setAttribute('font-size',o.fs||12.5); e.setAttribute('font-weight',o.fw||600);
         if(o.it) e.setAttribute('font-style','italic');
         e.setAttribute('fill',o.color||MUTED_P);
         if(o.tach) e.setAttribute('text-decoration','line-through');
-        if(/<\/?[bi]>/.test(li)) txtRico(e, li); else e.textContent=li;   /* (26-sep-2026, Iago) <b>/<i> dentro de una etiqueta */
+        if(/<\/?[biuc]>/.test(li)) txtRico(e, li); else e.textContent=li;   /* (26-sep-2026, Iago) <b>/<i>/<u>/<c> dentro de una etiqueta */
         svg.appendChild(e); els.push(e);
+        /* (26-sep-2026, Iago) que ninguna etiqueta se salga del papel por los lados (móvil): se corre lo justo hacia dentro */
+        if(!/\{g:/.test(lines[k]||'')){ try{ var mgE=(o.caja?9:3), bx=e.getBBox(), sobra=bx.x+bx.width-(L-mgE), falta=mgE-bx.x;
+          if(sobra>0) e.setAttribute('x', (+e.getAttribute('x'))-sobra); else if(falta>0) e.setAttribute('x', (+e.getAttribute('x'))+falta); }catch(err){} }
+        if(glifo){ try{ var fsG=+(o.fs||12.5), ptG=fsG*2.1, gwG=VF.Glyph.getWidth(glifo, ptG), gapG=fsG*0.3, twG=e.getComputedTextLength(), ancG=o.anchor||'middle';
+            var x0G = ancG==='middle' ? x-(gwG+gapG+twG)/2 : ancG==='end' ? x-(gwG+gapG+twG) : x;
+            e.setAttribute('text-anchor','start'); e.setAttribute('x', x0G+gwG+gapG);
+            var gG=ctx.openGroup('apx-glifo'); ctx.save(); ctx.setFillStyle(o.color||MUTED_P);
+            VF.Glyph.renderGlyph(ctx, x0G, y+k*(o.lh||14)-fsG*0.36, ptG, glifo); ctx.restore(); ctx.closeGroup(); els.push(gG); }catch(err){ console.warn('[apuntes] glifo',err); } }
         if(o.caja && !bloque){ try{ var bb=e.getBBox(); var r=document.createElementNS(NS,'rect'); r.setAttribute('x',bb.x-6); r.setAttribute('y',bb.y-3); r.setAttribute('width',bb.width+12); r.setAttribute('height',bb.height+6); r.setAttribute('rx',5); r.setAttribute('fill',o.cajaFill||'#fff'); r.setAttribute('stroke',o.color||INK_P); r.setAttribute('stroke-width','1.3'); svg.insertBefore(r,e); }catch(err){} }
       });
       if(bloque && els.length){ try{ var x0=1e9,y0b=1e9,x1=-1e9,y1=-1e9;
         els.forEach(function(e){ var bb=e.getBBox(); x0=Math.min(x0,bb.x); y0b=Math.min(y0b,bb.y); x1=Math.max(x1,bb.x+bb.width); y1=Math.max(y1,bb.y+bb.height); });
         var rb=document.createElementNS(NS,'rect'); rb.setAttribute('x',x0-6); rb.setAttribute('y',y0b-3); rb.setAttribute('width',x1-x0+12); rb.setAttribute('height',y1-y0b+6); rb.setAttribute('rx',4);
         rb.setAttribute('fill',o.cajaFill||'#fff'); rb.setAttribute('stroke',o.color||INK_P); rb.setAttribute('stroke-width','1.3'); svg.insertBefore(rb,els[0]); }catch(err){} }
+      return els;   /* (26-sep-2026, Iago) para saber dónde ha quedado (flechas entre pentagramas) */
     }
+    /* (26-sep-2026, Iago) caja que envuelve unos textos ya dibujados (con el margen del recuadro si lo llevan) */
+    function cajaDe(els, conCaja){ var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9; (els||[]).forEach(function(e){ try{ var bb=e.getBBox(); if(!bb.width) return; x0=Math.min(x0,bb.x); y0=Math.min(y0,bb.y); x1=Math.max(x1,bb.x+bb.width); y1=Math.max(y1,bb.y+bb.height); }catch(err){} });
+      if(x0>x1) return null; var px=conCaja?6:0, py=conCaja?3:0; return {x:x0-px, y:y0-py, width:x1-x0+2*px, height:y1-y0+2*py}; }
 
     /* (26-sep-2026, Iago) línea ondulada (trino, glissando) de (x1,y1) a (x2,y2) */
     function onda(x1,y1,x2,y2,o){
@@ -212,7 +266,7 @@
 
     /* (26-sep-2026, Iago) dibuja un compás «raro» (c.tsL) a partir de x */
     function dibujaTsL(parts, x, stv){
-      var yN=stv.getYForLine(2), yD=stv.getYForLine(4), yM=stv.getYForLine(2);
+      var yN=stv.getYForLine(2), yD=stv.getYForLine(4), yM=stv.getYForLine(3);   /* (26-sep-2026, Iago) «+» e «=» a la altura de la raya entre numerador y denominador, como en el libro */
       function cad(str, xx, yb, pt){ String(str).split('').forEach(function(ch){ var g=tsLCar(ch);
           if(g){ VF.Glyph.renderGlyph(ctx, xx, (/Plus|Minus/.test(g) ? yb-pt*0.25 : yb), pt, g); xx += tsLW(g,pt); }
           else if(ch==='/'){ var ls=document.createElementNS(NS,'path'); var hh=pt*0.5; ls.setAttribute('d','M'+(xx+pt*0.05)+' '+(yb+1)+' L'+(xx+pt*0.24)+' '+(yb-hh)); ls.setAttribute('stroke',INK_P); ls.setAttribute('stroke-width',pt>30?'3':'1.6'); ls.setAttribute('stroke-linecap','round'); svg.appendChild(ls); xx += pt*0.28; }
@@ -242,10 +296,12 @@
         if(S.justificar===false) w = it.min*ANCHO/Math.max(totMin, ANCHO) ;
         var st = new VF.Stave(x, y0-40, w), st2=null;   /* VexFlow deja 4 espacios encima: así la 1ª línea cae en y0 */
         if(clef2) st2 = new VF.Stave(x, y2-40, w);
-        /* (26-sep-2026, Iago) cambio de clave (c.clef): la nueva clave se dibuja al empezar ese compás */
+        /* (26-sep-2026, Iago) cambio de clave (c.clef): la clave nueva va pequeña al final del compás anterior (clefFin);
+           al empezar línea, a tamaño normal; con c.clefIni, al principio de su propio compás */
         var cambioClave = (c.clef && c.clef!==clefAct); if(c.clef) clefAct=c.clef;
         if(k===0){ if(!sinClave) st.addClef(clefAct); if(st2) st2.addClef(clef2); }
-        else { if(cambioClave) st.addClef(clefAct); else st.clef=clefAct; if(st2) st2.clef=clef2; }   /* st.clef: la armadura a mitad de línea se coloca según la clave vigente */
+        else { if(cambioClave && c.clefIni) st.addClef(clefAct); else st.clef=clefAct; if(st2) st2.clef=clef2; }   /* st.clef: la armadura a mitad de línea se coloca según la clave vigente */
+        if(clefFin[it.i]){ try{ st.addEndClef(clefFin[it.i], 'small'); }catch(e){ console.warn('[apuntes] clave final',e); } }
         /* (26-sep-2026, Iago) pentagrama sin líneas (S.lineas:0) o de una sola línea (S.lineas:1) */
         if(S.lineas!=null){ try{ st.setConfigForLines([0,1,2,3,4].map(function(li){ return {visible: S.lineas===1 && li===2}; })); }catch(e){} }
         var ksHere = (c.ks!=null) ? c.ks : (k===0 ? ksAct : null);
@@ -271,6 +327,16 @@
         var tsLx=null; if(c.tsL){ var xT=st.getNoteStartX(); tsLx = xT + (k===0 && sinClave ? 2 : 8); st.setNoteStartX(tsLx + tsLAncho(c.tsL) + 22); if(st2) st2.setNoteStartX(st.getNoteStartX()); }
         if(c.pad){ st.setNoteStartX(st.getNoteStartX()+c.pad); if(st2) st2.setNoteStartX(st.getNoteStartX()); }
         st.setContext(ctx).draw(); if(st2) st2.setContext(ctx).draw();
+        /* (26-sep-2026, Iago) donde acaban las notas: antes de la clave pequeña del final del compás (si la hay) */
+        var xFinN = x+w; try{ xFinN = Math.min(x+w, st.getNoteEndX()); }catch(e){}
+        /* (26-sep-2026, Iago) tachar:true → la clave y la armadura del principio del compás, tachadas con una X fina (como en el libro) */
+        if(c.tachar){ try{ st.getModifiers(VF.StaveModifierPosition.BEGIN).forEach(function(m){
+            var cat = m.getCategory ? m.getCategory() : ''; if(cat!=='Clef' && cat!=='KeySignature') return;
+            var x0 = m.getX() + (cat==='Clef' ? -2 : -3), x1 = m.getX() + m.getWidth() + (cat==='Clef' ? 2 : 1);
+            var yA = st.getYForLine(0) - (cat==='Clef' ? 14 : 12), yB = st.getYForLine(4) + (cat==='Clef' ? 16 : 2);
+            var px = document.createElementNS(NS,'path');
+            px.setAttribute('d','M'+x0+' '+yA+' L'+x1+' '+yB+' M'+x0+' '+yB+' L'+x1+' '+yA);
+            px.setAttribute('stroke',INK_P); px.setAttribute('stroke-width','1.3'); px.setAttribute('fill','none'); svg.appendChild(px); }); }catch(e){ console.warn('[apuntes] tachar',e); } }
         if(c.tsL){ try{ dibujaTsL(c.tsL, tsLx, st); }catch(e){} }
         if(k===0) sisX[si] = {ini: st.getNoteStartX(), fin: L-8};
         /* (26-sep-2026, Iago) llave:false → sistema doble sin llave (solo la barra de la izquierda) */
@@ -290,7 +356,7 @@
         /* marco (sombreado) del compás */
         if(c.marco){ var rr=document.createElementNS(NS,'rect'); var mx=st.getNoteStartX()+4, mw2=(x+w)-mx-10;
           rr.setAttribute('x',mx); rr.setAttribute('y',y0-4); rr.setAttribute('width',Math.max(10,mw2)); rr.setAttribute('height',STH+(st2?GAP2+STH:0)+8+18);
-          rr.setAttribute('rx',8); rr.setAttribute('fill', c.marco==='gris'?'rgba(120,130,160,.16)':PAL.accSoft.replace('.14','.18').replace('.16','.2')); svg.insertBefore(rr, svg.firstChild); }
+          rr.setAttribute('rx',8); rr.setAttribute('fill', c.marco==='gris'?'rgba(120,130,160,.16)':PAL.marco); svg.insertBefore(rr, svg.firstChild); }
 
         var mapa = ksMap(ksAct!=null?ksAct:0);
         function hazNotas(arr, stave, clefN){
@@ -335,6 +401,10 @@
         /* (26-sep-2026, Iago) v2: segunda voz en el pentagrama de arriba (plicas abajo salvo que se diga otra cosa) */
         var N1b = c.v2 ? hazNotas(c.v2.map(function(q){ var o={}; for(var kq in q) o[kq]=q[kq]; if(o.plica==null) o.plica='abajo'; return o; }), st, clefAct) : [];
         var v1b = N1b.length?voz(N1b):null; if(v1b) voces.push(v1b);
+        /* (27-sep-2026, Iago) v2b: segunda voz en el pentagrama de ABAJO (plicas abajo salvo que se diga otra cosa).
+           Coral a 4 voces: n = soprano, v2 = contralto, n2 = tenor, v2b = bajo */
+        var N2b = (st2 && c.v2b) ? hazNotas(c.v2b.map(function(q){ var o={}; for(var kq in q) o[kq]=q[kq]; if(o.plica==null) o.plica='abajo'; return o; }), st2, clef2) : [];
+        var vAb = N2b.length?voz(N2b):null; if(vAb) voces.push(vAb);
         var beams=[];
         function vigas(notes, spec){
           if(!notes.length) return;
@@ -348,22 +418,22 @@
           var cfgB = groups?{groups:groups}:{}; if(notes.some(function(q){ return q.__n && q.__n.plica; })) cfgB.maintain_stem_directions=true;
           try{ beams = beams.concat(VF.Beam.generateBeams(notes, cfgB)); }catch(e){}
         }
-        vigas(N1, c.bm); vigas(N2, c.bm2); vigas(N1b, c.bmV2);
+        vigas(N1, c.bm); vigas(N2, c.bm2); vigas(N1b, c.bmV2); vigas(N2b, c.bmV2b);
         if(voces.length){
           var fmt=new VF.Formatter(); voces.forEach(function(v){ fmt.joinVoices([v]); });
-          var ancho = (x+w) - st.getNoteStartX() - 16;
+          var ancho = xFinN - st.getNoteStartX() - 16;   /* (26-sep-2026, Iago) xFinN: respeta la clave pequeña del final */
           try{ fmt.format(voces, Math.max(20, ancho)); }catch(e){ try{ new VF.Formatter().format(voces, Math.max(20,ancho)); }catch(e2){} }
           /* pocas notas (redondas de ejemplo): repartidas por el compás en vez de amontonadas a la izquierda */
           /* (26-sep-2026, Iago) centrar:true (en el compás o en todo el pentagrama) también reparte las redondas del sistema doble;
              las notas sinPlica cuentan como redondas */
           var cenW = (c.centrar!=null) ? c.centrar : S.centrar;
           if(cenW!==false && N1.length && N1.length<=4 && (!N2.length || (cenW===true && N2.length===N1.length)) && (cenW===true || N1.every(function(q){ return (durBase(q.__n.d).d==='w' || q.__n.sinPlica) && !q.__n.gr; }))){
-            try{ var ini=st.getNoteStartX(), fin2=(x+w)-12, paso=(fin2-ini)/N1.length;
+            try{ var ini=st.getNoteStartX(), fin2=xFinN-12, paso=(fin2-ini)/N1.length;
               N1.forEach(function(q,qi){ var tc=q.getTickContext(); var dx = (ini + paso*(qi+0.5) - 8) - ini; if(c.izq) dx = 14 + qi*Math.min(paso, 70); tc.setX(dx); }); }catch(e){}
           }
           /* (26-sep-2026, Iago) pegar:px = la nota se coloca a px de la anterior (p. ej. la notita entre paréntesis del tierce coulé) */
           N1.forEach(function(q,qi){ if(qi>0 && q.__n && q.__n.pegar!=null){ try{ q.getTickContext().setX(N1[qi-1].getTickContext().getX() + q.__n.pegar); }catch(e){} } });
-          if(v1) v1.draw(ctx, st); if(v2) v2.draw(ctx, st2); if(v1b) v1b.draw(ctx, st);
+          if(v1) v1.draw(ctx, st); if(v2) v2.draw(ctx, st2); if(v1b) v1b.draw(ctx, st); if(vAb) vAb.draw(ctx, st2);
           beams.forEach(function(bm){ try{ bm.setContext(ctx).draw(); }catch(e){} });
         }
         /* (26-sep-2026, Iago) barras entre dos notas (trémolo medido o no): tremEntre:[{de:0, a:1, n:2}] */
@@ -392,7 +462,16 @@
             if(n.id) notasId[n.id]=info; todas.push(info);
             /* (26-sep-2026, Iago) ajustes de los adornos: debajo de la nota, en espejo, desplazados y línea ondulada del trino */
             (sn.__orns||[]).forEach(function(oo){ try{
-              var O=oo.O, g=svg.querySelector('#vf-'+oo.o.getAttribute('id')); if(!g) return; var bb=g.getBBox(); var tr='';
+              var O=oo.O, g=svg.querySelector('#vf-'+oo.o.getAttribute('id')); if(!g) return;
+              /* (26-sep-2026, Iago) lel:'nombre' → el signo se dibuja con el contorno exacto del Kit (Leland), al tamaño del Kit
+                 (esc = px por unidad; el Kit usa 0.026–0.032 según el signo). Las alteraciones del signo se recolocan. */
+              if(O.lel && LELAND[O.lel]){ var ps=[].slice.call(g.querySelectorAll('path')), p0=null, w0=-1;
+                ps.forEach(function(pa){ var bx=pa.getBBox(); if(bx.width>w0){ w0=bx.width; p0=pa; } });
+                if(p0){ var b0=p0.getBBox(), pl=pathLeland(O.lel, O.esc||0.03, p0.getAttribute('fill')||'#000'), nb=colocaLeland(pl, xN, b0.y+b0.height);
+                  p0.parentNode.replaceChild(pl, p0); var dxA=xN-(b0.x+b0.width/2);
+                  ps.forEach(function(pa){ if(pa===p0) return; var ab=pa.getBBox(), arriba=(ab.y+ab.height/2 < b0.y+b0.height/2);
+                    var dyA = arriba ? (nb.y-b0.y) : ((nb.y+nb.height)-(b0.y+b0.height)); pa.setAttribute('transform','translate('+dxA.toFixed(2)+' '+dyA.toFixed(2)+')'); }); } }
+              var bb=g.getBBox(); var tr='';
               var dx=O.dx||0, dy=O.dy||0;
               if(O.pos==='abajo'){ dy += Math.max(info.yInfSt+9, info.yBot+12) - bb.y; dx += xN - (bb.x+bb.width/2); }
               if(dx||dy) tr+='translate('+dx+' '+dy+') ';
@@ -402,9 +481,11 @@
             }catch(e){ console.warn('[apuntes] orn post',e); } });
             var base = esAbajo2 ? (yInf2+26) : ((st2 && !esAbajo2) ? (yInf + 24) : (yInf+26));
             if(n.ab){ var t=n.ab.t!=null?n.ab.t:n.ab; var yb = Math.max(base, info.yBot+22) + (n.ab.dy||0);
-              txt(xN + (n.ab.dx||0), yb, t, {color: n.ab.col?col(n.ab.col):(n.col==='acc'?PINK_ON_PAPER:MUTED_P), fw:n.ab.fw||(n.col==='acc'?800:600), fs:n.ab.fs||12.5, tach:n.ab.tach, it:n.ab.it, caja:n.ab.caja}); }
+              var eAb=txt(xN + (n.ab.dx||0), yb, t, {color: n.ab.col?col(n.ab.col):(n.col==='acc'?PINK_ON_PAPER:MUTED_P), fw:n.ab.fw||(n.col==='acc'?800:600), fs:n.ab.fs||12.5, tach:n.ab.tach, it:n.ab.it, caja:n.ab.caja});
+              if(n.id) info.abBB=cajaDe(eAb, !!n.ab.caja); }
             if(n.ar){ var ta=n.ar.t!=null?n.ar.t:n.ar; var ya = Math.min(ySup-10, info.yTop-16) + (n.ar.dy||0);
-              txt(xN + (n.ar.dx||0), ya, ta, {color: n.ar.col?col(n.ar.col):(n.col==='acc'?PINK_ON_PAPER:MUTED_P), fw:n.ar.fw||700, fs:n.ar.fs||12, it:n.ar.it, caja:n.ar.caja}); }
+              var eAr=txt(xN + (n.ar.dx||0), ya, ta, {color: n.ar.col?col(n.ar.col):(n.col==='acc'?PINK_ON_PAPER:MUTED_P), fw:n.ar.fw||700, fs:n.ar.fs||12, it:n.ar.it, caja:n.ar.caja});
+              if(n.id) info.arBB=cajaDe(eAr, !!n.ar.caja); }
             /* (26-sep-2026, Iago) notas de guía: VexFlow dibuja las líneas adicionales con el ancho de una cabeza normal; las acortamos a la cabeza pequeña */
             if(n.guia){ try{ var elg=sn.getSVGElement(), xh0=sn.getAbsoluteX(), gwh=sn.getGlyphWidth();
                 [].forEach.call(elg?elg.querySelectorAll('path'):[], function(pl){ var m=/^M\s*([\d.\-]+)[\s,]+([\d.\-]+)\s*L\s*([\d.\-]+)[\s,]+([\d.\-]+)\s*$/.exec(pl.getAttribute('d')||'');
@@ -426,7 +507,7 @@
               p.setAttribute('stroke', col(n.flechaCol||'acc')); p.setAttribute('stroke-width','1.8'); p.setAttribute('fill','none'); p.setAttribute('stroke-linecap','round'); svg.appendChild(p); }
           });
         }
-        post(N1,false); post(N2,true); post(N1b,false);
+        post(N1,false); post(N2,true); post(N1b,false); post(N2b,true);
         /* (26-sep-2026, Iago) barraDer:'¦' → línea discontinua entre esta nota y la siguiente, dentro del mismo compás (enarmonías: la nota | sus dos enarmónicos) */
         N1.forEach(function(sn,qi){ var sig=N1[qi+1]; if(!sn.__n.barraDer || !sig) return;
           try{ var xa=sn.getAbsoluteX()+sn.getGlyphWidth(), xb=sig.getAbsoluteX()-((sig.getMetrics()||{}).modLeftPx||0), xm=(xa+xb)/2;
@@ -450,6 +531,8 @@
         if(c.ksCol){ /* colorear alteraciones de la armadura */
           try{ var idxs=c.ksCol; var cand=glifosKs(); cand.forEach(function(o,ii){ if(idxs==='todas' || idxs.indexOf(ii)>=0){ o.p.setAttribute('fill',PINK_ON_PAPER); } }); }catch(e){}
         }
+        /* (26-sep-2026, Iago) ksId:'id' → la 1ª alteración de la armadura de este compás se puede usar como destino de flechas (grupoFlechas) */
+        if(c.ksId){ try{ var gk=glifosKs()[c.ksIdI||0]; if(gk) notasId[c.ksId]={x:gk.bb.x+gk.bb.width/2, ys:[], yTop:gk.bb.y, yBot:gk.bb.y+gk.bb.height, st:st, sis:si, yInfSt:yInf, ySupSt:ySup}; }catch(e){} }
         if(c.ksFlecha!=null){ /* flecha a una alteración de la armadura: {i, txt} */
           try{ var fl=c.ksFlecha; var gl=glifosKs()[fl.i]; var xk = gl ? gl.bb.x+gl.bb.width/2 : (x + (k===0?CLEFW:6) + 2 + fl.i*10.5 + 5); var yb3 = gl ? gl.bb.y+gl.bb.height+2 : yInf+4;
             var p2=document.createElementNS(NS,'path'); var ya2=yInf+16;
@@ -465,8 +548,29 @@
 
     /* ---- anotaciones entre notas ---- */
     (S.a||[]).forEach(function(A){
+      /* (26-sep-2026, Iago) siPartido: solo si el pentagrama se ha partido en varias líneas (móvil) · siEntero: solo si cabe en una */
+      if(A.siPartido && sistemas.length<2) return;
+      if(A.siEntero && sistemas.length>1) return;
       var a=notasId[A.de], b=notasId[A.a];
       var c2 = col(A.col)||(A.dash?MUTED_P:INK_P);
+      /* (26-sep-2026, Iago) raya vertical punteada (los «:» que separan los acordes puente en las filas de la modulación):
+         {t:'vline', de, dx, y1, y2 (px por debajo de la 5ª línea del pentagrama de «de»), col} */
+      if(A.t==='vline' && a){ try{ var xv=a.x+(A.dx||0), lv=document.createElementNS(NS,'line');
+        lv.setAttribute('x1',xv); lv.setAttribute('x2',xv); lv.setAttribute('y1',a.yInfSt+A.y1); lv.setAttribute('y2',a.yInfSt+A.y2);
+        lv.setAttribute('stroke',col(A.col)||INK_P); lv.setAttribute('stroke-width',A.grosor||2); lv.setAttribute('stroke-linecap','round'); lv.setAttribute('stroke-dasharray',A.patron||'0.1 9'); svg.appendChild(lv); }catch(e){} return; }
+      /* (26-sep-2026, Iago) caja entre dos notas (p. ej. las filas de cifrado de la modulación, dentro de su recuadro como en el libro):
+         {t:'caja', de, a, y1, y2 (px por debajo de la 5ª línea del pentagrama de «de»), dx1, dx2, rx, col, grosor}.
+         Si las dos notas caen en líneas distintas (móvil), se dibuja un trozo en cada línea. */
+      if(A.t==='caja' && a && b){ try{
+        var trozos = (a.sis===b.sis || !sisX[a.sis] || !sisX[b.sis]) ? [[a.x+(A.dx1||0), b.x+(A.dx2||0), a.yInfSt]]
+                     : [[a.x+(A.dx1||0), sisX[a.sis].fin-2, a.yInfSt]];
+        if(a.sis!==b.sis && sisX[a.sis] && sisX[b.sis]){
+          for(var sm=a.sis+1; sm<b.sis; sm++) if(sisX[sm]) trozos.push([sisX[sm].ini-8, sisX[sm].fin-2, a.yInfSt+(sm-a.sis)*sysH]);   /* líneas intermedias: la caja sigue */
+          trozos.push([sisX[b.sis].ini-8, b.x+(A.dx2||0), a.yInfSt+(b.sis-a.sis)*sysH]); }
+        trozos.forEach(function(tz){ var yR=tz[2], rc=document.createElementNS(NS,'rect');
+          rc.setAttribute('x',Math.min(tz[0],tz[1])); rc.setAttribute('y',yR+A.y1); rc.setAttribute('width',Math.abs(tz[1]-tz[0])); rc.setAttribute('height',A.y2-A.y1);
+          rc.setAttribute('rx',A.rx!=null?A.rx:7); rc.setAttribute('fill','none'); rc.setAttribute('stroke',col(A.col)||INK_P); rc.setAttribute('stroke-width',A.grosor||1.3); svg.appendChild(rc); });
+      }catch(e){ console.warn('[apuntes] caja',e); } return; }
       if(A.t==='arco' && a && b && a.sis!==b.sis && sisX[a.sis] && sisX[b.sis]){
         /* (26-sep-2026, Iago) arco entre notas que han caído en líneas distintas (pantallas estrechas):
            se parte en dos, como una ligadura entre sistemas (sale por la derecha y entra por la izquierda) */
@@ -489,7 +593,15 @@
         var arrV = (A.lado==='arriba');
         var yLin = arrV ? Math.min(a.st.getYForLine(0), b.st.getYForLine(0)) : Math.max(a.st.getYForLine(4), b.st.getYForLine(4));
         var pv=document.createElementNS(NS,'path'), dV;
-        if(A.raiz){
+        if(A.une){
+          /* (27-sep-2026, Iago) une:true → «V» que une de verdad las dos notas (como la del semitono de las 2ªs): sale de la altura de la nota a
+             (p. ej. el sol que no existe, en la 2ª línea), baja por debajo del pentagrama y sube hasta la altura de la nota b, parándose antes
+             de su alteración para que no se lea como un «visto» ✓. hondo = px más allá de la línea del pentagrama · hueco = px antes de la alteración */
+          var xU1=a.x+(A.dx1||0), xU2=b.x-12;
+          try{ xU2=b.sn.getAbsoluteX()-((b.sn.getMetrics()||{}).modLeftPx||0)-(A.hueco!=null?A.hueco:3); }catch(e){}
+          var yU=yLin+(arrV?-1:1)*(A.hondo!=null?A.hondo:8);
+          dV = 'M'+xU1+' '+a.yTop+' L'+((xU1+xU2)/2)+' '+yU+' L'+xU2+' '+b.yTop;
+        } else if(A.raiz){
           var dAB=b.x-a.x;
           dV = 'M'+(a.x+dAB*(A.ini!=null?A.ini:0.35))+' '+(yLin-6)+' L'+(a.x+dAB*(A.fin!=null?A.fin:0.5))+' '+(yLin+8)+' L'+(b.x-(A.rx!=null?A.rx:21))+' '+(b.yTop-(A.ry!=null?A.ry:18));
         } else {
@@ -516,7 +628,7 @@
           var h=document.createElementNS(NS,'path');
           h.setAttribute('d','M'+(hx-s1*Math.cos(ang-0.45))+' '+(hy-s1*Math.sin(ang-0.45))+' L'+hx+' '+hy+' L'+(hx-s1*Math.cos(ang+0.45))+' '+(hy-s1*Math.sin(ang+0.45)));
           h.setAttribute('fill','none'); h.setAttribute('stroke',c2); h.setAttribute('stroke-width','1.7'); svg.appendChild(h); }
-        if(A.txt){ txt(mx + (A.tdx||0), (arriba? (my+ (Math.min(ya,yb)-my)/2 - 4) : (my + 12)) + (A.tdy||0), A.txt, {color:c2, fw:A.fw||700, fs:A.fs||11.5}); }   /* (26-sep-2026, Iago) tdx/tdy/fs/fw opcionales */
+        if(A.txt){ txt(mx + (A.tdx||0), (arriba? (my+ (Math.min(ya,yb)-my)/2 - 4) : (my + 12)) + (A.tdy||0), A.txt, {color:c2, fw:A.fw||700, fs:A.fs||11.5, caja:A.caja, cajaFill:A.cajaFill}); }   /* (26-sep-2026, Iago) tdx/tdy/fs/fw/caja opcionales */
       }
       if(A.t==='flecha' && b){ /* flecha desde un texto (o desde otra nota) hasta la nota b */
         /* (26-sep-2026, Iago) ddx/ddy desplazan el origen (cuando sale de una nota) y bdy la punta (como bdx en horizontal): flechas que salen de una etiqueta y apuntan a una caja */
@@ -533,12 +645,17 @@
       if(A.t==='8va' && a && b){ try{
         var arr8 = A.lado!=='abajo', yl;
         if(arr8) yl = Math.min(a.ySupSt-14, a.yTop-14, b.yTop-14) + (A.dy||0); else yl = Math.max(a.yInfSt+22, a.yBot+18, b.yBot+18) + (A.dy||0);
-        var x8 = a.x - 12 + (A.dx||0), te = document.createElementNS(NS,'text');
+        var x8 = a.x - 12 + (A.dx||0);
+        /* (26-sep-2026, Iago) lel:'ottavaAlta'|'ottavaBassa' → el rótulo exacto del Kit («8va» con la «va» volada arriba; abajo, «8va» en línea),
+           con la raya discontinua a la altura de la parte de arriba del rótulo, como en el papel */
+        if(A.lel && LELAND[A.lel]){ var e8=A.esc||0.026, b8=LELAND[A.lel].bb, w8=(b8[2]-b8[0])*e8, h8=(b8[3]-b8[1])*e8, p8L=pathLeland(A.lel, e8, '#000');
+          colocaLeland(p8L, x8 - w8/2, yl + h8*0.75); svg.appendChild(p8L); }
+        else { var te = document.createElementNS(NS,'text');
         te.setAttribute('x',x8); te.setAttribute('y',yl+4); te.setAttribute('text-anchor','end'); te.setAttribute('font-family','Georgia,"Times New Roman",serif');
         te.setAttribute('font-style','italic'); te.setAttribute('font-weight','700'); te.setAttribute('font-size',A.fs||14); te.setAttribute('fill','#000');
         var t1=document.createElementNS(NS,'tspan'); t1.textContent=(A.txt!=null?A.txt:'8'); te.appendChild(t1);
         var t2=document.createElementNS(NS,'tspan'); t2.setAttribute('font-size',(A.fs||14)*0.72); t2.setAttribute('dy','-5'); t2.textContent=(A.sup!=null?A.sup:'va'); te.appendChild(t2);
-        svg.appendChild(te);
+        svg.appendChild(te); }
         var xe = b.x + 10 + (A.dx2||0), hk = arr8 ? 8 : -8;
         var p8=document.createElementNS(NS,'path'); p8.setAttribute('d','M'+(x8+6)+' '+yl+' L'+xe+' '+yl+' L'+xe+' '+(yl+hk));
         p8.setAttribute('fill','none'); p8.setAttribute('stroke','#000'); p8.setAttribute('stroke-width','1.1'); p8.setAttribute('stroke-dasharray','5 4'); svg.appendChild(p8);
@@ -560,6 +677,8 @@
       }
       if(A.t==='txt' && a){ txt(a.x+(A.dx||0), (A.lado==='arriba'? a.yTop-14 : a.yBot+22)+(A.dy||0), A.txt, {color:col(A.col)||MUTED_P, fw:A.fw||700, fs:A.fs||12, caja:A.caja, anchor:A.anchor, it:A.it}); }
     });
+    /* (26-sep-2026, Iago) dónde ha quedado cada nota con id (para las flechas entre pentagramas de grupoFlechas) */
+    host.__apx = {L:L, H:H, notas:notasId, lineas:sistemas.length};
     return true;
   }
 
@@ -567,6 +686,7 @@
      2. BLOQUES DE CONTENIDO
      ===================================================================== */
   var pendientes=[];   /* pentagramas por dibujar (se dibujan cuando el visor ya tiene ancho) */
+  var flechasPend=[];  /* (26-sep-2026, Iago) grupos con flechas entre pentagramas (se dibujan después de los pentagramas) */
   function B(b){
     if(b==null) return '';
     if(typeof b==='string') return '<p class="apx-p">'+b+'</p>';
@@ -578,13 +698,15 @@
     if(b.nota!=null) h+='<p class="apx-nota">'+b.nota+'</p>';
     if(b.penta){ var id='apxS'+(pendientes.length); pendientes.push({id:id, S:b.penta});
       h+='<div class="apx-paper'+(b.penta.estrecho?' apx-estrecho':'')+'">'+
-         ((b.penta.tit||b.penta.txt)?'<div class="apx-ptit">'+(b.penta.tit?'<b>'+b.penta.tit+'</b>':'')+(b.penta.txt?'<span>'+b.penta.txt+'</span>':'')+'</div>':'')+
+         /* (27-sep-2026, Iago) der: rótulo pequeño a la derecha de la fila del título (p. ej. la tonalidad «Sol mayor») */
+         ((b.penta.tit||b.penta.txt||b.penta.der)?'<div class="apx-ptit">'+(b.penta.tit?'<b>'+b.penta.tit+'</b>':'')+(b.penta.txt?'<span>'+b.penta.txt+'</span>':'')+(b.penta.der?'<span class="apx-pder">'+b.penta.der+'</span>':'')+'</div>':'')+
          '<div class="apx-svg" id="'+id+'"'+(b.penta.maxW?' style="max-width:'+(+b.penta.maxW)+'px;margin:0 auto"':'')+'></div>'   /* (26-sep-2026, Iago) maxW: figura estrecha y centrada */+(b.penta.pie?'<div class="apx-ppie">'+b.penta.pie+'</div>':'')+'</div>'; }
     if(b.grid){ h+='<div class="apx-grid" style="--apx-cols:'+(b.cols||2)+'">'+b.grid.map(function(x){ return '<div>'+B(x)+'</div>'; }).join('')+'</div>'; }
     if(b.ojo!=null || b.truco!=null || b.alerta!=null){
       var tipo = b.truco!=null?'truco':(b.alerta!=null?'alerta':'ojo');
-      var lab = b.lab || (tipo==='truco'?'Truco':tipo==='alerta'?'Alerta':'¡Ojo!');
-      h+='<div class="apx-card apx-'+tipo+'"><div class="apx-card-lab">'+lab+'</div><div class="apx-card-t">'+(b.ojo!=null?b.ojo:b.truco!=null?b.truco:b.alerta)+'</div>'+
+      /* (26-sep-2026, Iago) lab:'' → tarjeta sin etiqueta (cuando el recuadro del papel no lleva ninguna palabra delante) */
+      var lab = (b.lab!=null) ? b.lab : (tipo==='truco'?'Truco':tipo==='alerta'?'Alerta':'¡Ojo!');
+      h+='<div class="apx-card apx-'+tipo+'">'+(lab!==''?'<div class="apx-card-lab">'+lab+'</div>':'')+'<div class="apx-card-t">'+(b.ojo!=null?b.ojo:b.truco!=null?b.truco:b.alerta)+'</div>'+
          (b.dentro? '<div class="apx-card-in">'+[].concat(b.dentro).map(B).join('')+'</div>' : '')+'</div>';
     }
     if(b.pasos){ h+='<ol class="apx-pasos">'+b.pasos.map(function(p){ return '<li><span class="apx-paso-n">'+(p.n||'')+'</span><div>'+(p.t||'')+(p.dentro?[].concat(p.dentro).map(B).join(''):'')+'</div></li>'; }).join('')+'</ol>'; }
@@ -608,6 +730,14 @@
     if(b.img){ h+='<figure class="apx-img"><img src="'+esc(b.img.src||b.img)+'" alt="'+esc(b.img.alt||'')+'" loading="lazy"'+(b.img.w?' style="max-width:min(100%,'+b.img.w+'px)"':'')+'>'+(b.img.pie?'<figcaption>'+b.img.pie+'</figcaption>':'')+'</figure>'; }
     if(b.html!=null) h+=b.html;
     if(b.sep) h+='<div class="apx-sep"></div>';
+    /* (26-sep-2026, Iago) {duda:'…', solo:'gp'|'ge'} → recuadro ROJO «DUDA PARA IAGO». Solo aparece con APX_CFG.dudas===true
+       (la web de los alumnos NUNCA lo enseña); con «solo», únicamente en ese grado. */
+    if(b.duda!=null && DUDAS && (!b.solo || b.solo===TEMA)) h+='<div class="apx-duda" role="note"><div class="apx-duda-lab">Duda para Iago</div><div class="apx-duda-t">'+b.duda+'</div></div>';
+    /* (26-sep-2026, Iago) {grupoFlechas:{bloques:[…], flechas:[{de:'id', a:'id', desde:'ab'|'ar'|'nota', hasta:'ar'|'ab'|'nota'}]}}
+       → los bloques de dentro, con flechas que van de una nota de un pentagrama a otra de otro (como en el libro).
+       Si algún pentagrama se parte en varias líneas (móvil), no se dibujan: ahí mandan las etiquetas siPartido. */
+    if(b.grupoFlechas){ var GF=b.grupoFlechas, gid='apxF'+flechasPend.length; flechasPend.push({id:gid, fl:GF.flechas||[], col:GF.col});
+      h+='<div class="apx-gf" id="'+gid+'">'+[].concat(GF.bloques||[]).map(B).join('')+'</div>'; }
     return h;
   }
 
@@ -617,28 +747,42 @@
   function css(){
     if(document.getElementById('apx-css')) return;
     var s=document.createElement('style'); s.id='apx-css';
+    /* (26-sep-2026, Iago) PIEL común LM at home: foto del conservatorio desenfocada + velo, cristal oscuro, texto blanco,
+       rosa de Teoría para destacar (sin degradados ni sombras de neón), rectángulos de esquinas suaves
+       (tarjeta 16 · panel 14 · botón 12 · chip 8). Los pentagramas siguen sobre papel blanco. */
+    var F1=FONDO+'fondo-apaisado.jpg', F2=FONDO+'fondo-vertical.jpg';
     s.textContent=
-    '#apx-ov{position:fixed;inset:0;z-index:2147482000;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:'+PAL.bg+';background-attachment:fixed;color:'+PAL.ink+';font-family:'+FONT+';line-height:1.5}'+
+    '#apx-ov{position:fixed;inset:0;z-index:2147482000;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:'+PAL.base+';color:'+PAL.ink+';font-family:'+FONT+';line-height:1.5}'+
     '#apx-ov *{box-sizing:border-box}'+
-    '.apx-top{position:sticky;top:0;z-index:3;background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.35));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid '+PAL.line+'}'+
-    '.apx-topin{max-width:1000px;margin:0 auto;padding:12px 16px 10px;display:flex;align-items:center;gap:12px}'+
-    '.apx-volver{flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid '+PAL.line+';background:rgba(255,255,255,.06);color:'+PAL.ink+';border-radius:11px;padding:8px 13px;font:700 13px '+FONT+';cursor:pointer}'+
-    '.apx-volver:hover{border-color:'+PAL.acc+'}'+
+    /* fondo: capa fija detrás de todo */
+    '.apx-fondo{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:'+PAL.base+'}'+
+    '.apx-fondo:before{content:"";position:absolute;inset:0;background:url("'+F1+'") center/cover no-repeat;filter:blur(4px) saturate(1.08);transform:scale(1.04)}'+
+    '.apx-fondo:after{content:"";position:absolute;inset:0;background:'+PAL.velo+'}'+
+    '@media (orientation:portrait){.apx-fondo:before{background-image:url("'+F2+'");background-position:center 62%}}'+
+    '.apx-top{position:sticky;top:0;z-index:3;background:'+PAL.vidrio+';backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid '+PAL.line+'}'+
+    '.apx-topin{max-width:1000px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}'+
+    '.apx-volver{flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid '+PAL.line+';background:rgba(255,255,255,.06);color:'+PAL.ink+';border-radius:12px;padding:8px 13px;font:700 13px '+FONT+';cursor:pointer}'+
+    '.apx-volver:hover,.apx-volver:focus-visible{border-color:'+PAL.acc+';outline:none}'+
     '.apx-tits{flex:1;min-width:0;text-align:center}'+
-    '.apx-kick{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:'+PAL.acc+';font-weight:800}'+
-    '.apx-kick svg{width:14px;height:14px}'+
-    '.apx-h2{margin:2px 0 0;font-size:20px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;line-height:1.15;text-wrap:balance}'+
-    '.apx-h2 .apx-home{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-weight:500;text-transform:none;letter-spacing:0;font-size:.62em;color:'+PAL.muted+';margin-left:6px}'+
-    '.apx-x{flex:none;width:40px;height:40px;border-radius:11px;border:1px solid '+PAL.line+';background:rgba(255,255,255,.06);color:'+PAL.ink+';font-size:18px;cursor:pointer}'+
-    '.apx-x:hover{border-color:'+PAL.acc+'}'+
+    /* rótulo de grado arriba al centro: «GRADO ELEMENTAL» en blanco, «GRADO PROFESIONAL» en dorado */
+    '.apx-grado{font-size:10.5px;letter-spacing:.3em;padding-left:.3em;text-transform:uppercase;font-weight:800;color:'+PAL.grado+';line-height:1.35}'+
+    '.apx-h2{margin:3px 0 0;font-size:20px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;line-height:1.15;display:flex;align-items:baseline;justify-content:center;flex-wrap:wrap;column-gap:7px;row-gap:0}'+
+    '.apx-h2 svg{width:17px;height:17px;flex:none;color:'+PAL.acc+';align-self:center}'+
+    '.apx-h2 .apx-home{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-weight:500;text-transform:none;letter-spacing:0;font-size:.62em;color:'+PAL.muted+'}'+
+    '.apx-x{flex:none;width:40px;height:40px;border-radius:12px;border:1px solid '+PAL.line+';background:rgba(255,255,255,.06);color:'+PAL.ink+';font-size:18px;cursor:pointer}'+
+    '.apx-x:hover,.apx-x:focus-visible{border-color:'+PAL.acc+';outline:none}'+
     '.apx-tabs{max-width:1000px;margin:0 auto;padding:0 16px 10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}'+
-    '.apx-tab{border:1px solid '+PAL.line+';background:rgba(255,255,255,.05);color:'+PAL.muted+';border-radius:999px;padding:6px 13px;font:700 12.5px '+FONT+';cursor:pointer}'+
+    '.apx-tab{border:1px solid '+PAL.line+';background:rgba(255,255,255,.05);color:'+PAL.muted+';border-radius:8px;padding:6px 12px;font:700 12.5px '+FONT+';cursor:pointer}'+
+    '.apx-tab:hover,.apx-tab:focus-visible{border-color:'+PAL.acc+';color:'+PAL.ink+';outline:none}'+
     '.apx-tab.on{background:'+PAL.card+';border-color:'+PAL.card+';color:'+PAL.cardInk+'}'+
-    '.apx-body{max-width:1000px;margin:0 auto;padding:22px 16px 60px}'+
-    '.apx-titulo{font-size:30px;font-weight:900;letter-spacing:.02em;margin:4px 0 14px;text-wrap:balance}'+
-    '.apx-titulo:after{content:"";display:block;width:54px;height:4px;border-radius:4px;background:'+PAL.acc+';margin-top:10px}'+
+    /* la hoja de apuntes: un panel de cristal oscuro (más opaco: es zona de lectura) */
+    '.apx-body{position:relative;z-index:1;max-width:1000px;margin:18px auto 36px;padding:22px 20px 26px;background:'+PAL.vidrioO+';backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid '+PAL.line+';border-radius:16px}'+
+    '@media(max-width:1032px){.apx-body{margin:14px 16px 28px}}'+
+    '@media(max-width:700px){.apx-body{margin:8px 6px 20px;padding:16px 10px 20px;border-radius:14px}.apx-paper{padding:8px 6px 4px}.apx-topin{padding:8px 10px;gap:8px}.apx-volver{padding:8px 10px}}'+
+    '.apx-titulo{font-size:30px;font-weight:900;letter-spacing:.02em;margin:2px 0 14px;text-wrap:balance;color:'+PAL.ink+'}'+
+    '.apx-titulo:after{content:"";display:block;width:54px;height:4px;border-radius:2px;background:'+PAL.acc+';margin-top:10px}'+
     '.apx-intro{font-size:16.5px;margin:6px 0 14px;color:'+PAL.ink+'}'+
-    '.apx-intro span{background:linear-gradient(transparent 62%,'+PAL.accSoft.replace(/[\d.]+\)$/,'.55)')+' 62%);padding:0 2px}'+
+    '.apx-intro span{box-shadow:inset 0 -.42em 0 rgba(236,72,153,.45);padding:0 2px}'+
     '.apx-nota{color:'+PAL.muted+';font-style:italic;font-size:13.5px}'+
     '.apx-h{margin:26px 0 4px;font-size:15px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:'+PAL.acc+'}'+
     '.apx-h4{margin:16px 0 2px;font-size:15px;font-weight:800;color:'+PAL.ink+'}'+
@@ -647,25 +791,29 @@
     '.apx-it{font-style:italic}.apx-peq{font-size:13.5px;color:'+PAL.muted+'}'+
     '.apx-p b,.apx-intro b{color:#fff}'+
     '.apx-acc{color:'+PAL.acc+';font-weight:800}'+
-    '.apx-paper{background:'+PAPER+';border-radius:16px;padding:10px 12px 6px;margin:10px 0 14px;box-shadow:0 10px 30px rgba(0,0,0,.28);color:'+INK_P+'}'+
+    '.apx-paper .apx-acc{color:'+PAL.accP+'}'+
+    '.apx-card .apx-acc{color:#fff;text-decoration:underline;text-underline-offset:2px}'+
+    '.apx-paper{background:'+PAPER+';border-radius:14px;padding:10px 12px 6px;margin:10px 0 14px;color:'+INK_P+'}'+
     '.apx-ptit{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:2px 4px 0;font-size:14px;color:'+INK_P+'}'+
     '.apx-ptit b{font-size:22px;font-weight:900;letter-spacing:.01em;color:'+INK_P+'}'+
     '.apx-ptit span{font-weight:700;color:'+MUTED_P+';font-style:italic}'+
+    '.apx-ptit .apx-pder{margin-left:auto;font-style:normal;font-weight:600;font-size:12.5px}'+   /* (27-sep-2026, Iago) penta.der */
     '.apx-ppie{padding:0 6px 6px;font-size:13px;color:'+MUTED_P+';font-style:italic}'+
     '.apx-svg{width:100%}.apx-svg svg{display:block;width:100%;height:auto}'+
     '.apx-svg svg text{stroke:none!important}'+
     '.apx-grid{display:grid;grid-template-columns:repeat(var(--apx-cols),minmax(0,1fr));gap:0 14px}'+
     '@media(max-width:700px){.apx-grid{grid-template-columns:1fr}}'+
     '.apx-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:4px 22px}'+
-    '.apx-card{border-radius:16px;padding:14px 16px;margin:14px 0;background:'+PAL.card+';color:'+PAL.cardInk+';box-shadow:0 12px 30px rgba(0,0,0,.3)}'+
-    '.apx-card-lab{font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:900;opacity:.85;margin-bottom:2px}'+
+    /* tarjetas de truco / ojo / alerta: rosa liso opaco, texto blanco */
+    '.apx-card{border-radius:16px;padding:14px 16px;margin:14px 0;background:'+PAL.card+';color:'+PAL.cardInk+'}'+
+    '.apx-card-lab{font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:900;opacity:.92;margin-bottom:2px}'+
     '.apx-card-t{font-size:15.5px;font-weight:600}'+
     '.apx-card-t b{font-weight:900}'+
-    '.apx-card-in .apx-paper{margin:10px 0 2px;box-shadow:none}'+
+    '.apx-card-in .apx-paper{margin:10px 0 2px}'+
     '.apx-card-in .apx-p{color:inherit}'+
     '.apx-pasos{list-style:none;margin:10px 0;padding:0;display:flex;flex-direction:column;gap:10px}'+
     '.apx-pasos li{display:flex;gap:12px;align-items:flex-start;font-size:15.5px}'+
-    '.apx-paso-n{flex:none;display:inline-block;min-width:66px;text-align:center;border-radius:9px;padding:3px 8px;background:'+PAL.accSoft+';border:1px solid '+PAL.acc+';color:'+PAL.ink+';font-weight:900;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase}'+
+    '.apx-paso-n{flex:none;display:inline-block;min-width:66px;text-align:center;border-radius:8px;padding:3px 8px;background:'+PAL.accSoft+';border:1px solid '+PAL.acc+';color:'+PAL.ink+';font-weight:900;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase}'+
     '.apx-arbol{margin:12px 0}'+
     '.apx-raiz{position:relative;margin:0 auto 22px;max-width:640px;text-align:center;border:1.5px solid '+PAL.acc+';border-radius:14px;padding:10px 14px;background:rgba(255,255,255,.04);font-size:15.5px}'+
     '.apx-raiz:after{content:"";position:absolute;left:50%;bottom:-23px;width:2px;height:22px;background:'+PAL.acc+'}'+
@@ -695,20 +843,26 @@
     '.apx-ico{display:inline-block;margin:0 .3em;vertical-align:middle;line-height:0}.apx-ico svg{display:inline-block}'+
     '.apx-fuente{margin-top:34px;padding-top:12px;border-top:1px solid '+PAL.line+';font-size:12px;color:'+PAL.muted2+';letter-spacing:.04em;text-align:center}'+
     '.apx-err{padding:14px;color:#b00;font-size:13px}'+
+    /* (26-sep-2026, Iago) nota roja de duda para Iago (solo con APX_CFG.dudas===true) */
+    '.apx-duda{margin:14px 0;padding:12px 14px 13px;border:2.5px solid #dc2626;background:#fee2e2;color:#1f0a0a;border-radius:12px;font-size:14.5px;line-height:1.45;font-weight:500}'+
+    '.apx-duda-lab{font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#b91c1c;font-size:12px;margin-bottom:3px}'+
+    '.apx-duda b{font-weight:800}'+
+    /* (26-sep-2026, Iago) grupo de bloques con flechas entre pentagramas */
+    '.apx-gf{position:relative}'+
     /* botón en las tarjetas */
     '.apx-btn{position:absolute;top:10px;left:12px;z-index:4;display:inline-flex;align-items:center;gap:6px;border:none;background:none;padding:4px 6px;margin:0;border-radius:8px;cursor:pointer;'+
       'font:700 9.5px/1 '+FONT+';letter-spacing:.2em;text-transform:uppercase;color:'+PAL.muted+';opacity:.9}'+
     '.apx-btn svg{width:14px;height:14px;flex:none}'+
-    '.apx-btn:hover,.apx-btn:focus-visible{color:'+PAL.acc+';opacity:1;background:rgba(255,255,255,.06);outline:none}'+
+    '.apx-btn:hover,.apx-btn:focus-visible{color:'+PAL.acc+';opacity:1;background:rgba(255,255,255,.08);outline:none}'+
     /* volteo */
     '.apx-back{position:absolute;inset:0;z-index:5;display:grid;grid-template-columns:1fr;align-content:center;gap:6px;padding:34px 14px 10px;border-radius:inherit;overflow:auto;'+
-      'background:'+(TEMA==='gp'?'linear-gradient(180deg,#33240a,#1d1406)':'linear-gradient(180deg,#171a45,#0e1233)')+';opacity:0;pointer-events:none;transform:rotateY(90deg);transition:transform .22s ease,opacity .18s ease}'+
+      'background:rgba(11,19,32,.95);border:1px solid '+PAL.line+';opacity:0;pointer-events:none;transform:rotateY(90deg);transition:transform .22s ease,opacity .18s ease}'+
     '.apx-flip .apx-back{opacity:1;pointer-events:auto;transform:none}'+
     '.apx-back-tit{position:absolute;top:10px;left:14px;right:40px;font:800 9.5px/1 '+FONT+';letter-spacing:.2em;text-transform:uppercase;color:'+PAL.acc+';text-align:left;display:flex;gap:6px;align-items:center}'+
     '.apx-back-tit svg{width:14px;height:14px}'+
     '.apx-back-x{position:absolute;top:6px;right:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid '+PAL.line+';background:rgba(255,255,255,.05);color:'+PAL.ink+';cursor:pointer;font-size:13px}'+
     '.apx-back.apx-muchas{grid-template-columns:1fr 1fr}'+
-    '.apx-opt{display:flex;align-items:center;min-height:34px;width:100%;box-sizing:border-box;text-align:left;border:1px solid '+PAL.line+';background:rgba(255,255,255,.05);color:'+PAL.ink+';border-radius:10px;padding:6px 10px;font:700 12.5px/1.2 '+FONT+';cursor:pointer}'+
+    '.apx-opt{display:flex;align-items:center;min-height:34px;width:100%;box-sizing:border-box;text-align:left;border:1px solid '+PAL.line+';background:rgba(255,255,255,.05);color:'+PAL.ink+';border-radius:12px;padding:6px 10px;font:700 12.5px/1.2 '+FONT+';cursor:pointer}'+
     '.apx-opt:hover,.apx-opt:focus-visible{border-color:'+PAL.acc+';background:'+PAL.accSoft+';outline:none}';
     document.head.appendChild(s);
   }
@@ -722,6 +876,48 @@
   function pintaPentas(){
     var lst=pendientes.slice();
     lst.forEach(function(p){ var el=document.getElementById(p.id); if(el){ try{ dibujaPenta(el, p.S); }catch(e){ console.warn('[apuntes]',e); el.innerHTML='<div class="apx-err">No se ha podido dibujar este pentagrama.</div>'; } } });
+    try{ pintaFlechas(); }catch(e){ console.warn('[apuntes] flechas',e); }
+  }
+  /* (26-sep-2026, Iago) FLECHAS ENTRE PENTAGRAMAS (p. ej. de cada tríada a su cuatríada en el cifrado americano, como en el libro).
+     Cada pentagrama guarda dónde ha quedado cada nota con id (host.__apx); aquí se pasan a coordenadas de la página y se
+     dibuja una capa SVG encima del grupo. Desde/hasta: 'ab' = el rótulo de debajo de la nota, 'ar' = el de encima, 'nota'. */
+  function pintaFlechas(){
+    flechasPend.forEach(function(F){
+      var wrap=document.getElementById(F.id); if(!wrap) return;
+      var vieja=wrap.querySelector(':scope > svg.apx-gf-svg'); if(vieja) vieja.remove();
+      var hosts=[].slice.call(wrap.querySelectorAll('.apx-svg'));
+      if(hosts.some(function(h){ return !h.__apx || h.__apx.lineas>1; })) return;   /* móvil: el pentagrama se ha partido → mandan las etiquetas */
+      function busca(id){ if(/^#/.test(id)){ var el=wrap.querySelector(id); return el?{el:el}:null; }
+        for(var i=0;i<hosts.length;i++){ var A=hosts[i].__apx; if(A && A.notas[id]) return {h:hosts[i], A:A, n:A.notas[id]}; } return null; }
+      var wr=wrap.getBoundingClientRect(), NSf='http://www.w3.org/2000/svg';
+      var sv=document.createElementNS(NSf,'svg'); sv.setAttribute('class','apx-gf-svg'); sv.setAttribute('aria-hidden','true');
+      sv.setAttribute('width',Math.round(wr.width)); sv.setAttribute('height',Math.round(wr.height));
+      sv.style.cssText='position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:2';
+      var colF = F.col || PAL.acc;
+      function punto(o, cual, fin, f){
+        if(o.el){ var re=o.el.getBoundingClientRect(), px=re.left-wr.left, py=re.top-wr.top;   /* (26-sep-2026, Iago) destino/origen = un texto de la página */
+          var q = cual==='izq' ? {x:px-3, y:py+re.height*0.55} : cual==='der' ? {x:px+re.width+3, y:py+re.height*0.55} : cual==='abajo' ? {x:px+re.width/2, y:py+re.height+2} : {x:px+re.width/2, y:py-2};
+          q.x += (fin ? (f.dx2||0) : (f.dx1||0)); return q; }
+        var r=o.h.querySelector('svg').getBoundingClientRect(), s=r.width/o.A.L, n=o.n;
+        var bb = cual==='ab' ? n.abBB : cual==='ar' ? n.arBB : null, xx=n.x, yy;
+        if(bb){ xx = bb.x + bb.width/2; yy = fin ? bb.y - 3 : bb.y + bb.height + 3; }
+        else if(cual==='debajo') yy = n.yBot + (fin ? 5 : 10);   /* (26-sep-2026, Iago) justo debajo de la nota (o de la alteración de la armadura) */
+        else if(cual==='encima') yy = n.yTop - (fin ? 5 : 10);
+        else yy = fin ? n.yTop - 10 : n.yBot + 10;
+        xx += (fin ? (f.dx2||0) : (f.dx1||0)); yy += (fin ? (f.dy2||0) : (f.dy1||0));
+        return {x: r.left - wr.left + xx*s, y: r.top - wr.top + yy*s};
+      }
+      F.fl.forEach(function(f){ var a=busca(f.de), b=busca(f.a); if(!a || !b) return;
+        var p0=punto(a, f.desde||'ab', false, f), p1=punto(b, f.hasta||'ar', true, f);
+        var ang=Math.atan2(p1.y-p0.y, p1.x-p0.x), L2=9, sp=0.42;
+        var p=document.createElementNS(NSf,'path');
+        p.setAttribute('d','M'+p0.x.toFixed(1)+' '+p0.y.toFixed(1)+' L'+p1.x.toFixed(1)+' '+p1.y.toFixed(1));
+        p.setAttribute('stroke',colF); p.setAttribute('stroke-width','2'); p.setAttribute('fill','none'); p.setAttribute('stroke-linecap','round'); sv.appendChild(p);
+        var hd=document.createElementNS(NSf,'path');
+        hd.setAttribute('d','M'+p1.x.toFixed(1)+' '+p1.y.toFixed(1)+' L'+(p1.x-L2*Math.cos(ang-sp)).toFixed(1)+' '+(p1.y-L2*Math.sin(ang-sp)).toFixed(1)+' L'+(p1.x-L2*Math.cos(ang+sp)).toFixed(1)+' '+(p1.y-L2*Math.sin(ang+sp)).toFixed(1)+' Z');
+        hd.setAttribute('fill',colF); sv.appendChild(hd); });
+      wrap.appendChild(sv);
+    });
   }
   /* (26-sep-2026, Iago) iconos musicales dentro del texto (títulos de los adornos):
      <span class="apx-ico" data-ico="tr~"></span> · se dibujan con los mismos glifos que los pentagramas */
@@ -730,8 +926,11 @@
     'prall':[{g:'ornamentShortTrill'}], 'mordente':[{g:'ornamentMordent'}],
     'prall-b':[{g:'ornamentShortTrill', arr:'accidentalFlat'}], 'mordente-s':[{g:'ornamentMordent', ab:'accidentalSharp'}],
     'grupeto':[{g:'ornamentTurn'}], 'grupeto-inv':[{g:'ornamentTurn', espejo:true}],
-    'upmordent':[{g:'ornamentPrecompSlideTrillBach'}], 'upprall':[{g:'ornamentPrecompSlideTrillDAnglebert'}],
-    'downprall':[{g:'ornamentPrecompDoubleCadenceUpperPrefix'}], 'prallup':[{g:'ornamentPrecompTrillSuffixDandrieu'}],
+    /* (26-sep-2026, Iago) los tres signos de «Preparación y resolución» con el contorno exacto del Kit (Leland) */
+    'upmordent':[{lel:'ornamentPrecompSlideTrillBach'}], 'upprall':[{g:'ornamentPrecompSlideTrillDAnglebert'}],
+    'downprall':[{lel:'ornamentPrecompMordentUpperPrefix'}], 'prallup':[{lel:'ornamentPrecompTrillSuffixDandrieu'}],
+    'prall-k':[{lel:'ornamentShortTrill'}], 'mordente-k':[{lel:'ornamentMordent'}],
+    'prall-bk':[{lel:'ornamentShortTrill', arr:'accidentalFlat'}], 'mordente-sk':[{lel:'ornamentMordent', ab:'accidentalSharp'}],
     'pralldown':[{g:'ornamentPrecompTrillLowerSuffix'}],
     'acciaccatura':[{nota:'acciaccatura'}], 'semis':[{nota:'semis'}]
   };
@@ -743,7 +942,11 @@
         el.innerHTML=''; var R=new VF.Renderer(el, VF.Renderer.Backends.SVG); R.resize(240,160); var ctx=R.getContext(); var svg=el.querySelector('svg');
         var x=20, Y=90, ult=null, kpx=+(el.getAttribute('data-k')||0);
         spec.forEach(function(it){
-          if(it.g){ var g=ctx.openGroup('ico'); VF.Glyph.renderGlyph(ctx, x, Y, 38, it.g); ctx.closeGroup(); var bb=g.getBBox();
+          if(it.g || it.lel){ var g=ctx.openGroup('ico');
+            /* (26-sep-2026, Iago) lel: contorno exacto del Kit (Leland), a la misma escala que los demás iconos */
+            if(it.lel){ var pl=pathLeland(it.lel, 0.0372, '#000'); if(pl){ var bL=LELAND[it.lel].bb; colocaLeland(pl, x+(bL[2]-bL[0])/2*0.0372, Y); g.appendChild(pl); } }
+            else VF.Glyph.renderGlyph(ctx, x, Y, 38, it.g);
+            ctx.closeGroup(); var bb=g.getBBox();
             if(it.espejo) g.setAttribute('transform','matrix(-1 0 0 1 '+(2*(bb.x+bb.width/2))+' 0)');
             if(it.arr||it.ab){ var ga=ctx.openGroup('ico'); VF.Glyph.renderGlyph(ctx, 0, 0, 26, it.arr||it.ab); ctx.closeGroup(); var ba=ga.getBBox();
               var tx=(bb.x+bb.width/2)-(ba.x+ba.width/2), ty = it.arr ? (bb.y-3)-(ba.y+ba.height) : (bb.y+bb.height+3)-ba.y;
@@ -771,7 +974,7 @@
   }
   function render(){
     var id = grupoAct.temas[idxAct], T = temaDe(id);
-    pendientes=[];
+    pendientes=[]; flechasPend=[];
     var body = ov.querySelector('.apx-body');
     if(!T){ body.innerHTML='<p class="apx-p">Estos apuntes todavía no están disponibles.</p>'; return; }
     body.innerHTML = '<h1 class="apx-titulo">'+T.titulo+'</h1>' + (T.bloques||[]).map(B).join('') +
@@ -796,9 +999,10 @@
     grupoAct = { nombre:grupo.nombre, temas:grupo.temas, foco:foco||document.activeElement }; idxAct = idx||0;
     ov=document.createElement('div'); ov.id='apx-ov'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','Apuntes de '+grupo.nombre);
     var tabs = grupo.temas.length>1 ? '<div class="apx-tabs" role="tablist">'+grupo.temas.map(function(t,i){ var T=temaDe(t); return '<button type="button" class="apx-tab" role="tab" data-i="'+i+'">'+esc(T?(T.corto||T.titulo):t)+'</button>'; }).join('')+'</div>' : '';
-    ov.innerHTML='<div class="apx-top"><div class="apx-topin">'+
+    /* (26-sep-2026, Iago) piel común: foto de fondo fija, cabecera de cristal con el rótulo de grado arriba al centro */
+    ov.innerHTML='<div class="apx-fondo" aria-hidden="true"></div><div class="apx-top"><div class="apx-topin">'+
       '<button type="button" class="apx-volver" aria-label="Volver">‹ Volver</button>'+
-      '<div class="apx-tits"><div class="apx-kick">'+ICO_LIBRO+'Apuntes</div><div class="apx-h2">'+esc(grupo.nombre)+'<span class="apx-home">at home</span></div></div>'+
+      '<div class="apx-tits"><div class="apx-grado">'+esc(PAL.gradoTxt)+'</div><div class="apx-h2" title="Apuntes">'+ICO_LIBRO+'<span>'+esc(grupo.nombre)+'</span><span class="apx-home">at home</span></div></div>'+
       '<button type="button" class="apx-x" aria-label="Cerrar">✕</button></div>'+tabs+'</div><div class="apx-body"></div>';
     document.body.appendChild(ov); document.documentElement.style.overflow='hidden';
     ov.querySelector('.apx-volver').onclick=function(){ cerrar(false); };

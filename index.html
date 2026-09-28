@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<script>/* LM piel (27-sep-2026): estetica nueva SOLO en los navegadores de Iago Tester/Protester (marca lm_piel=1). Para quitarla, borra esta linea. */try{if((' '+document.cookie).indexOf(' lm_piel=1')>-1||location.search.indexOf('piel=1')>-1)document.write('<script src="https://ge.lmathome.es/piel/lm-piel.js" data-app="teoria-ge"></scr'+'ipt>')}catch(e){}</script>
 <!-- ⚠ (27-sep-2026, Iago) VARIAS CONVERSACIONES DE CLAUDE SUBEN CAMBIOS A ESTE REPOSITORIO A LA VEZ.
      Antes de subir nada, lee _COORDINACION-IA.md (en la raíz del repositorio): quién toca qué y cómo subir sin pisarse.
      Regla de oro: parte SIEMPRE del último commit de main, nunca de una copia antigua. -->
@@ -1512,6 +1513,13 @@
   .pp-ref-al{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.12)}
   .pp-ref-lbl{font-size:12px;font-weight:800;color:#ffd678;margin-right:2px}
   .pp-ref-chip{font-size:12px;font-weight:700;color:#ffe9a3;background:rgba(255,214,120,.14);border:1px solid rgba(255,214,120,.4);border-radius:999px;padding:3px 9px}
+  /* (27-sep-2026, Iago) «Los alumnos que tienen ejercicios específicos están en amarillo y no se leen»: la tarjeta
+     del ejercicio (.pp-ex) es BLANCA; «Para:» y los nombres van ahora en ámbar oscuro sobre amarillo claro, y el
+     «✕ Quitar» (que tampoco se veía: letra blanca) como el «↻ Regenerar». Para quitarlo: borrar estas cuatro líneas. */
+  .pp-ex .pp-ref-al{border-top-color:#eadcb2}
+  .pp-ex .pp-ref-lbl{color:#8a5a00}
+  .pp-ex .pp-ref-chip{color:#4a3200;background:#fff4d1;border-color:#e0b43a}
+  .pp-ex .pp-ref-quitar{background:#fff;color:var(--teoria);border-color:var(--teoria)}
   .pp-ref-quitar{margin-left:auto}
   #ppAlumnoSim .sim-refuerzo{background:linear-gradient(90deg,rgba(255,214,120,.22),rgba(255,214,120,.08));border:1px solid rgba(255,214,120,.55);color:#ffe9a3;border-radius:12px;padding:10px 14px;font-size:13.5px;line-height:1.45;margin-bottom:12px}
   .pp-cesta-empty{font-size:13px;color:var(--muted2);padding:8px 2px}
@@ -12190,6 +12198,12 @@ function __grados_marker__(){}
       let _asT=null;
       const _as=()=>{ if(!esAlumnoProg || enviado) return; clearTimeout(_asT); _asT=setTimeout(()=>{ try{ if(!enviado) progGuardar(i, maxAvance); }catch(e){} }, 2500); };
       ['pointerup','keyup','change'].forEach(ev=>ov.addEventListener(ev,_as,true));
+      /* (27-sep-2026, Iago) AUTOGUARDADO TAMBIÉN CON LA RUEDA: lo contestado SOLO girando una rueda con la rueda del
+         ratón o el trackpad no se guardaba hasta el siguiente clic (la rueda del ratón no produce pointerup/keyup/change).
+         Ahora girar una rueda de respuesta (.wheel) arranca el MISMO autoguardado que un clic (_as: misma espera de
+         2,5 s, que vuelve a empezar con cada movimiento). En captura y «passive»: no frena ni cambia cómo gira la rueda.
+         Para quitarlo: borrar esta línea. */
+      ov.addEventListener('wheel',e=>{ const t=e.target; if(t && t.closest && t.closest('.wheel')) _as(); },{capture:true,passive:true});
     }catch(e){}
     // SFX · clic suave al pulsar botones (el "Siguiente" ya tiene su arpegio de avance)
     ov.addEventListener('pointerdown', function(e){ try{ var t=e.target; if(t && t.closest && t.closest('button, .acc-btn, .fig-btn, .cad-ans, .ac-invbtn') && !t.closest('#simNext')){ if(window.SFX) window.SFX.tap(); } }catch(_){} }, true);
@@ -12354,7 +12368,11 @@ function __grados_marker__(){}
               ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Toca el pentagrama para colocar cada nota. Selecciónala y usa <b>♯ ♮ ♭</b> para alterarla. '+window.TXT_TIP('Borra con clic derecho.','Borra con la ×.')+'</div>'
               : esRuedas
                 ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Gira las ruedas para responder cada compás (y usa <b>♯ ♭</b> donde aparezcan).</div>'
-                : '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px;font-style:italic">Simulación: aquí el alumno resolvería el ejercicio (colocar notas, escribir, elegir…).</div>';
+                /* (27-sep-2026, Iago) Sin texto de relleno. Aquí decía «Simulación: aquí el alumno resolvería el ejercicio
+                   (colocar notas, escribir, elegir…)», de cuando la previsualización no era interactiva. Lo veían los
+                   alumnos en Términos (que ya trae sus instrucciones en A, B y C) y bajo «Este ejercicio no se ha podido
+                   cargar». El ejercicio no cambia. Para volver a ponerlo: devolver aquí ese <div>. */
+                : '';
       const areaItem = AREA_DE[item.key];
       /* (27-sep-2026, Iago) APUNTES EN LAS FICHAS: class="sim-ayuda" marca esta fila para colgarle «APUNTES» (bloque ApxFicha, al final) */
       const practiBtn = areaItem
@@ -12969,7 +12987,10 @@ function __grados_marker__(){}
     host.appendChild(acc);
     document.getElementById('ppPreviewAlumno').onclick=()=>{ asegurarFicha() && previsualizarAlumno(); };
     document.getElementById('ppPDF').onclick=()=>{ asegurarFicha() && elegirTipoYGenerarPDF(); };
-    document.getElementById('ppEnviar').onclick=()=>{ asegurarFicha() && preguntarPDFYEnviar(); };
+    /* (27-sep-2026, Iago) «Preparar envío a alumnos» va DIRECTO al envío: ya no pregunta si quieres además el ZIP
+       (alumno + solución). Para imprimir está «Generar PDF (alumno + solución)» y, al enviar, las copias en papel
+       se ofrecen solas. Para volver a preguntar: cambiar abrirEnvio() por preguntarPDFYEnviar(). */
+    document.getElementById('ppEnviar').onclick=()=>{ asegurarFicha() && abrirEnvio(); };
     document.getElementById('ppToggleSol').onclick=()=>{
       PP.mostrarSol=!PP.mostrarSol;
       document.getElementById('ppExList').classList.toggle('pp-hide-sol',!PP.mostrarSol);
@@ -18117,8 +18138,10 @@ window.CAD = {
      Solo para alumnos con cuenta validada (de momento, solo la cuenta Tester, para revisarlos).
      Para quitarlo: borrar este bloque (y los ficheros apuntes.js / apuntes-kit.js). -->
 <script>window.APX_CFG={tema:'ge', soloTester:true};</script>
-<script src="apuntes.js?v=1"></script>
-<script src="apuntes-kit.js?v=1"></script>
+<!-- (27-sep-2026, Iago) apuntes con las respuestas de Iago (motor nuevo + kit): «?v=2» para que ningún navegador
+     mezcle un fichero viejo de su caché con los nuevos. Si se vuelven a cambiar apuntes*.js, subir el número. -->
+<script src="apuntes.js?v=2"></script>
+<script src="apuntes-kit.js?v=2"></script>
 <script>
 (function(){
   if(!window.APX || new URLSearchParams(location.search).get('fichaId')) return;
