@@ -18467,7 +18467,15 @@ window.CAD = {
      (intros/indica-la-tonalidad/). Dentro del vídeo: «Salir» (o Esc) vuelve a la elección; «Ir a ejercicios» cierra y
      abre Tonalidades; ✕, clic fuera, Esc o atrás del navegador cierran. Las carpetas intros/ son autónomas.
      Para poner vídeos en otra tarjeta: una entrada más en INTROS (data-pad de la tarjeta → lista de vídeos).
-     Para quitarlo: borrar este bloque (y, si se quiere, la carpeta intros/). -->
+     Para quitarlo: borrar este bloque (y, si se quiere, la carpeta intros/).
+     (28-sep-2026, Iago) VÍDEOS EN PRUEBA: los que llevan «prueba: true» en INTROS solo los ve la cuenta Tester (la misma
+     comprobación que «VER APUNTES»: APX.comprobar → validado y tester), con la etiqueta «EN PRUEBA». Así aparecen ▶ también
+     en Intervalos, Inversión de intervalos y Compases. PARA PUBLICARLOS a los alumnos (solo cuando Iago lo diga): quitar
+     «prueba: true» de cada vídeo y añadirlos a VIDEO del bloque «APUNTES EN LAS FICHAS» (ver _COORDINACION-IA.md).
+     (28-sep-2026, Iago) PULGAR 👍: junto a cada vídeo EN PRUEBA, Iago (Tester/Protester) marca los que ya revisó y están
+     bien; se guarda en Supabase (funciones suite_intro_revisiones / suite_intro_marcar, tabla suite_intros_revision).
+     Al publicar, los vídeos NUNCA van abiertos a invitados: se cambia «prueba: true» por «alumnos: true» (solo cuentas
+     validadas, es decir, alumnos logueados y vinculados). -->
 <style>
   .ivg-play{position:absolute;top:10px;right:12px;z-index:4;width:30px;height:30px;box-sizing:border-box;display:grid;place-items:center;
     border-radius:8px;border:1px solid rgba(232,67,147,.6);background:rgba(0,0,0,.18);color:#ff9fd0;cursor:pointer;
@@ -18485,7 +18493,17 @@ window.CAD = {
   .ivg-menu{position:absolute;inset:0;container-type:size;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5cqh;
     padding:6cqh 4cqw;box-sizing:border-box;opacity:0;transition:opacity .35s ease;font-family:"Helvetica Neue",Arial,system-ui,sans-serif}
   .ivg-kick{font-size:max(10px,1.5cqw);font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:#e84393}
-  .ivg-opciones{display:flex;gap:3cqw;width:100%;justify-content:center}
+  .ivg-opciones{display:flex;flex-wrap:wrap;gap:3cqh 3cqw;width:100%;justify-content:center}
+  .ivg-opciones.ivg-muchas .ivg-op{flex-basis:34cqw}                        /* (28-sep-2026) 3–4 vídeos: dos filas */
+  .ivg-opciones.ivg-muchas .ivg-tit{font-size:max(11px,2.2cqw)}
+  .ivg-opciones.ivg-muchas .ivg-sub{font-size:max(9px,1.2cqw)}
+  .ivg-prueba{position:absolute!important;top:6%;left:4%;font-size:max(9px,1.05cqw);font-weight:800;letter-spacing:.12em;color:#ff9fd0;
+    border:1px dashed rgba(255,159,208,.85);border-radius:6px;padding:.25em .6em;background:rgba(5,9,22,.55)}
+  .ivg-prueba.ok{color:#86efac;border:1px solid rgba(134,239,172,.85)}
+  .ivg-ok{position:absolute!important;right:4%;bottom:6%;z-index:2;font-size:max(15px,2.3cqw);line-height:1;padding:.28em .36em;border-radius:8px;
+    border:1px dashed rgba(255,255,255,.55);background:rgba(5,9,22,.6);filter:grayscale(1);opacity:.7;cursor:pointer;transition:opacity .18s,border-color .18s,background .18s}
+  .ivg-ok:hover,.ivg-ok:focus-visible{opacity:1;outline:none;border-color:#e84393}
+  .ivg-ok.on{filter:none;opacity:1;border:1px solid #4ade80;background:rgba(74,222,128,.25)}
   .ivg-op{position:relative;flex:0 1 43.5cqw;aspect-ratio:16/9;box-sizing:border-box;border-radius:14px;border:1px solid rgba(255,255,255,.16);cursor:pointer;
     background:#0b1020 center/cover no-repeat;color:#fff;overflow:hidden;padding:0 4%;margin:0;font:inherit;text-align:center;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.4cqh;
@@ -18505,6 +18523,8 @@ window.CAD = {
   .ivg-visto{position:absolute!important;top:6%;right:4%;font-size:max(9px,1.05cqw);font-weight:800;letter-spacing:.12em;color:#fff;
     background:#e84393;border-radius:6px;padding:.25em .6em}
   @container (max-width:560px){ .ivg-sub,.ivg-bar{display:none} .ivg-kick{font-size:9px} .ivg-op{flex-basis:44cqw;gap:3cqh;border-radius:10px} }
+  @container (max-width:560px){ .ivg-opciones.ivg-muchas .ivg-op{flex-basis:37cqw;gap:1.5cqh} .ivg-muchas .ivg-num{display:none}
+    .ivg-prueba{top:4%;left:3%;padding:.1em .4em;font-size:8px;letter-spacing:.06em} .ivg-ok{font-size:13px;right:3%;bottom:4%} }   /* (28-sep-2026) móvil con 3–4 vídeos */
   .ivg-cerrar,.ivg-volver{position:fixed;top:14px;z-index:10000;height:40px;box-sizing:border-box;border-radius:10px;border:1px solid rgba(255,255,255,.3);
     background:rgba(0,0,0,.45);color:#fff;font:600 16px/1 system-ui,sans-serif;cursor:pointer;opacity:0;transition:opacity .3s,border-color .2s}
   .ivg-cerrar{right:16px;width:40px}
@@ -18515,20 +18535,75 @@ window.CAD = {
 (function(){
   'use strict';
   if (new URLSearchParams(location.search).get('fichaId')) return;          /* no en la ficha del alumno */
-  /* data-pad de la tarjeta → vídeos (carpeta de esta web · título · subtítulo · duración) */
+  /* data-pad de la tarjeta → vídeos (carpeta de esta web · título · subtítulo · duración)
+     · card / inv: adónde lleva «Ir a ejercicios» (tarjeta de ejercicios de esa sección; en Inversión, la pestaña)
+     · prueba: true → (28-sep-2026) SOLO lo ve la cuenta Tester, hasta que Iago diga «publícalos» */
   var INTROS = {
     tonalidades: { nombre: 'Tonalidades', lista: [
-      { src: 'intros/la-tonalidad/index.html', tit: 'La tonalidad', sub: '¿Para qué sirve?', dur: '2:57' },
-      { src: 'intros/indica-la-tonalidad/index.html', tit: 'Indica la tonalidad', sub: 'Sostenidos · Bemoles · Relativo menor', dur: '4:24' }
+      { src: 'intros/la-tonalidad/index.html', tit: 'La tonalidad', sub: '¿Para qué sirve?', dur: '2:57', card: 'cardTA' },
+      { src: 'intros/indica-la-tonalidad/index.html', tit: 'Indica la tonalidad', sub: 'Sostenidos · Bemoles · Relativo menor', dur: '4:24', card: 'cardTA' },
+      { src: 'intros/indica-la-armadura/index.html', tit: 'Indica la armadura', sub: 'Paso cero · Bemoles · Sostenidos', dur: '2:42', card: 'cardTB', prueba: true },
+      { src: 'intros/tonalidades-vecinas/index.html', tit: 'Tonalidades vecinas', sub: 'Armadura · Relativo · Una más y una menos', dur: '1:32', card: 'cardTC', prueba: true }
+    ] },
+    intervalos: { nombre: 'Intervalos', lista: [
+      { src: 'intros/intervalos/index.html', tit: 'Intervalos', sub: 'Número · Especie · El truco de las manos', dur: '5:21', card: 'cardA', prueba: true },
+      { src: 'intros/intervalos-compuestos/index.html', tit: 'Intervalos compuestos', sub: 'Acercar · Analizar · Listo', dur: '1:48', card: 'cardA', prueba: true }
+    ] },
+    inversiones: { nombre: 'Inversión de intervalos', lista: [
+      { src: 'intros/inversion-intervalos/index.html', tit: 'Inversión de intervalos', sub: 'Suman nueve · La especie se da la vuelta', dur: '1:32', inv: 'simples', prueba: true },
+      { src: 'intros/inversion-compuestos/index.html', tit: 'Inversión de compuestos', sub: 'Me acerco · Invierto · Me alejo', dur: '1:54', inv: 'compuestos', prueba: true }
+    ] },
+    compases: { nombre: 'Compases', lista: [
+      { src: 'intros/compases/index.html', tit: 'Compases', sub: 'Pulsos · Subdivisión · Figuras', dur: '2:23', card: 'cardCOM', prueba: true }
     ] }
   };
   /* «Ir a ejercicios» del final del vídeo: se cierra y se abren los ejercicios de esa tarjeta (sin recargar) */
+  function abreEj(fn, card, practica){
+    try { window[fn](); } catch (e) { if (practica) location.href = '?practice=' + practica; return; }
+    if (card) setTimeout(function(){ var c = document.getElementById(card); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120);
+  }
   var EJERCICIOS = {
-    tonalidades: function(){
-      try { window.openTonalidades(); } catch (e) { location.href = '?practice=ton_arm_tono'; return; }
-      setTimeout(function(){ var c = document.getElementById('cardTA'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120);
-    }
+    tonalidades: function(v){ abreEj('openTonalidades', (v && v.card) || 'cardTA', 'ton_arm_tono'); },
+    intervalos: function(v){ abreEj('openIntervalos', (v && v.card) || 'cardA', 'int_clasif'); },
+    inversiones: function(v){ abreEj('openInversiones', null, 'inv_simples'); try { if (v && v.inv && window.invTab) window.invTab(v.inv); } catch (e) {} },
+    compases: function(v){ abreEj('openCompases', (v && v.card) || 'cardCOM', 'com_clasif'); }
   };
+  /* (28-sep-2026) quién puede ver cada vídeo: sin marca, todos (los dos primeros de Tonalidades); alumnos: true, solo cuentas
+     validadas (alumnos logueados y vinculados; nunca invitados); prueba: true, solo Tester y Protester (APX.comprobar) */
+  var tester = false, alumno = false, cuentaId = null, marcas = {};
+  function visibles(path){ return INTROS[path].lista.filter(function(v){ return v.prueba ? tester : (v.alumnos ? (alumno || tester) : true); }); }
+  /* ---- pulgar 👍 de Iago en los vídeos EN PRUEBA (Supabase: suite_intro_revisiones / suite_intro_marcar) ---- */
+  var SB = 'https://woiptkyrxkbpnvioypit.supabase.co', SBK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvaXB0a3lyeGticG52aW95cGl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NzI2ODYsImV4cCI6MjA5MjA0ODY4Nn0.B2nKgj5rD0rkdLeMIrd9KgD8lUPWsBT4Y7aCtmnvbjA';
+  function rpc(fn, args){
+    return fetch(SB + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SBK, Authorization: 'Bearer ' + SBK }, body: JSON.stringify(args) })
+      .then(function(r){ if (!r.ok) throw new Error('http ' + r.status); return r.json(); });
+  }
+  function leeCuenta(){
+    var c = null;
+    try { c = localStorage.getItem('apx_cuenta_ge'); } catch (e) {}
+    if (!c) { try { var s = JSON.parse(localStorage.getItem('lmeav_session') || 'null'); if (s && s.id && s.estado === 'validado') c = s.id; } catch (e) {} }
+    return c;
+  }
+  function refrescaPulgares(){
+    Array.prototype.forEach.call(document.querySelectorAll('.ivg-ok'), function(ok){
+      var on = !!marcas[ok.getAttribute('data-src')];
+      ok.classList.toggle('on', on); ok.setAttribute('aria-pressed', on ? 'true' : 'false');
+      ok.title = on ? 'Revisado y correcto · pulsa para quitarlo' : 'Marcar como revisado y correcto (solo lo ves tú)';
+      var tag = ok.parentNode && ok.parentNode.querySelector('.ivg-prueba');
+      if (tag) { tag.textContent = on ? 'REVISADO' : 'EN PRUEBA'; tag.classList.toggle('ok', on); }
+    });
+  }
+  function cargaMarcas(){
+    if (!tester || !cuentaId) return;
+    rpc('suite_intro_revisiones', { p_id: cuentaId }).then(function(d){ if (d && d.ok && d.marcas) { marcas = d.marcas; refrescaPulgares(); } }).catch(function(){});
+  }
+  function alternaPulgar(src){
+    if (!tester || !cuentaId) return;
+    var nuevo = !marcas[src]; marcas[src] = nuevo; refrescaPulgares();
+    rpc('suite_intro_marcar', { p_id: cuentaId, p_src: src, p_ok: nuevo })
+      .then(function(d){ if (!d || !d.ok) throw new Error((d && d.error) || 'error'); })
+      .catch(function(){ marcas[src] = !nuevo; refrescaPulgares(); try { alert('No se ha podido guardar el 👍. Inténtalo otra vez.'); } catch (e) {} });
+  }
   var ICO = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 1.1v9.8L10.6 6z" fill="currentColor"/></svg>';
   var abierto = null, vistos = {};
   var reducir = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -18544,13 +18619,21 @@ window.CAD = {
     a.detras.innerHTML = '';
     var m = el('div', 'ivg-menu'); m.setAttribute('role', 'group'); m.setAttribute('aria-label', 'Elige un vídeo');
     var k = el('div', 'ivg-kick'); k.textContent = a.def.nombre + ' · vídeos'; m.appendChild(k);
-    var ops = el('div', 'ivg-opciones'); m.appendChild(ops);
+    var ops = el('div', 'ivg-opciones' + (a.lista.length > 2 ? ' ivg-muchas' : '')); m.appendChild(ops);
     var botones = [];
-    a.def.lista.forEach(function(v, i){
+    a.lista.forEach(function(v, i){
       var b = el('button', 'ivg-op'); b.type = 'button';
       b.style.backgroundImage = 'url("' + v.src.replace(/index\.html$/, 'fondo.jpg') + '")';
       b.innerHTML = '<span class="ivg-num">' + (i + 1) + '</span><span class="ivg-tit"></span><span class="ivg-bar"></span>' +
-        '<span class="ivg-sub"></span><span class="ivg-dur">' + ICO + '<span></span></span>' + (vistos[v.src] ? '<span class="ivg-visto">✓ VISTO</span>' : '');
+        '<span class="ivg-sub"></span><span class="ivg-dur">' + ICO + '<span></span></span>' + (vistos[v.src] ? '<span class="ivg-visto">✓ VISTO</span>' : '') +
+        (v.prueba ? '<span class="ivg-prueba" title="Solo lo ve la cuenta Tester hasta que se publique">EN PRUEBA</span>' : '');
+      if (v.prueba && tester) {   /* (28-sep-2026) pulgar 👍: revisado y correcto (no abre el vídeo) */
+        var ok = el('span', 'ivg-ok'); ok.setAttribute('role', 'button'); ok.tabIndex = 0; ok.setAttribute('data-src', v.src); ok.textContent = '👍';
+        ok.setAttribute('aria-label', 'Revisado: «' + v.tit + '» está bien');
+        ok.addEventListener('click', function(ev){ ev.stopPropagation(); ev.preventDefault(); alternaPulgar(v.src); });
+        ok.addEventListener('keydown', function(ev){ if (ev.key === 'Enter' || ev.key === ' ') { ev.stopPropagation(); ev.preventDefault(); alternaPulgar(v.src); } });
+        b.appendChild(ok);
+      }
       b.querySelector('.ivg-tit').textContent = v.tit;
       b.querySelector('.ivg-sub').textContent = v.sub;
       b.querySelector('.ivg-dur span').textContent = v.dur;
@@ -18559,6 +18642,7 @@ window.CAD = {
       ops.appendChild(b); botones.push(b);
     });
     a.detras.appendChild(m);
+    refrescaPulgares();
     a.volver.style.display = 'none'; a.cerrar.style.display = ''; a.video = null;   /* (28-sep-2026, Iago) en la lista de vídeos, solo la ✕ */
     requestAnimationFrame(function(){ m.style.opacity = '1'; });
     var f = botones[Math.max(0, foco || 0)];
@@ -18585,7 +18669,7 @@ window.CAD = {
   }
   function volverAMenu(){
     var a = abierto; if (!a || a.cerrando || !a.video) return;
-    var i = a.def.lista.indexOf(a.video.v);
+    var i = a.lista.indexOf(a.video.v);
     vistos[a.video.v.src] = true;
     pintaMenu(a, i);                                                      /* quita el iframe: se para el sonido */
   }
@@ -18606,7 +18690,7 @@ window.CAD = {
     card.style.visibility = 'hidden';
     document.documentElement.style.overflow = 'hidden';
     var tok = 'ivg' + Date.now();
-    abierto = { card: card, path: path, def: INTROS[path], caja: caja, giro: giro, detras: detras, fondo: fondo, cerrar: cerrar, volver: volver, tok: tok, video: null };
+    abierto = { card: card, path: path, def: INTROS[path], lista: visibles(path), caja: caja, giro: giro, detras: detras, fondo: fondo, cerrar: cerrar, volver: volver, tok: tok, video: null };
     try { history.pushState({ ivg: tok }, ''); } catch (e) {}
     requestAnimationFrame(function(){ fondo.style.opacity = '1'; });
     caja.animate([px(r), px(d)], { duration: dur, easing: easing, fill: 'forwards' });
@@ -18621,6 +18705,7 @@ window.CAD = {
     o = o || {};
     if (!abierto || abierto.cerrando) return;
     var a = abierto; a.cerrando = true;
+    var vv = a.video ? a.video.v : null;
     a.detras.innerHTML = '';                                              /* fuera el vídeo (se para el sonido) */
     a.cerrar.style.opacity = '0'; a.volver.style.opacity = '0';
     if (!o.porAtras) { try { if (history.state && history.state.ivg === a.tok) history.back(); } catch (e) {} }
@@ -18631,7 +18716,7 @@ window.CAD = {
     }
     if (o.ejercicios) {
       a.fondo.style.opacity = '0'; a.caja.style.transition = 'opacity .25s ease'; a.caja.style.opacity = '0';
-      setTimeout(function(){ fin(); if (EJERCICIOS[a.path]) EJERCICIOS[a.path](); }, reducir ? 0 : 260);
+      setTimeout(function(){ fin(); if (EJERCICIOS[a.path]) EJERCICIOS[a.path](vv); }, reducir ? 0 : 260);
       return;
     }
     var r = a.card.getBoundingClientRect(), b = a.caja.getBoundingClientRect(), dur = reducir ? 1 : 700, easing = 'cubic-bezier(.4,.1,.3,1)';
@@ -18667,7 +18752,7 @@ window.CAD = {
   function monta(){
     Object.keys(INTROS).forEach(function(path){
       var card = document.querySelector('#padGrid .pad[data-pad="' + path + '"]');
-      if (!card || card.querySelector(':scope > .ivg-play')) return;
+      if (!card || card.querySelector(':scope > .ivg-play') || !visibles(path).length) return;
       if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
       var b = el('span', 'ivg-play'); b.setAttribute('role', 'button'); b.tabIndex = 0;
       b.setAttribute('aria-label', 'Ver los vídeos de introducción de ' + INTROS[path].nombre); b.title = 'Vídeos de introducción'; b.innerHTML = ICO;
@@ -18682,6 +18767,13 @@ window.CAD = {
     monta();
     var g = document.getElementById('padGrid');
     if (g && window.MutationObserver) new MutationObserver(monta).observe(g, { childList: true });
+    try {   /* (28-sep-2026) ¿cuenta Tester? → se ven también los vídeos EN PRUEBA */
+      if (window.APX && window.APX.comprobar) window.APX.comprobar(function(info){
+        if (!info || !info.validado) return;
+        alumno = true; tester = !!info.tester; cuentaId = leeCuenta();
+        monta(); cargaMarcas();
+      });
+    } catch (e) {}
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arranca); else arranca();
 })();
