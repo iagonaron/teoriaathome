@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<!-- ⚠ (27-sep-2026, Iago) VARIAS CONVERSACIONES DE CLAUDE SUBEN CAMBIOS A ESTE REPOSITORIO A LA VEZ.
+     Antes de subir nada, lee _COORDINACION-IA.md (en la raíz del repositorio): quién toca qué y cómo subir sin pisarse.
+     Regla de oro: parte SIEMPRE del último commit de main, nunca de una copia antigua. -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TEORÍA at home</title>
 <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.3/build/cjs/vexflow.js"></script>
@@ -18142,7 +18145,7 @@ window.CAD = {
 
 <!-- (27-sep-2026, Iago) APUNTES EN LAS FICHAS: en cada ejercicio de la ficha del alumno, al lado de «No lo sé hacer,
      necesito practicar esto» sale «APUNTES» (abre el tema de ESE ejercicio en el mismo visor que «VER APUNTES») y
-     «VER VÍDEO» si ese tipo de ejercicio tiene vídeo (hoy, en GE, ninguno). En los ejercicios tipo test (adornos y
+     «VER VÍDEO» si ese tipo de ejercicio tiene vídeo (en GE, desde el 27-sep: «indica la tonalidad»). En los ejercicios tipo test (adornos y
      abreviaciones: test + V/F) y en los que no tienen práctica (términos) sale solo «¿Dudas? Ver APUNTES».
      MISMA PUERTA que «VER APUNTES» (APX_CFG.soloTester, arriba): hoy solo lo ve la cuenta Tester; el día que se abran
      los apuntes a todos (soloTester:false) aparece a la vez. Si el ejercicio no tiene tema de apuntes, la fila se queda
@@ -18178,7 +18181,7 @@ window.CAD = {
     cadencias_quiz:G('Cadencias',['cadencias'])
   };
   function esTest(k){ return k==='adorno_quiz' || k==='abrev_quiz'; }   /* test a/b/c + V/F */
-  var VIDEO={};   /* tipo de ejercicio → vídeo (ruta de esta web, p. ej. 'intros/…/index.html'). Hoy no hay ninguno en GE. */
+  var VIDEO={ ton_arm_tono:'intros/indica-la-tonalidad/index.html' };   /* tipo de ejercicio → vídeo (ruta de esta web). (27-sep-2026, Iago) «indica la tonalidad» → su vídeo (el de la tarjeta Tonalidades, bloque VÍDEOS DE INTRODUCCIÓN). */
   var SEL_PRACTICA='.simPracticaLive', CLASE_BOTON='sim-practica-btn', ACENTO='#e84393';
   var CSS_PROPIO=
     '#ppAlumnoSim .sim-ayuda.apxf-fila{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px}'+
@@ -18330,6 +18333,230 @@ window.CAD = {
     window.addEventListener('popstate', alAtras);
     try{ ov.querySelector('.apxf-vid-x').focus({preventScroll:true}); }catch(e){}
   }
+})();
+</script>
+
+<!-- (27-sep-2026, Iago) VÍDEOS DE INTRODUCCIÓN en la tarjeta «Tonalidades»: botón ▶ arriba a la derecha. Al pulsarlo
+     la tarjeta se voltea, crece y deja ELEGIR vídeo: «La tonalidad» (intros/la-tonalidad/) o «Indica la tonalidad»
+     (intros/indica-la-tonalidad/). Dentro del vídeo: «Salir» (o Esc) vuelve a la elección; «Ir a ejercicios» cierra y
+     abre Tonalidades; ✕, clic fuera, Esc o atrás del navegador cierran. Las carpetas intros/ son autónomas.
+     Para poner vídeos en otra tarjeta: una entrada más en INTROS (data-pad de la tarjeta → lista de vídeos).
+     Para quitarlo: borrar este bloque (y, si se quiere, la carpeta intros/). -->
+<style>
+  .ivg-play{position:absolute;top:10px;right:12px;z-index:4;width:30px;height:30px;box-sizing:border-box;display:grid;place-items:center;
+    border-radius:8px;border:1px solid rgba(232,67,147,.6);background:rgba(0,0,0,.18);color:#ff9fd0;cursor:pointer;
+    transition:background .18s,color .18s,border-color .18s,transform .18s}
+  .ivg-play svg{width:11px;height:11px;margin-left:2px;display:block}
+  .ivg-play:hover,.ivg-play:focus-visible{background:#e84393;color:#fff;border-color:#e84393;outline:none;transform:scale(1.06)}
+  .ivg-fondo{position:fixed;inset:0;z-index:9998;background:rgba(3,5,14,.8);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);opacity:0;transition:opacity .5s ease}
+  .ivg-caja{position:fixed;z-index:9999;perspective:1800px}
+  .ivg-giro{position:absolute;inset:0;transform-style:preserve-3d}
+  .ivg-cara{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden;border-radius:18px;overflow:hidden}
+  .ivg-cara .pad{position:absolute!important;inset:0;width:100%!important;height:100%!important;margin:0!important;transform:none!important;pointer-events:none;box-shadow:none!important}
+  .ivg-detras{transform:rotateY(180deg);background:#070b1c;border:1px solid rgba(232,67,147,.6);box-shadow:0 30px 90px rgba(0,0,0,.65)}
+  .ivg-detras iframe{position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .45s ease}
+  /* elección de vídeo (tamaños relativos a la caja: sirve igual en ordenador, tablet y móvil) */
+  .ivg-menu{position:absolute;inset:0;container-type:size;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5cqh;
+    padding:6cqh 4cqw;box-sizing:border-box;opacity:0;transition:opacity .35s ease;font-family:"Helvetica Neue",Arial,system-ui,sans-serif}
+  .ivg-kick{font-size:max(10px,1.5cqw);font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:#e84393}
+  .ivg-opciones{display:flex;gap:3cqw;width:100%;justify-content:center}
+  .ivg-op{position:relative;flex:0 1 43.5cqw;aspect-ratio:16/9;box-sizing:border-box;border-radius:14px;border:1px solid rgba(255,255,255,.16);cursor:pointer;
+    background:#0b1020 center/cover no-repeat;color:#fff;overflow:hidden;padding:0 4%;margin:0;font:inherit;text-align:center;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.4cqh;
+    transition:transform .18s,border-color .18s,box-shadow .18s}
+  .ivg-op::before{content:"";position:absolute;inset:0;background:rgba(5,9,22,.64);transition:background .18s}
+  .ivg-op>*{position:relative}
+  .ivg-op:hover,.ivg-op:focus-visible{transform:translateY(-3px);border-color:#e84393;box-shadow:0 14px 40px rgba(232,67,147,.28);outline:none}
+  .ivg-op:hover::before,.ivg-op:focus-visible::before{background:rgba(5,9,22,.52)}
+  .ivg-num{font-size:max(10px,1.3cqw);font-weight:800;letter-spacing:.22em;color:#e84393}
+  .ivg-tit{font-size:max(12px,2.7cqw);font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1.08}
+  .ivg-bar{width:3.2cqw;height:2px;background:#e84393;border-radius:2px}
+  .ivg-sub{font-size:max(10px,1.4cqw);color:#cbd5e1;line-height:1.3}
+  .ivg-dur{display:inline-flex;align-items:center;gap:.55em;margin-top:.4cqh;font-size:max(10px,1.3cqw);font-weight:700;color:#fff;
+    border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:.35em .8em;transition:background .18s,border-color .18s}
+  .ivg-dur svg{width:.75em;height:.75em;display:block}
+  .ivg-op:hover .ivg-dur,.ivg-op:focus-visible .ivg-dur{background:#e84393;border-color:#e84393}
+  .ivg-visto{position:absolute!important;top:6%;right:4%;font-size:max(9px,1.05cqw);font-weight:800;letter-spacing:.12em;color:#fff;
+    background:#e84393;border-radius:6px;padding:.25em .6em}
+  @container (max-width:560px){ .ivg-sub,.ivg-bar{display:none} .ivg-kick{font-size:9px} .ivg-op{flex-basis:44cqw;gap:3cqh;border-radius:10px} }
+  .ivg-cerrar,.ivg-volver{position:fixed;top:14px;z-index:10000;height:40px;box-sizing:border-box;border-radius:10px;border:1px solid rgba(255,255,255,.3);
+    background:rgba(0,0,0,.45);color:#fff;font:600 16px/1 system-ui,sans-serif;cursor:pointer;opacity:0;transition:opacity .3s,border-color .2s}
+  .ivg-cerrar{right:16px;width:40px}
+  .ivg-volver{left:16px;padding:0 14px;font-size:14px;display:none}
+  .ivg-cerrar:hover,.ivg-cerrar:focus-visible,.ivg-volver:hover,.ivg-volver:focus-visible{border-color:#e84393;outline:none}
+</style>
+<script>
+(function(){
+  'use strict';
+  if (new URLSearchParams(location.search).get('fichaId')) return;          /* no en la ficha del alumno */
+  /* data-pad de la tarjeta → vídeos (carpeta de esta web · título · subtítulo · duración) */
+  var INTROS = {
+    tonalidades: { nombre: 'Tonalidades', lista: [
+      { src: 'intros/la-tonalidad/index.html', tit: 'La tonalidad', sub: '¿Para qué sirve?', dur: '2:57' },
+      { src: 'intros/indica-la-tonalidad/index.html', tit: 'Indica la tonalidad', sub: 'Sostenidos · Bemoles · Relativo menor', dur: '4:24' }
+    ] }
+  };
+  /* «Ir a ejercicios» del final del vídeo: se cierra y se abren los ejercicios de esa tarjeta (sin recargar) */
+  var EJERCICIOS = {
+    tonalidades: function(){
+      try { window.openTonalidades(); } catch (e) { location.href = '?practice=ton_arm_tono'; return; }
+      setTimeout(function(){ var c = document.getElementById('cardTA'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120);
+    }
+  };
+  var ICO = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 1.1v9.8L10.6 6z" fill="currentColor"/></svg>';
+  var abierto = null, vistos = {};
+  var reducir = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function el(tag, cls){ var e = document.createElement(tag); if (cls) e.className = cls; return e; }
+  function destino(){
+    var vw = innerWidth, vh = innerHeight, w = Math.min(vw * 0.92, vh * 0.86 * 16 / 9), h = w * 9 / 16;
+    return { left: (vw - w) / 2, top: (vh - h) / 2, width: w, height: h };
+  }
+  function px(b){ return { left: b.left + 'px', top: b.top + 'px', width: b.width + 'px', height: b.height + 'px' }; }
+
+  /* ---- la cara de atrás: elegir vídeo ---- */
+  function pintaMenu(a, foco){
+    a.detras.innerHTML = '';
+    var m = el('div', 'ivg-menu'); m.setAttribute('role', 'group'); m.setAttribute('aria-label', 'Elige un vídeo');
+    var k = el('div', 'ivg-kick'); k.textContent = a.def.nombre + ' · vídeos'; m.appendChild(k);
+    var ops = el('div', 'ivg-opciones'); m.appendChild(ops);
+    var botones = [];
+    a.def.lista.forEach(function(v, i){
+      var b = el('button', 'ivg-op'); b.type = 'button';
+      b.style.backgroundImage = 'url("' + v.src.replace(/index\.html$/, 'fondo.jpg') + '")';
+      b.innerHTML = '<span class="ivg-num">' + (i + 1) + '</span><span class="ivg-tit"></span><span class="ivg-bar"></span>' +
+        '<span class="ivg-sub"></span><span class="ivg-dur">' + ICO + '<span></span></span>' + (vistos[v.src] ? '<span class="ivg-visto">✓ VISTO</span>' : '');
+      b.querySelector('.ivg-tit').textContent = v.tit;
+      b.querySelector('.ivg-sub').textContent = v.sub;
+      b.querySelector('.ivg-dur span').textContent = v.dur;
+      b.setAttribute('aria-label', 'Ver el vídeo «' + v.tit + '» (' + v.dur + ')');
+      b.addEventListener('click', function(ev){ ev.stopPropagation(); ver(v); });
+      ops.appendChild(b); botones.push(b);
+    });
+    a.detras.appendChild(m);
+    a.volver.style.display = 'none'; a.video = null;
+    requestAnimationFrame(function(){ m.style.opacity = '1'; });
+    var f = botones[Math.max(0, foco || 0)];
+    try { f.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function ver(v){
+    var a = abierto; if (!a || a.cerrando) return;
+    a.detras.innerHTML = '';                                              /* fuera la elección */
+    var f = el('iframe'); f.src = v.src + '?auto&embed'; f.title = 'Vídeo: ' + v.tit;
+    f.setAttribute('allow', 'autoplay; fullscreen');
+    f.onload = function(){
+      f.style.opacity = '1';
+      try {   /* «Ir a ejercicios»: sin salir de la web */
+        f.contentDocument.addEventListener('click', function(ev){
+          var t = ev.target; if (t && t.closest && t.closest('#irEjercicios')) { ev.preventDefault(); ev.stopPropagation(); vistos[v.src] = true; cierra({ ejercicios: true }); }
+        }, true);
+      } catch (e) {}
+      try { f.contentWindow.focus(); } catch (e) {}
+    };
+    a.detras.appendChild(f);
+    a.video = { v: v, frame: f };
+    a.volver.style.display = 'block'; a.volver.style.opacity = '1';
+  }
+  function volverAMenu(){
+    var a = abierto; if (!a || a.cerrando || !a.video) return;
+    var i = a.def.lista.indexOf(a.video.v);
+    vistos[a.video.v.src] = true;
+    pintaMenu(a, i);                                                      /* quita el iframe: se para el sonido */
+  }
+
+  /* ---- abrir: la tarjeta se voltea y crece ---- */
+  function abrir(card, path){
+    if (abierto) return;
+    var r = card.getBoundingClientRect(), d = destino(), dur = reducir ? 1 : 820, easing = 'cubic-bezier(.22,.8,.26,1)';
+    var fondo = el('div', 'ivg-fondo'), caja = el('div', 'ivg-caja'), giro = el('div', 'ivg-giro');
+    var delante = el('div', 'ivg-cara ivg-delante'), detras = el('div', 'ivg-cara ivg-detras');
+    var clon = card.cloneNode(true); clon.removeAttribute('data-pad'); clon.setAttribute('aria-hidden', 'true'); clon.tabIndex = -1;
+    delante.appendChild(clon); giro.appendChild(delante); giro.appendChild(detras); caja.appendChild(giro);
+    caja.setAttribute('role', 'dialog'); caja.setAttribute('aria-modal', 'true'); caja.setAttribute('aria-label', 'Vídeos de ' + INTROS[path].nombre);
+    Object.assign(caja.style, px(r));
+    var cerrar = el('button', 'ivg-cerrar'); cerrar.type = 'button'; cerrar.textContent = '✕'; cerrar.setAttribute('aria-label', 'Cerrar');
+    var volver = el('button', 'ivg-volver'); volver.type = 'button'; volver.textContent = '‹ Vídeos'; volver.setAttribute('aria-label', 'Volver a elegir vídeo');
+    document.body.appendChild(fondo); document.body.appendChild(caja); document.body.appendChild(cerrar); document.body.appendChild(volver);
+    card.style.visibility = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    var tok = 'ivg' + Date.now();
+    abierto = { card: card, path: path, def: INTROS[path], caja: caja, giro: giro, detras: detras, fondo: fondo, cerrar: cerrar, volver: volver, tok: tok, video: null };
+    try { history.pushState({ ivg: tok }, ''); } catch (e) {}
+    requestAnimationFrame(function(){ fondo.style.opacity = '1'; });
+    caja.animate([px(r), px(d)], { duration: dur, easing: easing, fill: 'forwards' });
+    giro.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(180deg)' }], { duration: dur, easing: easing, fill: 'forwards' }).onfinish = function(){
+      if (!abierto || abierto.caja !== caja || abierto.cerrando) return;
+      pintaMenu(abierto, 0);
+      cerrar.style.opacity = '1';
+    };
+  }
+  /* ---- cerrar: vuelve a la tarjeta (o, desde «Ir a ejercicios», se desvanece y abre los ejercicios) ---- */
+  function cierra(o){
+    o = o || {};
+    if (!abierto || abierto.cerrando) return;
+    var a = abierto; a.cerrando = true;
+    a.detras.innerHTML = '';                                              /* fuera el vídeo (se para el sonido) */
+    a.cerrar.style.opacity = '0'; a.volver.style.opacity = '0';
+    if (!o.porAtras) { try { if (history.state && history.state.ivg === a.tok) history.back(); } catch (e) {} }
+    function fin(){
+      a.card.style.visibility = ''; a.caja.remove(); a.fondo.remove(); a.cerrar.remove(); a.volver.remove();
+      document.documentElement.style.overflow = '';
+      abierto = null;
+    }
+    if (o.ejercicios) {
+      a.fondo.style.opacity = '0'; a.caja.style.transition = 'opacity .25s ease'; a.caja.style.opacity = '0';
+      setTimeout(function(){ fin(); if (EJERCICIOS[a.path]) EJERCICIOS[a.path](); }, reducir ? 0 : 260);
+      return;
+    }
+    var r = a.card.getBoundingClientRect(), b = a.caja.getBoundingClientRect(), dur = reducir ? 1 : 700, easing = 'cubic-bezier(.4,.1,.3,1)';
+    a.caja.getAnimations().forEach(function(x){ x.cancel(); }); a.giro.getAnimations().forEach(function(x){ x.cancel(); });
+    a.caja.animate([px(b), px(r)], { duration: dur, easing: easing, fill: 'forwards' });
+    a.giro.animate([{ transform: 'rotateY(180deg)' }, { transform: 'rotateY(0deg)' }], { duration: dur, easing: easing, fill: 'forwards' }).onfinish = function(){
+      fin();
+      try { a.card.querySelector('.ivg-play').focus({ preventScroll: true }); } catch (e) {}
+    };
+    a.fondo.style.opacity = '0';
+  }
+  document.addEventListener('click', function(e){
+    if (!abierto) return;
+    if (e.target === abierto.cerrar || e.target === abierto.fondo) cierra();
+    else if (e.target === abierto.volver) volverAMenu();
+  });
+  document.addEventListener('keydown', function(e){
+    if (!abierto || (e.key !== 'Escape' && e.key !== 'Esc')) return;
+    e.preventDefault(); e.stopPropagation();
+    if (abierto.video) volverAMenu(); else cierra();
+  }, true);
+  window.addEventListener('message', function(e){      /* «Salir» (o Esc) dentro del vídeo: a la elección */
+    if (abierto && abierto.video && e.source === abierto.video.frame.contentWindow && e.data && e.data.intro === 'salir') volverAMenu();
+  });
+  window.addEventListener('popstate', function(){ if (abierto && !abierto.cerrando) cierra({ porAtras: true }); });
+  window.addEventListener('resize', function(){
+    if (!abierto || abierto.cerrando) return;
+    abierto.caja.getAnimations().forEach(function(x){ x.cancel(); });
+    Object.assign(abierto.caja.style, px(destino()));
+  });
+
+  /* ---- botón ▶ en cada tarjeta con vídeos (se repone si la rejilla se vuelve a pintar) ---- */
+  function monta(){
+    Object.keys(INTROS).forEach(function(path){
+      var card = document.querySelector('#padGrid .pad[data-pad="' + path + '"]');
+      if (!card || card.querySelector(':scope > .ivg-play')) return;
+      if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
+      var b = el('span', 'ivg-play'); b.setAttribute('role', 'button'); b.tabIndex = 0;
+      b.setAttribute('aria-label', 'Ver los vídeos de introducción de ' + INTROS[path].nombre); b.title = 'Vídeos de introducción'; b.innerHTML = ICO;
+      function act(ev){ ev.stopPropagation(); ev.preventDefault(); abrir(card, path); }
+      b.addEventListener('click', act);
+      b.addEventListener('keydown', function(ev){ if (ev.key === 'Enter' || ev.key === ' ') act(ev); });
+      ['pointerdown', 'mousedown', 'touchstart'].forEach(function(t){ b.addEventListener(t, function(e){ e.stopPropagation(); }, { passive: true }); });
+      card.appendChild(b);
+    });
+  }
+  function arranca(){
+    monta();
+    var g = document.getElementById('padGrid');
+    if (g && window.MutationObserver) new MutationObserver(monta).observe(g, { childList: true });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arranca); else arranca();
 })();
 </script>
 
