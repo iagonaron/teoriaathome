@@ -18559,7 +18559,7 @@ window.CAD = {
       ops.appendChild(b); botones.push(b);
     });
     a.detras.appendChild(m);
-    a.volver.style.display = 'none'; a.video = null;
+    a.volver.style.display = 'none'; a.cerrar.style.display = ''; a.video = null;   /* (28-sep-2026, Iago) en la lista de vídeos, solo la ✕ */
     requestAnimationFrame(function(){ m.style.opacity = '1'; });
     var f = botones[Math.max(0, foco || 0)];
     try { f.focus({ preventScroll: true }); } catch (e) {}
@@ -18581,6 +18581,7 @@ window.CAD = {
     a.detras.appendChild(f);
     a.video = { v: v, frame: f };
     a.volver.style.display = 'block'; a.volver.style.opacity = '1';
+    a.cerrar.style.display = 'none';   /* (28-sep-2026, Iago) con un vídeo puesto, solo «‹ Vídeos» arriba a la izquierda: nunca «volver» y ✕ a la vez */
   }
   function volverAMenu(){
     var a = abierto; if (!a || a.cerrando || !a.video) return;
