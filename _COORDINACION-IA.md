@@ -60,6 +60,12 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   public; si creáis una copia de seguridad, quitadle esas dos políticas al crearla.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 28-sep 19:35 · Intros didácticas · EN CURSO · 5 vídeos GE nuevos EN PRUEBA (solo Tester y Protester): carpetas nuevas
+  intros/escalas-menores/, intros/escalas-mayores/, intros/otras-escalas/, intros/grados/, intros/semitonos/ · cambios que pidió
+  Iago en el escenas.js de intros/intervalos/, inversion-intervalos/, inversion-compuestos/, indica-la-armadura/, tonalidades-vecinas/
+  y de las públicas la-tonalidad/ e indica-la-tonalidad/ (tono = arco redondo, semitono = pico en V, por debajo; carteles de
+  otro vídeo pulsables) · index.html: solo el bloque «VÍDEOS DE INTRODUCCIÓN» (ivg-*): INTROS escalas / grados / semitonos,
+  EJERCICIOS de esas tres tarjetas y el punto de «EN PRUEBA» en móvil. Parto de 1580b6a.
 - 28-sep 16:40 · Intros didácticas · HECHO · commits 1795e0d (intervalos), fd9e6a2 (inversion-intervalos), e56106f (intervalos-compuestos), 56b2695 (inversion-compuestos), 4ea29f8 (compases), aa859be (indica-la-armadura), 6f3c478 (tonalidades-vecinas), c8d5d46 (index.html) · 7 vídeos GE nuevos EN PRUEBA (solo Tester y
   Protester) en intros/<carpeta>/ · index.html: solo el bloque «VÍDEOS DE INTRODUCCIÓN» (ivg-*): INTROS con «prueba: true»,
   niveles de acceso (sin marca = todos · «alumnos: true» = solo cuentas validadas · «prueba: true» = Tester/Protester),
