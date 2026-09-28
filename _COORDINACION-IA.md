@@ -47,13 +47,24 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   int_clasif → intros/intervalos/, inv_simples → intros/inversion-intervalos/, inv_compuestos →
   intros/inversion-compuestos/, com_clasif → intros/compases/, ton_tono_arm → intros/indica-la-armadura/,
   ton_vecinos → intros/tonalidades-vecinas/ (cada una con /index.html).
+- (28-sep, Intros didácticas) PULGAR 👍: Iago marca en el menú de vídeos (solo Tester/Protester) los vídeos EN PRUEBA
+  que ya revisó y están bien. Se guarda en Supabase (suite_intro_marcar; se lee con suite_intro_revisiones; la tabla
+  suite_intros_revision solo se toca desde esas dos funciones, que comprueban que la cuenta es Tester o Protester).
+  «Haz públicos los vídeos revisados» = cambiar «prueba: true» por «alumnos: true» SOLO en los que tienen 👍: los vídeos
+  didácticos nunca se abren a invitados, solo a alumnos logueados (cuenta validada).
+- (28-sep, Intros didácticas · aprobado por Iago) SUPABASE, copias de seguridad cerradas a la web: RLS activado en
+  _copia_reactivar_ficha_protester_20260922 y _bak_rit_notas_20260925, y quitadas las 2 políticas «todo permitido» de
+  _copia_reactivar_fichas_protester_20260927 (migraciones rls_en_copias_de_seguridad_20260928 y
+  cerrar_copia_fichas_protester_20260927; el deshacer va en el propio SQL). Se siguen leyendo por SQL (dueño postgres).
+  OJO: el disparador auto_rls_grants_trg da políticas «todo permitido» (anon y authenticated) a TODA tabla nueva de
+  public; si creáis una copia de seguridad, quitadle esas dos políticas al crearla.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 28-sep 11:55 · Intros didácticas · EN CURSO · 7 vídeos GE nuevos EN PRUEBA (solo la cuenta Tester): carpetas
-  nuevas intros/intervalos/, intros/inversion-intervalos/, intros/intervalos-compuestos/, intros/inversion-compuestos/,
-  intros/compases/, intros/indica-la-armadura/, intros/tonalidades-vecinas/ · index.html: solo el bloque «VÍDEOS DE
-  INTRODUCCIÓN» (ivg-*): INTROS con «prueba: true», puerta Tester, ▶ en Intervalos / Inversión / Compases, EJERCICIOS
-  por tarjeta y CSS para 3–4 vídeos. Parto de c832ac2 (incluye el cambio de «Fichas y rediseño» en la ✕ / «‹ Vídeos»).
+- 28-sep 16:40 · Intros didácticas · HECHO · commits 1795e0d (intervalos), fd9e6a2 (inversion-intervalos), e56106f (intervalos-compuestos), 56b2695 (inversion-compuestos), 4ea29f8 (compases), aa859be (indica-la-armadura), 6f3c478 (tonalidades-vecinas), c8d5d46 (index.html) · 7 vídeos GE nuevos EN PRUEBA (solo Tester y
+  Protester) en intros/<carpeta>/ · index.html: solo el bloque «VÍDEOS DE INTRODUCCIÓN» (ivg-*): INTROS con «prueba: true»,
+  niveles de acceso (sin marca = todos · «alumnos: true» = solo cuentas validadas · «prueba: true» = Tester/Protester),
+  ▶ en Intervalos / Inversión / Compases, EJERCICIOS por tarjeta, CSS para 3–4 vídeos y el pulgar 👍 de revisión
+  (Supabase: tabla suite_intros_revision + funciones suite_intro_revisiones / suite_intro_marcar). Partí de c832ac2.
 - 28-sep 10:48 · Fichas y rediseño · HECHO · commit 7d97570 · index.html · vídeos de introducción (bloque ivg de «Intros
   didácticas»): con un vídeo puesto se oculta la ✕ y queda solo «‹ Vídeos»; en la lista de vídeos, solo la ✕ (Iago:
   nunca «volver» y ✕ a la vez). Dos líneas marcadas «(28-sep-2026, Iago)»; Esc, «Salir» del vídeo y «atrás» siguen
