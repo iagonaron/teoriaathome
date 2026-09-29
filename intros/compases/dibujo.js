@@ -64,7 +64,9 @@
     const g = N.group(parent, 'chip');
     const size = o.size || 22, padX = o.padX || 18, h = o.h || size * 1.9;
     const t = texto(g, str, 0, 0, { size, peso: o.peso || 800, ls: o.ls != null ? o.ls : '0.14em', anchor: 'start' });
-    const w = medir(t) + padX * 2 + (o.extraW || 0);
+    const wt = medir(t), w = wt + padX * 2 + (o.extraW || 0);
+    // (29-sep-2026) el texto ocupa exactamente lo medido: nunca se sale de su cartel, sea cual sea el ordenador
+    if (wt > 0) { t.setAttribute('textLength', wt.toFixed(1)); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
     const r = el('rect', { x: 0, y: -h / 2, width: w, height: h, rx: o.rx || 8,
       fill: o.relleno === false ? 'none' : (o.fondo || C.rosa), stroke: o.borde || (o.relleno === false ? C.rosa : 'none'),
       'stroke-width': o.relleno === false ? 2 : 0 }, g);
@@ -78,8 +80,33 @@
   }
 
   // medición de texto (con el SVG ya en el documento)
+  // (29-sep-2026) Hay Chrome (p. ej. el de la pantalla del aula) cuyo getComputedTextLength NO cuenta el espaciado entre
+  // letras (letter-spacing) aunque sí lo pinta: los carteles con espaciado se quedaban cortos. Se comprueba una vez y,
+  // si pasa, se suma a mano (espaciado × nº de letras).
+  let LS_FUERA = null;
+  function lsFuera(svg) {
+    if (LS_FUERA !== null || !svg) return !!LS_FUERA;
+    try {
+      const p = el('text', { x: -9999, y: -9999, 'font-size': 40, 'font-weight': 800 }, svg);
+      p.style.fontFamily = FT; p.textContent = 'MMMMMMMMMM';
+      const a = p.getComputedTextLength(); p.setAttribute('letter-spacing', '0.5em');
+      const b = p.getComputedTextLength(); p.remove();
+      LS_FUERA = a > 0 && (b - a) < 100;        // con el espaciado deberían ser 200 px más
+    } catch (e) { LS_FUERA = false; }
+    return LS_FUERA;
+  }
+  function espaciado(t) {
+    const v = t.getAttribute('letter-spacing') || getComputedStyle(t).letterSpacing || '';
+    if (!v || v === 'normal') return 0;
+    const n = parseFloat(v); if (!isFinite(n)) return 0;
+    if (/em$/.test(v)) return n * (parseFloat(t.getAttribute('font-size')) || parseFloat(getComputedStyle(t).fontSize) || 32);
+    return n;
+  }
   function medir(t) {
-    try { return t.getComputedTextLength(); } catch (e) { return (t.textContent || '').length * 14; }
+    let w;
+    try { w = t.getComputedTextLength(); } catch (e) { return (t.textContent || '').length * 14; }
+    if (lsFuera(t.ownerSVGElement)) { const ls = espaciado(t); if (ls) w += ls * Array.from(t.textContent || '').length; }
+    return w;
   }
 
   function flecha(parent, x1, y1, x2, y2, o) {

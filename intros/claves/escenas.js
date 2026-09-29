@@ -1048,7 +1048,8 @@
       for (const f of s.tracks) f(t);
     }
     const velo = document.getElementById('velo');
-    if (velo) velo.setAttribute('opacity', veloFondo(t).toFixed(3));
+    if (velo) { const v = veloFondo(t).toFixed(3); if (velo._v !== v) { velo._v = v;   // (29-sep-2026) velo en su propia capa
+      if (velo.tagName.toLowerCase() === 'rect') velo.setAttribute('opacity', v); else velo.style.opacity = v; } }
   }
   window.ESCENAS = { construir, pintar, get T() { return T; } };
 })();
