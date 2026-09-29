@@ -75,9 +75,12 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 29-sep 12:04 · Intros didácticas · EN CURSO · todos los vídeos de intros/: motor más ligero (la foto y el velo salen del SVG a capas
-  propias: index.html y la línea del velo de escenas.js) y carteles que no se salen en ningún ordenador (dibujo.js). Nada
-  más. Parto de 8fe55dd.
+- 29-sep 12:08 · Intros didácticas · HECHO · commit 923f7dc (EN CURSO en 19ed168) · todos los vídeos de intros/: la foto del
+  conservatorio y el velo salen del SVG a dos capas propias (index.html: #fondoCapa y #velo; escenas.js: solo la línea del
+  velo, que ahora cambia style.opacity) y dibujo.js mide bien los textos con espaciado entre letras (había un Chrome, el de la
+  pantalla del aula de Iago, que no lo contaba y los carteles se quedaban cortos) y ajusta el texto a su cartel. Mismo aspecto;
+  el pintado por fotograma baja de ~31 a ~2 ms en los fundidos del título y de ~2 a ~0,5 ms en el resto (medido a 4K).
+  Si hacéis un vídeo nuevo, usad este index.html y este dibujo.js (script: _herramientas/motor34.py en el Escritorio de Iago).
 - 29-sep 11:41 · Intros didácticas · HECHO · commit 8358889 (EN CURSO en a281df1) · intros/: 7 vídeos GE nuevos EN PRUEBA
   (acordes, inversion-acordes, enarmonias, claves, terminos, terminos-movimiento, cadencias; ▶ en 6 tarjetas más: data-pad
   acordes, inv-acordes, enarmonias, claves, terminos (2 vídeos) y cadencias) · retoques de Iago en escalas-menores,
