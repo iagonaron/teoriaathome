@@ -75,6 +75,13 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 13:08 · Intros didácticas · HECHO · commits 4b07d19 y 078caaa (EN CURSO en bd832a5) · (1) intros/*/motor.js: modo
+  MP4 (si el index.html de un vídeo declara window.VIDEO_MP4 = '<fichero>.mp4' y window.ENLACES_MP4 = zonas pulsables de sus
+  carteles, se reproduce ese vídeo grabado a 60 fps en vez de dibujarlo en directo; ?svg = modo de siempre; ?fps = contador) y
+  el primero grabado: escalas-mayores (escalas_mayores_60.mp4, 10 MB, + una línea en su index.html). (2) index.html: bloque
+  ivg con SIN_GIRO = true (la caja del vídeo sale ya grande y plana, sin volteo, fundidos ni desenfoque) + bloque CSS «VÍDEOS
+  SIN VOLTEO» antes de </body>; para volver al giro, SIN_GIRO = false. Seguiré grabando el resto de vídeos a MP4 (un .mp4 por
+  carpeta + esa línea en su index.html), con su EN CURSO.
 - 29-sep 12:46 · Intros didácticas · EN CURSO · (1) vídeos en MP4 a 60 fps, fluidos en cualquier pantalla: motor.js nuevo en
   todas las intros (modo MP4 solo si su index.html declara window.VIDEO_MP4; si no, igual que siempre) y el primero grabado,
   escalas-mayores (escalas_mayores_60.mp4 + una línea en su index.html); (2) después, index.html: las tarjetas de vídeo
