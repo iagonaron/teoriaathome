@@ -75,7 +75,7 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 29-sep 17:47 · Fichas y rediseño · EN CURSO · index.html · ESCALAS MAYORES con bemoles: las tónicas eran solo teclas
+- 29-sep 17:47 · Fichas y rediseño · HECHO · commit c79c916 · index.html · ESCALAS MAYORES con bemoles: las tónicas eran solo teclas
   blancas (de las mayores, solo Fa lleva bemoles). Para las mayores se añaden Si♭, Mi♭, La♭ y Re♭ (práctica escItem7 y
   ejemplos escGenEjemplo); sin dobles alteraciones. Menores y otras, igual.
 - 29-sep 16:49 · Intros didácticas · HECHO · commits f50781f y e04f4ed (EN CURSO en 327fe2a) · (1) MP4 a 60 fps:
