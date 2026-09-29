@@ -254,6 +254,10 @@
     // mostrar controles al mover el ratón
     let tm = null;
     document.addEventListener('mousemove', () => { document.body.classList.add('raton'); clearTimeout(tm); tm = setTimeout(() => document.body.classList.remove('raton'), 2200); });
+    // (29-sep-2026, Iago) mientras suena, el cursor desaparece si no se mueve (vuelve al moverlo)
+    const stc = document.createElement('style');
+    stc.textContent = 'body.sonando:not(.raton),body.sonando:not(.raton) *{cursor:none!important}';
+    document.head.appendChild(stc);
   }
   window.addEventListener('DOMContentLoaded', () => arrancar().catch(e => { console.error(e); document.title = 'ERROR ' + e.message; }));
 })();

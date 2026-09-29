@@ -19037,7 +19037,7 @@ window.CAD = {
   }
   document.addEventListener('click', function(e){
     if (!abierto) return;
-    if (e.target === abierto.cerrar || e.target === abierto.fondo) cierra();
+    if (e.target === abierto.cerrar || (e.target === abierto.fondo && !abierto.video)) cierra();   /* (29-sep-2026) con un vídeo puesto, el fondo no cierra */
     else if (e.target === abierto.volver) volverAMenu();
   });
   document.addEventListener('keydown', function(e){
@@ -19190,5 +19190,19 @@ html body .ivg-caja .ivg-cara .pad{-webkit-backdrop-filter:none!important;backdr
 .ivf-fondo.ivf-plano{background:rgba(6,5,3,.93)}
 .ivg-cerrar,.ivg-volver,.ivf-cerrar{transition:border-color .2s}
 </style>
+
+<!-- (29-sep-2026, Iago) CURSOR QUIETO EN LOS VÍDEOS: con un vídeo abierto en su tarjeta, el cursor se esconde a los 2,5 s
+     sin moverse (dentro del vídeo lo hace el propio vídeo). Para quitarlo: borrar este bloque. -->
+<style>html.iv-quieto .ivg-fondo,html.iv-quieto .ivg-caja,html.iv-quieto .ivf-fondo,html.iv-quieto .ivf-caja,html.iv-quieto .ivg-cerrar,html.iv-quieto .ivg-volver,html.iv-quieto .ivf-cerrar{cursor:none}</style>
+<script>
+(function(){
+  var tm = null, H = document.documentElement;
+  function mueve(){
+    H.classList.remove('iv-quieto'); clearTimeout(tm);
+    tm = setTimeout(function(){ if (document.querySelector('.ivg-caja iframe, .ivf-caja iframe')) H.classList.add('iv-quieto'); }, 2500);
+  }
+  ['mousemove', 'pointerdown', 'keydown', 'touchstart'].forEach(function(t){ document.addEventListener(t, mueve, { passive: true }); });
+})();
+</script>
 </body>
 </html>
