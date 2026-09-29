@@ -75,6 +75,8 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 14:24 · Intros didácticas · EN CURSO · vídeos en MP4 a 60 fps, tanda 1: intros/la-tonalidad e
+  intros/indica-la-tonalidad (su .mp4 + una línea en su index.html; nada más). Parto de 93325e0.
 - 29-sep 13:08 · Intros didácticas · HECHO · commits 4b07d19 y 078caaa (EN CURSO en bd832a5) · (1) intros/*/motor.js: modo
   MP4 (si el index.html de un vídeo declara window.VIDEO_MP4 = '<fichero>.mp4' y window.ENLACES_MP4 = zonas pulsables de sus
   carteles, se reproduce ese vídeo grabado a 60 fps en vez de dibujarlo en directo; ?svg = modo de siempre; ?fps = contador) y
