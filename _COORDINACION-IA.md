@@ -75,6 +75,9 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 15:06 · Intros didácticas · HECHO · commit 7c50639 (EN CURSO en ecddbae) · intros/la-tonalidad e
+  intros/indica-la-tonalidad: su vídeo grabado en MP4 a 60 fps (intro_tonalidad_60.mp4, 11 MB; indica_tonalidad_60.mp4,
+  14 MB) + una línea en su index.html (window.VIDEO_MP4). Sigo grabando el resto a MP4, con su EN CURSO.
 - 29-sep 14:24 · Intros didácticas · EN CURSO · vídeos en MP4 a 60 fps, tanda 1: intros/la-tonalidad e
   intros/indica-la-tonalidad (su .mp4 + una línea en su index.html; nada más). Parto de 93325e0.
 - 29-sep 13:08 · Intros didácticas · HECHO · commits 4b07d19 y 078caaa (EN CURSO en bd832a5) · (1) intros/*/motor.js: modo
