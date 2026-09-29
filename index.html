@@ -18299,17 +18299,25 @@ window.CAD = {
       {src:'intros/inversion-compuestos/index.html', tit:'Inversión de compuestos', dur:'1:54'} ] },
     compases:{ nombre:'Compases', lista:[ {src:'intros/compases/index.html', tit:'Compases', dur:'2:23'} ] },
     escalas:{ nombre:'Escalas', lista:[
-      {src:'intros/escalas-menores/index.html', tit:'Escalas menores', dur:'3:26'},
+      {src:'intros/escalas-menores/index.html', tit:'Escalas menores', dur:'3:22'},
       {src:'intros/escalas-mayores/index.html', tit:'Escalas Mayores', dur:'3:00'},
       {src:'intros/otras-escalas/index.html', tit:'Otras escalas', dur:'3:31'} ] },
     grados:{ nombre:'Grados', lista:[ {src:'intros/grados/index.html', tit:'Grados', dur:'2:56'} ] },
-    semitonos:{ nombre:'Semitonos', lista:[ {src:'intros/semitonos/index.html', tit:'Semitono cromático y diatónico', dur:'2:10'} ] }
+    semitonos:{ nombre:'Semitonos', lista:[ {src:'intros/semitonos/index.html', tit:'Semitono cromático y diatónico', dur:'2:10'} ] },
+    /* (29-sep-2026, Intros didácticas) vídeos nuevos EN PRUEBA: aquí solo los ven Tester/Protester hasta que tengan 👍 (VERIFICADOS) */
+    acordes:{ nombre:'Acordes', lista:[ {src:'intros/acordes/index.html', tit:'Acordes', dur:'2:53'} ] },
+    'inv-acordes':{ nombre:'Inversión de acordes', lista:[ {src:'intros/inversion-acordes/index.html', tit:'Inversión de acordes', dur:'3:02'} ] },
+    enarmonias:{ nombre:'Enarmonías', lista:[ {src:'intros/enarmonias/index.html', tit:'Enarmonías', dur:'2:32'} ] },
+    claves:{ nombre:'Claves', lista:[ {src:'intros/claves/index.html', tit:'Claves', dur:'4:01'} ] },
+    cadencias:{ nombre:'Cadencias', lista:[ {src:'intros/cadencias/index.html', tit:'Cadencias', dur:'3:02'} ] }
   };
   var VERIFICADOS={ 'intros/compases/index.html':1, 'intros/grados/index.html':1, 'intros/intervalos-compuestos/index.html':1,
     'intros/inversion-compuestos/index.html':1, 'intros/tonalidades-vecinas/index.html':1 };   /* 👍 de Iago a 29-sep-2026 */
   var TEMA_VIDEO={ int_clasif:'intervalos', int_constr:'intervalos', inv_simples:'inversiones', inv_compuestos:'inversiones',
     com_clasif:'compases', ton_arm_tono:'tonalidades', ton_tono_arm:'tonalidades', ton_vecinos:'tonalidades',
-    esc_menor:'escalas', esc_mayor:'escalas', esc_otras:'escalas', gra_senalar:'grados', semitonos:'semitonos' };
+    esc_menor:'escalas', esc_mayor:'escalas', esc_otras:'escalas', gra_senalar:'grados', semitonos:'semitonos',
+    acordes:'acordes', aco_identificar:'inv-acordes', aco_construir:'inv-acordes', ena_a:'enarmonias', ena_avanzado:'enarmonias',
+    cla_a:'claves', cla_b:'claves', cadencias_quiz:'cadencias' };   /* (29-sep-2026, Intros didácticas) temas nuevos */
   var PRIMERO={ ton_arm_tono:'intros/indica-la-tonalidad/index.html', ton_tono_arm:'intros/indica-la-armadura/index.html',
     ton_vecinos:'intros/tonalidades-vecinas/index.html', inv_simples:'intros/inversion-intervalos/index.html',
     inv_compuestos:'intros/inversion-compuestos/index.html', esc_menor:'intros/escalas-menores/index.html',
@@ -18802,7 +18810,7 @@ window.CAD = {
     ] },
     /* (28-sep-2026, tarde) grabación «Guiones 9-14»: EN PRUEBA (solo Tester y Protester) */
     escalas: { nombre: 'Escalas', lista: [
-      { src: 'intros/escalas-menores/index.html', tit: 'Escalas menores', sub: 'Natural · Armónica · Melódica · Dórica', dur: '3:26', practica: 'esc_menor', prueba: true },
+      { src: 'intros/escalas-menores/index.html', tit: 'Escalas menores', sub: 'Natural · Armónica · Melódica · Dórica', dur: '3:22', practica: 'esc_menor', prueba: true },
       { src: 'intros/escalas-mayores/index.html', tit: 'Escalas Mayores', sub: 'Tipo 1 · Tipo 2 · Tipo 3 · Tipo 4', dur: '3:00', practica: 'esc_mayor', prueba: true },
       { src: 'intros/otras-escalas/index.html', tit: 'Otras escalas', sub: 'Pentatónicas · Hexátona · Cromática', dur: '3:31', practica: 'esc_otras', prueba: true }
     ] },
@@ -18811,7 +18819,29 @@ window.CAD = {
     ] },
     semitonos: { nombre: 'Semitonos', lista: [
       { src: 'intros/semitonos/index.html', tit: 'Semitono cromático y diatónico', sub: 'Cromático = copia · Diatónico = distinto', dur: '2:10', card: 'cardSEM', prueba: true }
+    ] },
+    /* (29-sep-2026, Iago) últimos vídeos de GE: EN PRUEBA (solo Tester y Protester). Para quitarlos: borrar de aquí hasta
+       «FIN vídeos 29-sep» y sus 6 líneas de EJERCICIOS (marcadas igual) */
+    acordes: { nombre: 'Acordes', lista: [
+      { src: 'intros/acordes/index.html', tit: 'Acordes', sub: 'Tríadas · Séptima de dominante', dur: '2:53', card: 'cardACO', practica: 'acordes', prueba: true }
+    ] },
+    'inv-acordes': { nombre: 'Inversión de acordes', lista: [
+      { src: 'intros/inversion-acordes/index.html', tit: 'Inversión de acordes', sub: 'El bajo manda · Ordena primero', dur: '3:02', card: 'cardINVACO', practica: 'aco_identificar', prueba: true }
+    ] },
+    enarmonias: { nombre: 'Enarmonías', lista: [
+      { src: 'intros/enarmonias/index.html', tit: 'Enarmonías', sub: 'Mismo sonido · Distinto nombre', dur: '2:32', card: 'cardENA', practica: 'ena_a', prueba: true }
+    ] },
+    claves: { nombre: 'Claves', lista: [
+      { src: 'intros/claves/index.html', tit: 'Claves', sub: 'Las siete claves · El Do central', dur: '4:01', card: 'cardCA', practica: 'cla_a', prueba: true }
+    ] },
+    terminos: { nombre: 'Términos', lista: [
+      { src: 'intros/terminos/index.html', tit: 'Términos', sub: 'Dinámica · Articulación · Carácter', dur: '3:40', card: 'cardTERa', prueba: true },
+      { src: 'intros/terminos-movimiento/index.html', tit: 'Términos de movimiento', sub: 'El tempo · Cambios · Modificadores', dur: '3:22', card: 'cardTERc', prueba: true }
+    ] },
+    cadencias: { nombre: 'Cadencias', lista: [
+      { src: 'intros/cadencias/index.html', tit: 'Cadencias', sub: 'Auténtica · Plagal · Semicadencia · Rota', dur: '3:02', practica: 'cadencias_quiz', prueba: true }
     ] }
+    /* FIN vídeos 29-sep */
   };
   /* «Ir a ejercicios» del final del vídeo: se cierra y se abren los ejercicios de esa tarjeta (sin recargar) */
   function abreEj(fn, card, practica){
@@ -18825,7 +18855,13 @@ window.CAD = {
     compases: function(v){ abreEj('openCompases', (v && v.card) || 'cardCOM', 'com_clasif'); },
     escalas: function(v){ abreEj('openEscalas', null, (v && v.practica) || 'esc_menor'); },          /* (28-sep-2026, tarde) */
     grados: function(v){ abreEj('openGrados', (v && v.card) || 'cardGR', 'gra_senalar'); },
-    semitonos: function(v){ abreEj('openSemitonos', (v && v.card) || 'cardSEM', 'semitonos'); }
+    semitonos: function(v){ abreEj('openSemitonos', (v && v.card) || 'cardSEM', 'semitonos'); },
+    acordes: function(v){ abreEj('openAcordes', (v && v.card) || 'cardACO', 'acordes'); },                                  /* (29-sep-2026) */
+    'inv-acordes': function(v){ abreEj('openInvAcordes', (v && v.card) || 'cardINVACO', 'aco_identificar'); },              /* (29-sep-2026) */
+    enarmonias: function(v){ abreEj('openEnarmonias', (v && v.card) || 'cardENA', 'ena_a'); },                              /* (29-sep-2026) */
+    claves: function(v){ abreEj('openClaves', (v && v.card) || 'cardCA', 'cla_a'); },                                       /* (29-sep-2026) */
+    terminos: function(v){ abreEj('openTerminos', (v && v.card) || 'cardTERa', null); },                                   /* (29-sep-2026) */
+    cadencias: function(v){ abreEj('openCadencias', null, 'cadencias_quiz'); }                                             /* (29-sep-2026) */
   };
   /* (28-sep-2026) quién puede ver cada vídeo: sin marca, todos (los dos primeros de Tonalidades); alumnos: true, solo cuentas
      validadas (alumnos logueados y vinculados; nunca invitados); prueba: true, solo Tester y Protester (APX.comprobar) */
@@ -18993,14 +19029,81 @@ window.CAD = {
     else if (e.target === abierto.volver) volverAMenu();
   });
   document.addEventListener('keydown', function(e){
-    if (!abierto || (e.key !== 'Escape' && e.key !== 'Esc')) return;
+    if (!abierto || (e.key !== 'Escape' && e.key !== 'Esc') || document.getElementById('apx-ov')) return;   /* (29-sep-2026) con apuntes abiertos, Esc es suyo */
     e.preventDefault(); e.stopPropagation();
     if (abierto.video) volverAMenu(); else cierra();
   }, true);
   window.addEventListener('message', function(e){      /* «Salir» (o Esc) dentro del vídeo: a la elección */
     if (abierto && abierto.video && e.source === abierto.video.frame.contentWindow && e.data && e.data.intro === 'salir') volverAMenu();
   });
-  window.addEventListener('popstate', function(){ if (abierto && !abierto.cerrando) cierra({ porAtras: true }); });
+  /* (29-sep-2026, Iago) APUNTES DESDE LOS VÍDEOS. Las tarjetas «APUNTES» de dentro de un vídeo mandan
+     {intro:'apuntes', temas:[…], nombre}: se abren en el visor de «VER APUNTES» (APX), por encima del vídeo, que se queda en
+     pausa detrás («‹ Volver» de los apuntes → otra vez el vídeo). MISMA PUERTA que «VER APUNTES»: cuenta validada y,
+     mientras APX_CFG.soloTester, solo Tester/Protester (si no, un aviso). Se abre el grupo de la tarjeta de «VER APUNTES»
+     que tiene ese tema, con su pestaña delante (GRUPOS_APX = la lista T de ese bloque: si cambia allí, cambiadla aquí).
+     Un vídeo abierto suelto (pestaña propia) llega con ?apuntes=<temas>&nombre=… y se abren igual. Nunca en la ficha del
+     alumno (este bloque no corre allí). Para quitarlo: borrar desde aquí hasta «FIN APUNTES DESDE LOS VÍDEOS» (y las dos
+     líneas marcadas «(29-sep-2026)» de Esc y de «atrás», que dejan los apuntes por encima del vídeo). */
+  var GRUPOS_APX = [
+    ['Intervalos', ['intervalos', 'int-comp']],
+    ['Inversión de intervalos', ['inv-simples', 'inv-comp']],
+    ['Compases', ['compases']],
+    ['Tonalidades', ['relativos', 'tonalidad', 'armadura', 'vecinas']],
+    ['Escalas', ['esc-menores', 'esc-mayores', 'esc-otras']],
+    ['Grados', ['grados']],
+    ['Semitonos', ['semitonos']],
+    ['Acordes', ['acordes']],
+    ['Inversión de acordes', ['inv-acordes']],
+    ['Enarmonías', ['enarmonias']],
+    ['Claves', ['claves']],
+    ['Términos', ['terminos']],
+    ['Notas de adorno', ['adorno']],
+    ['Abreviaciones', ['abrev']],
+    ['Cadencias', ['cadencias']]
+  ];
+  function avisoApx(txt){
+    var d = el('div', 'ivg-aviso'); d.textContent = txt; d.setAttribute('role', 'status');
+    Object.assign(d.style, { position: 'fixed', left: '50%', bottom: '28px', transform: 'translateX(-50%)', zIndex: '2147483000',
+      padding: '12px 18px', borderRadius: '12px', background: 'rgba(7,11,28,.94)', border: '1px solid rgba(232,67,147,.6)', color: '#fff',
+      font: '600 15px/1.3 system-ui,sans-serif', boxShadow: '0 10px 30px rgba(0,0,0,.5)', opacity: '0', transition: 'opacity .25s' });
+    document.body.appendChild(d);
+    requestAnimationFrame(function(){ d.style.opacity = '1'; });
+    setTimeout(function(){ d.style.opacity = '0'; setTimeout(function(){ d.remove(); }, 300); }, 2800);
+  }
+  function abreApuntes(m){
+    var TT = window.APX_TEMAS || {};
+    var temas = ((m && m.temas) || []).filter(function(x){ return !!TT[x]; });
+    if (!window.APX || !temas.length) return;
+    window.APX.comprobar(function(info){
+      var ok = info.validado && (info.tester || !!(window.APX_CFG && window.APX_CFG.soloTester === false));
+      if (!ok) { avisoApx('Los apuntes todavía no están abiertos para tu cuenta.'); return; }
+      var g = null;
+      for (var i = 0; i < GRUPOS_APX.length && !g; i++) if (GRUPOS_APX[i][1].indexOf(temas[0]) >= 0) g = GRUPOS_APX[i];
+      var grupo = g ? { nombre: g[0], temas: g[1].filter(function(x){ return !!TT[x]; }) } : { nombre: (m && m.nombre) || 'Apuntes', temas: temas };
+      window.APX.abrir(grupo, Math.max(0, grupo.temas.indexOf(temas[0])));
+      if (abierto) {   /* al cerrar los apuntes, la página sigue sin scroll mientras el vídeo esté abierto */
+        var mo = new MutationObserver(function(){
+          if (document.getElementById('apx-ov')) return;
+          mo.disconnect(); if (abierto) document.documentElement.style.overflow = 'hidden';
+        });
+        mo.observe(document.body, { childList: true });
+      }
+    });
+  }
+  window.addEventListener('message', function(e){
+    if (abierto && abierto.video && e.source === abierto.video.frame.contentWindow && e.data && e.data.intro === 'apuntes') abreApuntes(e.data);
+  });
+  (function(){   /* vídeo suelto → portal con ?apuntes=… */
+    var q; try { q = new URLSearchParams(location.search); } catch (e) { return; }
+    var tm = q.get('apuntes'); if (!tm) return;
+    var nombre = q.get('nombre') || ''; q.delete('apuntes'); q.delete('nombre');
+    try { history.replaceState(history.state, '', location.pathname + (q.toString() ? '?' + q.toString() : '') + location.hash); } catch (e) {}
+    var n = 0;
+    (function espera(){ if (window.APX && window.APX_TEMAS) abreApuntes({ temas: tm.split(','), nombre: nombre }); else if (n++ < 40) setTimeout(espera, 250); })();
+  })();
+  /* FIN APUNTES DESDE LOS VÍDEOS */
+  /* (29-sep-2026, Iago) si «atrás» vuelve a este mismo vídeo (al cerrar unos apuntes abiertos desde él), el vídeo sigue */
+  window.addEventListener('popstate', function(){ if (abierto && !abierto.cerrando && !(history.state && history.state.ivg === abierto.tok)) cierra({ porAtras: true }); });
   window.addEventListener('resize', function(){
     if (!abierto || abierto.cerrando) return;
     abierto.caja.getAnimations().forEach(function(x){ x.cancel(); });

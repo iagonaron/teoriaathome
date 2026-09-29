@@ -476,6 +476,61 @@
     N.el('path', { d: `M${x + sz * 0.35},${y + sz * 0.65} L${x + sz * 0.72},${y + sz * 0.28} M${x + sz * 0.42},${y + sz * 0.28} H${x + sz * 0.72} V${y + sz * 0.58}`, fill: 'none', stroke: 'currentColor', 'stroke-width': 2.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, G);
     return G;
   }
+  /** (29-sep, Iago) Cuando el vídeo nombra los APUNTES, el cartel se puede pulsar y los abre (el apartado exacto).
+   *  Dentro del portal (el vídeo va en un marco): se lo pide al portal con postMessage y el portal abre sus apuntes
+   *  (los mismos de «VER APUNTES»). Suelto (pestaña propia): abre el portal de esta misma web con ?apuntes=…
+   *  temas = ids de los apuntes (p. ej. ['armadura']); nombre = título de la ventana de apuntes. */
+  function enlaceApuntes(g, temas, nombre) {
+    g.style.cursor = 'pointer';
+    g.setAttribute('role', 'link'); g.setAttribute('tabindex', '0');
+    g.setAttribute('aria-label', 'Abrir los apuntes: ' + (nombre || temas.join(', ')));
+    const abre = ev => {
+      ev.stopPropagation(); ev.preventDefault();
+      try { if (document.body.classList.contains('sonando')) document.getElementById('botonPausa').click(); } catch (e) { }
+      let dentro = false;
+      try { dentro = window.parent && window.parent !== window; } catch (e) { dentro = true; }
+      if (dentro) { try { parent.postMessage({ intro: 'apuntes', temas: temas, nombre: nombre || '' }, '*'); return; } catch (e) { } }
+      const url = new URL('../../?apuntes=' + encodeURIComponent(temas.join(',')) + (nombre ? '&nombre=' + encodeURIComponent(nombre) : ''), location.href).href;
+      let w = null;
+      try { w = window.open(url, '_blank'); } catch (e) { }
+      if (w) { try { w.opener = null; } catch (e) { } }
+    };
+    g.addEventListener('click', abre);
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') abre(e); });
+    g.addEventListener('mouseenter', () => { g.style.filter = 'brightness(1.25)'; });
+    g.addEventListener('mouseleave', () => { g.style.filter = ''; });
+    return g;
+  }
+  /** (29-sep, Iago) TARJETA DE ENLACE: la misma en todos los vídeos (la de «Inversión de intervalos» en «Intervalos»).
+   *  Panel oscuro con contorno rosa · cuadrado rosa con su icono (▶ = vídeo; hoja = apuntes) · rótulo pequeño en rosa
+   *  («VÍDEO» / «APUNTES») · título en blanco · ↗ en la esquina. Se pulsa entera.
+   *  o = { tipo: 'video'|'apuntes', titulo, slug (vídeo) | temas + nombre (apuntes), rotulo?, centro?: true, w?, enlace?: false }
+   *  (x, y) = esquina superior izquierda, o el centro si o.centro. Devuelve el grupo (con _w, _h, _cx, _cy). */
+  function tarjetaEnlace(parent, x, y, o) {
+    o = o || {};
+    const V = N.group(parent, 'tarjetaEnlace');
+    const h = 96, esApu = o.tipo === 'apuntes';
+    const P = panel(V, 0, 0, 460, h, { rx: 18, stroke: C.rosa, sw: 2 });
+    N.el('rect', { x: 22, y: 22, width: 52, height: 52, rx: 12, fill: C.rosa }, V);
+    if (esApu) {
+      N.el('path', { d: 'M37,33 h15 l9,9 v21 h-24 z M52,33 v9 h9', fill: 'none', stroke: '#fff', 'stroke-width': 2.6, 'stroke-linejoin': 'round' }, V);
+      for (let i = 0; i < 3; i++) N.line(V, 42, 48 + i * 5, 56, 48 + i * 5, 2, { stroke: '#fff', 'stroke-linecap': 'round' });
+    } else {
+      N.el('path', { d: 'M40,36 v24 l20,-12 z', fill: '#fff' }, V);
+    }
+    const r = texto(V, o.rotulo || (esApu ? 'APUNTES' : 'VÍDEO'), 94, 40, { size: 18, peso: 800, ls: '0.18em', fill: C.rosa });
+    const tt = texto(V, o.titulo || '', 94, 72, { size: 28, peso: 800, fill: C.blanco });
+    const w = Math.max(o.w || 0, 94 + Math.max(D.medir(r) + 50, D.medir(tt)) + 64);
+    P.setAttribute('width', w.toFixed(0));
+    if (o.enlace !== false) { const ia = icoAbrir(V, w - 40, 14, 26); color(ia, C.rosa); }   // enlace:false → misma tarjeta, sin ↗ ni clic
+    const x0 = o.centro ? x - w / 2 : x, y0 = o.centro ? y - h / 2 : y;
+    V.setAttribute('transform', `translate(${x0.toFixed(1)},${y0.toFixed(1)})`);
+    if (o.enlace !== false) { if (esApu) enlaceApuntes(V, o.temas || [], o.nombre || o.titulo); else if (o.slug) enlaceVideo(V, o.slug); }
+    V._w = w; V._h = h; V._cx = x0 + w / 2; V._cy = y0 + h / 2;
+    const E = N.group(parent, 'tarjetaEnlaceCaja'); E.appendChild(V);    // envoltorio: para pop/aparece sin pisar el translate
+    E._w = w; E._h = h; E._cx = V._cx; E._cy = V._cy;
+    return E;
+  }
 
   // ================================================================ E7 · INDICA LA ARMADURA (el camino de vuelta de «Indica la tonalidad»)
   const TITULO = { kicker: 'TEORÍA  ·  TONALIDADES', lineas: ['INDICA LA ARMADURA'], sub: 'Paso cero · Bemoles · Sostenidos' };
@@ -646,13 +701,11 @@
       const tDic = Wd('I3', 'dictado') - 0.2, tSab = Wd('I4', 'sabes') - 0.15, tPon = Wd('I4', 'poner') - 0.15;
       // de qué vídeo venimos… y en cuál estamos
       const video = (G, c) => N.el('polygon', { points: `${c._x - 34},${230 - 12} ${c._x - 34},${230 + 12} ${c._x - 13},230`, fill: C.rosa }, G);   // ▶ = un vídeo
-      const k1 = N.group(g); const c1 = chip(k1, 'INDICA LA TONALIDAD', CX + 20, 230, { size: 26, anchor: 'middle', relleno: false }); video(k1, c1);
-      // (28-sep, Iago) el cartel del otro vídeo se puede pulsar: lo abre en una pestaña nueva
-      c1._rect.setAttribute('fill', 'rgba(8,22,40,0.01)');
-      const ic1 = N.group(k1); color(ic1, C.rosa); icoAbrir(ic1, c1._x + c1._w + 12, 230 - 13, 26);
-      enlaceVideo(k1, 'indica-la-tonalidad');
+      // (29-sep, Iago) con la tarjeta de enlace de siempre: la del otro vídeo se pulsa (lo abre en una pestaña nueva);
+      // la de este vídeo es igual pero sin ↗ ni clic
+      const k1 = tarjetaEnlace(g, CX, 230, { tipo: 'video', titulo: 'Indica la tonalidad', slug: 'indica-la-tonalidad', centro: true });
       pop(s, k1, tInd, tVue + 0.15, CX, 230);
-      const k2 = N.group(g); video(k2, chip(k2, 'INDICA LA ARMADURA', CX + 20, 230, { size: 26, anchor: 'middle' }));
+      const k2 = tarjetaEnlace(g, CX, 230, { tipo: 'video', rotulo: 'ESTE VÍDEO', titulo: 'Indica la armadura', enlace: false, centro: true, w: k1._w });
       pop(s, k2, tVue + 0.05, fin, CX, 230);
       // la armadura de Mi M (4♯) ⇄ la tonalidad
       const yM = 570, xP = 330, xA = xP + 3.9 * SP + 4;

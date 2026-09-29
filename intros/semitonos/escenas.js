@@ -476,6 +476,61 @@
     N.el('path', { d: `M${x + sz * 0.35},${y + sz * 0.65} L${x + sz * 0.72},${y + sz * 0.28} M${x + sz * 0.42},${y + sz * 0.28} H${x + sz * 0.72} V${y + sz * 0.58}`, fill: 'none', stroke: 'currentColor', 'stroke-width': 2.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, G);
     return G;
   }
+  /** (29-sep, Iago) Cuando el vídeo nombra los APUNTES, el cartel se puede pulsar y los abre (el apartado exacto).
+   *  Dentro del portal (el vídeo va en un marco): se lo pide al portal con postMessage y el portal abre sus apuntes
+   *  (los mismos de «VER APUNTES»). Suelto (pestaña propia): abre el portal de esta misma web con ?apuntes=…
+   *  temas = ids de los apuntes (p. ej. ['armadura']); nombre = título de la ventana de apuntes. */
+  function enlaceApuntes(g, temas, nombre) {
+    g.style.cursor = 'pointer';
+    g.setAttribute('role', 'link'); g.setAttribute('tabindex', '0');
+    g.setAttribute('aria-label', 'Abrir los apuntes: ' + (nombre || temas.join(', ')));
+    const abre = ev => {
+      ev.stopPropagation(); ev.preventDefault();
+      try { if (document.body.classList.contains('sonando')) document.getElementById('botonPausa').click(); } catch (e) { }
+      let dentro = false;
+      try { dentro = window.parent && window.parent !== window; } catch (e) { dentro = true; }
+      if (dentro) { try { parent.postMessage({ intro: 'apuntes', temas: temas, nombre: nombre || '' }, '*'); return; } catch (e) { } }
+      const url = new URL('../../?apuntes=' + encodeURIComponent(temas.join(',')) + (nombre ? '&nombre=' + encodeURIComponent(nombre) : ''), location.href).href;
+      let w = null;
+      try { w = window.open(url, '_blank'); } catch (e) { }
+      if (w) { try { w.opener = null; } catch (e) { } }
+    };
+    g.addEventListener('click', abre);
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') abre(e); });
+    g.addEventListener('mouseenter', () => { g.style.filter = 'brightness(1.25)'; });
+    g.addEventListener('mouseleave', () => { g.style.filter = ''; });
+    return g;
+  }
+  /** (29-sep, Iago) TARJETA DE ENLACE: la misma en todos los vídeos (la de «Inversión de intervalos» en «Intervalos»).
+   *  Panel oscuro con contorno rosa · cuadrado rosa con su icono (▶ = vídeo; hoja = apuntes) · rótulo pequeño en rosa
+   *  («VÍDEO» / «APUNTES») · título en blanco · ↗ en la esquina. Se pulsa entera.
+   *  o = { tipo: 'video'|'apuntes', titulo, slug (vídeo) | temas + nombre (apuntes), rotulo?, centro?: true, w?, enlace?: false }
+   *  (x, y) = esquina superior izquierda, o el centro si o.centro. Devuelve el grupo (con _w, _h, _cx, _cy). */
+  function tarjetaEnlace(parent, x, y, o) {
+    o = o || {};
+    const V = N.group(parent, 'tarjetaEnlace');
+    const h = 96, esApu = o.tipo === 'apuntes';
+    const P = panel(V, 0, 0, 460, h, { rx: 18, stroke: C.rosa, sw: 2 });
+    N.el('rect', { x: 22, y: 22, width: 52, height: 52, rx: 12, fill: C.rosa }, V);
+    if (esApu) {
+      N.el('path', { d: 'M37,33 h15 l9,9 v21 h-24 z M52,33 v9 h9', fill: 'none', stroke: '#fff', 'stroke-width': 2.6, 'stroke-linejoin': 'round' }, V);
+      for (let i = 0; i < 3; i++) N.line(V, 42, 48 + i * 5, 56, 48 + i * 5, 2, { stroke: '#fff', 'stroke-linecap': 'round' });
+    } else {
+      N.el('path', { d: 'M40,36 v24 l20,-12 z', fill: '#fff' }, V);
+    }
+    const r = texto(V, o.rotulo || (esApu ? 'APUNTES' : 'VÍDEO'), 94, 40, { size: 18, peso: 800, ls: '0.18em', fill: C.rosa });
+    const tt = texto(V, o.titulo || '', 94, 72, { size: 28, peso: 800, fill: C.blanco });
+    const w = Math.max(o.w || 0, 94 + Math.max(D.medir(r) + 50, D.medir(tt)) + 64);
+    P.setAttribute('width', w.toFixed(0));
+    if (o.enlace !== false) { const ia = icoAbrir(V, w - 40, 14, 26); color(ia, C.rosa); }   // enlace:false → misma tarjeta, sin ↗ ni clic
+    const x0 = o.centro ? x - w / 2 : x, y0 = o.centro ? y - h / 2 : y;
+    V.setAttribute('transform', `translate(${x0.toFixed(1)},${y0.toFixed(1)})`);
+    if (o.enlace !== false) { if (esApu) enlaceApuntes(V, o.temas || [], o.nombre || o.titulo); else if (o.slug) enlaceVideo(V, o.slug); }
+    V._w = w; V._h = h; V._cx = x0 + w / 2; V._cy = y0 + h / 2;
+    const E = N.group(parent, 'tarjetaEnlaceCaja'); E.appendChild(V);    // envoltorio: para pop/aparece sin pisar el translate
+    E._w = w; E._h = h; E._cx = V._cx; E._cy = V._cy;
+    return E;
+  }
 
 
   // ================================================================ E13 · SEMITONO CROMÁTICO Y DIATÓNICO
@@ -794,15 +849,16 @@
       const rl = fraseG(L.G, [['mismo', C.rosa], [' nombre', C.blanco]], L.x + 395, yP + 160, { size: 40, peso: 800, anchor: 'middle' });
       aparece(s, rl, tMis, 1e9, { dy: 6 });
       const px = L.x;
-      const PL = parejas(L.G, px + 50, yM, 700, [['C4', 'C#4'], ['Eb4', 'E4']], [[px + 250, px + 390], [px + 560, px + 690]], [px + 480]);
+      // (29-sep, Iago) la barra, en el centro del espacio de las notas, y cada compás con su aire (antes: barra muy a la derecha y el 2.º compás apretado)
+      const PL = parejas(L.G, px + 50, yM, 700, [['C4', 'C#4'], ['Eb4', 'E4']], [[px + 230, px + 365], [px + 530, px + 665]], [px + 450]);
       const tC = [Wd('C1', 'do', 2) - 0.1, Wd('C1', 'do', 3) - 0.1, Wd('C1', 'mi', 2) - 0.1, Wd('C1', 'mi', 3) - 0.1];
       [PL[0][0], PL[0][1], PL[1][0], PL[1][1]].forEach((n, i) => pop(s, n.W, tC[i], 1e9, n.cx, n.y, { k0: .5 }));
       // el becuadro del Mi (se nombra: «Mi becuadro»)
-      const nat = N.group(L.G); N.glyph(nat, 'accidentalNatural', px + 690 - (N.M.accidentalNatural.adv + 0.22) * SP, yNota('E4', yM), SP); color(nat, C.rosa);
-      pop(s, nat, Wd('C1', 'becuadro') - 0.15, 1e9, px + 690 - 16, yNota('E4', yM), { k0: .3 });
+      const nat = N.group(L.G); N.glyph(nat, 'accidentalNatural', px + 665 - (N.M.accidentalNatural.adv + 0.22) * SP, yNota('E4', yM), SP); color(nat, C.rosa);
+      pop(s, nat, Wd('C1', 'becuadro') - 0.15, 1e9, px + 665 - 16, yNota('E4', yM), { k0: .3 });
       colorSeq(s, PL[0][1].r.alt, [[-1, C.rosa], [tD, C.blanco]]);
-      const nmL = [fraseG(L.G, 'Do–Do♯', px + 335, yM + 170, { size: 36, peso: 700, anchor: 'middle', fill: 'currentColor' }),
-        fraseG(L.G, 'Mi♭–Mi♮', px + 640, yM + 170, { size: 36, peso: 700, anchor: 'middle', fill: 'currentColor' })];
+      const nmL = [fraseG(L.G, 'Do–Do♯', px + 313, yM + 170, { size: 36, peso: 700, anchor: 'middle', fill: 'currentColor' }),
+        fraseG(L.G, 'Mi♭–Mi♮', px + 613, yM + 170, { size: 36, peso: 700, anchor: 'middle', fill: 'currentColor' })];
       mostrarEn(s, nmL[0], Wd('C1', 'sostenido') - 0.1, 1e9, .3);
       mostrarEn(s, nmL[1], Wd('C1', 'becuadro') - 0.05, 1e9, .3);
       // cartel: Cromático = Copia
@@ -826,13 +882,13 @@
       const [rA, rB] = dosPartes(R.G, [['distinto', C.rosa], [' nombre,', C.blanco]], [['seguidas', C.blanco]], rx + 395, yP + 160, { size: 40, peso: 800 });
       aparece(s, rA, Wd('D1', 'distinto') - 0.2, 1e9, { dy: 6 });
       aparece(s, rB, Wd('D1', 'seguidas') - 0.2, 1e9, { dy: 6 });
-      const PR = parejas(R.G, rx + 50, yM, 700, [['E4', 'F4'], ['C4', 'Db4']], [[rx + 250, rx + 390], [rx + 560, rx + 690]], [rx + 480]);
+      const PR = parejas(R.G, rx + 50, yM, 700, [['E4', 'F4'], ['C4', 'Db4']], [[rx + 230, rx + 365], [rx + 530, rx + 665]], [rx + 450]);
       const tMF = Wd('D1', 'mifa') - 0.15, tDR = Wd('D1', 'dore') - 0.15;
       const tR = [tMF, tMF + 0.25, tDR, tDR + 0.3];
       [PR[0][0], PR[0][1], PR[1][0], PR[1][1]].forEach((n, i) => pop(s, n.W, tR[i], 1e9, n.cx, n.y, { k0: .5 }));
       colorSeq(s, PR[1][1].r.alt, [[-1, C.blanco], [Wd('D1', 'bemol') - 0.15, C.rosa]]);
-      const nmR = [fraseG(R.G, 'Mi–Fa', rx + 335, yM + 170, { size: 36, peso: 700, anchor: 'middle', fill: 'currentColor' }),
-        fraseG(R.G, 'Do–Re♭', rx + 640, yM + 170, { size: 36, peso: 700, anchor: 'middle', fill: 'currentColor' })];
+      const nmR = [fraseG(R.G, 'Mi–Fa', rx + 313, yM + 170, { size: 36, peso: 700, anchor: 'middle', fill: 'currentColor' }),
+        fraseG(R.G, 'Do–Re♭', rx + 613, yM + 170, { size: 36, peso: 700, anchor: 'middle', fill: 'currentColor' })];
       mostrarEn(s, nmR[0], tMF + 0.2, 1e9, .3);
       mostrarEn(s, nmR[1], Wd('D1', 'bemol') - 0.1, 1e9, .3);
       cartel(R, [['D', C.rosa], ['iatónico', C.blanco]], [['= ', C.suave], ['D', C.rosa], ['istinto', C.blanco]], Wd('D2', 'truco') - 0.15, Wd('D2', 'diatonico') - 0.2, Wd('D2', 'distinto') - 0.2);
@@ -932,8 +988,9 @@
         const tt = texto(G, ok ? 'bien hechos' : 'mal hechos', x + 96, yP + 74, { size: 36, peso: 800, fill: C.blanco });
         mostrarEn(s, tt, tMarca, 1e9, .3);
         const px = x + 30;
-        const PR = parejas(G, px, yM, 680, [['Eb4', 'E4'], ['F#4', 'F4']], [[px + 210, px + 340], [px + 500, px + 630]], [px + 420]);
-        const xN = [px + 340, px + 630], ns = ['E4', 'F4'];
+        // (29-sep, Iago) margen a la derecha tras la última nota y barra en el centro (antes la última nota tocaba el final)
+        const PR = parejas(G, px, yM, 680, [['Eb4', 'E4'], ['F#4', 'F4']], [[px + 183, px + 313], [px + 470, px + 600]], [px + 392]);
+        const xN = [px + 313, px + 600], ns = ['E4', 'F4'];
         xN.forEach((xn, i) => {
           const xa = xn - (N.M.accidentalNatural.adv + 0.22) * SP, y = yNota(ns[i], yM);
           if (ok) {

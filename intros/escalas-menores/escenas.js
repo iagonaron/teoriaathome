@@ -476,6 +476,61 @@
     N.el('path', { d: `M${x + sz * 0.35},${y + sz * 0.65} L${x + sz * 0.72},${y + sz * 0.28} M${x + sz * 0.42},${y + sz * 0.28} H${x + sz * 0.72} V${y + sz * 0.58}`, fill: 'none', stroke: 'currentColor', 'stroke-width': 2.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, G);
     return G;
   }
+  /** (29-sep, Iago) Cuando el vídeo nombra los APUNTES, el cartel se puede pulsar y los abre (el apartado exacto).
+   *  Dentro del portal (el vídeo va en un marco): se lo pide al portal con postMessage y el portal abre sus apuntes
+   *  (los mismos de «VER APUNTES»). Suelto (pestaña propia): abre el portal de esta misma web con ?apuntes=…
+   *  temas = ids de los apuntes (p. ej. ['armadura']); nombre = título de la ventana de apuntes. */
+  function enlaceApuntes(g, temas, nombre) {
+    g.style.cursor = 'pointer';
+    g.setAttribute('role', 'link'); g.setAttribute('tabindex', '0');
+    g.setAttribute('aria-label', 'Abrir los apuntes: ' + (nombre || temas.join(', ')));
+    const abre = ev => {
+      ev.stopPropagation(); ev.preventDefault();
+      try { if (document.body.classList.contains('sonando')) document.getElementById('botonPausa').click(); } catch (e) { }
+      let dentro = false;
+      try { dentro = window.parent && window.parent !== window; } catch (e) { dentro = true; }
+      if (dentro) { try { parent.postMessage({ intro: 'apuntes', temas: temas, nombre: nombre || '' }, '*'); return; } catch (e) { } }
+      const url = new URL('../../?apuntes=' + encodeURIComponent(temas.join(',')) + (nombre ? '&nombre=' + encodeURIComponent(nombre) : ''), location.href).href;
+      let w = null;
+      try { w = window.open(url, '_blank'); } catch (e) { }
+      if (w) { try { w.opener = null; } catch (e) { } }
+    };
+    g.addEventListener('click', abre);
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') abre(e); });
+    g.addEventListener('mouseenter', () => { g.style.filter = 'brightness(1.25)'; });
+    g.addEventListener('mouseleave', () => { g.style.filter = ''; });
+    return g;
+  }
+  /** (29-sep, Iago) TARJETA DE ENLACE: la misma en todos los vídeos (la de «Inversión de intervalos» en «Intervalos»).
+   *  Panel oscuro con contorno rosa · cuadrado rosa con su icono (▶ = vídeo; hoja = apuntes) · rótulo pequeño en rosa
+   *  («VÍDEO» / «APUNTES») · título en blanco · ↗ en la esquina. Se pulsa entera.
+   *  o = { tipo: 'video'|'apuntes', titulo, slug (vídeo) | temas + nombre (apuntes), rotulo?, centro?: true, w?, enlace?: false }
+   *  (x, y) = esquina superior izquierda, o el centro si o.centro. Devuelve el grupo (con _w, _h, _cx, _cy). */
+  function tarjetaEnlace(parent, x, y, o) {
+    o = o || {};
+    const V = N.group(parent, 'tarjetaEnlace');
+    const h = 96, esApu = o.tipo === 'apuntes';
+    const P = panel(V, 0, 0, 460, h, { rx: 18, stroke: C.rosa, sw: 2 });
+    N.el('rect', { x: 22, y: 22, width: 52, height: 52, rx: 12, fill: C.rosa }, V);
+    if (esApu) {
+      N.el('path', { d: 'M37,33 h15 l9,9 v21 h-24 z M52,33 v9 h9', fill: 'none', stroke: '#fff', 'stroke-width': 2.6, 'stroke-linejoin': 'round' }, V);
+      for (let i = 0; i < 3; i++) N.line(V, 42, 48 + i * 5, 56, 48 + i * 5, 2, { stroke: '#fff', 'stroke-linecap': 'round' });
+    } else {
+      N.el('path', { d: 'M40,36 v24 l20,-12 z', fill: '#fff' }, V);
+    }
+    const r = texto(V, o.rotulo || (esApu ? 'APUNTES' : 'VÍDEO'), 94, 40, { size: 18, peso: 800, ls: '0.18em', fill: C.rosa });
+    const tt = texto(V, o.titulo || '', 94, 72, { size: 28, peso: 800, fill: C.blanco });
+    const w = Math.max(o.w || 0, 94 + Math.max(D.medir(r) + 50, D.medir(tt)) + 64);
+    P.setAttribute('width', w.toFixed(0));
+    if (o.enlace !== false) { const ia = icoAbrir(V, w - 40, 14, 26); color(ia, C.rosa); }   // enlace:false → misma tarjeta, sin ↗ ni clic
+    const x0 = o.centro ? x - w / 2 : x, y0 = o.centro ? y - h / 2 : y;
+    V.setAttribute('transform', `translate(${x0.toFixed(1)},${y0.toFixed(1)})`);
+    if (o.enlace !== false) { if (esApu) enlaceApuntes(V, o.temas || [], o.nombre || o.titulo); else if (o.slug) enlaceVideo(V, o.slug); }
+    V._w = w; V._h = h; V._cx = x0 + w / 2; V._cy = y0 + h / 2;
+    const E = N.group(parent, 'tarjetaEnlaceCaja'); E.appendChild(V);    // envoltorio: para pop/aparece sin pisar el translate
+    E._w = w; E._h = h; E._cx = V._cx; E._cy = V._cy;
+    return E;
+  }
 
 
   // ================================================================ E9 · ESCALAS MENORES (natural, armónica, melódica y dórica, con Re m)
@@ -785,12 +840,8 @@
       const fin = b - 0.3;
       // ---------- H1 · «Si viste el vídeo de introducción a las tonalidades…»
       const tVid = Wd('H1', 'video') - 0.15, tFuera = Wd('H2', 'tendencia') - 0.3;
-      const kv = N.group(g);
-      const cv = chip(kv, 'LA TONALIDAD', CX, 200, { size: 26, anchor: 'middle', relleno: false });
-      N.el('polygon', { points: `${cv._x - 34},188 ${cv._x - 34},212 ${cv._x - 13},200`, fill: C.rosa }, kv);    // ▶ = un vídeo
-      const ia = N.group(kv); icoAbrir(ia, cv._x + cv._w + 14, 187, 26); color(ia, C.rosa);                     // ↗ = se abre en otra pestaña
-      kv.insertBefore(N.el('rect', { x: cv._x - 46, y: 170, width: cv._w + 106, height: 60, rx: 12, fill: 'rgba(0,0,0,0)' }), kv.firstChild);   // zona que se puede pulsar
-      enlaceVideo(kv, 'la-tonalidad');
+      // (29-sep, Iago) el cartel del vídeo «La tonalidad», con la tarjeta de enlace de siempre (se pulsa y lo abre)
+      const kv = tarjetaEnlace(g, CX, 200, { tipo: 'video', titulo: 'La tonalidad', slug: 'la-tonalidad', centro: true });
       pop(s, kv, tVid, tFuera, CX, 200);
       // antiguamente: primero cantar y tocar… antes de comprender y escribir la música
       const yI = 520, yT = 672, kI = 1.4;
@@ -985,27 +1036,17 @@
       const [cxA, cyA] = centroArm(ES.A, 0, yM, 'b');
       pop(s, ES.A.items[0].g, tArm, fin, cxA, cyA, { k0: .4, fi: .3 });
       rosaEn(s, ES.A.items[0].g, [[tArm - 0.3, tArm + 1.6]]);
-      // P3 · calcula el Mayor y hazle la pregunta (a la derecha)
-      const xR = 1460, tP3 = Wd('P3', 'calcula') - 0.15, tMay = Wd('P3', 'mayor') - 0.1, tPreg = Wd('P3', 'tiene') - 0.15;
-      const D3 = N.group(g);
-      s.on(t => opa(D3, win(t, tP3, t3, .35, .4)));
-      const cm = N.group(D3); chip(cm, 'menor', xR - 210, 340, { size: 36, anchor: 'middle', relleno: false, borde: C.suave, colorTexto: C.blanco, ls: '0.04em' });
-      pop(s, cm, tP3, 1e9, xR - 210, 340);
-      const fm = N.group(D3); color(fm, C.rosa); flecha(fm, xR - 100, 340, xR + 60, 340, { w: 6, cab: 20 });
-      mostrarEn(s, fm, tMay - 0.2, 1e9);
-      const cM = N.group(D3); chip(cM, 'Mayor', xR + 180, 340, { size: 36, anchor: 'middle', relleno: false, ls: '0.04em' });
-      pop(s, cM, tMay, 1e9, xR + 180, 340);
-      const pq = fraseG(D3, [['¿', C.blanco], ['♭', C.rosa], [' en el nombre?', C.blanco]], xR, 486, { size: 60, peso: 800, anchor: 'middle' });
-      aparece(s, pq, tPreg, 1e9, { dy: 8 });
-      // P4 · si tienes dudas: el vídeo «Indica la armadura» o los apuntes
-      const tVid = Wd('P4', 'video') - 0.15, tApu = Wd('P4', 'apuntes') - 0.2;
-      const tv = tarjetaVideo(D3, 1040, 580, 'Indica', 'la armadura', 'indica-la-armadura');
-      pop(s, tv, tVid, 1e9, 1040 + tv._w / 2, 648);
-      const xAp = 1040 + tv._w + 24;
-      const ta = tarjetaApuntes(D3, xAp, 580);
-      pop(s, ta, tApu, 1e9, xAp + 150, 648);
-      // P5 · modifica las notas según la variante, subiendo un semitono
+      // (29-sep, Iago) fuera «Ya sabes, calcula el Mayor…»: del paso 2 se pasa directo a «Si tienes dudas…»
+      // P4 · si tienes dudas: el vídeo «Indica la armadura» o los apuntes → dos tarjetas de enlace (se pulsan)
+      const xR = 1460, tVid = Wd('P4', 'video') - 0.15, tApu = Wd('P4', 'apuntes') - 0.2;
       const tVari = Wd('P5', 'variante') - 0.2, tSub = Wd('P5', 'subiendo') - 0.15;
+      const D3 = N.group(g);   // las tarjetas siguen a la vista hasta que salen las variantes (en el mismo sitio)
+      s.on(t => opa(D3, win(t, tVid, tVari - 0.45, .35, .4)));
+      const tv = tarjetaEnlace(D3, xR, 440, { tipo: 'video', titulo: 'Indica la armadura', slug: 'indica-la-armadura', centro: true });
+      const ta = tarjetaEnlace(D3, xR, 560, { tipo: 'apuntes', titulo: 'Indica la armadura', temas: ['armadura'], centro: true, w: tv._w });
+      pop(s, tv, tVid, 1e9, xR, 440);
+      pop(s, ta, tApu, 1e9, xR, 560);
+      // P5 · modifica las notas según la variante, subiendo un semitono
       const VR = [['Armónica', '7↑'], ['Melódica', '6↑ 7↑'], ['Dórica', '6↑']];
       VR.forEach(([nom, f], i) => {
         const G = N.group(g);

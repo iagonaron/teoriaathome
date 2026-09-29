@@ -476,6 +476,61 @@
     N.el('path', { d: `M${x + sz * 0.35},${y + sz * 0.65} L${x + sz * 0.72},${y + sz * 0.28} M${x + sz * 0.42},${y + sz * 0.28} H${x + sz * 0.72} V${y + sz * 0.58}`, fill: 'none', stroke: 'currentColor', 'stroke-width': 2.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, G);
     return G;
   }
+  /** (29-sep, Iago) Cuando el vídeo nombra los APUNTES, el cartel se puede pulsar y los abre (el apartado exacto).
+   *  Dentro del portal (el vídeo va en un marco): se lo pide al portal con postMessage y el portal abre sus apuntes
+   *  (los mismos de «VER APUNTES»). Suelto (pestaña propia): abre el portal de esta misma web con ?apuntes=…
+   *  temas = ids de los apuntes (p. ej. ['armadura']); nombre = título de la ventana de apuntes. */
+  function enlaceApuntes(g, temas, nombre) {
+    g.style.cursor = 'pointer';
+    g.setAttribute('role', 'link'); g.setAttribute('tabindex', '0');
+    g.setAttribute('aria-label', 'Abrir los apuntes: ' + (nombre || temas.join(', ')));
+    const abre = ev => {
+      ev.stopPropagation(); ev.preventDefault();
+      try { if (document.body.classList.contains('sonando')) document.getElementById('botonPausa').click(); } catch (e) { }
+      let dentro = false;
+      try { dentro = window.parent && window.parent !== window; } catch (e) { dentro = true; }
+      if (dentro) { try { parent.postMessage({ intro: 'apuntes', temas: temas, nombre: nombre || '' }, '*'); return; } catch (e) { } }
+      const url = new URL('../../?apuntes=' + encodeURIComponent(temas.join(',')) + (nombre ? '&nombre=' + encodeURIComponent(nombre) : ''), location.href).href;
+      let w = null;
+      try { w = window.open(url, '_blank'); } catch (e) { }
+      if (w) { try { w.opener = null; } catch (e) { } }
+    };
+    g.addEventListener('click', abre);
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') abre(e); });
+    g.addEventListener('mouseenter', () => { g.style.filter = 'brightness(1.25)'; });
+    g.addEventListener('mouseleave', () => { g.style.filter = ''; });
+    return g;
+  }
+  /** (29-sep, Iago) TARJETA DE ENLACE: la misma en todos los vídeos (la de «Inversión de intervalos» en «Intervalos»).
+   *  Panel oscuro con contorno rosa · cuadrado rosa con su icono (▶ = vídeo; hoja = apuntes) · rótulo pequeño en rosa
+   *  («VÍDEO» / «APUNTES») · título en blanco · ↗ en la esquina. Se pulsa entera.
+   *  o = { tipo: 'video'|'apuntes', titulo, slug (vídeo) | temas + nombre (apuntes), rotulo?, centro?: true, w?, enlace?: false }
+   *  (x, y) = esquina superior izquierda, o el centro si o.centro. Devuelve el grupo (con _w, _h, _cx, _cy). */
+  function tarjetaEnlace(parent, x, y, o) {
+    o = o || {};
+    const V = N.group(parent, 'tarjetaEnlace');
+    const h = 96, esApu = o.tipo === 'apuntes';
+    const P = panel(V, 0, 0, 460, h, { rx: 18, stroke: C.rosa, sw: 2 });
+    N.el('rect', { x: 22, y: 22, width: 52, height: 52, rx: 12, fill: C.rosa }, V);
+    if (esApu) {
+      N.el('path', { d: 'M37,33 h15 l9,9 v21 h-24 z M52,33 v9 h9', fill: 'none', stroke: '#fff', 'stroke-width': 2.6, 'stroke-linejoin': 'round' }, V);
+      for (let i = 0; i < 3; i++) N.line(V, 42, 48 + i * 5, 56, 48 + i * 5, 2, { stroke: '#fff', 'stroke-linecap': 'round' });
+    } else {
+      N.el('path', { d: 'M40,36 v24 l20,-12 z', fill: '#fff' }, V);
+    }
+    const r = texto(V, o.rotulo || (esApu ? 'APUNTES' : 'VÍDEO'), 94, 40, { size: 18, peso: 800, ls: '0.18em', fill: C.rosa });
+    const tt = texto(V, o.titulo || '', 94, 72, { size: 28, peso: 800, fill: C.blanco });
+    const w = Math.max(o.w || 0, 94 + Math.max(D.medir(r) + 50, D.medir(tt)) + 64);
+    P.setAttribute('width', w.toFixed(0));
+    if (o.enlace !== false) { const ia = icoAbrir(V, w - 40, 14, 26); color(ia, C.rosa); }   // enlace:false → misma tarjeta, sin ↗ ni clic
+    const x0 = o.centro ? x - w / 2 : x, y0 = o.centro ? y - h / 2 : y;
+    V.setAttribute('transform', `translate(${x0.toFixed(1)},${y0.toFixed(1)})`);
+    if (o.enlace !== false) { if (esApu) enlaceApuntes(V, o.temas || [], o.nombre || o.titulo); else if (o.slug) enlaceVideo(V, o.slug); }
+    V._w = w; V._h = h; V._cx = x0 + w / 2; V._cy = y0 + h / 2;
+    const E = N.group(parent, 'tarjetaEnlaceCaja'); E.appendChild(V);    // envoltorio: para pop/aparece sin pisar el translate
+    E._w = w; E._h = h; E._cx = V._cx; E._cy = V._cy;
+    return E;
+  }
 
 
   // ================================================================ E10 · ESCALAS MAYORES (tipos 1–4 con Re M: natural, armónica, melódica y mixolidia; aquí se baja)
@@ -785,12 +840,8 @@
       const fin = b - 0.3;
       // ---------- H1 · «Si viste el vídeo de introducción a las tonalidades…»
       const tVid = Wd('H1', 'video') - 0.15, tFuera = Wd('H2', 'tendencia') - 0.3;
-      const kv = N.group(g);
-      const cv = chip(kv, 'LA TONALIDAD', CX, 200, { size: 26, anchor: 'middle', relleno: false });
-      N.el('polygon', { points: `${cv._x - 34},188 ${cv._x - 34},212 ${cv._x - 13},200`, fill: C.rosa }, kv);    // ▶ = un vídeo
-      const ia = N.group(kv); icoAbrir(ia, cv._x + cv._w + 14, 187, 26); color(ia, C.rosa);                     // ↗ = se abre en otra pestaña
-      kv.insertBefore(N.el('rect', { x: cv._x - 46, y: 170, width: cv._w + 106, height: 60, rx: 12, fill: 'rgba(0,0,0,0)' }), kv.firstChild);   // zona que se puede pulsar
-      enlaceVideo(kv, 'la-tonalidad');
+      // (29-sep, Iago) el cartel del vídeo «La tonalidad», con la tarjeta de enlace de siempre (se pulsa y lo abre)
+      const kv = tarjetaEnlace(g, CX, 200, { tipo: 'video', titulo: 'La tonalidad', slug: 'la-tonalidad', centro: true });
       pop(s, kv, tVid, tFuera, CX, 200);
       // antiguamente: primero cantar y tocar… antes de comprender y escribir la música
       const yI = 520, yT = 672, kI = 1.4;
@@ -988,10 +1039,10 @@
         { n: '2', tit: 'PON LA ARMADURA', t0: t2, t1: t3 },
         { n: '3', tit: 'MODIFICA LAS NOTAS', t0: t3, t1: fin + 1 },
       ], Wd('P1', 'pasos') - 0.25, fin);
-      const mis = fraseG(g, [['los mismos que en las ', C.suave], ['escalas menores', C.blanco]], 1440, 420, { size: 40, peso: 700, italic: true, anchor: 'middle' });
-      const fM = mis._f, iaM = N.group(mis); icoAbrir(iaM, fM._x + fM._w + 14, 420 - 29, 26); color(iaM, C.rosa);   // ↗ se puede pulsar
-      mis.insertBefore(N.el('rect', { x: fM._x - 14, y: 420 - 46, width: fM._w + 68, height: 62, rx: 12, fill: 'rgba(0,0,0,0)' }), mis.firstChild);
-      enlaceVideo(mis, 'escalas-menores');                                                            // abre «Escalas menores»
+      // (29-sep, Iago) el enlace, con la tarjeta de siempre (VÍDEO · Escalas menores; se pulsa entera)
+      const mis = N.group(g);
+      fraseG(mis, [['los mismos pasos que en las', C.suave]], 1440, 400, { size: 40, peso: 700, italic: true, anchor: 'middle' });
+      tarjetaEnlace(mis, 1440, 490, { tipo: 'video', titulo: 'Escalas menores', slug: 'escalas-menores', centro: true });
       aparece(s, mis, Wd('P1', 'mismos') - 0.2, t3, { dy: 8 });
       // a la izquierda, el ejemplo de siempre (Re M) paso a paso
       const yM = 560, xP = 110;
@@ -1100,7 +1151,7 @@
       const fin = b - 0.3;
       const xC = 90, yC = 150, wC = 800, hC = 700, dxM = 940;
       const tMueve = F0('F3') - 0.2, tMen = Wd('F3', 'menores') - 0.35, tSuben = Wd('F3', 'suben') - 0.15;
-      const tPil = Wd('F3', 'pildoras') - 0.2, tMay = Wd('F3', 'mayores') - 0.2, tBaj = Wd('F4', 'bajate') - 0.1;
+      const tMay = Wd('F3', 'mayores') - 0.2, tBaj = Wd('F4', 'bajate') - 0.1;
       // ---------- el panel de las Mayores (repaso) — se va a la derecha cuando entran las menores
       const PM = N.group(g), PMi = N.group(PM);
       s.on(t => PMi.setAttribute('transform', `translate(${(dxM * ease(ramp(t, tMueve, tMueve + 0.8))).toFixed(1)},0)`));
@@ -1153,7 +1204,7 @@
         const e = ES.notas[i], G = fraseG(E, (i + 1) + '↓', e.cx, yM - 94, { size: 28, peso: 800, anchor: 'middle', fill: C.rosa });
         s.on(t => opa(G, ventanas(t, ALT[i][1], .3, .3)));
       });
-      // ---------- F3 · en las menores, las alteraciones suben (píldoras que suben)…
+      // ---------- F3 · en las menores, las alteraciones suben…
       const Pm = N.group(g);
       aparece(s, Pm, tMen, fin, { dy: 12 });
       panel(Pm, xC, yC, wC, hC, { rx: 24, stroke: 'rgba(248,250,252,0.35)', sw: 2 });
@@ -1167,16 +1218,7 @@
         const G = N.group(Pm);
         frase(G, [[nom + (f ? ' ' : ''), C.blanco], [f, C.rosa]], xC + 50, yC + 210 + i * 125, { size: 46, peso: 800 });
       });
-      // píldoras que suben
-      [[xC + 640, 0], [xC + 720, 0.35], [xC + 590, 0.7], [xC + 690, 1.05]].forEach(([x, dt], i) => {
-        const P = N.group(g), Pi = pildora(P, i % 2 ? 25 : -30);
-        const t0 = tPil + dt, t1 = t0 + 2.2;
-        s.on(t => {
-          const k = ramp(t, t0, t1);
-          opa(P, t < t0 || t > t1 ? 0 : Math.min(1, k * 5, (1 - k) * 4));
-          P.setAttribute('transform', `translate(${x},${(yC + hC - 90 - (hC - 260) * eo(k)).toFixed(1)})`);
-        });
-      });
+      // (29-sep, Iago) fuera la animación de las píldoras que suben («como de psiquiatría»)
     });
   }
 
