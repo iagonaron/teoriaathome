@@ -75,12 +75,15 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 29-sep 08:39 · Fichas y rediseño · EN CURSO · index.html · ficha del alumno: «No lo sé hacer / tengo dudas» como
+- 29-sep 08:39 · Fichas y rediseño · HECHO · commit 5fcc2cd · index.html · ficha del alumno: «No lo sé hacer / tengo dudas» como
   texto + hasta 3 botones con contorno rosa (Apuntes · Vídeo · Practicar ejercicios sueltos) en previsualizarAlumno y
   en el bloque «APUNTES EN LAS FICHAS» (ApxFicha); ventana «Vamos a practicar esto» con la estética nueva
   (modalPracticar); en la ficha, los vídeos con 👍 para los alumnos (lista propia dentro de ApxFicha: NO toca INTROS,
   ivg-* ni intros/); revisión del profesor: &ej=N abre la ficha centrada en ese ejercicio y el rótulo con la estética
   nueva. Parto de 1f52f80.
+  AVISO para «Intros didácticas»: en la ficha, «Vídeo» enseña a los alumnos los vídeos del tema ya publicados o con 👍.
+  El 👍 no lo pueden leer las cuentas de alumno, así que va copiado en VERIFICADOS (bloque «APUNTES EN LAS FICHAS»):
+  al dar un 👍 nuevo o publicar un vídeo, añadidlo también ahí (y a VIDEOS si es un vídeo nuevo).
 - 28-sep 20:33 · Intros didácticas · HECHO · solo este fichero: aviso de que 11 carpetas de intros/ tienen copia en
   teoriapro (vídeos GE en las tarjetas de repaso de Teoría PRO, EN PRUEBA; commits de teoriapro 9b5a04c … d915f15).
 - 28-sep 19:55 · Intros didácticas · HECHO · commits f5b5598 (escalas-menores), dca78a2 (escalas-mayores), 0f7e26c (otras-escalas),
