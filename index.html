@@ -3274,6 +3274,16 @@ const ESC_PATRONES_MAY={
 };
 /* fifths de la MAYOR de cada tónica blanca */
 const MAJOR_FIFTHS={C:0,D:2,E:4,F:-1,G:1,A:3,B:5};
+/* (29-sep-2026, Iago) «En escalas mayores me salen todo el rato escalas con sostenidos; mírame si no está bugeado lo de
+   los bemoles.» Las tónicas eran solo las teclas blancas y, de las mayores, solo Fa lleva bemoles. Para las MAYORES se
+   añaden Si♭, Mi♭, La♭ y Re♭: cinco con sostenidos (Sol, Re, La, Mi, Si), cinco con bemoles (Fa, Si♭, Mi♭, La♭, Re♭)
+   y Do. Las menores y las otras escalas siguen igual. «a» es la alteración de la tónica (−1 = bemol). */
+const ESC_TONICAS_MAY=ESC_TONICAS.concat([
+  {nom:"Si♭",s:"B",o:3,a:-1},{nom:"Mi♭",s:"E",o:4,a:-1},{nom:"La♭",s:"A",o:4,a:-1},{nom:"Re♭",s:"D",o:4,a:-1}
+]);
+function escFifthsMay(ton){ return (MAJOR_FIFTHS[ton.s]||0)+7*(ton.a||0); }
+/* con el panel solo hay ♯ ♮ ♭: nada de dobles alteraciones (Re♭ Mayor tipo 2 y 3 pedirían Si𝄫) */
+function escSinDobles(notas){ return !(notas||[]).some(n=>Math.abs(n.alter||0)>1); }
 /* escalas de nº variable: índices de grado (0-based) y semis base */
 function escVarNotas(fam,s,o){
   const it=STEPS.indexOf(s), mt=midiNota(s,o,0);
@@ -3297,8 +3307,8 @@ function escVarNotas(fam,s,o){
 /* tipos de escala que el alumno ha activado (por defecto solo menores) */
 const escSel={menores:true, mayores:false, otras:false};
 
-function escGenerarNotas(s,o,patron){
-  const midiTon=midiNota(s,o,0);
+function escGenerarNotas(s,o,patron,a){
+  const midiTon=midiNota(s,o,a||0);   /* a: alteración de la tónica (29-sep-2026: Si♭, Mi♭, La♭, Re♭) */
   const idxTon=STEPS.indexOf(s);
   const notas=[];
   for(let i=0;i<patron.length;i++){
@@ -3312,13 +3322,16 @@ function escGenerarNotas(s,o,patron){
 }
 /* familia 'menor'|'mayor' -> item con notas PRECOLOCADAS que el alumno altera */
 function escItem7(familia){
-  const ton=pick(ESC_TONICAS);
   const tipos = familia==='mayor'?ESC_TIPOS_MAY:ESC_TIPOS;
   const pesos = familia==='mayor'?ESC_PESOS_MAY:ESC_PESOS;
   const patrones = familia==='mayor'?ESC_PATRONES_MAY:ESC_PATRONES;
   const pool=[]; tipos.forEach(t=>{ for(let i=0;i<pesos[t];i++) pool.push(t); });
-  const tipo=pick(pool);
-  const notasSol=escGenerarNotas(ton.s,ton.o,patrones[tipo]);   // 7 notas con su alteración correcta
+  let ton, tipo, notasSol, intentos=0;
+  do {
+    ton=pick(familia==='mayor'?ESC_TONICAS_MAY:ESC_TONICAS);
+    tipo=pick(pool);
+    notasSol=escGenerarNotas(ton.s,ton.o,patrones[tipo],ton.a);   // 7 notas con su alteración correcta
+  } while(!escSinDobles(notasSol) && ++intentos<40);
   // userSeq precolocada: mismas alturas/letras pero SIN alteración (alter:0),
   // + 8ª opcional (tónica repetida) marcada _opt (no se corrige)
   const userSeq=notasSol.map(n=>({step:n.step,octave:n.octave,alter:0}));
@@ -3327,7 +3340,7 @@ function escItem7(familia){
   const etiqueta=tipo;
   return {familia, _variable:true, _precolocada:true, tonica:ton, tipo:etiqueta,
           notasSol, nNotas:notasSol.length, userSeq, _selVar:null, userArm:null,
-          fifths:(familia==='mayor'?MAJOR_FIFTHS[ton.s]:MINOR_FIFTHS[ton.s])};
+          fifths:(familia==='mayor'?escFifthsMay(ton):MINOR_FIFTHS[ton.s])};
 }
 function escPickTipo(){
   const pool=[]; ESC_TIPOS.forEach(t=>{ for(let i=0;i<ESC_PESOS[t];i++) pool.push(t); });
@@ -8232,6 +8245,8 @@ function openTerminos(){
   };
   // tónica de comienzo entre La3 (la más grave) y La4 (la más aguda) — nunca por debajo de La3
   const ESC_TON_EJ=[{s:'A',o:3},{s:'B',o:3},{s:'C',o:4},{s:'D',o:4},{s:'E',o:4},{s:'F',o:4},{s:'G',o:4},{s:'A',o:4}];
+  /* (29-sep-2026) mayores también con bemoles: Si♭, Mi♭, La♭ y Re♭ (ver ESC_TONICAS_MAY) */
+  const ESC_TON_EJ_MAY=ESC_TON_EJ.concat([{s:'B',o:3,a:-1},{s:'E',o:4,a:-1},{s:'A',o:4,a:-1},{s:'D',o:4,a:-1}]);
   function escAccFlags(tipo){
     if(tipo==='menor natural')  return [0,0,0,0,0,0,0];
     if(tipo==='menor armónica') return [0,0,0,0,0,0,1];
@@ -8246,30 +8261,34 @@ function openTerminos(){
   function escGenEjemplo(familia){
     if(familia==='otras') return escGenOtra(null);
     if(familia==='pentatonica'||familia==='pentatonica_may'||familia==='pentatonica_men'||familia==='hexatona'||familia==='cromatica') return escGenOtra(familia);
-    const ton=pick(ESC_TON_EJ);
-    let tipos,patrones,fifthsMap;
-    if(familia==='menor'){ tipos=ESC_TIPOS; patrones=ESC_PATRONES; fifthsMap=MINOR_FIFTHS; }
-    else { tipos=ESC_TIPOS_MAY; patrones=ESC_PATRONES_MAY; fifthsMap=MAJOR_FIFTHS; }
-    const tipo=pick(tipos);
-    const notas=escGenerarNotas(ton.s,ton.o,patrones[tipo]);
+    let tipos,patrones;
+    if(familia==='menor'){ tipos=ESC_TIPOS; patrones=ESC_PATRONES; }
+    else { tipos=ESC_TIPOS_MAY; patrones=ESC_PATRONES_MAY; }
+    let ton, tipo, notas, intentos=0;
+    do {
+      ton=pick(familia==='menor'?ESC_TON_EJ:ESC_TON_EJ_MAY);
+      tipo=pick(tipos);
+      notas=escGenerarNotas(ton.s,ton.o,patrones[tipo],ton.a);
+    } while(!escSinDobles(notas) && ++intentos<40);
+    const ta=ton.a||0;
     const flags=escAccFlags(tipo);
-    const fifths=fifthsMap[ton.s]||0;
+    const fifths=(familia==='menor')?(MINOR_FIFTHS[ton.s]||0):escFifthsMay(ton);
     const keysig=(fifths!==0)?KS_VF[String(fifths)]:null;
     const notesSpec=notas.map((n,i)=>({key:keyDe(n.step,n.alter,n.octave),acc:!!flags[i]}));
     // 8ª opcional: tónica una octava arriba, atenuada (como en la vista de alumno)
-    notesSpec.push({key:keyDe(ton.s, 0, ton.o+1), acc:false, dim:true});
-    const tonicLabel=solfDe(ton.s,0)+' '+(familia==='menor'?'m':'M');
+    notesSpec.push({key:keyDe(ton.s, ta, ton.o+1), acc:false, dim:true});
+    const tonicLabel=solfDe(ton.s,ta)+' '+(familia==='menor'?'m':'M');
     const d=ESC_DESC[tipo]||{nick:'',alt:''};
     // nombres naturales desde la tónica
     const it=STEPS.indexOf(ton.s); const naturales=[];
     for(let i=0;i<8;i++){ naturales.push(SOLF[(it+i)%7]); }
     return {
       titulo:'Escala '+tipo,
-      enun:'Construye la escala '+tipo+' de '+solfDe(ton.s,0)+' (una octava ascendente).',
+      enun:'Construye la escala '+tipo+' de '+solfDe(ton.s,ta)+' (una octava ascendente).',
       resp:notas.map(n=>solfDe(n.step,n.alter)).join(' – '),
       spec:{type:'scale',clef:'treble',fifths,keysig,tonicLabel,notes:notesSpec,familia:familia,porAltura:false,conArmadura:true,precolocada:true},
       pasos:[
-        'Pongo las cabezas desde la tónica ('+solfDe(ton.s,0)+').',
+        'Pongo las cabezas desde la tónica ('+solfDe(ton.s,ta)+').',
         'Coloco la armadura: '+(keysig?(Math.abs(fifths)+(fifths>0?' sostenido(s)':' bemol(es)')):'ninguna alteración')+'.',
         'Compruebo la armadura para saber qué alteraciones aplicar y modifico la variante: '+d.alt
       ]
