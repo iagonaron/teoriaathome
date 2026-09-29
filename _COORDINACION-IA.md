@@ -75,6 +75,10 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 20:51 · Intros didácticas · HECHO · commit 098aa13 (EN CURSO en 0d0f1c2) · tanda 1440-A: intros/intervalos,
+  intervalos-compuestos, inversion-intervalos, inversion-compuestos, compases, escalas-menores y otras-escalas pasan a MP4
+  1440p60 con audio 256k (<slug>_1440.mp4 + window.VIDEO_MP4 en su index.html). Para volver al modo de siempre en un vídeo:
+  borrar esa línea de su index.html (o abrirlo con ?svg).
 - 29-sep 20:48 · Intros didácticas · EN CURSO · vídeos en MP4 1440p a 60 fps (audio 256k), tanda 1440-A: intros/intervalos,
   intervalos-compuestos, inversion-intervalos, inversion-compuestos, compases, escalas-menores y otras-escalas: cada una, su
   <slug>_1440.mp4 + una línea en su index.html (window.VIDEO_MP4). Nada más. Parto de 7f35cbd.
