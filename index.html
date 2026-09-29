@@ -12133,19 +12133,24 @@ function __grados_marker__(){}
     const area = AREA_DE[key];
     if(!area) return;
     const ov=document.createElement('div');
-    ov.style.cssText='position:fixed;inset:0;background:rgba(6,11,26,.62);z-index:100001;display:flex;align-items:center;justify-content:center;padding:22px';
+    /* (29-sep-2026, Iago) «que la ventana de "vamos a practicar esto" esté actualizada estéticamente (icono simple,
+       fondo…)»: cristal oscuro, icono plano y rosa de teoría, como la ventanita «¿Necesitas mirar los apuntes?». */
+    ov.style.cssText='position:fixed;inset:0;background:rgba(3,5,12,.66);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:100001;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
     const card=document.createElement('div');
-    card.style.cssText='background:#fff;border-radius:18px;max-width:430px;width:100%;padding:26px 28px;box-shadow:0 26px 80px #00000060;font-family:\'Helvetica Neue\',Arial,sans-serif';
+    card.style.cssText='background:#0d1222;color:#fff;border:1px solid rgba(236,72,153,.6);border-radius:16px;max-width:460px;width:100%;box-sizing:border-box;padding:24px 24px 20px;box-shadow:0 26px 80px rgba(0,0,0,.55);font-family:inherit;text-align:left';
     card.innerHTML=
-      '<div style="font-size:18px;font-weight:800;color:#16203a;margin-bottom:10px">Vamos a practicar esto 💪</div>'+
-      '<div style="font-size:14px;line-height:1.55;color:#414b63">'+
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'+
+        '<span aria-hidden="true" style="flex:none;width:40px;height:40px;box-sizing:border-box;border-radius:10px;background:rgba(236,72,153,.16);border:1px solid rgba(236,72,153,.6);color:#f9a8d4;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>'+
+        '<div style="font-size:20px;font-weight:800;line-height:1.2;color:#fff">Vamos a practicar esto</div>'+
+      '</div>'+
+      '<div style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.86)">'+
         'Te abriré este tipo de ejercicio en una <b>pestaña nueva</b>, donde podrás practicar tranquilamente, ver <b>ejemplos resueltos</b> y repetir tantas veces como quieras.'+
         '<br><br>Ten a mano tus <b>apuntes de teoría</b> por si necesitas repasar.'+
         '<br><br>No te preocupes: <b>la ficha seguirá abierta</b> en la pestaña de antes, justo donde la dejaste.'+
       '</div>'+
-      '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px">'+
-        '<button id="mpCancel" style="border:0;background:#eef1f7;color:#16203a;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer">Ahora no</button>'+
-        '<a id="mpOk" href="'+(location.origin+location.pathname+'?practice='+encodeURIComponent(key))+'" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;border:0;background:#1f6df6;color:#fff;border-radius:9px;padding:10px 18px;font-weight:700;cursor:pointer">Abrir y practicar ↗</a>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px">'+
+        '<button id="mpCancel" type="button" style="min-height:44px;box-sizing:border-box;border-radius:12px;border:1px solid rgba(255,255,255,.38);background:transparent;color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">Ahora no</button>'+
+        '<a id="mpOk" href="'+(location.origin+location.pathname+'?practice='+encodeURIComponent(key))+'" target="_blank" rel="noopener" style="min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;background:#ec4899;color:#fff;text-decoration:none;font-size:14px;font-weight:800;cursor:pointer">Abrir y practicar <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4 10 14"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>'+
       '</div>';
     ov.appendChild(card); document.body.appendChild(ov);
     const cerrar=()=>{ try{ document.body.removeChild(ov); }catch(e){} };
@@ -12375,9 +12380,13 @@ function __grados_marker__(){}
                 : '';
       const areaItem = AREA_DE[item.key];
       /* (27-sep-2026, Iago) APUNTES EN LAS FICHAS: class="sim-ayuda" marca esta fila para colgarle «APUNTES» (bloque ApxFicha, al final) */
+      /* (29-sep-2026, Iago) «que no diga eso, quiero que ponga "No lo sé hacer / tengo dudas" y que solo sea texto.
+         Después hasta 3 botones: Apuntes, Vídeo, practicar ejercicios sueltos … con contorno rosa». Aquí va el texto y
+         «Practicar ejercicios sueltos»; «Apuntes» y «Vídeo» los pone delante el bloque «APUNTES EN LAS FICHAS» (ApxFicha).
+         Estilos: <style id="lmf-ayuda-css">, junto a ese bloque. */
       const practiBtn = areaItem
-        ? '<div class="sim-ayuda" style="margin-top:16px"><button class="simPracticaLive sim-practica-btn" data-key="'+item.key+'">No lo sé hacer, necesito practicar esto ↗</button></div>'
-        : '<div class="sim-ayuda" style="margin-top:16px;color:#c7bff0;font-size:13px;font-weight:600">¿Dudas? <b>Revisa los apuntes</b> 📖</div>';   /* ELE-W2: el «Ey, soy Iago» queda para la corrección */
+        ? '<div class="sim-ayuda lmf-ayuda" style="margin-top:16px"><span class="lmf-ayuda-txt">No lo sé hacer / tengo dudas</span><div class="lmf-ayuda-bots"><button type="button" class="simPracticaLive lmf-ayuda-btn" data-key="'+item.key+'">'+'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>'+'<span>Practicar ejercicios sueltos</span></button></div></div>'
+        : '<div class="sim-ayuda lmf-ayuda" style="margin-top:16px"><span class="lmf-ayuda-txt">¿Dudas? Revisa los apuntes</span><div class="lmf-ayuda-bots"></div></div>';   /* ELE-W2: el «Ey, soy Iago» queda para la corrección */
       const entClass = animDir==='fwd' ? 'sim-slide-in' : (animDir==='back' ? 'sim-slide-in-l' : 'sim-enter'); animDir=null;
       main.innerHTML='<div class="pp-hide-sol sim-card '+entClass+'" style="max-width:min(1120px,95vw);width:100%;align-self:flex-start">'+
           (item.refuerzo?'<div class="sim-refuerzo">⭐ <b>Ejercicio solo para ti</b> · Vamos a practicar esto porque nos cuesta un poco. Recuerda que en el portal at home, en Teoría, puedes hacer todos los ejercicios de este tipo que quieras. Y también tienes la explicación y ejemplos en el <b>Kit Salvavidas'+(/^4/.test(String(window.__FICHA_CURSO||''))?' 4ºGe':(/^3/.test(String(window.__FICHA_CURSO||''))?' 3ºGe':''))+'</b> que te entregué al principio del curso. Y si quieres, escríbeme un mensaje: te paso más material o agendamos una clase presencial de refuerzo para explicar justo lo que necesitas y que te quedes sin dudas.</div>':'')+
@@ -12897,7 +12906,10 @@ function __grados_marker__(){}
     document.addEventListener('keydown',onKey);
     if(window.__REVISION){                      /* ELE-W5 · el profesor entra directo a la corrección */
       enviado=true;
-      pantallaCorrigiendo(pantallaFinal);
+      /* (29-sep-2026, Iago) el PROFESOR va directo a la ficha corregida, sin la animación «Corrigiendo tu ficha…»
+         (el alumno, en su revisión, la sigue viendo) */
+      if(window.__REVISION.alumno) pantallaCorrigiendo(pantallaFinal);
+      else { foot.innerHTML=''; pantallaFinal(); }
       if(window.__REVISION.alumno){
         /* (22-sep-2026) REVISIÓN DEL ALUMNO (?revision=…&alu=1): misma ficha corregida,
            pero sin banner ni controles de profesor: rótulo «Tu ficha N corregida · nota X»,
@@ -12938,19 +12950,36 @@ function __grados_marker__(){}
         }, 150);
         return;
       }
+      /* (29-sep-2026, Iago) rótulo del profesor con la estética nueva (cristal oscuro, amarillo del Diario) y, con
+         &ej=N en la dirección (la lupa amarilla de la reclamación), la ficha se abre centrada en ESE ejercicio, con un
+         contorno amarillo unos segundos. */
+      const centrarEjRevision=()=>{
+        const n=parseInt(new URLSearchParams(location.search).get('ej'),10);
+        if(!isFinite(n)) return;
+        let k=PP.ficha.findIndex(it=>it && it.n!=null && Number(it.n)===n); if(k<0) k=n-1;
+        const host=main.querySelector('.simSolHost[data-k="'+k+'"]'); const fila=host && host.parentElement;
+        if(!fila) return;
+        if(!document.getElementById('revEjCss')){ const st=document.createElement('style'); st.id='revEjCss'; st.textContent='.rev-ej-foco{outline:2px solid #ffd678;outline-offset:6px;border-radius:10px;animation:revEjLat 1.1s ease-in-out 3}@keyframes revEjLat{50%{outline-color:rgba(255,214,120,.25)}}@media (prefers-reduced-motion:reduce){.rev-ej-foco{animation:none}}'; document.head.appendChild(st); }
+        fila.classList.add('rev-ej-foco');
+        const ir=()=>{ try{ fila.scrollIntoView({block:'center'}); }catch(e){} };
+        ir(); setTimeout(ir, 450); setTimeout(ir, 1300);   /* las soluciones se dibujan después y cambian la altura */
+        setTimeout(()=>{ fila.classList.remove('rev-ej-foco'); }, 6500);
+      };
       setTimeout(()=>{ try{
         const card=main.querySelector('.sim-card');
         if(card){
           const rev=window.__REVISION;
-          const ban=document.createElement('div');
-          ban.style.cssText='margin:0 0 16px;background:rgba(255,184,77,.14);border:1px solid rgba(255,184,77,.55);border-radius:12px;padding:12px 16px;color:#ffd9a0;font-size:13px;line-height:1.55';
+          const ban=document.createElement('div'); ban.id='simRevProfe';
+          ban.style.cssText='margin:0 0 16px;background:rgba(11,19,32,.86);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:12px 16px;color:#e8eef5;font-size:13.5px;line-height:1.55;text-align:left';
           let fbHtml='';
           if(rev.feedback){ const its=(rev.feedback.items&&rev.feedback.items.length)?rev.feedback.items:(rev.feedback.texto?[{n:rev.feedback.n,texto:rev.feedback.texto}]:[]);
-            if(its.length) fbHtml='<div style="margin-top:8px;border-top:1px dashed rgba(255,184,77,.4);padding-top:8px">'+its.map(x=>'💬 '+(x.n!=null?('<b>Ej. '+x.n+':</b> '):'')+String(x.texto||'').replace(/</g,'&lt;')).join('<br>')+'</div>'; }
-          ban.innerHTML='<b>🔍 REVISIÓN DEL PROFESOR</b> · Ficha '+(rev.numero!=null?rev.numero:'—')+(rev.nota!=null?(' · nota registrada: <b>'+String(rev.nota).replace('.',',')+'</b>'):'')+' · abajo, la ficha EXACTA que vio el alumno'+fbHtml;
+            if(its.length) fbHtml='<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)">'+its.map(x=>'<div style="margin-top:4px"><b style="color:#ffd678">'+(x.n!=null?('Ejercicio '+esc(String(x.n))):'General')+'</b> · '+esc(String(x.texto||''))+'</div>').join('')+'</div>'; }
+          ban.innerHTML='<div style="font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#ffd678;margin-bottom:3px">Revisión del profesor</div>'+
+            '<div>Ficha '+(rev.numero!=null?esc(String(rev.numero)):'—')+(rev.nota!=null?(' · nota registrada: <b>'+String(rev.nota).replace('.',',')+'</b>'):'')+' · abajo, la ficha EXACTA que vio el alumno</div>'+fbHtml;
           card.insertBefore(ban, card.firstChild);
         }
-      }catch(e){} }, 4300);
+        centrarEjRevision();
+      }catch(e){} }, 250);
       return;
     }
     if(reanudado) mostrar(); else pantallaIntro(mostrar);   // intro de bienvenida solo al empezar de cero
@@ -18166,6 +18195,46 @@ window.CAD = {
 })();
 </script>
 
+<!-- (29-sep-2026, Iago) FILA DE AYUDA DE LA FICHA: «No lo sé hacer / tengo dudas» (texto) y hasta 3 botones con contorno
+     rosa (Apuntes · Vídeo · Practicar ejercicios sueltos; en los test de GP, «Ver portal interactivo»). Clases propias
+     (lmf-*) para que ni la piel ni los estilos de antes las cambien. También: la ventanita para elegir vídeo y el visor
+     del Libro 2º GP. Para quitarlo: borrar este <style> y volver a los botones de antes (ver _COORDINACION-IA.md). -->
+<style id="lmf-ayuda-css">
+  .lmf-ayuda{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+  .lmf-ayuda .lmf-ayuda-txt{font-size:13.5px;font-weight:700;letter-spacing:.01em;line-height:1.3;color:rgba(255,255,255,.72)}
+  .lmf-ayuda .lmf-ayuda-bots{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:100%}
+  .lmf-ayuda .lmf-ayuda-bots:empty{display:none}
+  .lmf-ayuda .lmf-ayuda-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;box-sizing:border-box;min-height:40px;max-width:100%;
+    margin:0;padding:0 16px;border-radius:10px;border:1.5px solid #ec4899;background:rgba(11,19,32,.55);color:#fff;
+    font-family:inherit;font-size:13px;font-weight:700;line-height:1.15;letter-spacing:.01em;text-align:center;cursor:pointer;
+    box-shadow:none;transition:background .15s,border-color .15s}
+  .lmf-ayuda .lmf-ayuda-btn:hover{background:rgba(236,72,153,.18);border-color:#f472b6}
+  .lmf-ayuda .lmf-ayuda-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .lmf-ayuda .lmf-ayuda-btn svg{flex:none;display:block}
+  .lmf-ayuda .lmf-ayuda-btn.apxf-con-min{padding-right:40px}
+  @media (max-width:420px){ .lmf-ayuda .lmf-ayuda-bots{flex-direction:column;align-items:stretch;width:100%} .lmf-ayuda .lmf-ayuda-btn{width:100%} }
+  .lmf-elige .lmf-vids{display:flex;flex-direction:column;gap:8px;margin:0 0 16px}
+  .lmf-elige .lmf-vid{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;min-height:48px;margin:0;padding:10px 12px;
+    border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#fff;font-family:inherit;font-size:15px;
+    font-weight:700;line-height:1.25;text-align:left;cursor:pointer}
+  .lmf-elige .lmf-vid:hover,.lmf-elige .lmf-vid:focus-visible{border-color:#ec4899;background:rgba(236,72,153,.14);outline:none}
+  .lmf-elige .lmf-vid-ico{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:#ec4899;color:#fff}
+  .lmf-elige .lmf-vid-t{flex:1 1 auto;min-width:0}
+  .lmf-elige .lmf-vid-d{flex:none;font-size:12.5px;font-weight:700;color:rgba(255,255,255,.7);font-variant-numeric:tabular-nums}
+  .lmf-elige .lmf-vid-p{flex:none;font-size:10px;font-weight:800;letter-spacing:.1em;color:#f9a8d4;border:1px dashed rgba(249,168,212,.8);border-radius:6px;padding:2px 6px}
+  .lmf-libro{position:fixed;inset:0;z-index:2147482000;display:flex;flex-direction:column;background:#0b1220;color:#e8eef5;font-family:inherit}
+  .lmf-libro-top{flex:none;display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.12);background:#0d1526}
+  .lmf-libro-volver{flex:none;min-height:40px;box-sizing:border-box;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;
+    font-family:inherit;font-size:14px;font-weight:700;padding:0 14px;cursor:pointer}
+  .lmf-libro-volver:disabled{opacity:.6;cursor:not-allowed}
+  .lmf-libro-volver .apxf-cuenta{font-variant-numeric:tabular-nums;font-weight:800;margin-left:3px}
+  .lmf-libro-tit{min-width:0;font-size:16px;font-weight:800;line-height:1.2}
+  .lmf-libro-tit small{display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,.62);margin-top:2px}
+  .lmf-libro-pags{flex:1 1 auto;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;align-items:center;gap:14px;padding:14px 12px 28px}
+  .lmf-libro-pags canvas{display:block;max-width:100%;height:auto;background:#fff;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,.45)}
+  .lmf-libro-msg{margin:18vh auto 0;max-width:520px;text-align:center;font-size:15px;color:rgba(255,255,255,.8)}
+  .lmf-libro:focus{outline:none}
+</style>
 <!-- (27-sep-2026, Iago) APUNTES EN LAS FICHAS: en cada ejercicio de la ficha del alumno, al lado de «No lo sé hacer,
      necesito practicar esto» sale «APUNTES» (abre el tema de ESE ejercicio en el mismo visor que «VER APUNTES») y
      «VER VÍDEO» si ese tipo de ejercicio tiene vídeo (en GE, desde el 27-sep: «indica la tonalidad»). En los ejercicios tipo test (adornos y
@@ -18208,18 +18277,52 @@ window.CAD = {
     cadencias_quiz:G('Cadencias',['cadencias'])
   };
   function esTest(k){ return k==='adorno_quiz' || k==='abrev_quiz'; }   /* test a/b/c + V/F */
-  var VIDEO={ ton_arm_tono:'intros/indica-la-tonalidad/index.html' };   /* tipo de ejercicio → vídeo (ruta de esta web). (27-sep-2026, Iago) «indica la tonalidad» → su vídeo (el de la tarjeta Tonalidades, bloque VÍDEOS DE INTRODUCCIÓN). */
-  var SEL_PRACTICA='.simPracticaLive', CLASE_BOTON='sim-practica-btn', ACENTO='#e84393';
-  var CSS_PROPIO=
-    '#ppAlumnoSim .sim-ayuda.apxf-fila{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px}'+
-    /* mismo tamaño que «No lo sé hacer…» (misma clase sim-practica-btn); aquí solo cambia el color: liso y opaco */
-    '#ppAlumnoSim .sim-practica-btn.apxf-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;max-width:100%;background:#e84393;border-color:#e84393;color:#fff}'+
-    '#ppAlumnoSim .sim-practica-btn.apxf-btn:hover{background:#f0579f;border-color:#f0579f;color:#fff}'+
-    '#ppAlumnoSim .sim-practica-btn.apxf-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}';
+  /* (27-sep-2026) VIDEO = tipo de ejercicio → vídeo. (29-sep-2026) Lo sustituye VIDEOS (por tema, con 👍), más abajo. */
+  var SEL_PRACTICA='.simPracticaLive', CLASE_BOTON='lmf-ayuda-btn', ACENTO='#e84393';
+  var CSS_PROPIO='';   /* (29-sep-2026) la fila y los botones van en <style id="lmf-ayuda-css"> (mismos en GE y GP) */
+  /* (29-sep-2026, Iago) «Asegúrate de que los vídeos que estén subidos y verificados les aparezcan ahí abajo para poder
+     verlos en medio de la ficha». VÍDEO: los vídeos del TEMA del ejercicio (los mismos de las tarjetas de Teoría, bloque
+     VÍDEOS DE INTRODUCCIÓN) que ya ven los alumnos (publico) o que Iago marcó con 👍 (VERIFICADOS); el más cercano al
+     ejercicio, primero. Las cuentas Tester/Protester ven también los que siguen EN PRUEBA. Si solo hay uno, se abre
+     directamente; si hay varios, una ventanita para elegir. Al dar un 👍 nuevo, añadirlo a VERIFICADOS. */
+  var VIDEOS={
+    tonalidades:{ nombre:'Tonalidades', lista:[
+      {src:'intros/la-tonalidad/index.html', tit:'La tonalidad', dur:'2:57', publico:1},
+      {src:'intros/indica-la-tonalidad/index.html', tit:'Indica la tonalidad', dur:'4:24', publico:1},
+      {src:'intros/indica-la-armadura/index.html', tit:'Indica la armadura', dur:'2:42'},
+      {src:'intros/tonalidades-vecinas/index.html', tit:'Tonalidades vecinas', dur:'1:32'} ] },
+    intervalos:{ nombre:'Intervalos', lista:[
+      {src:'intros/intervalos/index.html', tit:'Intervalos', dur:'5:21'},
+      {src:'intros/intervalos-compuestos/index.html', tit:'Intervalos compuestos', dur:'1:48'} ] },
+    inversiones:{ nombre:'Inversión de intervalos', lista:[
+      {src:'intros/inversion-intervalos/index.html', tit:'Inversión de intervalos', dur:'1:32'},
+      {src:'intros/inversion-compuestos/index.html', tit:'Inversión de compuestos', dur:'1:54'} ] },
+    compases:{ nombre:'Compases', lista:[ {src:'intros/compases/index.html', tit:'Compases', dur:'2:23'} ] },
+    escalas:{ nombre:'Escalas', lista:[
+      {src:'intros/escalas-menores/index.html', tit:'Escalas menores', dur:'3:26'},
+      {src:'intros/escalas-mayores/index.html', tit:'Escalas Mayores', dur:'3:00'},
+      {src:'intros/otras-escalas/index.html', tit:'Otras escalas', dur:'3:31'} ] },
+    grados:{ nombre:'Grados', lista:[ {src:'intros/grados/index.html', tit:'Grados', dur:'2:56'} ] },
+    semitonos:{ nombre:'Semitonos', lista:[ {src:'intros/semitonos/index.html', tit:'Semitono cromático y diatónico', dur:'2:10'} ] }
+  };
+  var VERIFICADOS={ 'intros/compases/index.html':1, 'intros/grados/index.html':1, 'intros/intervalos-compuestos/index.html':1,
+    'intros/inversion-compuestos/index.html':1, 'intros/tonalidades-vecinas/index.html':1 };   /* 👍 de Iago a 29-sep-2026 */
+  var TEMA_VIDEO={ int_clasif:'intervalos', int_constr:'intervalos', inv_simples:'inversiones', inv_compuestos:'inversiones',
+    com_clasif:'compases', ton_arm_tono:'tonalidades', ton_tono_arm:'tonalidades', ton_vecinos:'tonalidades',
+    esc_menor:'escalas', esc_mayor:'escalas', esc_otras:'escalas', gra_senalar:'grados', semitonos:'semitonos' };
+  var PRIMERO={ ton_arm_tono:'intros/indica-la-tonalidad/index.html', ton_tono_arm:'intros/indica-la-armadura/index.html',
+    ton_vecinos:'intros/tonalidades-vecinas/index.html', inv_simples:'intros/inversion-intervalos/index.html',
+    inv_compuestos:'intros/inversion-compuestos/index.html', esc_menor:'intros/escalas-menores/index.html',
+    esc_mayor:'intros/escalas-mayores/index.html', esc_otras:'intros/otras-escalas/index.html' };
+  /* (29-sep-2026) en GE no hay Libro en PDF ni portales interactivos por tema */
+  function libroDe(key){ return null; }
+  function portalDe(key){ return null; }
 
   /* ---- a partir de aquí, igual en GE y en GP ---- */
   var ICO_LIBRO='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5C5.5 4.3 8.5 4.3 12 6c3.5-1.7 6.5-1.7 9-.5v13c-2.5-1.2-5.5-1.2-9 .5-3.5-1.7-6.5-1.7-9-.5z"/><path d="M12 6v13.5"/></svg>';
   var ICO_PLAY='<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.2 1.1v9.8L10.6 6z" fill="currentColor"/></svg>';
+  var ICO_BRUJULA='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.6 8.4-2.1 5.1-5.1 2.1 2.1-5.1z"/></svg>';
+  function escH(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   var cssPuesto=false;
   /* (28-sep-2026, Iago) ventana «¿Necesitas mirar los apuntes?», «>1min» en el botón y «‹ Volver» con cuenta atrás */
   var ESPERA_MS=60000;
@@ -18258,21 +18361,24 @@ window.CAD = {
     document.head.appendChild(s);
   }
 
-  /* ---- puerta: la misma que «VER APUNTES» (APX.montar): cuenta validada y, mientras soloTester, cuenta de prueba ---- */
-  var ok=null, pend=null;   /* ok: null = todavía preguntando */
+  /* ---- puerta: «Apuntes» (y, en GP, el Libro y el portal de los test), la misma que «VER APUNTES» (APX.montar): cuenta
+     validada y, mientras soloTester, cuenta de prueba. (29-sep-2026) «Vídeo»: cualquier cuenta validada (los vídeos EN
+     PRUEBA, solo las cuentas de prueba). ---- */
+  var ok=null, pend=null;   /* ok: null = todavía preguntando · {apuntes, video, tester} */
   window.ApxFicha={ pinta:function(cont, key){
     if(!cont) return;
     if(ok===null){ pend={c:cont, k:key}; return; }
-    if(ok) decora(cont, key);
+    decora(cont, key);
   } };
   try{
     window.APX.comprobar(function(info){
       var solo=!(window.APX_CFG && window.APX_CFG.soloTester===false);
-      ok=!!(info && info.validado && (info.tester || !solo));
+      var val=!!(info && info.validado), te=!!(val && info.tester);
+      ok={ apuntes: val && (te || !solo), video: val, tester: te };
       var p=pend; pend=null;
-      if(ok && p && document.body.contains(p.c)) decora(p.c, p.k);
+      if(p && document.body.contains(p.c)) decora(p.c, p.k);
     });
-  }catch(e){ ok=false; }
+  }catch(e){ ok={ apuntes:false, video:false, tester:false }; }
 
   function grupo(key){
     var m=MAPA[key]; if(!m) return null;
@@ -18287,25 +18393,40 @@ window.CAD = {
     b.addEventListener('click', function(ev){ ev.preventDefault(); fn(b); });
     return b;
   }
+  /* (29-sep-2026, Iago) la fila nueva (.lmf-ayuda): «No lo sé hacer / tengo dudas» (texto) y, en .lmf-ayuda-bots, hasta 3
+     botones con contorno rosa en este orden: Apuntes · Vídeo · Practicar ejercicios sueltos (este último lo pone la ficha).
+     En los test de GP, en vez de Practicar: «Ver portal interactivo». */
   function decora(cont, key){
     if(!cont || cont.getAttribute('data-apxf')) return;
-    var g=grupo(key), vid=VIDEO[key]||null;
-    var prac=cont.querySelector(SEL_PRACTICA);
-    var soloDudas=!prac || esTest(key);             /* test, o ejercicio sin práctica: solo «¿Dudas? Ver APUNTES» */
-    if(soloDudas ? !g : !(g || vid)) return;        /* sin apuntes (ni vídeo): la fila se queda como estaba */
+    var bots=cont.querySelector('.lmf-ayuda-bots'); if(!bots || !ok) return;
+    var prac=bots.querySelector(SEL_PRACTICA);
+    var g=ok.apuntes ? grupo(key) : null;
+    var libro=(ok.apuntes && !g) ? libroDe(key) : null;
+    var portal=ok.apuntes ? portalDe(key) : null;
+    var vids=videosDe(key);
+    if(!g && !libro && !portal && !vids.length) return;   /* nada que añadir: la fila se queda como estaba */
     css();
     cont.setAttribute('data-apxf','1');
-    cont.classList.add('apxf-fila');
-    if(soloDudas){
-      /* lo que había («¿Dudas? Revisa los apuntes 📖» o, en los test, el botón de practicar) queda oculto, sin borrarlo */
-      var antes=document.createElement('span'); antes.className='apxf-antes'; antes.hidden=true; antes.style.display='none';
-      while(cont.firstChild) antes.appendChild(cont.firstChild);
-      cont.appendChild(antes);
-      cont.appendChild(boton('¿Dudas? Ver APUNTES', ICO_LIBRO, 'Ver los apuntes de '+g.nombre+' (al menos un minuto)', function(b){ abrirApuntes(g, b); }, true));
-      return;
-    }
-    if(g) cont.appendChild(boton('APUNTES', ICO_LIBRO, 'Ver los apuntes de '+g.nombre+' (al menos un minuto)', function(b){ abrirApuntes(g, b); }, true));
-    if(vid) cont.appendChild(boton('VER VÍDEO', ICO_PLAY, 'Ver el vídeo de introducción', function(b){ abrirVideo(vid, b); }));
+    function pon(b){ bots.insertBefore(b, prac || null); }
+    if(g) pon(boton('Apuntes', ICO_LIBRO, 'Ver los apuntes de '+g.nombre+' (al menos un minuto)', function(b){ abrirApuntes(g, b); }, true));
+    else if(libro) pon(boton('Apuntes', ICO_LIBRO, 'Ver los apuntes de '+libro.nombre+' en el Libro 2º GP (al menos un minuto)', function(b){ abrirLibro(libro, b); }, true));
+    if(vids.length) pon(boton('Vídeo', ICO_PLAY, vids.length===1 ? ('Ver el vídeo «'+vids[0].tit+'»') : ('Ver los vídeos de '+vids.tema),
+      function(b){ if(vids.length===1) abrirVideo(vids[0].src, b); else elegirVideo(vids, b); }));
+    if(portal) bots.appendChild(boton('Ver portal interactivo', ICO_BRUJULA, 'Abrir el portal interactivo de '+portal.nombre+' (en una pestaña nueva)', function(){ abrirPortal(portal); }));
+    var txt=cont.querySelector('.lmf-ayuda-txt'); if(txt) txt.textContent='No lo sé hacer / tengo dudas';
+  }
+  /* vídeos del tema de ESTE ejercicio que puede ver esta cuenta (el más cercano, primero) */
+  function videosDe(key){
+    var t=TEMA_VIDEO[key], T=t && VIDEOS[t]; if(!T || !ok) return [];
+    var L=T.lista.map(function(v){ var visto=!!(v.publico || VERIFICADOS[v.src]); return {src:v.src, tit:v.tit, dur:v.dur, enPrueba:!visto, puede: visto ? ok.video : ok.tester}; })
+      .filter(function(v){ return v.puede; });
+    var p=PRIMERO[key]; if(p) L.sort(function(a,b){ return (b.src===p ? 1 : 0) - (a.src===p ? 1 : 0); });
+    L.tema=T.nombre;
+    return L;
+  }
+  function abrirPortal(P){
+    try{ var w=window.open(P.url, '_blank', 'noopener'); if(w) return; }catch(e){}
+    location.href=P.url;
   }
 
   /* ---- mientras hay algo abierto encima (apuntes o vídeo), la ficha no se toca ---- */
@@ -18357,6 +18478,7 @@ window.CAD = {
     css();
     var cs=getComputedStyle(b), acc=cs.backgroundColor, ink=cs.color;
     if(!acc || acc==='transparent' || /^rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\)$/.test(acc)){ acc=ACENTO; ink='#fff'; }
+    if(b.classList.contains('lmf-ayuda-btn')){ acc='#ec4899'; ink='#fff'; }   /* (29-sep-2026) botones con contorno rosa */
     var f=document.createElement('div'); f.className='apxf-conf';
     f.setAttribute('role','dialog'); f.setAttribute('aria-modal','true');
     f.setAttribute('aria-labelledby','apxfConfT'); f.setAttribute('aria-describedby','apxfConfP');
@@ -18458,6 +18580,126 @@ window.CAD = {
     try{ history.pushState({apxf:tok}, ''); }catch(e){}
     window.addEventListener('popstate', alAtras);
     try{ ov.querySelector('.apxf-vid-x').focus({preventScroll:true}); }catch(e){}
+  }
+
+  /* (29-sep-2026) varios vídeos del tema: ventanita para elegir (la misma estética que «¿Necesitas mirar los apuntes?») */
+  function elegirVideo(vids, b){
+    if(abierto) return;
+    css();
+    var f=document.createElement('div'); f.className='apxf-conf lmf-elige';
+    f.setAttribute('role','dialog'); f.setAttribute('aria-modal','true'); f.setAttribute('aria-label','Elige un vídeo');
+    f.style.setProperty('--apxf-acc', '#ec4899'); f.style.setProperty('--apxf-ink', '#fff');
+    f.innerHTML='<div class="apxf-conf-caja"><h2 class="apxf-conf-t">Vídeos · '+escH(vids.tema)+'</h2><div class="lmf-vids"></div>'+
+      '<div class="apxf-conf-bot" style="grid-template-columns:1fr"><button type="button" class="apxf-conf-no">Seguir con la ficha</button></div></div>';
+    var lista=f.querySelector('.lmf-vids');
+    function cierra(abre){ if(!abierto || abierto.nodos[0]!==f) return; f.remove(); if(abre) suelta(); else alCerrar(); }
+    vids.forEach(function(v){
+      var x=document.createElement('button'); x.type='button'; x.className='lmf-vid';
+      x.innerHTML='<span class="lmf-vid-ico">'+ICO_PLAY+'</span><span class="lmf-vid-t">'+escH(v.tit)+'</span>'+(v.enPrueba?'<span class="lmf-vid-p">EN PRUEBA</span>':'')+'<span class="lmf-vid-d">'+escH(v.dur||'')+'</span>';
+      x.addEventListener('click', function(){ cierra(true); abrirVideo(v.src, b); });
+      lista.appendChild(x);
+    });
+    document.body.appendChild(f);
+    abierto={ nodos:[f], boton:b, conf:true, cerrar:function(){ cierra(false); } };
+    bloquea([f]);
+    f.querySelector('.apxf-conf-no').addEventListener('click', function(){ cierra(false); });
+    f.addEventListener('click', function(e){ if(e.target===f) cierra(false); });
+    requestAnimationFrame(function(){ f.classList.add('on'); });
+    try{ lista.querySelector('.lmf-vid').focus({preventScroll:true}); }catch(e){}
+  }
+
+  /* (29-sep-2026, Iago) APUNTES de los test de GP: el Libro 2º GP (PDF «Apuntes de teoría» del Diario) en las páginas de su
+     unidad, con la misma ventanita y el mismo minuto que los apuntes web («‹ Volver» con cuenta atrás, sin ✕). */
+  var SB_URL='https://woiptkyrxkbpnvioypit.supabase.co';
+  var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvaXB0a3lyeGticG52aW95cGl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NzI2ODYsImV4cCI6MjA5MjA0ODY4Nn0.B2nKgj5rD0rkdLeMIrd9KgD8lUPWsBT4Y7aCtmnvbjA';
+  var PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', PDFJS_W='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  var _pdfjs=null, _rutaLibro={};
+  function pdfjs(){
+    if(_pdfjs) return _pdfjs;
+    _pdfjs=new Promise(function(res, rej){
+      if(window.pdfjsLib){ res(window.pdfjsLib); return; }
+      var sc=document.createElement('script'); sc.src=PDFJS;
+      sc.onload=function(){ try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS_W; res(window.pdfjsLib); }catch(e){ rej(e); } };
+      sc.onerror=function(){ _pdfjs=null; rej(new Error('no se pudo cargar el visor de PDF')); };
+      document.head.appendChild(sc);
+    });
+    return _pdfjs;
+  }
+  function rutaLibro(curso){
+    if(_rutaLibro[curso]) return Promise.resolve(_rutaLibro[curso]);
+    return fetch(SB_URL+'/rest/v1/libros?select=storage_path&tipo=eq.teoria&curso=eq.'+encodeURIComponent(curso), { headers:{ apikey:SB_ANON, Authorization:'Bearer '+SB_ANON } })
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(j){ var p=j && j[0] && j[0].storage_path; if(!p) throw new Error('el libro no está subido en el Diario'); _rutaLibro[curso]=p; return p; });
+  }
+  function abrirLibro(L, b){
+    if(abierto) return;
+    confirmar(b, function(){ abrirLibroYa(L, b); });
+  }
+  function abrirLibroYa(L, b){
+    if(abierto) return;
+    css();
+    var ov=document.createElement('div'); ov.className='lmf-libro';
+    ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','Apuntes: '+L.nombre+' · Libro 2º GP');
+    ov.innerHTML='<div class="lmf-libro-top"><button type="button" class="lmf-libro-volver" disabled aria-disabled="true">‹ Volver</button>'+
+      '<div class="lmf-libro-tit">'+escH(L.nombre)+'<small>Libro 2º GP · unidad '+L.unidad+' · págs. '+L.p[0]+'–'+L.p[1]+'</small></div></div>'+
+      '<div class="lmf-libro-pags"><div class="lmf-libro-msg">Cargando los apuntes…</div></div>';
+    var tok='lmfl'+Date.now(), estado={lmfl:tok}, ovAntes=document.documentElement.style.overflow;
+    var hasta=Date.now()+ESPERA_MS, reloj=null, ultimo=-1, vol=ov.querySelector('.lmf-libro-volver');
+    function bloqueado(){ return Date.now()<hasta; }
+    function pinta(){
+      if(!document.body.contains(ov)){ clearInterval(reloj); return; }
+      var q=Math.max(0, Math.ceil((hasta-Date.now())/1000));
+      if(q===ultimo) return; ultimo=q;
+      if(q>0){
+        vol.disabled=true; vol.setAttribute('aria-disabled','true');
+        vol.innerHTML='‹ Volver <span class="apxf-cuenta">'+Math.floor(q/60)+':'+String(q%60).padStart(2,'0')+'</span>';
+        vol.setAttribute('aria-label','Volver a la ficha (dentro de '+q+' segundos)');
+      } else {
+        clearInterval(reloj);
+        vol.disabled=false; vol.removeAttribute('aria-disabled');
+        vol.textContent='‹ Volver a la ficha'; vol.setAttribute('aria-label','Volver a la ficha');
+      }
+    }
+    function alAtras(e){ if(e && e.state && e.state.lmfl===tok) return; cierra(true); }
+    function cierra(porAtras){
+      if(!abierto || abierto.nodos[0]!==ov) return;
+      clearInterval(reloj); window.removeEventListener('popstate', alAtras);
+      ov.remove(); document.documentElement.style.overflow=ovAntes;
+      if(!porAtras){ try{ if(history.state && history.state.lmfl===tok) history.back(); }catch(e){} }
+      alCerrar();
+    }
+    document.body.appendChild(ov); document.documentElement.style.overflow='hidden';
+    abierto={ nodos:[ov], boton:b, estado:estado, bloqueado:bloqueado, cerrar:function(){ if(!bloqueado()) cierra(false); } };
+    bloquea([ov]);
+    try{ history.pushState(estado, ''); }catch(e){}
+    window.addEventListener('popstate', alAtras);
+    vol.addEventListener('click', function(){ if(!bloqueado()) cierra(false); });
+    pinta(); reloj=setInterval(pinta, 250);
+    try{ ov.setAttribute('tabindex','-1'); ov.focus({preventScroll:true}); }catch(e){}
+    var caja=ov.querySelector('.lmf-libro-pags');
+    Promise.all([pdfjs(), rutaLibro(L.curso)]).then(function(r){
+      var lib=r[0], ruta=r[1];
+      return lib.getDocument(SB_URL+'/storage/v1/object/public/diario/'+ruta.split('/').map(encodeURIComponent).join('/')).promise;
+    }).then(function(doc){
+      if(!document.body.contains(ov)) return;
+      caja.innerHTML='';
+      var n=L.p[0], fin=Math.min(L.p[1], doc.numPages);
+      function sig(){
+        if(n>fin || !document.body.contains(ov)) return;
+        doc.getPage(n).then(function(page){
+          var W=Math.max(280, Math.min(caja.clientWidth-24, 1100)), v1=page.getViewport({scale:1}), sc=W/v1.width;
+          var dpr=Math.min(2, window.devicePixelRatio||1), vp=page.getViewport({scale:sc*dpr});
+          var cv=document.createElement('canvas'); cv.width=Math.floor(vp.width); cv.height=Math.floor(vp.height);
+          cv.style.width=Math.floor(vp.width/dpr)+'px'; cv.style.height=Math.floor(vp.height/dpr)+'px';
+          cv.setAttribute('aria-label','Página '+n);
+          caja.appendChild(cv);
+          return page.render({ canvasContext:cv.getContext('2d'), viewport:vp }).promise;
+        }).then(function(){ n++; sig(); }).catch(function(e){ console.warn('[libro 2GP]', e); });
+      }
+      sig();
+    }).catch(function(e){
+      if(document.body.contains(ov)) caja.innerHTML='<div class="lmf-libro-msg">No se pudieron abrir los apuntes ('+escH((e && e.message) || e)+').</div>';
+    });
   }
 })();
 </script>
