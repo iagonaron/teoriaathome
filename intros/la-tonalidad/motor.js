@@ -80,13 +80,28 @@
   function montarMp4() {
     const esc = $('escenario');
     const v = document.createElement('video');
-    v.id = 'vid'; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto'; v.src = window.VIDEO_MP4;
+    v.id = 'vid'; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto';
+    descarga(v);        // (29-sep-2026, Iago) se descarga entero antes de reproducirse: luego ya no se para a mitad
     v.style.cssText = 'position:absolute;left:0;top:0;width:1920px;height:1080px;display:block;background:#081628;object-fit:cover';
     esc.insertBefore(v, esc.firstChild);
-    ['lienzo', 'fondoCapa', 'velo'].forEach(id => { const e = $(id); if (e) e.style.visibility = 'hidden'; });
+    // (29-sep-2026, tarde) el título dibujado (= primer fotograma del MP4) se queda delante hasta que el vídeo tiene su
+    // primera imagen: al abrirlo se ve ya nítido aunque el MP4 aún se esté descargando
+    try { window.ESCENAS.pintar(0); } catch (e) { }
+    const capas = on => ['lienzo', 'fondoCapa', 'velo'].forEach(id => { const e = $(id); if (e) e.style.visibility = on ? '' : 'hidden'; });
+    const quitaCapas = () => { if (v.readyState >= 2) capas(false); };
+    v.addEventListener('loadeddata', quitaCapas); v.addEventListener('seeked', quitaCapas); v.addEventListener('playing', () => capas(false));
     const st = document.createElement('style');
-    st.textContent = '#enlacesMp4 div:hover{background:rgba(255,255,255,.08)}';
+    st.textContent = '#enlacesMp4 div:hover{background:rgba(255,255,255,.08)}' +
+      // (29-sep-2026, Iago) barra rosa: lo que lleva descargado el vídeo, bajo el título, hasta que puede empezar
+      '#carga{position:absolute;left:50%;top:772px;width:460px;margin-left:-230px;z-index:5;opacity:0;visibility:hidden;transition:opacity .3s,visibility 0s .3s;pointer-events:none}' +
+      '#carga.on{opacity:1;visibility:visible;transition:opacity .35s .12s,visibility 0s}' +
+      '#carga.mitad{top:auto;bottom:118px}' +
+      '#carga i{display:block;height:8px;border-radius:4px;background:rgba(255,255,255,.16);overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.25)}' +
+      '#carga b{display:block;height:100%;width:0;border-radius:4px;background:var(--rosa,#ec4899);box-shadow:0 0 14px rgba(236,72,153,.55);transition:width .25s linear}';
     document.head.appendChild(st);
+    const cg = document.createElement('div');
+    cg.id = 'carga'; cg.setAttribute('aria-hidden', 'true'); cg.innerHTML = '<i><b></b></i>';
+    esc.appendChild(cg);
     const capa = document.createElement('div');
     capa.id = 'enlacesMp4';
     capa.style.cssText = 'position:absolute;left:0;top:0;width:1920px;height:1080px;pointer-events:none;z-index:2';
@@ -108,6 +123,44 @@
     for (const z of ZONAS) { const on = t >= z.t0 && t <= z.t1; if (z.on !== on) { z.on = on; z.d.style.display = on ? 'block' : 'none'; } }
   }
 
+  // (29-sep-2026, Iago: «que se empiece a reproducir cuando haya garantías de que se verá entero») DESCARGA COMPLETA:
+  // el MP4 se baja entero a la memoria del navegador (fetch → Blob) y solo entonces se puede reproducir; la barra rosa
+  // enseña el porcentaje real. Si el navegador no deja descargarlo así, se usa la dirección de siempre (como antes).
+  const DESC = { lista: false, rec: 0, tot: 0, fallo: false, alTerminar: null };
+  async function descarga(v) {
+    const url = window.VIDEO_MP4;
+    try {
+      if (!window.fetch || !window.ReadableStream || location.protocol === 'file:') throw new Error('sin descarga');
+      const r = await fetch(url);
+      if (!r.ok || !r.body) throw new Error('HTTP ' + r.status);
+      DESC.tot = +r.headers.get('Content-Length') || +window.VIDEO_BYTES || 0;
+      const rd = r.body.getReader(), trozos = [];
+      for (;;) { const { done, value } = await rd.read(); if (done) break; trozos.push(value); DESC.rec += value.length; }
+      v.src = URL.createObjectURL(new Blob(trozos, { type: (r.headers.get('Content-Type') || 'video/mp4').split(';')[0] }));
+    } catch (e) { console.warn('MP4 sin descarga previa:', e); DESC.fallo = true; v.src = url; }
+    DESC.lista = true;
+    const f = DESC.alTerminar; DESC.alTerminar = null; if (f) f();
+  }
+  let cargaTm = null;
+  function adelante() {
+    const b = audio.buffered, t = audio.currentTime; let fin = t;
+    for (let i = 0; i < b.length; i++) if (b.start(i) <= t + 0.3 && b.end(i) > fin) fin = b.end(i);
+    return fin - t;
+  }
+  function carga(on, mitad) {
+    const el = $('carga'); if (!el) return;
+    el.classList.toggle('on', !!on); el.classList.toggle('mitad', !!mitad);
+    clearInterval(cargaTm); cargaTm = null;
+    if (!on) return;
+    const pinta = () => {
+      let k;
+      if (!DESC.lista) k = DESC.tot ? DESC.rec / DESC.tot : 0;                                    // descargando
+      else k = adelante() / Math.max(0.5, Math.min(4, (isFinite(audio.duration) ? audio.duration : T.dur) - audio.currentTime));   // (sin descarga previa)
+      el.querySelector('b').style.width = (100 * Math.max(0.03, Math.min(1, k))).toFixed(1) + '%';
+    };
+    pinta(); cargaTm = setInterval(pinta, 150);
+  }
+
   let vivo = false;                            // un solo bucle de dibujo a la vez
   function bucle() {
     const t = tiempo();
@@ -119,11 +172,20 @@
 
   function play() {
     const primera = !empezado;
+    if (MP4 && !DESC.lista) {        // (29-sep-2026) aún se está descargando: la barra hasta el 100 % y entonces empieza solo
+      $('portada').classList.add('fuera'); carga(true);
+      try { const p = audio.play(); if (p && p.catch) p.catch(() => { }); } catch (e) { }     // este clic deja sonar después
+      DESC.alTerminar = () => { carga(false); play(); };
+      return Promise.resolve();
+    }
     if (primera) audio.currentTime = 0;
     return audio.play().then(() => {
       if (primera) { empezado = true; $('portada').classList.add('fuera'); }
       jugando = true; document.body.classList.add('sonando'); lanza();
-    }).catch(e => { console.warn(e); document.documentElement.classList.remove('auto'); });   // si no deja empezar sola: portada con su botón
+    }).catch(e => {   // si no deja empezar sola: portada con su botón
+      console.warn(e); document.documentElement.classList.remove('auto');
+      if (MP4 && primera) { carga(false); $('portada').classList.remove('fuera'); }
+    });
   }
   function pausa() { audio.pause(); jugando = false; document.body.classList.remove('sonando'); pintar(tiempo()); }
   function alternar() { if (!empezado || audio.paused) play(); else pausa(); }
@@ -161,6 +223,8 @@
     if (MP4) {   // teclas multimedia / controles del sistema: el vídeo manda y los carteles, subtítulos y final le siguen
       audio.addEventListener('play', () => { if (empezado && !jugando) { jugando = true; document.body.classList.add('sonando'); lanza(); } });
       audio.addEventListener('pause', () => { if (jugando && !audio.ended) { jugando = false; document.body.classList.remove('sonando'); pintar(tiempo()); } });
+      audio.addEventListener('playing', () => carga(false));
+      audio.addEventListener('waiting', () => { if (empezado && !audio.paused) carga(true, audio.currentTime > 5); });   // (solo sin descarga previa)
     }
     const bp = $('botonPlay');
     let yaListo = false;
@@ -168,7 +232,7 @@
       if (yaListo) return; yaListo = true; bp.disabled = false; bp.classList.add('listo');
       if (AUTO) { play(); setTimeout(() => { if (!empezado) document.documentElement.classList.remove('auto'); }, 2500); }
     };
-    if (audio.readyState >= 3) listo(); else audio.addEventListener('canplaythrough', listo, { once: true });
+    if (MP4 || audio.readyState >= 3) listo(); else audio.addEventListener('canplaythrough', listo, { once: true });   // MP4: la descarga se ve al pulsar
     setTimeout(listo, 4000);
     bp.addEventListener('click', play);
     $('botonPausa').addEventListener('click', alternar);
