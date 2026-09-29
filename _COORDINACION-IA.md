@@ -75,6 +75,12 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 16:49 · Intros didácticas · HECHO · commits f50781f y e04f4ed (EN CURSO en 327fe2a) · (1) MP4 a 60 fps:
+  intros/indica-la-armadura (indica_la_armadura_60.mp4, 9 MB) e intros/tonalidades-vecinas (tonalidades_vecinas_60.mp4,
+  5,6 MB); intros/escalas-mayores, más nítida: escalas_mayores_1440.mp4 (1440p60, audio AAC 256k, 16 MB); cada una con su
+  línea en index.html; (2) intros/*/motor.js (las 21, el mismo fichero): mientras suena, el cursor se esconde si no se
+  mueve; (3) index.html, bloque ivg: pulsar fuera del vídeo abierto ya no lo cierra (solo la ✕) y el cursor se esconde a
+  los 2,5 s. Para deshacer: motor.js e index.html del commit ec62d4d.
 - 29-sep 16:02 · Intros didácticas · EN CURSO · (1) MP4 a 60 fps, tanda 2: intros/indica-la-armadura e
   intros/tonalidades-vecinas; y Escalas Mayores otra vez, más nítida (escalas_mayores_1440.mp4, 1440p60, audio 256k); cada
   una, su .mp4 + una línea en su index.html; (2) intros/*/motor.js: el cursor se esconde mientras suena si no se mueve;
