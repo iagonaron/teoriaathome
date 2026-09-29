@@ -75,6 +75,9 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 15:28 · Intros didácticas · EN CURSO · intros/*/motor.js (todas, el mismo fichero): en modo MP4 el vídeo se
+  DESCARGA ENTERO antes de empezar (barra rosa con el % bajo el título; luego ya no se para a mitad) y el título se ve
+  dibujado mientras. Nada más. Parto de 48f7fd9.
 - 29-sep 15:06 · Intros didácticas · HECHO · commit 7c50639 (EN CURSO en ecddbae) · intros/la-tonalidad e
   intros/indica-la-tonalidad: su vídeo grabado en MP4 a 60 fps (intro_tonalidad_60.mp4, 11 MB; indica_tonalidad_60.mp4,
   14 MB) + una línea en su index.html (window.VIDEO_MP4). Sigo grabando el resto a MP4, con su EN CURSO.
