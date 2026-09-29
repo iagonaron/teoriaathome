@@ -75,6 +75,11 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 11:31 · Intros didácticas · EN CURSO · intros/: 7 vídeos GE nuevos EN PRUEBA (acordes, inversion-acordes,
+  enarmonias, claves, terminos, terminos-movimiento, cadencias) · retoques de Iago en escalas-menores, escalas-mayores,
+  otras-escalas, semitonos e indica-la-armadura · música re-empalmada (solo el mp3) en los ya subidos · index.html: bloque
+  «VÍDEOS DE INTRODUCCIÓN» (INTROS/EJERCICIOS de 6 tarjetas más y APUNTES desde los vídeos) y, en «APUNTES EN LAS FICHAS»,
+  solo VIDEOS/TEMA_VIDEO de los vídeos nuevos (vuestro aviso). Parto de d46f014. Subo con GitHub Desktop.
 - 29-sep 08:39 · Fichas y rediseño · HECHO · commit 5fcc2cd · index.html · ficha del alumno: «No lo sé hacer / tengo dudas» como
   texto + hasta 3 botones con contorno rosa (Apuntes · Vídeo · Practicar ejercicios sueltos) en previsualizarAlumno y
   en el bloque «APUNTES EN LAS FICHAS» (ApxFicha); ventana «Vamos a practicar esto» con la estética nueva
