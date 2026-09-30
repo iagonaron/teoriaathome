@@ -75,6 +75,9 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 30-sep 12:01 · Intros didácticas · EN CURSO · index.html: «La tonalidad» e «Indica la tonalidad» (INTROS del bloque de
+  vídeos) pasan a `alumnos: true` (Iago: «Quiero que los vídeos solo estén disponibles para alumnos»; como invitado se veían).
+  Nada más. Parto de 575915b.
 - 30-sep 09:40 · Intros didácticas · HECHO · commit cbe9a9e (EN CURSO en ffd4e42) · intros/acordes/escenas.js e intros/inversion-acordes/escenas.js
   (correcciones de Iago) · index.html: PUBLICACIÓN de todos los vídeos para alumnos (Iago: «puedes hacer públicos todos
   los vídeos»): `prueba: true` → `alumnos: true` en INTROS del bloque de vídeos (nunca invitados), VERIFICADOS del bloque
