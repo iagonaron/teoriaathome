@@ -857,7 +857,9 @@
       mostrarEn(s, re, tF - 0.2, fin, .35);
       const rp = fraseG(g, [['reposo', C.rosa]], xF + 20, yM + 186, { size: 38, peso: 800, italic: true, anchor: 'middle' });
       aparece(s, rp, Wd('F3', 'reposo') - 0.2, fin, { dy: 6 });
-      s.on(t => opa(nn, 1 - 0.55 * ease(ramp(t, tR, tR + 0.4))));
+      // (30-sep-2026, Iago) «antes del repaso final hay un texto que se queda como enganchado»: el atenuado va en el grupo de
+      // dentro (nn._f); así la salida de aparece() (en nn) funciona y «Do · Mi · Sol · Si♭» se va con todo lo demás
+      s.on(t => opa(nn._f, 1 - 0.55 * ease(ramp(t, tR, tR + 0.4))));
     });
   }
 
@@ -904,7 +906,11 @@
     });
     const yR = y1 + (n - 1) * paso + 38;
     N.el('rect', { x: CX - 60, y: yR, width: 120, height: 5, rx: 2.5, fill: C.rosa }, g);
-    if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
+    if (TITULO.subSegs) {   // (30-sep-2026) subtítulo por trozos con su tamaño: [[texto, factor], …] (el código 8 5 4 3 3 3 2 de la
+      const G = N.group(g); let x = 0;              //  serie armónica, con los «tres pequeños» más pequeños)
+      TITULO.subSegs.forEach(([tx, k]) => { const t_ = texto(G, tx, x, yR + 74, { size: 38 * (k || 1), peso: 400, fill: '#cbd5e1' }); x += D.medir(t_); });
+      G.setAttribute('transform', `translate(${(CX - x / 2).toFixed(1)},0)`);
+    } else if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
   }
   function escenaTitulo() {
     const b = F1('TITULO');

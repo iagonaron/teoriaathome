@@ -811,7 +811,8 @@
       // al lado, entre paréntesis: ordenado
       const tPa = Wd('O1', 'parentesis') - 0.3;
       const P = N.group(g);
-      const pa = N.group(P); color(pa, C.rosa); parentesisDibuja(s, pa, 960, 1180, yM - 3.6 * SP, yM + 3.6 * SP, tPa, fin);
+      // (30-sep-2026, Iago) «que sea gris el paréntesis (el texto rosa)»
+      const pa = N.group(P); color(pa, C.suave); parentesisDibuja(s, pa, 960, 1180, yM - 3.6 * SP, yM + 3.6 * SP, tPa, fin);
       const O1 = acorde(P, ['D4', 'F#4', 'A4'], 1050, yM);
       const tOr = Wd('O2', 'ordenemos') - 0.2;
       O1.notas.forEach((n, j) => pop(s, n.g, Math.max(tPa + 0.3, tOr) + j * 0.1, fin, n.cx, n.y, { k0: .4 }));
@@ -850,7 +851,9 @@
       s.on(t => opa(q, win(t, F0('X1') + 0.5, tTe0 - 0.05, .3, .25)));      // (29-sep, Iago) se va antes de «bajo: Fa♯ = 3ª»
       // paso 1: lo ordeno, al lado (el paréntesis se dibuja)
       const P = N.group(g);
-      const pa = N.group(P); color(pa, C.suave); parentesisDibuja(s, pa, 790, 1250, yM - 3.6 * SP, yM + 3.6 * SP, Wd('X2', 'ordeno') - 0.3, fin);
+      // (30-sep-2026, Iago) «el paréntesis no lo quiero tan alejado… pegado a lo que luego será 3M y 5J»: se dibuja más abajo,
+      // cuando ya se sabe dónde caen las pastillas de las dos llaves (antes: de 790 a 1250)
+      const pa = N.group(P); color(pa, C.suave);
       const xOR = 1020, OR = acorde(P, ['D4', 'F#4', 'A4'], xOR, yM);
       OR.notas.forEach((n, j) => pop(s, n.g, Wd('X2', 'ordeno') + 0.3 + j * 0.1, fin, n.cx, n.y, { k0: .4 }));
       // paso 2: Re, Fa♯, La → 3M + 5J (llaves en el acorde ordenado) → Re PM
@@ -860,6 +863,9 @@
       const t3M = Wd('X4', 'tercera') - 0.2, t5J = Wd('X4', 'quinta') - 0.2;
       const L3 = intervaloLlave(g, OR.notas[0], OR.notas[1], '3M', xOR - 1.25 * SP - 10, 'izq'); color(L3, C.rosa); mostrarEn(s, L3, t3M, fin, .3);
       const L5 = intervaloLlave(g, OR.notas[0], OR.notas[2], '5J', xOR + wN + 10, 'der'); color(L5, C.rosa); mostrarEn(s, L5, t5J, fin, .3);
+      { const r3 = L3.querySelector('rect'), r5 = L5.querySelector('rect');
+        const xA = +r3.getAttribute('x') - 22, xB = +r5.getAttribute('x') + +r5.getAttribute('width') + 22;
+        parentesisDibuja(s, pa, xA, xB, yM - 3.6 * SP, yM + 3.6 * SP, Wd('X2', 'ordeno') - 0.3, fin); }
       const iv = fraseG(g, [['3M', C.rosa], [' + ', C.suave], ['5J', C.rosa]], 1530, yM - 20, { size: 46, peso: 800, anchor: 'middle' });
       aparece(s, iv, t3M, fin, { dy: 6 });
       const pm = fraseG(g, [['Re PM', C.blanco]], 1530, yM + 56, { size: 50, peso: 800, anchor: 'middle' });
@@ -956,7 +962,7 @@
       const hueco = 64, x1 = CX - (w1 + hueco + w2) / 2, x2 = x1 + w1 + hueco;
       f1.setAttribute('transform', `translate(${x1.toFixed(1)},880)`); f2.setAttribute('transform', `translate(${x2.toFixed(1)},880)`);
       aparece(s, co, Wd('R6', 'desordenado') - 0.3, fin, { dy: 8 });
-      const pr = N.group(g); color(pr, C.rosa);
+      const pr = N.group(g); color(pr, C.suave);   // (30-sep-2026, Iago) «que sea gris el paréntesis (el texto rosa)»
       parentesisDibuja(s, pr, x2 - 30, x2 + w2 + 30, 880 - 60, 880 + 22, Wd('R6', 'ordenalo') - 0.15, fin, 0.8);
     });
   }
@@ -975,7 +981,11 @@
     });
     const yR = y1 + (n - 1) * paso + 38;
     N.el('rect', { x: CX - 60, y: yR, width: 120, height: 5, rx: 2.5, fill: C.rosa }, g);
-    if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
+    if (TITULO.subSegs) {   // (30-sep-2026) subtítulo por trozos con su tamaño: [[texto, factor], …] (el código 8 5 4 3 3 3 2 de la
+      const G = N.group(g); let x = 0;              //  serie armónica, con los «tres pequeños» más pequeños)
+      TITULO.subSegs.forEach(([tx, k]) => { const t_ = texto(G, tx, x, yR + 74, { size: 38 * (k || 1), peso: 400, fill: '#cbd5e1' }); x += D.medir(t_); });
+      G.setAttribute('transform', `translate(${(CX - x / 2).toFixed(1)},0)`);
+    } else if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
   }
   function escenaTitulo() {
     const b = F1('TITULO');

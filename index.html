@@ -18330,8 +18330,28 @@ window.CAD = {
     claves:{ nombre:'Claves', lista:[ {src:'intros/claves/index.html', tit:'Claves', dur:'4:01'} ] },
     cadencias:{ nombre:'Cadencias', lista:[ {src:'intros/cadencias/index.html', tit:'Cadencias', dur:'3:02'} ] }
   };
-  var VERIFICADOS={ 'intros/compases/index.html':1, 'intros/grados/index.html':1, 'intros/intervalos-compuestos/index.html':1,
-    'intros/inversion-compuestos/index.html':1, 'intros/tonalidades-vecinas/index.html':1 };   /* 👍 de Iago a 29-sep-2026 */
+  /* (30-sep-2026, Iago: «puedes hacer públicos todos los vídeos» · «puedes dar todos por validados») TODOS validados: los ven
+     los alumnos con cuenta validada (nunca invitados). Para deshacer: dejar solo los cinco de antes (compases, grados,
+     intervalos-compuestos, inversion-compuestos, tonalidades-vecinas). */
+  var VERIFICADOS={ 'intros/acordes/index.html':1,
+    'intros/cadencias/index.html':1,
+    'intros/claves/index.html':1,
+    'intros/compases/index.html':1,
+    'intros/enarmonias/index.html':1,
+    'intros/escalas-mayores/index.html':1,
+    'intros/escalas-menores/index.html':1,
+    'intros/grados/index.html':1,
+    'intros/indica-la-armadura/index.html':1,
+    'intros/indica-la-tonalidad/index.html':1,
+    'intros/intervalos-compuestos/index.html':1,
+    'intros/intervalos/index.html':1,
+    'intros/inversion-acordes/index.html':1,
+    'intros/inversion-compuestos/index.html':1,
+    'intros/inversion-intervalos/index.html':1,
+    'intros/la-tonalidad/index.html':1,
+    'intros/otras-escalas/index.html':1,
+    'intros/semitonos/index.html':1,
+    'intros/tonalidades-vecinas/index.html':1 };
   var TEMA_VIDEO={ int_clasif:'intervalos', int_constr:'intervalos', inv_simples:'inversiones', inv_compuestos:'inversiones',
     com_clasif:'compases', ton_arm_tono:'tonalidades', ton_tono_arm:'tonalidades', ton_vecinos:'tonalidades',
     esc_menor:'escalas', esc_mayor:'escalas', esc_otras:'escalas', gra_senalar:'grados', semitonos:'semitonos',
@@ -18808,57 +18828,59 @@ window.CAD = {
   if (new URLSearchParams(location.search).get('fichaId')) return;          /* no en la ficha del alumno */
   /* data-pad de la tarjeta → vídeos (carpeta de esta web · título · subtítulo · duración)
      · card / inv: adónde lleva «Ir a ejercicios» (tarjeta de ejercicios de esa sección; en Inversión, la pestaña)
-     · prueba: true → (28-sep-2026) SOLO lo ve la cuenta Tester, hasta que Iago diga «publícalos» */
+     · prueba: true → (28-sep-2026) SOLO lo ve la cuenta Tester, hasta que Iago diga «publícalos»
+     · (30-sep-2026, Iago: «puedes hacer públicos todos los vídeos») TODOS PUBLICADOS: alumnos: true (solo cuentas validadas;
+       nunca invitados). Para volver a dejarlos en prueba: alumnos: true → prueba: true en cada línea de INTROS. */
   var INTROS = {
     tonalidades: { nombre: 'Tonalidades', lista: [
       { src: 'intros/la-tonalidad/index.html', tit: 'La tonalidad', sub: '¿Para qué sirve?', dur: '2:57', card: 'cardTA' },
       { src: 'intros/indica-la-tonalidad/index.html', tit: 'Indica la tonalidad', sub: 'Sostenidos · Bemoles · Relativo menor', dur: '4:24', card: 'cardTA' },
-      { src: 'intros/indica-la-armadura/index.html', tit: 'Indica la armadura', sub: 'Paso cero · Bemoles · Sostenidos', dur: '2:42', card: 'cardTB', prueba: true },
-      { src: 'intros/tonalidades-vecinas/index.html', tit: 'Tonalidades vecinas', sub: 'Armadura · Relativo · Una más y una menos', dur: '1:32', card: 'cardTC', prueba: true }
+      { src: 'intros/indica-la-armadura/index.html', tit: 'Indica la armadura', sub: 'Paso cero · Bemoles · Sostenidos', dur: '2:42', card: 'cardTB', alumnos: true },
+      { src: 'intros/tonalidades-vecinas/index.html', tit: 'Tonalidades vecinas', sub: 'Armadura · Relativo · Una más y una menos', dur: '1:32', card: 'cardTC', alumnos: true }
     ] },
     intervalos: { nombre: 'Intervalos', lista: [
-      { src: 'intros/intervalos/index.html', tit: 'Intervalos', sub: 'Número · Especie · El truco de las manos', dur: '5:21', card: 'cardA', prueba: true },
-      { src: 'intros/intervalos-compuestos/index.html', tit: 'Intervalos compuestos', sub: 'Acercar · Analizar · Listo', dur: '1:48', card: 'cardA', prueba: true }
+      { src: 'intros/intervalos/index.html', tit: 'Intervalos', sub: 'Número · Especie · El truco de las manos', dur: '5:21', card: 'cardA', alumnos: true },
+      { src: 'intros/intervalos-compuestos/index.html', tit: 'Intervalos compuestos', sub: 'Acercar · Analizar · Listo', dur: '1:48', card: 'cardA', alumnos: true }
     ] },
     inversiones: { nombre: 'Inversión de intervalos', lista: [
-      { src: 'intros/inversion-intervalos/index.html', tit: 'Inversión de intervalos', sub: 'Suman nueve · La especie se da la vuelta', dur: '1:32', inv: 'simples', prueba: true },
-      { src: 'intros/inversion-compuestos/index.html', tit: 'Inversión de compuestos', sub: 'Me acerco · Invierto · Me alejo', dur: '1:54', inv: 'compuestos', prueba: true }
+      { src: 'intros/inversion-intervalos/index.html', tit: 'Inversión de intervalos', sub: 'Suman nueve · La especie se da la vuelta', dur: '1:32', inv: 'simples', alumnos: true },
+      { src: 'intros/inversion-compuestos/index.html', tit: 'Inversión de compuestos', sub: 'Me acerco · Invierto · Me alejo', dur: '1:54', inv: 'compuestos', alumnos: true }
     ] },
     compases: { nombre: 'Compases', lista: [
-      { src: 'intros/compases/index.html', tit: 'Compases', sub: 'Pulsos · Subdivisión · Figuras', dur: '2:23', card: 'cardCOM', prueba: true }
+      { src: 'intros/compases/index.html', tit: 'Compases', sub: 'Pulsos · Subdivisión · Figuras', dur: '2:23', card: 'cardCOM', alumnos: true }
     ] },
     /* (28-sep-2026, tarde) grabación «Guiones 9-14»: EN PRUEBA (solo Tester y Protester) */
     escalas: { nombre: 'Escalas', lista: [
-      { src: 'intros/escalas-menores/index.html', tit: 'Escalas menores', sub: 'Natural · Armónica · Melódica · Dórica', dur: '3:22', practica: 'esc_menor', prueba: true },
-      { src: 'intros/escalas-mayores/index.html', tit: 'Escalas Mayores', sub: 'Tipo 1 · Tipo 2 · Tipo 3 · Tipo 4', dur: '3:00', practica: 'esc_mayor', prueba: true },
-      { src: 'intros/otras-escalas/index.html', tit: 'Otras escalas', sub: 'Pentatónicas · Hexátona · Cromática', dur: '3:31', practica: 'esc_otras', prueba: true }
+      { src: 'intros/escalas-menores/index.html', tit: 'Escalas menores', sub: 'Natural · Armónica · Melódica · Dórica', dur: '3:22', practica: 'esc_menor', alumnos: true },
+      { src: 'intros/escalas-mayores/index.html', tit: 'Escalas Mayores', sub: 'Tipo 1 · Tipo 2 · Tipo 3 · Tipo 4', dur: '3:00', practica: 'esc_mayor', alumnos: true },
+      { src: 'intros/otras-escalas/index.html', tit: 'Otras escalas', sub: 'Pentatónicas · Hexátona · Cromática', dur: '3:31', practica: 'esc_otras', alumnos: true }
     ] },
     grados: { nombre: 'Grados', lista: [
-      { src: 'intros/grados/index.html', tit: 'Grados', sub: 'Nombres · Tonales y modales · Dos ejercicios', dur: '2:56', card: 'cardGR', prueba: true }
+      { src: 'intros/grados/index.html', tit: 'Grados', sub: 'Nombres · Tonales y modales · Dos ejercicios', dur: '2:56', card: 'cardGR', alumnos: true }
     ] },
     semitonos: { nombre: 'Semitonos', lista: [
-      { src: 'intros/semitonos/index.html', tit: 'Semitono cromático y diatónico', sub: 'Cromático = copia · Diatónico = distinto', dur: '2:10', card: 'cardSEM', prueba: true }
+      { src: 'intros/semitonos/index.html', tit: 'Semitono cromático y diatónico', sub: 'Cromático = copia · Diatónico = distinto', dur: '2:10', card: 'cardSEM', alumnos: true }
     ] },
     /* (29-sep-2026, Iago) últimos vídeos de GE: EN PRUEBA (solo Tester y Protester). Para quitarlos: borrar de aquí hasta
        «FIN vídeos 29-sep» y sus 6 líneas de EJERCICIOS (marcadas igual) */
     acordes: { nombre: 'Acordes', lista: [
-      { src: 'intros/acordes/index.html', tit: 'Acordes', sub: 'Tríadas · Séptima de dominante', dur: '2:53', card: 'cardACO', practica: 'acordes', prueba: true }
+      { src: 'intros/acordes/index.html', tit: 'Acordes', sub: 'Tríadas · Séptima de dominante', dur: '2:53', card: 'cardACO', practica: 'acordes', alumnos: true }
     ] },
     'inv-acordes': { nombre: 'Inversión de acordes', lista: [
-      { src: 'intros/inversion-acordes/index.html', tit: 'Inversión de acordes', sub: 'El bajo manda · Ordena primero', dur: '3:02', card: 'cardINVACO', practica: 'aco_identificar', prueba: true }
+      { src: 'intros/inversion-acordes/index.html', tit: 'Inversión de acordes', sub: 'El bajo manda · Ordena primero', dur: '3:02', card: 'cardINVACO', practica: 'aco_identificar', alumnos: true }
     ] },
     enarmonias: { nombre: 'Enarmonías', lista: [
-      { src: 'intros/enarmonias/index.html', tit: 'Enarmonías', sub: 'Mismo sonido · Distinto nombre', dur: '2:32', card: 'cardENA', practica: 'ena_a', prueba: true }
+      { src: 'intros/enarmonias/index.html', tit: 'Enarmonías', sub: 'Mismo sonido · Distinto nombre', dur: '2:32', card: 'cardENA', practica: 'ena_a', alumnos: true }
     ] },
     claves: { nombre: 'Claves', lista: [
-      { src: 'intros/claves/index.html', tit: 'Claves', sub: 'Las siete claves · El Do central', dur: '4:01', card: 'cardCA', practica: 'cla_a', prueba: true }
+      { src: 'intros/claves/index.html', tit: 'Claves', sub: 'Las siete claves · El Do central', dur: '4:01', card: 'cardCA', practica: 'cla_a', alumnos: true }
     ] },
     terminos: { nombre: 'Términos', lista: [
-      { src: 'intros/terminos/index.html', tit: 'Términos', sub: 'Dinámica · Articulación · Carácter', dur: '3:40', card: 'cardTERa', prueba: true },
-      { src: 'intros/terminos-movimiento/index.html', tit: 'Términos de movimiento', sub: 'El tempo · Cambios · Modificadores', dur: '3:22', card: 'cardTERc', prueba: true }
+      { src: 'intros/terminos/index.html', tit: 'Términos', sub: 'Dinámica · Articulación · Carácter', dur: '3:40', card: 'cardTERa', alumnos: true },
+      { src: 'intros/terminos-movimiento/index.html', tit: 'Términos de movimiento', sub: 'El tempo · Cambios · Modificadores', dur: '3:22', card: 'cardTERc', alumnos: true }
     ] },
     cadencias: { nombre: 'Cadencias', lista: [
-      { src: 'intros/cadencias/index.html', tit: 'Cadencias', sub: 'Auténtica · Plagal · Semicadencia · Rota', dur: '3:02', practica: 'cadencias_quiz', prueba: true }
+      { src: 'intros/cadencias/index.html', tit: 'Cadencias', sub: 'Auténtica · Plagal · Semicadencia · Rota', dur: '3:02', practica: 'cadencias_quiz', alumnos: true }
     ] }
     /* FIN vídeos 29-sep */
   };
@@ -18872,7 +18894,12 @@ window.CAD = {
     intervalos: function(v){ abreEj('openIntervalos', (v && v.card) || 'cardA', 'int_clasif'); },
     inversiones: function(v){ abreEj('openInversiones', null, 'inv_simples'); try { if (v && v.inv && window.invTab) window.invTab(v.inv); } catch (e) {} },
     compases: function(v){ abreEj('openCompases', (v && v.card) || 'cardCOM', 'com_clasif'); },
-    escalas: function(v){ abreEj('openEscalas', null, (v && v.practica) || 'esc_menor'); },          /* (28-sep-2026, tarde) */
+    escalas: function(v){ abreEj('openEscalas', null, (v && v.practica) || 'esc_menor');          /* (28-sep-2026, tarde) */
+      /* (30-sep-2026, Iago) «Ir a ejercicios» abre directamente las escalas de ESE vídeo (Mayores / Otras), no siempre las menores.
+         Para quitarlo: borrar este try. */
+      try { var k = { esc_menor: 'menores', esc_mayor: 'mayores', esc_otras: 'otras' }[v && v.practica];
+        if (k && typeof escSel === 'object' && (escSel.menores !== (k === 'menores') || escSel.mayores !== (k === 'mayores') || escSel.otras !== (k === 'otras'))) {
+          escSel.menores = k === 'menores'; escSel.mayores = k === 'mayores'; escSel.otras = k === 'otras'; renderEscTypes(); nuevoESC(); } } catch (e) {} },
     grados: function(v){ abreEj('openGrados', (v && v.card) || 'cardGR', 'gra_senalar'); },
     semitonos: function(v){ abreEj('openSemitonos', (v && v.card) || 'cardSEM', 'semitonos'); },
     acordes: function(v){ abreEj('openAcordes', (v && v.card) || 'cardACO', 'acordes'); },                                  /* (29-sep-2026) */
