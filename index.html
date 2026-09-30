@@ -18833,8 +18833,8 @@ window.CAD = {
        nunca invitados). Para volver a dejarlos en prueba: alumnos: true → prueba: true en cada línea de INTROS. */
   var INTROS = {
     tonalidades: { nombre: 'Tonalidades', lista: [
-      { src: 'intros/la-tonalidad/index.html', tit: 'La tonalidad', sub: '¿Para qué sirve?', dur: '2:57', card: 'cardTA' },
-      { src: 'intros/indica-la-tonalidad/index.html', tit: 'Indica la tonalidad', sub: 'Sostenidos · Bemoles · Relativo menor', dur: '4:24', card: 'cardTA' },
+      { src: 'intros/la-tonalidad/index.html', tit: 'La tonalidad', sub: '¿Para qué sirve?', dur: '2:57', card: 'cardTA', alumnos: true },
+      { src: 'intros/indica-la-tonalidad/index.html', tit: 'Indica la tonalidad', sub: 'Sostenidos · Bemoles · Relativo menor', dur: '4:24', card: 'cardTA', alumnos: true },
       { src: 'intros/indica-la-armadura/index.html', tit: 'Indica la armadura', sub: 'Paso cero · Bemoles · Sostenidos', dur: '2:42', card: 'cardTB', alumnos: true },
       { src: 'intros/tonalidades-vecinas/index.html', tit: 'Tonalidades vecinas', sub: 'Armadura · Relativo · Una más y una menos', dur: '1:32', card: 'cardTC', alumnos: true }
     ] },
@@ -18909,8 +18909,11 @@ window.CAD = {
     terminos: function(v){ abreEj('openTerminos', (v && v.card) || 'cardTERa', null); },                                   /* (29-sep-2026) */
     cadencias: function(v){ abreEj('openCadencias', null, 'cadencias_quiz'); }                                             /* (29-sep-2026) */
   };
-  /* (28-sep-2026) quién puede ver cada vídeo: sin marca, todos (los dos primeros de Tonalidades); alumnos: true, solo cuentas
-     validadas (alumnos logueados y vinculados; nunca invitados); prueba: true, solo Tester y Protester (APX.comprobar) */
+  /* (28-sep-2026) quién puede ver cada vídeo: sin marca, todos; alumnos: true, solo cuentas validadas (alumnos logueados y
+     vinculados; nunca invitados); prueba: true, solo Tester y Protester (APX.comprobar).
+     (30-sep-2026, Iago: «Quiero que los vídeos solo estén disponibles para alumnos») «La tonalidad» e «Indica la tonalidad»,
+     que eran los dos sin marca (abiertos también a invitados), llevan ya alumnos: true: ahora NINGÚN vídeo sale sin marca.
+     Para volver a abrirlos a todos: quitar «, alumnos: true» de esas dos líneas de INTROS. */
   var tester = false, alumno = false, cuentaId = null, marcas = {};
   function visibles(path){ return INTROS[path].lista.filter(function(v){ return v.prueba ? tester : (v.alumnos ? (alumno || tester) : true); }); }
   /* ---- pulgar 👍 de Iago en los vídeos EN PRUEBA (Supabase: suite_intro_revisiones / suite_intro_marcar) ---- */
