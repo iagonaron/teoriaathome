@@ -75,10 +75,12 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 30-sep 19:58 · Intros didácticas · EN CURSO · intros/*/*.mp3 (21 audios) e intros/*/*_60.mp4 y *_1440.mp4 (13 vídeos):
-  MÁS MARGEN EN EL AUDIO (Iago: «noto un pelín distorsionada mi voz… algo más de margen»). Misma mezcla, 2 dB más
-  baja (−18 LUFS), picos a −3,5 dB, filtro suave por debajo de 60 Hz y MP3 a 192 kbps; en los MP4 solo cambia la pista
-  de audio (AAC hecho desde la mezcla, no desde el MP3). Mismos tiempos. No toca index.html, escenas ni tiempos.
+- 30-sep 20:30 · Intros didácticas · HECHO · commit 2f2a7e2 (EN CURSO en 73ccf5d) · intros/*/*.mp3 (21 audios) e
+  intros/*/*_60.mp4 y *_1440.mp4 (13 vídeos): MÁS MARGEN EN EL AUDIO (Iago: «noto un pelín distorsionada mi voz… algo
+  más de margen»). Misma mezcla, 2 dB más baja (−18 LUFS), picos a −3,5 dB, filtro suave por debajo de 60 Hz y MP3 a
+  192 kbps; en los MP4 solo cambia la pista de audio (AAC hecho desde la mezcla): el vídeo es idéntico (comprobado paquete a
+  paquete). Mismos tiempos; no toca index.html, escenas ni tiempos. Para volver al audio de antes: git revert 2f2a7e2.
+  Espejo de Dropbox igual que GitHub (lo de antes, en APPs/_PARA BORRAR/30-sep-2026-noche-audio-antes-de-mas-margen).
 - 30-sep 12:06 · Intros didácticas · HECHO · commit 97d1666 (EN CURSO en c2496cf) · index.html: «La tonalidad» e «Indica la
   tonalidad» (INTROS del bloque de vídeos) pasan a `alumnos: true` (Iago: «Quiero que los vídeos solo estén disponibles para
   alumnos»; como invitado se veían). Ya no queda ningún vídeo sin marca: invitados, ninguno. Para volver a abrirlos a todos:
