@@ -75,6 +75,10 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 30-sep 09:40 · Intros didácticas · EN CURSO · intros/acordes/escenas.js e intros/inversion-acordes/escenas.js
+  (correcciones de Iago) · index.html: PUBLICACIÓN de todos los vídeos para alumnos (Iago: «puedes hacer públicos todos
+  los vídeos»): `prueba: true` → `alumnos: true` en INTROS del bloque de vídeos (nunca invitados), VERIFICADOS del bloque
+  de las fichas, y «Ir a ejercicios» de Escalas abre el tipo de escala de su vídeo. Parto de bb67547.
 - 29-sep 20:51 · Intros didácticas · HECHO · commit 098aa13 (EN CURSO en 0d0f1c2) · tanda 1440-A: intros/intervalos,
   intervalos-compuestos, inversion-intervalos, inversion-compuestos, compases, escalas-menores y otras-escalas pasan a MP4
   1440p60 con audio 256k (<slug>_1440.mp4 + window.VIDEO_MP4 en su index.html). Para volver al modo de siempre en un vídeo:
