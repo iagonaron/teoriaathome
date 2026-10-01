@@ -75,6 +75,9 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 1-oct 09:38 · Fichas y rediseño · EN CURSO · index.html (bloque «FICHAS EN PAPEL», window.PapelFichas): el PDF de la
+  ficha en papel pasa a llevar UN solo ejemplar y el nombre sigue diciendo cuántas copias hacer (Iago: «si un alumno se
+  pasa a papel a mitad de semana, en la copistería pido una más»). Parto de ccc151c.
 - 30-sep 20:30 · Intros didácticas · HECHO · commit 2f2a7e2 (EN CURSO en 73ccf5d) · intros/*/*.mp3 (21 audios) e
   intros/*/*_60.mp4 y *_1440.mp4 (13 vídeos): MÁS MARGEN EN EL AUDIO (Iago: «noto un pelín distorsionada mi voz… algo
   más de margen»). Misma mezcla, 2 dB más baja (−18 LUFS), picos a −3,5 dB, filtro suave por debajo de 60 Hz y MP3 a
