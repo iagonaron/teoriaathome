@@ -17990,6 +17990,9 @@ window.CAD = {
    a mano, asi que baja solo segun se van vinculando.
    La carpeta (FICHAS TEORIA, en Dropbox) se elige UNA vez y se
    recuerda; el nombre del fichero lleva el numero y el curso.
+   (1-oct-2026, Iago) Ahora el PDF lleva UN SOLO ejemplar y el nombre dice
+   cuantas copias hacer: «si un alumno se pasa a papel a mitad de semana,
+   en la copisteria pido una mas». Antes, la ficha repetida N veces.
    ============================================================ */
 (function () {
   'use strict';
@@ -18112,10 +18115,10 @@ window.CAD = {
         var donde = h ? ('Se guardará en la carpeta que elegiste (' + CARPETA + ').')
                       : ('La primera vez tienes que elegir la carpeta: escoge tu carpeta de Dropbox y dentro se usará <b>' + CARPETA + '</b>.');
         ventana('<div style="font-size:17px;font-weight:800;margin-bottom:6px">📄 Versión en papel</div>' +
-          fila('Hay <b>' + c.n + '</b> alumno(s) de ' + C().curso + ' en papel. Se prepara <b>un solo PDF</b> con la ficha del alumno repetida ' + c.n + ' veces, lista para imprimir de una tirada.<br>' + donde) +
+          fila('Hay <b>' + c.n + '</b> alumno(s) de ' + C().curso + ' en papel. Se guarda <b>la ficha del alumno una sola vez</b> y el nombre del PDF dice cuántas copias hacer (<b>' + c.n + '</b>). Si alguien se pasa a papel antes de imprimir, pide una más.<br>' + donde) +
           '<div id="pEstado" style="font-size:13px;font-weight:700;color:#1f6df6;min-height:18px;margin-bottom:10px"></div>' +
           '<div style="display:flex;gap:10px;justify-content:flex-end">' +
-          btn('pNo', 'Ahora no') + btn('pSi', '📁 Guardar ' + c.n + ' copias', true) + '</div>',
+          btn('pNo', 'Ahora no') + btn('pSi', '📁 Guardar la ficha (' + c.n + ' copias)', true) + '</div>',
           [
             { id: 'pNo', fn: function (c2, cerrar) { cerrar(); } },
             { id: 'pSi', fn: function (c2, cerrar) { hacer(info, c.n, c2, cerrar); } }
@@ -18135,9 +18138,9 @@ window.CAD = {
     var si = card.querySelector('#pSi');
     if (si) si.disabled = true;
     var di = function (t) { if (est) est.textContent = t; };
-    di('Preparando el PDF con ' + n + ' copias…');
+    di('Preparando el PDF…');
     Promise.resolve()
-      .then(function () { return C().construir(n); })          // -> Blob
+      .then(function () { return C().construir(1); })          // -> Blob · (1-oct-2026) un solo ejemplar; n va en el nombre
       .then(function (blob) {
         di('Guardando…');
         return leerHandle().then(function (h) {
@@ -18163,7 +18166,7 @@ window.CAD = {
         var msg = (e && e.message) || String(e);
         if (msg === 'sin_api' || msg === 'sin_carpeta' || msg === 'sin_permiso' || /abort/i.test(msg)) {
           di('No se pudo guardar en la carpeta: te lo descargo.');
-          C().construir(n).then(function (blob) {
+          C().construir(1).then(function (blob) {
             var a = document.createElement('a');
             a.href = URL.createObjectURL(blob); a.download = nombre(info, n);
             document.body.appendChild(a); a.click();
