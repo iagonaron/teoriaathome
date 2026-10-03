@@ -18180,8 +18180,10 @@ window.CAD = {
      vacías sin nombre.» Si el generador sabe quién va en papel (contexto v2: C().papel()), se guarda UNA ficha por
      alumno de papel, con su nombre y sus ejercicios de refuerzo al final, más SIN_NOMBRE fichas sin nombre. Cada
      alumno empieza en hoja nueva (doble cara). Si no lo sabe (base sin actualizar), se hace lo de antes: un
-     ejemplar y el número de copias en el nombre del fichero. */
-  var SIN_NOMBRE = 2;
+     ejemplar y el número de copias en el nombre del fichero.
+     (3-oct-2026, más tarde, Iago) «Solo quiero una copia a mayores vacía, sin nombre»: 1 en vez de 2. Si alguien se
+     pasa a papel después de imprimir, esa hoja es para él (el Diario móvil avisa con «+1» en el icono de papel). */
+  var SIN_NOMBRE = 1;
   function escP(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function listaPapel() { try { var l = C().papel && C().papel(); return Array.isArray(l) ? l : null; } catch (e) { return null; } }
   function personasDe(lista) {
@@ -18213,7 +18215,7 @@ window.CAD = {
       ventana('<div style="font-size:17px;font-weight:800;margin-bottom:6px">📄 Fichas en papel, con nombre</div>' +
         fila('Hay <b>' + lista.length + '</b> alumno(s) de ' + C().curso + ' en papel. Se guarda <b>un solo PDF</b> con una ficha para cada uno, con <b>su nombre ya escrito</b>' +
           (conRef.length ? ' y sus ejercicios de <b>refuerzo</b> al final (etiqueta REFUERZO ★)' : '') +
-          ', más <b>' + SIN_NOMBRE + ' fichas sin nombre</b>. Cada alumno empieza en hoja nueva, para imprimir a doble cara.' +
+          ', más <b>' + SIN_NOMBRE + (SIN_NOMBRE === 1 ? ' ficha sin nombre' : ' fichas sin nombre') + '</b>. Cada alumno empieza en hoja nueva, para imprimir a doble cara.' +
           (conRef.length ? '<br><span id="pConRef">★ Con refuerzo: ' + conRef.map(function (p) { return escP(p.nombre) + ' (' + p.extras.length + ')'; }).join(', ') + '.</span>' : '') +
           '<br>' + donde) +
         '<div id="pEstado" style="font-size:13px;font-weight:700;color:#1f6df6;min-height:18px;margin-bottom:10px"></div>' +
