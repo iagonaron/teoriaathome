@@ -75,6 +75,14 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 3-oct 14:16 · Fichas y rediseño · EN CURSO · index.html (parto de 1dacaf8): FICHA CORREGIDA EN TARJETAS, la pantalla
+  final de la ficha (al terminarla, en la revisión del alumno —digital y en papel— y en la del profesor desde el
+  Diario): leyenda arriba, % con icono en cada ejercicio (✓ verde 100 · triángulo amarillo 50–99 · triángulo rojo <50)
+  y, en los suspensos, «Hey, soy Iago. Aquí tienes apuntes, vídeo y ejercicios para practicar». Bloque nuevo «FICHA
+  CORREGIDA EN TARJETAS» (window.LmfCorr) justo antes de «FILA DE AYUDA DE LA FICHA». OJO «Apuntes en fichas»: toco
+  vuestro bloque ApxFicha (también corre con ?revision=… y gana ApxFicha.recursos; abrirApuntes/abrirLibro/elegirVideo
+  aceptan un 3.er dato «libre»); lo de la ficha del alumno no cambia. También ?practice= de escalas (solo esa familia)
+  y la ficha en papel corregida en negro y rojo.
 - 3-oct 11:45 · Fichas y rediseño · HECHO · commit 1dacaf8 (EN CURSO en 16da67b) · index.html (window.PapelFichas): el
   PDF de papel con nombres lleva UNA sola ficha sin nombre (antes dos). Iago: «solo quiero una copia a mayores vacía,
   sin nombre»; si alguien se pasa a papel después de generar la ficha, esa hoja es para él (el Diario móvil lo avisará
