@@ -75,9 +75,11 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 3-oct 11:45 · Fichas y rediseño · EN CURSO · index.html (window.PapelFichas), parto de 0f3381e: el PDF de papel con
-  nombres pasa a llevar UNA sola ficha sin nombre en vez de dos (Iago: «solo quiero una copia a mayores vacía, sin
-  nombre»). No toquéis index.html hasta el HECHO.
+- 3-oct 11:45 · Fichas y rediseño · HECHO · commit 1dacaf8 (EN CURSO en 16da67b) · index.html (window.PapelFichas): el
+  PDF de papel con nombres lleva UNA sola ficha sin nombre (antes dos). Iago: «solo quiero una copia a mayores vacía,
+  sin nombre»; si alguien se pasa a papel después de generar la ficha, esa hoja es para él (el Diario móvil lo avisará
+  con «+1» en el icono de papel). Para volver a dos: SIN_NOMBRE = 2 en window.PapelFichas, o git revert 1dacaf8.
+  Espejo de Dropbox igual que GitHub.
 - 3-oct 11:05 · Fichas y rediseño · HECHO · commit 71ec2c2 (EN CURSO en 3d47eb3, parto de 58c75c8) · index.html. (1)
   GENERADOR, ficha en papel (bloque «FICHAS EN PAPEL», window.PapelFichas, construirPDF y window.__PAPEL_CFG): el
   botón «Guardar el PDF» hace UN PDF con una ficha por cada alumno que va en papel, con su nombre y su grupo escritos,
