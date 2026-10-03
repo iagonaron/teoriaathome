@@ -75,6 +75,12 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 3-oct 10:55 · Fichas y rediseño · EN CURSO · index.html, parto de 58c75c8: (1) generador de fichas (bloque «FICHAS
+  EN PAPEL», window.PapelFichas y construirPDF): el PDF de papel pasa a ser UNO con una ficha por alumno de papel, con
+  su nombre escrito, sus ejercicios de refuerzo al final (etiqueta «REFUERZO ★») y 2 fichas más sin nombre; el
+  contexto se pide a suite_ficha_profe_contexto_v2 (con el de siempre de reserva). (2) Revisión del alumno: ruta nueva
+  ?revision=…&alu=1&papel=1 = la ficha en formato solución para quien la entregó en papel (función
+  suite_ficha_solucion_papel). No toquéis index.html hasta el HECHO.
 - 1-oct 09:42 · Fichas y rediseño · HECHO · commit 85e52d7 (EN CURSO antes, parto de ccc151c) · index.html (bloque «FICHAS EN
   PAPEL», window.PapelFichas): el PDF de la ficha en papel lleva UN solo ejemplar; el nombre sigue diciendo cuántas copias
   hacer («Ficha N · 4 GE · X copias.pdf»). Iago: «si un alumno se pasa a papel a mitad de semana, en la copistería pido
