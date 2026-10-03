@@ -75,14 +75,29 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 3-oct 14:16 · Fichas y rediseño · EN CURSO · index.html (parto de 1dacaf8): FICHA CORREGIDA EN TARJETAS, la pantalla
-  final de la ficha (al terminarla, en la revisión del alumno —digital y en papel— y en la del profesor desde el
-  Diario): leyenda arriba, % con icono en cada ejercicio (✓ verde 100 · triángulo amarillo 50–99 · triángulo rojo <50)
-  y, en los suspensos, «Hey, soy Iago. Aquí tienes apuntes, vídeo y ejercicios para practicar». Bloque nuevo «FICHA
-  CORREGIDA EN TARJETAS» (window.LmfCorr) justo antes de «FILA DE AYUDA DE LA FICHA». OJO «Apuntes en fichas»: toco
-  vuestro bloque ApxFicha (también corre con ?revision=… y gana ApxFicha.recursos; abrirApuntes/abrirLibro/elegirVideo
-  aceptan un 3.er dato «libre»); lo de la ficha del alumno no cambia. También ?practice= de escalas (solo esa familia)
-  y la ficha en papel corregida en negro y rojo.
+- 3-oct 14:30 · Fichas y rediseño · HECHO · commit 093c454 (EN CURSO en bdf25ef, parto de 1dacaf8) · index.html. FICHA
+  CORREGIDA EN TARJETAS: la pantalla final de la ficha (al terminarla, en ?revision=…&alu=1 —digital y &papel=1— y en
+  la revisión del profesor ?revision=…&s=…) pinta una tarjeta por ejercicio con el % y su icono arriba a la derecha (✓
+  verde 100 · triángulo amarillo 50–99 · triángulo rojo <50), la leyenda arriba y, en los suspensos, abajo a la
+  derecha: «Hey, soy Iago. Aquí tienes apuntes, vídeo y ejercicios para practicar» (sustituye a «practica esto,
+  anda»). Bloque nuevo «FICHA CORREGIDA EN TARJETAS» (<style id=lmf-corr-css> + window.LmfCorr), antes de «FILA DE
+  AYUDA DE LA FICHA»; si se borra, la pantalla vuelve sola a las filas de antes. (1) «Apuntes en fichas», OJO: vuestro
+  bloque ApxFicha corre ahora también con ?revision=… (antes solo con ?fichaId) y gana ApxFicha.recursos(tipo, cb),
+  que da a la ficha corregida lo que ESA cuenta puede abrir (apuntes, Libro y portal con vuestra misma puerta
+  soloTester; vídeos, con la suya); desde ahí se abren «libres» (3.er dato de abrirApuntes / abrirApuntesYa /
+  abrirLibro / abrirLibroYa / elegirVideo): sin la ventanita ni el minuto. En ?revision=…&alu=1 la cuenta del enlace
+  se guarda en apx_cuenta_<tema>, igual que ?cuenta= en una ficha. La fila de ayuda de la ficha del alumno NO cambia
+  (mismas pruebas, misma salida). (2) En la revisión de una ficha DIGITAL el % de cada tarjeta es el GUARDADO con la
+  entrega (payload.ejercicios[k].pct), no uno recalculado; si la entrega es antigua y no lo trae, el de siempre. (3)
+  El rótulo «Tu ficha N corregida · nota X» del alumno ya solo sale si dice algo que no esté en «Puntuación» (sin
+  nota, anulados o reclamación). (4) Ficha EN PAPEL corregida: negro lo impreso y rojo lo que se escribe; cada
+  solución va sobre una hoja blanca (.lmf-hoja) y los pintores de compás, términos y cifra no usan allí los colores de
+  fondo oscuro (enSim); las casillas verdes de test y cadencias pasan a rojo (LmfCorr.rojo). (5) El profesor puede
+  abrir la ficha en papel de un alumno: ?revision=papel:<alumno>&s=…&papel=1&curso=…&n=…&pct=…&nota=… (lee la ficha
+  con suite_ficha_ver; sin funciones nuevas en la base). (6) ?practice=esc_mayor / esc_menor / esc_otras abre Escalas
+  con SOLO esa familia marcada (antes, la que estuviera: las menores). Para volver atrás: git revert 093c454. Espejo
+  de Dropbox igual que GitHub (la versión anterior, en APPs/_PARA
+  BORRAR/3-oct-2026-teoria-antes-de-ficha-en-tarjetas/GE-index.html).
 - 3-oct 11:45 · Fichas y rediseño · HECHO · commit 1dacaf8 (EN CURSO en 16da67b) · index.html (window.PapelFichas): el
   PDF de papel con nombres lleva UNA sola ficha sin nombre (antes dos). Iago: «solo quiero una copia a mayores vacía,
   sin nombre»; si alguien se pasa a papel después de generar la ficha, esa hoja es para él (el Diario móvil lo avisará
