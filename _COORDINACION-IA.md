@@ -75,11 +75,23 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 6-oct 10:45 · Fichas y rediseño · EN CURSO · index.html (parto de 093c454), tres cosas que pidió Iago hoy: (1)
-  APUNTES PARA TODOS: APX_CFG soloTester pasa a false (cuentas validadas; invitados y pendientes siguen sin verlos).
-  (2) GENERADOR DEL PROFESOR: empieza siempre vacío (la cesta ya no se guarda en localStorage; solo aguanta una
-  recarga de la misma pestaña con el mismo enlace de envío) y «Vaciar ficha» pasa a llamarse «Limpiar ficha». (3)
-  FICHA DEL ALUMNO, fila «No lo sé hacer / tengo dudas»: Términos suma «Vídeo» y «Practicar ejercicios sueltos».
+- 6-oct 10:50 · Fichas y rediseño · HECHO · commit 0d4e8c8 (EN CURSO en 7236661) · index.html, tres cosas que pidió
+  Iago. (1) APUNTES PARA TODOS: APX_CFG soloTester:false. «Ver apuntes» sale a toda cuenta VALIDADA (invitados y
+  pendientes, no) en las tarjetas, en la fila de ayuda de la ficha, en las tarjetas «APUNTES» de dentro de los vídeos
+  y en el consejo de la ficha corregida. Para volver: soloTester:true. (2) GENERADOR DEL PROFESOR: empieza siempre
+  vacío. La cesta ya no se guarda en localStorage (CFG_KEY ni se borra ni se escribe; solo se lee una vez para heredar
+  «Acordes con 7ª», que pasa a OPC_KEY); ahora vive en sessionStorage (SES_KEY) atada al enlace de envío: aguanta una
+  recarga de la misma pestaña y se olvida al enviar (olvidaSesion). loadCfg/saveCfg son los nuevos. «Vaciar ficha» se
+  llama «Limpiar ficha», como en profesional. OJO quien pruebe el generador sembrando teoria_prof_ficha_cfg_v2: ya no
+  rellena la cesta; hay que sembrar sessionStorage teoria_prof_ficha_sesion_v1 = {ctx:<envio>, items:[…]} o pulsar los
+  tipos. (3) FICHA DEL ALUMNO, fila «No lo sé hacer / tengo dudas»: Términos suma «Vídeo» (sus dos vídeos, en VIDEOS /
+  TEMA_VIDEO / VERIFICADOS del bloque «APUNTES EN LAS FICHAS») y «Practicar ejercicios sueltos» (PRACTICA_SOLO +
+  tienePractica(), que sustituye a AREA_DE[key] en modalPracticar, la fila, la lista final y el consejo; y
+  PRACTICE_MAP.terminos → view-terminos). AREA_DE no cambia, así que lo que se guarda en la ficha (area, practica_url)
+  sigue igual. Con esto, 22 de los 24 tipos enseñan Apuntes · Vídeo · Practicar; Notas de adorno y Abreviaciones no
+  tienen vídeo. Entrega de una ficha entera (24 tipos) idéntica a la de antes, byte a byte. Espejo de Dropbox igual
+  que GitHub. Nota: APPs/LMATHOME GE (github
+  LMEAVathome)/LEEME-6-oct-2026-entregada-apuntes-para-todos-y-limpiar-ficha.txt.
 - 3-oct 14:30 · Fichas y rediseño · HECHO · commit 093c454 (EN CURSO en bdf25ef, parto de 1dacaf8) · index.html. FICHA
   CORREGIDA EN TARJETAS: la pantalla final de la ficha (al terminarla, en ?revision=…&alu=1 —digital y &papel=1— y en
   la revisión del profesor ?revision=…&s=…) pinta una tarjeta por ejercicio con el % y su icono arriba a la derecha (✓
