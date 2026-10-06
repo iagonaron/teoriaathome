@@ -431,11 +431,14 @@
       });
       const tP = Wd('B4', 'penultima') - 0.1;
       resalta(s, A.items[1].g, tP, null);
-      // sin círculo (pisaba el si♭ y el la♭): el mi♭ en rosa, los otros dos atenuados y «penúltimo» encima
-      // (misma opacidad que su «pop» de entrada, multiplicada por el atenuado)
-      [0, 2].forEach(i => { const ta = Wd('B3', pals[i]) - 0.1; s.on(t => opa(A.items[i].g, win(t, ta, tB6 - 0.1, .25, .4) * (1 - 0.6 * win(t, tP, tB6 - 0.1, .35, .35)))); });
-      const lu = N.group(EJ);
-      texto(lu, 'penúltimo', A.items[1].x + 12, yM - 4.3 * SP, { anchor: 'middle', size: 26, peso: 800, fill: C.rosa });
+      // (6-oct-2026, Iago: «que el bemol que se ilumine sea el penúltimo», como el último en los sostenidos) SOLO cambia el mi♭:
+      // el si♭ y el la♭ se quedan en blanco, sin atenuar. Antes se atenuaban al 40 % y quedaban con el mismo brillo que el
+      // rosa: los tres cambiaban a la vez y solo se distinguían por el tono. Sin círculo (pisaría a los dos vecinos):
+      // «penúltimo» encima y una flecha que baja hasta él. Para volver a lo de antes: escenas.js del commit c1c0b34.
+      const lu = N.group(EJ); color(lu, C.rosa);
+      const xPen = A.items[1].x + 8.5;                       // entre el palo y la panza del bemol
+      texto(lu, 'penúltimo', xPen, yM - 5.6 * SP, { anchor: 'middle', size: 26, peso: 800, fill: C.rosa });
+      flecha(lu, xPen, yM - 5.25 * SP, xPen, yM - 3.55 * SP, { w: 5, cab: 16 });
       aparece(s, lu, tP, tB6 - 0.1, { dy: 6 });
       const ch = chipTon(EJ, 'Eb', 'mayor', 1200, yM - 150, { size: 40 });
       pop(s, ch, Wd('B5', 'mi') - 0.1, tB6 - 0.1, 1200, yM - 150, { k0: .6 });
@@ -825,7 +828,7 @@
       tramo(tF5, F0('F6') - 0.1)(S3);
       const tPen = Wd('F5', 'penultimo') - 0.1;
       resalta(s, B2.items[0].g, tPen, null);
-      s.on(t => opa(B2.items[1].g, 1 - 0.65 * win(t, tPen, 1e9, .35, .35)));
+      // (6-oct-2026, Iago) igual que arriba y que en los sostenidos: el mi♭ (el último) se queda en blanco, sin atenuar
       const pe = texto(S3, 'penúltimo', B2.items[0].x + 12, yM + 118, { anchor: 'middle', size: 26, peso: 800, fill: C.rosa });
       mostrarEn(s, pe, tPen, 1e9);
       const cSib = N.group(S3); chipTon(cSib, 'Bb', 'mayor', xR, yChip, { size: 40 });
@@ -856,8 +859,8 @@
       [['E', xm], ['D', xs2[0]], ['C', xs2[1]]].forEach(([n, x]) => nombreNota(nombres, n, x + 22, yM + 130, { size: 28, anchor: 'middle', fill: C.blanco }));
       mostrarEn(s, nombres, tF8 + 0.2, 1e9);
       resalta(s, A5.items[1].g, tF9, null);
-      const tMen9 = Wd('F9', 'menor');
-      [0, 2, 3].forEach(i => s.on(t => opa(A5.items[i].g, 1 - 0.65 * win(t, tF9, tMen9 + 0.4, .35, .45))));
+      // (6-oct-2026, Iago) por coherencia con lo de los bemoles: solo cambia el do♯ (rosa); los otros tres sostenidos se quedan
+      // en blanco, sin atenuar (antes bajaban al 35 % mientras se miraba la armadura y quedaban tan oscuros como el rosa)
       const ds = N.group(S5); nombreNota(ds, 'C#', xs2[1] + 22, yM + 178, { size: 32, anchor: 'middle', fill: C.rosa });
       aparece(s, ds, tF9 + 0.4, 1e9, { dy: 6 });
       const fl5 = N.group(S5); color(fl5, C.suave); flecha(fl5, xR - 60, yChip, xR + 20, yChip, { w: 4, cab: 14 });
