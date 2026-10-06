@@ -75,8 +75,18 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 6-oct 17:40 · Intros didácticas · EN CURSO · intros/indica-la-tonalidad/escenas.js e indica_tonalidad_60.mp4: con
-  bemoles, solo el penúltimo cambia a rosa (lo pidió Iago). Nada más: no toca index.html. Parto de c1c0b34.
+- 6-oct 17:45 · Intros didácticas · HECHO · commit d698ff6 (EN CURSO en 9324c67, parto de c1c0b34) ·
+  intros/indica-la-tonalidad/escenas.js e indica_tonalidad_60.mp4 · CON BEMOLES, SOLO EL PENÚLTIMO CAMBIA (Iago: «sería
+  mucho más claro y preciso que el bemol que se ilumine sea el penúltimo»; en los sostenidos ya cambiaba solo el
+  último). Antes, al decir «penúltimo», el penúltimo pasaba a rosa y los demás bemoles se atenuaban al 40 %: quedaban
+  con el mismo brillo que el rosa (medido en el vídeo: 0,22 y 0,18 frente a 0,26; un segundo antes, 0,9), cambiaban
+  los tres a la vez y solo se distinguían por el tono. Ahora los demás se quedan en blanco, como en los sostenidos, y
+  al penúltimo lo señala una flecha bajo «penúltimo» (un círculo pisaría a los dos vecinos). Lo mismo en el resumen
+  (3:52) y, por coherencia, en «mira la armadura» (4:07: el do♯ en rosa y los otros tres sostenidos en blanco). Vídeo
+  regrabado con la receta de siempre (1080p60, crf 21) y el mismo audio: 14.442 de sus 15.842 fotogramas son idénticos
+  a los de antes; solo cambian 1:16–1:27, 3:53–3:57 y 4:07–4:14. Mismos tiempos; no toca index.html, tiempos ni
+  guion. La copia de teoriapro, igual (commit 53531f7). Para volver: git revert d698ff6, o subir los dos ficheros de
+  APPs/_PARA BORRAR/6-oct-2026-indica-la-tonalidad-antes-de-solo-el-penultimo/. Espejo de Dropbox igual que GitHub.
 - 6-oct 10:50 · Fichas y rediseño · HECHO · commit 0d4e8c8 (EN CURSO en 7236661) · index.html, tres cosas que pidió
   Iago. (1) APUNTES PARA TODOS: APX_CFG soloTester:false. «Ver apuntes» sale a toda cuenta VALIDADA (invitados y
   pendientes, no) en las tarjetas, en la fila de ayuda de la ficha, en las tarjetas «APUNTES» de dentro de los vídeos
