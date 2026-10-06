@@ -75,6 +75,8 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 6-oct 17:40 · Intros didácticas · EN CURSO · intros/indica-la-tonalidad/escenas.js e indica_tonalidad_60.mp4: con
+  bemoles, solo el penúltimo cambia a rosa (lo pidió Iago). Nada más: no toca index.html. Parto de c1c0b34.
 - 6-oct 10:50 · Fichas y rediseño · HECHO · commit 0d4e8c8 (EN CURSO en 7236661) · index.html, tres cosas que pidió
   Iago. (1) APUNTES PARA TODOS: APX_CFG soloTester:false. «Ver apuntes» sale a toda cuenta VALIDADA (invitados y
   pendientes, no) en las tarjetas, en la fila de ayuda de la ficha, en las tarjetas «APUNTES» de dentro de los vídeos
