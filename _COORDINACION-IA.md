@@ -75,6 +75,11 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 6-oct 10:45 · Fichas y rediseño · EN CURSO · index.html (parto de 093c454), tres cosas que pidió Iago hoy: (1)
+  APUNTES PARA TODOS: APX_CFG soloTester pasa a false (cuentas validadas; invitados y pendientes siguen sin verlos).
+  (2) GENERADOR DEL PROFESOR: empieza siempre vacío (la cesta ya no se guarda en localStorage; solo aguanta una
+  recarga de la misma pestaña con el mismo enlace de envío) y «Vaciar ficha» pasa a llamarse «Limpiar ficha». (3)
+  FICHA DEL ALUMNO, fila «No lo sé hacer / tengo dudas»: Términos suma «Vídeo» y «Practicar ejercicios sueltos».
 - 3-oct 14:30 · Fichas y rediseño · HECHO · commit 093c454 (EN CURSO en bdf25ef, parto de 1dacaf8) · index.html. FICHA
   CORREGIDA EN TARJETAS: la pantalla final de la ficha (al terminarla, en ?revision=…&alu=1 —digital y &papel=1— y en
   la revisión del profesor ?revision=…&s=…) pinta una tarjeta por ejercicio con el % y su icono arriba a la derecha (✓
