@@ -11523,7 +11523,21 @@ function __grados_marker__(){}
      config = { items:[{key,peso}], total, opciones:{acorde7} }
      ficha  = [{n,key,label,ej}]   (ejercicios ya materializados)
      ============================================================ */
+  /* (6-oct-2026, Iago) EL GENERADOR EMPIEZA SIEMPRE DE CERO: «no me aporta gran cosa que aparezca lo de la semana
+     anterior… prefiero que parta las fichas de cero para empezar a montarlas». Hasta hoy la cesta (los tipos elegidos)
+     se guardaba para siempre en este navegador (CFG_KEY) y, al volver a entrar, reaparecía la de la última ficha. Ahora:
+       · la cesta solo se recuerda dentro de ESTA pestaña y de ESTE enlace de envío (SES_KEY, en sessionStorage): sirve
+         para no perderla si la página se recarga sin querer. Con un enlace nuevo del Diario, o en una pestaña nueva,
+         el generador sale vacío. Al enviar la ficha, se olvida;
+       · de un día para otro solo se recuerda la casilla «Acordes con 7ª» (OPC_KEY).
+     CFG_KEY ni se borra ni se vuelve a escribir (solo se lee una vez, para heredar esa casilla).
+     Para volver a lo de antes: que loadCfg() y saveCfg() lean y guarden PP.config entero en CFG_KEY (como en la versión
+     anterior del fichero) y quitar olvidaSesion(). */
   const CFG_KEY = 'teoria_prof_ficha_cfg_v2';   // v2: estrena vacía (0 ejercicios) y con el nuevo orden del índice
+  const OPC_KEY = 'teoria_prof_ficha_opc_v1';      // «Acordes con 7ª»
+  const SES_KEY = 'teoria_prof_ficha_sesion_v1';   // la cesta de esta pestaña y este enlace de envío
+  function ctxSesion(){ try{ return new URLSearchParams(location.search).get('envio')||''; }catch(e){ return ''; } }
+  function olvidaSesion(){ try{ sessionStorage.removeItem(SES_KEY); }catch(e){} }
   function cfgDefault(){ return { version:1, items:[], opciones:{ acorde7:false } }; }
   /* migra configuraciones guardadas con los keys antiguos (aco_id/aco_constr -> acordes, etc.) */
   const MIGRA_KEY={ aco_id:'acordes', aco_constr:'acordes', sem_clasif:'semitonos', sem_constr:'semitonos' };
@@ -11538,13 +11552,22 @@ function __grados_marker__(){}
     return out;
   }
   function loadCfg(){
-    try{ const raw=localStorage.getItem(CFG_KEY); if(raw){ const c=JSON.parse(raw);
-      const base=cfgDefault(); const merged=Object.assign(base, c, {opciones:Object.assign(base.opciones, c.opciones||{})});
-      merged.items=migraItems(merged.items);
-      return merged; } }catch(e){}
-    return cfgDefault();
+    const base=cfgDefault();
+    try{   /* la casilla «Acordes con 7ª» (la primera vez, la que hubiera en la configuración antigua) */
+      let o=null; const r=localStorage.getItem(OPC_KEY);
+      if(r) o=JSON.parse(r); else { const v=localStorage.getItem(CFG_KEY); if(v){ const c=JSON.parse(v); o=c && c.opciones; } }
+      if(o && typeof o==='object') Object.assign(base.opciones, o);
+    }catch(e){}
+    try{   /* la cesta: solo la de esta misma pestaña y este mismo enlace de envío */
+      const r=sessionStorage.getItem(SES_KEY);
+      if(r){ const s=JSON.parse(r); if(s && s.ctx===ctxSesion()) base.items=migraItems(s.items); }
+    }catch(e){}
+    return base;
   }
-  function saveCfg(){ try{ localStorage.setItem(CFG_KEY, JSON.stringify(PP.config)); }catch(e){} }
+  function saveCfg(){
+    try{ localStorage.setItem(OPC_KEY, JSON.stringify(PP.config.opciones||{})); }catch(e){}
+    try{ sessionStorage.setItem(SES_KEY, JSON.stringify({ ctx:ctxSesion(), items:PP.config.items||[] })); }catch(e){}
+  }
 
   const PP = { config: loadCfg(), ficha: null, mostrarSol:true };
   const TOPE=10;   // máximo de ejercicios (pentagramas) por ficha
@@ -11971,7 +11994,7 @@ function __grados_marker__(){}
          '<label class="pp-opt"><input type="checkbox" id="ppAco7" '+(PP.config.opciones.acorde7?'checked':'')+'> Acordes con 7ª</label>'+
        '</div>';
     if(items.length){
-      h+='<div class="pp-row"><button class="pp-btn small" id="ppVaciar">Vaciar ficha</button></div>';
+      h+='<div class="pp-row"><button class="pp-btn small" id="ppVaciar" title="Quitar todos los tipos de la cesta y empezar de cero">🧹 Limpiar ficha</button></div>';   /* (6-oct-2026) el mismo nombre que en profesional (antes «Vaciar ficha») */
     }
     h+='<div class="pp-actions">'+
          '<button class="pp-btn primary" id="ppGenerar">Generar ficha y revisar</button>'+
@@ -12149,8 +12172,7 @@ function __grados_marker__(){}
   // ventana flotante que explica la práctica antes de abrir el módulo en pestaña nueva
   function modalPracticar(key){
     if(!key) return;
-    const area = AREA_DE[key];
-    if(!area) return;
+    if(!tienePractica(key)) return;   /* (6-oct-2026) antes: AREA_DE[key] */
     const ov=document.createElement('div');
     /* (29-sep-2026, Iago) «que la ventana de "vamos a practicar esto" esté actualizada estéticamente (icono simple,
        fondo…)»: cristal oscuro, icono plano y rosa de teoría, como la ventanita «¿Necesitas mirar los apuntes?». */
@@ -12397,7 +12419,7 @@ function __grados_marker__(){}
                    alumnos en Términos (que ya trae sus instrucciones en A, B y C) y bajo «Este ejercicio no se ha podido
                    cargar». El ejercicio no cambia. Para volver a ponerlo: devolver aquí ese <div>. */
                 : '';
-      const areaItem = AREA_DE[item.key];
+      const areaItem = tienePractica(item.key);   /* (6-oct-2026) antes: AREA_DE[item.key] (Términos se quedaba sin «Practicar») */
       /* (27-sep-2026, Iago) APUNTES EN LAS FICHAS: class="sim-ayuda" marca esta fila para colgarle «APUNTES» (bloque ApxFicha, al final) */
       /* (29-sep-2026, Iago) «que no diga eso, quiero que ponga "No lo sé hacer / tengo dudas" y que solo sea texto.
          Después hasta 3 botones: Apuntes, Vídeo, practicar ejercicios sueltos … con contorno rosa». Aquí va el texto y
@@ -12638,7 +12660,7 @@ function __grados_marker__(){}
         const sc=scores[k]; const sinCorr=(sc==null); let ok=sinCorr||sc>=50;
         const anulado=_esAnulado(item,k); if(anulado) ok=true;
         const col=ok?'#5bf0c0':'#ff8aa6'; const bg=ok?'rgba(52,211,153,.16)':'rgba(255,92,128,.16)';
-        const area=AREA_DE[item.key];
+        const area=tienePractica(item.key);   /* (6-oct-2026) antes: AREA_DE[item.key] */
         const practicar = !ok
           ? (area
               ? '<div style="margin-top:10px;display:flex;align-items:center;gap:9px;flex-wrap:wrap"><span style="font-size:13px;color:#c7bff0;font-weight:600">Ey, soy Iago:</span><button class="simPractica sim-practica-btn" data-key="'+item.key+'">practica esto, anda ↗</button></div>'
@@ -12778,7 +12800,7 @@ function __grados_marker__(){}
       });
       main.querySelectorAll('.simPractica').forEach(b=>{ b.onclick=()=>{ modalPracticar(b.dataset.key); }; });
       /* (3-oct-2026, Iago) ficha corregida: «Hey, soy Iago. Aquí tienes apuntes, vídeo y ejercicios para practicar» */
-      if(_LP){ main.querySelectorAll('.lmf-con-t').forEach(c2=>{ const key=c2.getAttribute('data-key'); try{ _LP.consejo(c2, key, AREA_DE[key] ? (location.origin+location.pathname+'?practice='+encodeURIComponent(key)) : null); }catch(e){} }); }
+      if(_LP){ main.querySelectorAll('.lmf-con-t').forEach(c2=>{ const key=c2.getAttribute('data-key'); try{ _LP.consejo(c2, key, tienePractica(key) ? (location.origin+location.pathname+'?practice='+encodeURIComponent(key)) : null); }catch(e){} }); }
       foot.innerHTML = btn('simCerrar','Cerrar', true);
       ov.querySelector('#simCerrar').onclick=cerrar;
       main.scrollTop=0;
@@ -13934,6 +13956,12 @@ function __grados_marker__(){}
     inv_simples:'inversiones', inv_compuestos:'inversiones',
     aco_identificar:'inv-acordes', aco_construir:'inv-acordes',
     ena_avanzado:'enarmonias' };
+  /* (6-oct-2026, Iago) «en cada ejercicio… las tres referencias: apuntes, vídeos y ejercicios para practicar». Tipos que
+     tienen ejercicios sueltos aunque no tengan «área» en AREA_DE: «Términos» (su tarjeta de la portada). Van aparte para
+     NO cambiar lo que se guarda en la ficha (area y practica_url salen de AREA_DE y se quedan como estaban).
+     Para quitarlo: borrar PRACTICA_SOLO (tienePractica vuelve a ser solo AREA_DE) y «terminos» de PRACTICE_MAP. */
+  const PRACTICA_SOLO={ terminos:1 };
+  function tienePractica(key){ return !!(AREA_DE[key] || PRACTICA_SOLO[key]); }
   const VIEW_DE={ intervalos:'intervalos',tonalidades:'tonalidades',claves:'claves',escalas:'escalas',
     grados:'grados',acordes:'acordes',compases:'compases',enarmonias:'enarmonias',semitonos:'semitonos',
     adorno:'adorno',abrev:'abrev',cadencias:'cadencias',
@@ -14898,6 +14926,7 @@ function __grados_marker__(){}
           throw new Error(msg);
         }
         window.__SUITE_ENVIO_TOKEN=null;   // consumido: un solo uso
+        olvidaSesion();                    // (6-oct-2026) ficha enviada: si se recarga la página, el generador sale vacío
         cerrarModal();
         // (Iago jul-2026) avisar al Diario del Profesor (la pestaña que abrió
         // este generador) de que la ficha se ENVIÓ de verdad, para que muestre
@@ -14994,6 +15023,7 @@ function __grados_marker__(){}
     adorno_quiz:    { view:'view-adorno', gen:()=>{ try{ window.adoNuevo&&window.adoNuevo(); }catch(e){} } },
     abrev_quiz:     { view:'view-abrev',  gen:()=>{ try{ window.abrNuevo&&window.abrNuevo(); }catch(e){} } },
     cadencias_quiz: { view:'view-cadencias', gen:()=>{ try{ window.cadNuevo&&window.cadNuevo(); }catch(e){} } },
+    terminos:       { view:'view-terminos',  gen:()=>{ try{ window.openTerminos&&window.openTerminos(); }catch(e){} } },   /* (6-oct-2026) */
   };
 
   /* ============================================================
@@ -18374,7 +18404,13 @@ window.CAD = {
 <!-- (26-sep-2026, Iago) VER APUNTES: apuntes del Kit salvavidas 4GE re-creados con la estética at home.
      Solo para alumnos con cuenta validada (de momento, solo la cuenta Tester, para revisarlos).
      Para quitarlo: borrar este bloque (y los ficheros apuntes.js / apuntes-kit.js). -->
-<script>window.APX_CFG={tema:'ge', soloTester:true};</script>
+<!-- (6-oct-2026, Iago) APUNTES PARA TODOS: «en las tarjetas donde están los ejercicios libres, que arriba a la derecha haya
+     vídeos y que arriba a la izquierda haya apuntes. Si es así, sí, sí que lo quiero». soloTester pasa de true a false:
+     «Ver apuntes» sale a todo alumno con cuenta VALIDADA (nunca a invitados ni a cuentas pendientes), en las tarjetas, en
+     la fila de ayuda de cada ejercicio de la ficha («No lo sé hacer / tengo dudas» · Apuntes · Vídeo · Practicar), en las
+     tarjetas «APUNTES» de dentro de los vídeos y en el consejo de la ficha corregida.
+     Para volver a dejarlos solo a la cuenta Tester: poner soloTester:true. -->
+<script>window.APX_CFG={tema:'ge', soloTester:false};</script>
 <!-- (27-sep-2026, Iago) apuntes con las respuestas de Iago (motor nuevo + kit): «?v=2» para que ningún navegador
      mezcle un fichero viejo de su caché con los nuevos. Si se vuelven a cambiar apuntes*.js, subir el número. -->
 <script src="apuntes.js?v=2"></script>
@@ -18665,7 +18701,13 @@ window.LmfCorr=(function(){
     'inv-acordes':{ nombre:'Inversión de acordes', lista:[ {src:'intros/inversion-acordes/index.html', tit:'Inversión de acordes', dur:'3:02'} ] },
     enarmonias:{ nombre:'Enarmonías', lista:[ {src:'intros/enarmonias/index.html', tit:'Enarmonías', dur:'2:32'} ] },
     claves:{ nombre:'Claves', lista:[ {src:'intros/claves/index.html', tit:'Claves', dur:'4:01'} ] },
-    cadencias:{ nombre:'Cadencias', lista:[ {src:'intros/cadencias/index.html', tit:'Cadencias', dur:'3:02'} ] }
+    cadencias:{ nombre:'Cadencias', lista:[ {src:'intros/cadencias/index.html', tit:'Cadencias', dur:'3:02'} ] },
+    /* (6-oct-2026, Iago) «en cada ejercicio… las tres referencias: apuntes, vídeos y ejercicios para practicar»: Términos
+       tenía sus dos vídeos en la tarjeta de la portada (INTROS) pero no aquí, en la ficha. Para quitarlo: borrar esta
+       entrada, «terminos» de TEMA_VIDEO y sus dos líneas de VERIFICADOS. */
+    terminos:{ nombre:'Términos', lista:[
+      {src:'intros/terminos/index.html', tit:'Términos', dur:'3:40'},
+      {src:'intros/terminos-movimiento/index.html', tit:'Términos de movimiento', dur:'3:22'} ] }
   };
   /* (30-sep-2026, Iago: «puedes hacer públicos todos los vídeos» · «puedes dar todos por validados») TODOS validados: los ven
      los alumnos con cuenta validada (nunca invitados). Para deshacer: dejar solo los cinco de antes (compases, grados,
@@ -18688,12 +18730,15 @@ window.LmfCorr=(function(){
     'intros/la-tonalidad/index.html':1,
     'intros/otras-escalas/index.html':1,
     'intros/semitonos/index.html':1,
+    'intros/terminos-movimiento/index.html':1,
+    'intros/terminos/index.html':1,
     'intros/tonalidades-vecinas/index.html':1 };
   var TEMA_VIDEO={ int_clasif:'intervalos', int_constr:'intervalos', inv_simples:'inversiones', inv_compuestos:'inversiones',
     com_clasif:'compases', ton_arm_tono:'tonalidades', ton_tono_arm:'tonalidades', ton_vecinos:'tonalidades',
     esc_menor:'escalas', esc_mayor:'escalas', esc_otras:'escalas', gra_senalar:'grados', semitonos:'semitonos',
     acordes:'acordes', aco_identificar:'inv-acordes', aco_construir:'inv-acordes', ena_a:'enarmonias', ena_avanzado:'enarmonias',
-    cla_a:'claves', cla_b:'claves', cadencias_quiz:'cadencias' };   /* (29-sep-2026, Intros didácticas) temas nuevos */
+    cla_a:'claves', cla_b:'claves', cadencias_quiz:'cadencias',   /* (29-sep-2026, Intros didácticas) temas nuevos */
+    terminos:'terminos' };   /* (6-oct-2026) */
   var PRIMERO={ ton_arm_tono:'intros/indica-la-tonalidad/index.html', ton_tono_arm:'intros/indica-la-armadura/index.html',
     ton_vecinos:'intros/tonalidades-vecinas/index.html', inv_simples:'intros/inversion-intervalos/index.html',
     inv_compuestos:'intros/inversion-compuestos/index.html', esc_menor:'intros/escalas-menores/index.html',
