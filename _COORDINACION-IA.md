@@ -75,6 +75,9 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 7-oct 22:55 · Fichas y rediseño · EN CURSO (parto de f9e6ade) · index.html, SOLO la generación de casos de nueve motores
+  (nuevoTB, elegirIntervalos, elegirClaves, nuevoSEM, ENA_ADV.generar, INV_INT.generar, ACORD.generar, nuevoENA y
+  genTerminosData): que un ejercicio no traiga dos casos iguales. No toca pintado, corrección, estilos ni fichas ya enviadas.
 - 6-oct 17:45 · Intros didácticas · HECHO · commit d698ff6 (EN CURSO en 9324c67, parto de c1c0b34) ·
   intros/indica-la-tonalidad/escenas.js e indica_tonalidad_60.mp4 · CON BEMOLES, SOLO EL PENÚLTIMO CAMBIA (Iago: «sería
   mucho más claro y preciso que el bemol que se ilumine sea el penúltimo»; en los sostenidos ya cambiaba solo el
