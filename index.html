@@ -1904,11 +1904,18 @@ function elegirIntervalos(n,compuestos,probAlt){
   for(let i=plan.length-1;i>0;i--){const j=rint(i+1);[plan[i],plan[j]]=[plan[j],plan[i]];}
 
   const res=[];
+  /* (7-oct-2026, Iago: «que el generador sepa evitar repetir dos casos iguales en un ejercicio») Dos compases del mismo
+     ejercicio no llevan nunca las MISMAS DOS NOTAS (se pinten juntas, seguidas o en el otro orden): si el intervalo
+     recién construido coincide con otro, se vuelve a construir con la MISMA entrada del catálogo (mismo número y
+     especie: no cambia qué intervalos salen ni con qué peso), hasta 40 veces. Vale para «clasificar» y «construir». */
+  const mismasNotas=(a,b)=>{ const k=x=>[x.n1,x.n2].map(n=>n.step+n.alter+'/'+n.octave).sort().join('~'); return k(a)===k(b); };
   for(const fam of plan){
     let entry;
     if(fam==='LIBRE') entry=pick(cat);
     else entry=pick(porFam[fam].length?porFam[fam]:cat);
-    res.push(_construirIntervalo(entry, compuestos, probAlt));
+    let it=_construirIntervalo(entry, compuestos, probAlt);
+    for(let k=0;k<40 && res.some(o=>mismasNotas(o,it));k++) it=_construirIntervalo(entry, compuestos, probAlt);
+    res.push(it);
   }
   return res;
 }
@@ -2811,7 +2818,11 @@ function corregirTA(){
 let dataTB=[], selTB=[];   // selTB[i] = fifths elegido por el alumno (o null)
 function nuevoTB(){
   unlockCard('cardTB');
-  dataTB=[]; for(let i=0;i<4;i++) dataTB.push(sorteaTon(false));
+  /* (7-oct-2026, Iago: «me gustaría que el generador sepa evitar repetir dos casos iguales en un ejercicio. Por ejemplo,
+     estoy haciendo uno de tonalidades y hay dos seguidos igual») Las 4 tonalidades salen DISTINTAS: si la sorteada ya
+     está en el ejercicio se vuelve a tirar (tope: 60 intentos; hay 30 tonalidades). Dos relativas (Do M y La m) sí
+     pueden coincidir: son casos distintos con la misma armadura. Antes: for(…) dataTB.push(sorteaTon(false)); */
+  dataTB=[]; for(let i=0;i<4;i++){ let t,k=0; do{ t=sorteaTon(false); k++; }while(k<60 && dataTB.some(u=>u.nom===t.nom)); dataTB.push(t); }
   selTB=dataTB.map(()=>0);
   renderScoreTB(); renderAnswersTB();
 }
@@ -3044,7 +3055,11 @@ function elegirClaves(n,probAlt){
   for(let i=0;i<n;i++){
     const cl=seq[i];
     // posición razonable: evitamos extremos demasiado often; rango -2..10
-    const pos=pick(POSICIONES);
+    let pos=pick(POSICIONES);
+    /* (7-oct-2026, Iago: «que el generador sepa evitar repetir dos casos iguales en un ejercicio») Misma clave + misma
+       línea o espacio = la misma lectura, aunque cambie la alteración: se vuelve a sortear la posición, hasta 40 veces
+       (hay 13 posiciones). La misma clave con OTRA nota sí puede salir dos veces. Vale para «nombrar» y «poner la clave». */
+    for(let k=0;k<40 && out.some(o=>o.clave===cl && o.pos===pos);k++) pos=pick(POSICIONES);
     const nat=posToNote(pos, cl.s1, cl.o1);
     let alter=0; if(chance(probAlt)) alter=pick([-1,1]);
     out.push({clave:cl, pos, n:{step:nat.step,octave:nat.octave,alter}});
@@ -5684,7 +5699,11 @@ function nuevoENA(){
   dataENA=[];
   for(let k=0;k<4;k++){
     let key, intentos=0;
-    do{ key=pick(ENA_KEYS); intentos++; }while(usadas.has(key) && intentos<30);
+    /* (7-oct-2026, Iago: «que el generador sepa evitar repetir dos casos iguales en un ejercicio») Tampoco salen dos
+       notas que SUENAN igual (Fa♯ y Sol♭, Do y Si♯): en este ejercicio serían la misma pregunta, y cada una es la
+       respuesta de la otra. Antes solo se evitaba repetir la misma nota escrita. enaSuena = altura de la nota (0–11). */
+    const enaSuena=q=>{ const p=q.split(','); return ((STEP_ST[p[0]]+parseInt(p[1],10))%12+12)%12; };
+    do{ key=pick(ENA_KEYS); intentos++; }while((usadas.has(key) || [...usadas].some(u=>enaSuena(u)===enaSuena(key))) && intentos<30);
     usadas.add(key);
     const [stepStr,alterStr]=key.split(',');
     const octave=4;
@@ -6106,6 +6125,12 @@ function nuevoSEM(){
   const tiposB=shuffleSEM(['cromatico','diatonico']);
   tiposB.forEach(t=>{
     let s=null,intentos=0; do{ s=semSortea(t); intentos++; }while(!s&&intentos<6); if(!s) s=semSortea(t);
+    /* (7-oct-2026, Iago: «que el generador sepa evitar repetir dos casos iguales en un ejercicio») El semitono que se
+       pide CONSTRUIR no puede ser uno de los dos que ya se ven en «identificar» (las mismas dos notas, en el orden que
+       sea): se vuelve a sortear del mismo tipo, hasta 40 veces. Dentro de cada bloque no hace falta: uno es cromático
+       y el otro diatónico, nunca coinciden. */
+    const semPar=x=>[x.n1,x.n2].map(n=>n.step+n.alter+'/'+n.octave).sort().join('~');
+    for(let k=0;k<40 && dataSEM.some(e=>e.modo==='id' && semPar(e)===semPar(s));k++){ const o=semSortea(t); if(o) s=o; }
     dataSEM.push({modo:'build', tipo:s.tipo, dir:s.dir, dada:s.n1, objetivo:s.n2, userSeq:[], _selVar:null});
   });
   renderSEM();
@@ -11131,6 +11156,14 @@ function __grados_marker__(){}
     var FR = (typeof TER_FRANJAS!=='undefined') ? TER_FRANJAS : [];
     var idxs = _pickN(FR.map(function(_,i){ return i; }), Math.min(3, FR.length)).sort(function(a,b){ return a-b; });
     var correcto = idxs.map(function(i){ return _pick(FR[i].items); });
+    /* (7-oct-2026, Iago: «que el generador sepa evitar repetir dos casos iguales en un ejercicio») Un mismo término no sale
+       en DOS APARTADOS del ejercicio: se vería dos veces y, además, «C · Ordena los tempos» (o el significado de B) diría
+       de qué categoría es el de A. Si un término de A está también en B (morendo, smorzando), en A se sortea otro de su
+       misma categoría; si un tempo de C ya está en A o en B, se sortea C otra vez (franjas y términos). Tope: 40 intentos.
+       Dentro de cada apartado ya no se repetían. */
+    var yaSale=function(t){ return A.some(function(a){ return a.term===t; }) || B.some(function(b){ return b.t===t; }); };
+    A.forEach(function(a){ for(var q=0;q<40 && B.some(function(b){ return b.t===a.term; });q++) a.term=_pick(CATS[a.cat].items); });
+    for(var q2=0;q2<40 && correcto.some(yaSale);q2++) correcto=_pickN(FR.map(function(_,i){ return i; }), Math.min(3, FR.length)).sort(function(a,b){ return a-b; }).map(function(i){ return _pick(FR[i].items); });
     return { A:A, B:B, C:{ correcto:correcto, barajado:_shuffle(correcto) } };
   }
 
@@ -15609,9 +15642,14 @@ window.SuiteTiempo=(function(){
       var sols=enarmDe(nota.step,nota.alter,nota.octave);
       return { mode:'notas', items:[{tipo:'nota', dada:[nota], sols:sols, user:[], need:sols.length}], ton:null, _sel:null };
     }
+    /* (7-oct-2026, Iago: «que el generador sepa evitar repetir dos casos iguales en un ejercicio») El intervalo de la
+       enarmonía TOTAL no es el mismo que el de la PARCIAL (las mismas dos notas dadas dos veces): se vuelve a sortear,
+       hasta 40 veces (hay 11 intervalos). */
+    var i1=mkInt(), i2=mkInt(), kInt=function(d){ return d.map(function(n){ return n.step+n.alter+'/'+n.octave; }).join('~'); };
+    for(var q=0;q<40 && kInt(i2)===kInt(i1);q++) i2=mkInt();
     var items=[
-      {tipo:'parcial', dada:mkInt(), user:[], need:2, cambios:1},
-      {tipo:'total',   dada:mkInt(), user:[], need:2, cambios:2}
+      {tipo:'parcial', dada:i1, user:[], need:2, cambios:1},
+      {tipo:'total',   dada:i2, user:[], need:2, cambios:2}
     ];
     var par=pick(TON_PARES), d=Math.random()<0.5?0:1;
     var ton={dada:par[d], sol:par[1-d], sel:{step:null,alter:0,mode:null,f:0}};
@@ -16027,7 +16065,11 @@ window.SuiteTiempo=(function(){
   }
   function generar(tipo){
     if(tipo==='compuestos'){ return genCompuesto(); }
-    return { tipo:'simples', pares:[genPar(), genPar()], _sel:null };
+    /* (7-oct-2026, Iago: «que el generador sepa evitar repetir dos casos iguales en un ejercicio») Las dos parejas no
+       son el mismo intervalo con las mismas notas: la 2ª se vuelve a sortear (hasta 40 veces) si sale igual que la 1ª. */
+    var p1=genPar(), p2=genPar(), kPar=function(p){ return p.dada.map(function(n){ return n.step+n.alter+'/'+n.octave; }).join('~'); };
+    for(var q=0;q<40 && kPar(p2)===kPar(p1);q++) p2=genPar();
+    return { tipo:'simples', pares:[p1, p2], _sel:null };
   }
 
   /* ===== compuestos ===== */
@@ -16604,7 +16646,13 @@ window.SuiteTiempo=(function(){
   }
   function ordenado(a){ return voiceAuto(a.tones,0); }
   function nombreAcorde(a){ return nombreES(a.root)+' '+TIPOS[a.tipo].lab; }
-  function generar(tipo){ var t=(tipo==='construir')?'construir':'identificar'; return { tipo:t, items:[genAcorde(), genAcorde()], _sel:null }; }
+  /* (7-oct-2026, Iago: «que el generador sepa evitar repetir dos casos iguales en un ejercicio») Los dos acordes no son
+     el mismo (mismo tipo + misma fundamental + misma inversión): el 2º se vuelve a sortear, hasta 40 veces. El mismo
+     acorde en OTRA inversión sí puede salir: es otro caso. */
+  function generar(tipo){ var t=(tipo==='construir')?'construir':'identificar';
+    var a1=genAcorde(), a2=genAcorde(), kAco=function(a){ return a.tipo+'|'+a.root.step+a.root.alter+'|'+a.inv; };
+    for(var q=0;q<40 && kAco(a2)===kAco(a1);q++) a2=genAcorde();
+    return { tipo:t, items:[a1, a2], _sel:null }; }
 
   /* ---------------- SVG util ---------------- */
   var NS='http://www.w3.org/2000/svg';
