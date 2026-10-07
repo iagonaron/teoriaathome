@@ -75,9 +75,20 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 7-oct 22:55 · Fichas y rediseño · EN CURSO (parto de f9e6ade) · index.html, SOLO la generación de casos de nueve motores
-  (nuevoTB, elegirIntervalos, elegirClaves, nuevoSEM, ENA_ADV.generar, INV_INT.generar, ACORD.generar, nuevoENA y
-  genTerminosData): que un ejercicio no traiga dos casos iguales. No toca pintado, corrección, estilos ni fichas ya enviadas.
+- 7-oct 22:13 · Fichas y rediseño · HECHO · commit 67005a6 (EN CURSO en 4ec090b, parto de f9e6ade) · index.html. Iago: «me
+  gustaría que el generador sepa evitar repetir dos casos iguales en un ejercicio. Por ejemplo, estoy haciendo uno de
+  tonalidades y hay dos seguidos igual. Arréglalo para futuras generaciones». SOLO la generación de casos, en nueve
+  motores: nuevoTB (tonalidad → armadura: las 4 tonalidades, distintas), elegirIntervalos (nunca las mismas dos notas),
+  elegirClaves (nunca la misma clave en la misma línea o espacio), nuevoSEM (lo que se pide construir no está ya en
+  «identificar»), ENA_ADV.generar e INV_INT.generar (el 2.º caso ≠ el 1.º), ACORD.generar (no el mismo acorde en la misma
+  inversión), nuevoENA (no dos notas que suenan igual) y genTerminosData (un término no sale en dos apartados). En todos:
+  si el caso recién sorteado ya está, se vuelve a tirar (con tope de intentos); si no hay coincidencia se consumen los
+  mismos números al azar y el ejercicio sale idéntico al de antes. No cambia la forma de los datos guardados ni toca
+  pintado, corrección o estilos; las fichas ya enviadas no cambian. Medido con 2.000 ejercicios por tipo: los repetidos
+  pasan a 0 (tonalidad → armadura tenía un 26 %). Cada bloque lleva su comentario «(7-oct-2026, Iago: …)» con cómo era
+  antes. Para volver: git revert 67005a6, o subir el index.html de APPs/_PARA BORRAR/7-oct-2026-noche-teoria-antes-del-
+  generador-sin-repetidos/ge/. Espejo de Dropbox igual que GitHub. SIN HACER (medido, a decidir por Iago): que dos
+  ejercicios del MISMO tipo de una misma ficha no compartan caso (hoy pasa a menudo: armadura → tonalidad, 90 %).
 - 6-oct 17:45 · Intros didácticas · HECHO · commit d698ff6 (EN CURSO en 9324c67, parto de c1c0b34) ·
   intros/indica-la-tonalidad/escenas.js e indica_tonalidad_60.mp4 · CON BEMOLES, SOLO EL PENÚLTIMO CAMBIA (Iago: «sería
   mucho más claro y preciso que el bemol que se ilumine sea el penúltimo»; en los sostenidos ya cambiaba solo el
