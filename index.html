@@ -12177,6 +12177,50 @@ function __grados_marker__(){}
 
   function barajar(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
+  /* (7-oct-2026, Iago: «que el generador sepa evitar repetir dos casos iguales en un ejercicio») OPCIONAL · ENTRE DOS
+     EJERCICIOS DEL MISMO TIPO DE LA FICHA. casosDeBloque() = los casos de un bloque recién generado, con el mismo
+     criterio que dentro de un ejercicio (hay que llamarla justo después de fichaBloque: en «clasificar intervalos» y
+     «nombrar la nota» las notas solo están en los datos del motor). fichaBloqueSinRepetir() genera un bloque y, si
+     comparte algún caso con «otros» (bloques del mismo tipo que ya están en la ficha), lo vuelve a generar y se queda
+     con el que menos comparte: hasta 30 veces más si el bloque dibuja pentagrama al generarse (12 si ya hay más de dos
+     de ese tipo); hasta 200 si es de solo datos, que no cuesta nada. Los casos se guardan en ej.__casos, NO enumerable:
+     no viaja en el JSON de la ficha. Para quitarlo: que los tres sitios que la llaman vuelvan a llamar a fichaBloque(key). */
+  function casosDeBloque(key, ej){
+    if(!ej) return [];
+    const nk=n=>n?(n.step+(n.alter||0)+'/'+n.octave):'', par=(a,b)=>[nk(a),nk(b)].sort().join('~');
+    try{
+      if(key==='int_clasif' && typeof dataA!=='undefined') return dataA.map(it=>par(it.n1,it.n2));
+      if(key==='cla_a' && typeof dataCA!=='undefined') return dataCA.map(it=>it.clave.nom+'~'+it.pos);
+      if(key==='int_constr') return ej._solData.map(d=>par(d.n1,d.n2));
+      if(key==='cla_b') return ej._solData.map(d=>d.claveNom+'~'+d.pos);
+      if(key==='semitonos') return ej._solData.map(d=>par(d.n1||d.dada, d.n2||d.objetivo));
+      if(key==='acordes') return ej._solData.map(d=>d.tipo+'~'+d.fund.step+d.fund.alter);
+      if(key==='ena_a') return ej._solData.map(d=>'suena'+(((STEP_ST[d.dada.step]+d.dada.alter)%12+12)%12));   /* el mismo sonido (Fa♯ = Sol♭) */
+      const T=ej._terminos, Q=ej._quiz, C=ej._cad;
+      const l = ej._solData
+        || (ej._inv && (ej._inv.pares ? ej._inv.pares.map(p=>p.dada) : [ej._inv.dada]))
+        || (ej._aco && ej._aco.items.map(a=>[a.tipo,a.root.step,a.root.alter,a.inv]))
+        || (ej._enaAdv && ej._enaAdv.items.map(i=>i.dada).concat([ej._enaAdv.ton.dada.nom]))
+        || (T && T.A.map(a=>a.term).concat(T.B.map(b=>b.t), T.C.correcto))   /* el término, esté en el apartado que esté */
+        || (Q && [[Q.p1.il,Q.p1.q],Q.p2])
+        || [ ej._vecinos || ej._comSol || (C && [C.type,C.mode,C.keyName,(C.events||[]).map(e=>e.midi)]) || (/^(esc_|gra_)/.test(key) && ej.enun) || ej._spec || ej.enun ];   /* escalas y grados: el enunciado ES el caso («Construye la escala de Re m armónica.») */
+      return l.map(c=>JSON.stringify(c));
+    }catch(e){ return []; }
+  }
+  function fichaBloqueSinRepetir(key, otros){
+    const ya=new Set(); (otros||[]).forEach(o=>{ ((o && o.__casos)||[]).forEach(c=>ya.add(c)); });
+    let mejor=null, mejorN=1e9, mejorCs=[];
+    const dibuja=!!MOTOR[key] || /^(esc_|gra_)/.test(key);   // estos bloques pintan notación al generarse (unos ms cada vez)
+    const tope=!dibuja ? 201 : ((otros||[]).length<=2 ? 31 : 13);   // con muchos bloques del mismo tipo el dominio ya no da: menos intentos
+    for(let q=0;q<tope;q++){
+      const ej=fichaBloque(key), cs=casosDeBloque(key, ej), n=cs.filter(c=>ya.has(c)).length;
+      if(ej && n<mejorN){ mejor=ej; mejorN=n; mejorCs=cs; }
+      if(!ej || !ya.size || n===0) break;
+    }
+    if(mejor){ try{ Object.defineProperty(mejor,'__casos',{ value:mejorCs, enumerable:false, configurable:true }); }catch(e){} }
+    return mejor;
+  }
+
   function generarFicha(){
     if(!PP.config.items.length){ alert('Añade al menos un tipo de ejercicio a la ficha.'); return false; }
     const orden=[];
@@ -12184,7 +12228,7 @@ function __grados_marker__(){}
     barajar(orden);
     const ficha=[];
     orden.forEach(key=>{
-      const ej=fichaBloque(key);
+      const ej=fichaBloqueSinRepetir(key, ficha.filter(f=>f.key===key).map(f=>f.ej));   /* (7-oct-2026) opcional: sin repetir caso entre ejercicios del mismo tipo */
       if(ej) ficha.push({ n:ficha.length+1, key, label:(PP_FLAT[key]||{}).label||key, ej });
     });
     if(!ficha.length){ alert('No se pudo generar la ficha.'); return false; }
@@ -13139,7 +13183,7 @@ function __grados_marker__(){}
       document.getElementById('ppToggleSol').textContent=PP.mostrarSol?'Ocultar soluciones':'Ver soluciones';
     };
     document.getElementById('ppRegenAll').onclick=()=>{
-      PP.ficha.forEach(it=>{ const e=fichaBloque(it.key); if(e) it.ej=e; });
+      PP.ficha.forEach((it,k)=>{ const e=fichaBloqueSinRepetir(it.key, PP.ficha.slice(0,k).filter(f=>f.key===it.key).map(f=>f.ej)); if(e) it.ej=e; });   /* (7-oct-2026) opcional: ídem */
       renderRevisar();
     };
     try{ if(host.scrollIntoView) host.scrollIntoView({behavior:'smooth', block:'start'}); }catch(e){}
@@ -13816,7 +13860,7 @@ function __grados_marker__(){}
       try{ pintarBloque(solHost, ej, 'sol'); }catch(e){}
     }
     card.querySelector('.pp-regen').onclick=()=>{
-      const nuevo=fichaBloque(item.key);
+      const nuevo=fichaBloqueSinRepetir(item.key, (PP.ficha||[]).filter(f=>f!==item && f.key===item.key).map(f=>f.ej));   /* (7-oct-2026) opcional: ídem */
       if(nuevo){ item.ej=nuevo; const fresh=cardEjercicio(item); card.replaceWith(fresh); }
     };
     return card;

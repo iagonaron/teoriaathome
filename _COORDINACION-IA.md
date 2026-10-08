@@ -75,6 +75,14 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 8-oct 10:17 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
+  fichero; comprobado antes que el último commit seguía siendo fbb531b y el vivo, d3dda0e5). Iago (8-oct, «sí a
+  todo»): dos ejercicios del MISMO tipo en una ficha ya no comparten caso. Al generar la ficha, al «regenerar todo» y
+  al ↻ de una tarjeta, si el ejercicio nuevo comparte algún caso con otro del mismo tipo que ya está en la ficha, se
+  vuelve a generar y se queda con el que menos comparte. Si la ficha no repite tipo, no cambia nada (mismos números al
+  azar). No cambia lo que se guarda (los casos van en una propiedad no enumerable, ej.__casos) y no toca refuerzos ni
+  práctica libre. Marca en el código: fichaBloqueSinRepetir. Pruebas sobre el fichero real: humo 175 ✓; 24 tipos × 300
+  fichas con dos ejercicios del mismo tipo, 144 ✓ (casos compartidos → 0 %); regenerar, 551 ✓.
 - 7-oct 22:13 · Fichas y rediseño · HECHO · commit 67005a6 (EN CURSO en 4ec090b, parto de f9e6ade) · index.html. Iago: «me
   gustaría que el generador sepa evitar repetir dos casos iguales en un ejercicio. Por ejemplo, estoy haciendo uno de
   tonalidades y hay dos seguidos igual. Arréglalo para futuras generaciones». SOLO la generación de casos, en nueve
