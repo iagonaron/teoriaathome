@@ -75,6 +75,17 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 13-oct 17:10 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
+  fichero; comprobado antes que el último commit seguía siendo df4ae4f). Iago (13-oct): en clase, «Acordes» (práctica)
+  daba la fundamental por mal puesta con la rueda bien. Causa: al colocar o borrar una nota en los compases de
+  CONSTRUIR, renderACO repinta la fila de respuestas y buildACOIdControls volvía a montar las ruedas de IDENTIFICAR
+  desde el guion con e.selNota=null (e.selTipo sí se conservaba), así que salía «fundamental incorrecta · tipo
+  correcto» aunque estuviera bien. Ahora las monta con lo ya elegido: la nota (startN), su ♯/♭ (repaintACONota) y el
+  tipo (startT). Solo esa función; cada cambio lleva su comentario «(13-oct-2026, Iago)» con cómo era antes. La ficha
+  del alumno (montarAcordes) ya conservaba la elección y no cambia. Banco con el fichero real: práctica 9 ✓ en
+  ordenador, móvil y táctil (antes 3 ✗, el mismo fallo de clase) y ficha 5 ✓. El mismo arreglo, en teoriapro. Para
+  volver: git revert de este commit, o subir el index.html de APPs/_PARA
+  BORRAR/13-oct-2026-teoria-antes-de-acordes-fundamental/ge/. Espejo de Dropbox igual que GitHub.
 - 8-oct 10:17 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
   fichero; comprobado antes que el último commit seguía siendo fbb531b y el vivo, d3dda0e5). Iago (8-oct, «sí a
   todo»): dos ejercicios del MISMO tipo en una ficha ya no comparten caso. Al generar la ficha, al «regenerar todo» y

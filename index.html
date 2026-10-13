@@ -4999,13 +4999,18 @@ function buildACOIdControls(ans, e, i){
   ans.appendChild(wrap);
   // rueda de nombre: guión por defecto; Do justo encima del guión, luego Re, Mi... (mismo criterio que el resto)
   const nItems=NOTAS_ES_REV.concat(['—']);
-  const startN=NOTAS_ES_REV.length; // guión
+  /* (13-oct-2026, Iago) BUG «hacíamos bien los acordes y al corregir decía "fundamental incorrecta"»: al colocar o
+     borrar una nota en los compases de CONSTRUIR se vuelve a pintar toda la fila de respuestas (renderACO), y aquí las
+     ruedas de IDENTIFICAR se montaban otra vez desde el guion con selNota=null; el tipo sí quedaba guardado. Por eso
+     salía «fundamental incorrecta · tipo correcto». Ahora se montan con lo ya elegido (nota, ♯/♭ y tipo).
+     Antes: startN=NOTAS_ES_REV.length, e.selNota=null tras crear la rueda y startT siempre en el guion. */
+  const startN=e.selNota? NOTAS_ES_REV.indexOf(e.selNota) : NOTAS_ES_REV.length; // guión si aún no hay nota
   const wNapi=makeWheel(wN, nItems, startN, (idx)=>{
     e.selNota = (idx<NOTAS_ES_REV.length)?NOTAS_ES_REV[idx]:null; e.selAlt='';
     repaintACONota(e,wNapi,accRow);
   });
   e._wN=wNapi;
-  e.selNota=null; // guión por defecto
+  repaintACONota(e,wNapi,accRow);   /* (13-oct-2026) la nota elegida, con su ♯/♭ y el botón encendido */
   accRow.querySelectorAll('.aco-acc').forEach(b=>b.addEventListener('click',()=>{
     if(!e.selNota) return;
     e.selAlt=(e.selAlt===b.dataset.a)?'':b.dataset.a;
@@ -5013,7 +5018,7 @@ function buildACOIdControls(ans, e, i){
   }));
   // rueda de tipo (guion en medio); orden ya visual: arriba Aum/PM, abajo Pm/Dis
   const tItems=acoTipoItems();
-  const startT=tItems.indexOf('—');
+  const startT=(e.selTipo && tItems.indexOf(e.selTipo)>=0)? tItems.indexOf(e.selTipo) : tItems.indexOf('—');   /* (13-oct-2026) el tipo elegido se conserva */
   const wTapi=makeWheel(wT, tItems, startT, (idx)=>{
     const v=tItems[idx]; e.selTipo = (v==='—')?null:v;
   });
