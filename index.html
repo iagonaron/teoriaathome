@@ -10766,7 +10766,7 @@ function __grados_marker__(){}
     function buildNoteHit(p){
       for(let i=0;i<n;i++){ if(geom.comp[i].modo!=='build') continue; const arr=estado.resp[i];
         for(let h=0;h<arr.length;h++){ const x=geom.comp[i].baseX, y=yReal(arr[h].step,arr[h].octave);
-          if(x!=null&&y!=null && Math.abs(x-p.x)<20 && Math.abs(y-p.y)<11) return {compas:i, idx:h}; } }
+          if(x!=null&&y!=null && Math.abs(x-p.x)<20 && Math.abs(y-p.y)<8) return {compas:i, idx:h}; } }   /* (14-oct-2026, Iago: «primero colocar la nota re y luego la nota si… tiene que ser válido») Antes <11: una 3ª (10 px) contaba como «clic sobre la nota ya puesta», así que la 2ª nota no se podía apilar en la columna del acorde (se volvía a seleccionar la 1ª). Con <8, como en el ejercicio libre de acordes. La corrección ya era en cualquier orden. */
       return null;
     }
 

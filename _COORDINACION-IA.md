@@ -75,6 +75,16 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 14-oct 18:25 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
+  fichero; el relevo comprueba que index.html y este registro son los del último commit). Iago (14-oct): en «construye
+  acordes» de la ficha, ¿hay que poner primero la 3ª y luego la 5ª? «primero colocar la nota re y luego la nota si… eso
+  tiene que ser válido». La CORRECCIÓN ya era en cualquier orden (comprobarAcordes, la ficha corregida y el ejercicio libre
+  comparan las notas como conjunto; en teoriapro, igual). Lo que fallaba era COLOCAR: en montarAcordes, buildNoteHit daba por
+  «clic sobre la nota ya puesta» todo lo que quedara a menos de 11 px, y una 3ª está a 10 px, así que la 2.ª nota no se podía
+  apilar en la columna del acorde (se volvía a seleccionar la 1.ª), en los dos órdenes. Ahora < 8 px, como en el ejercicio
+  libre de acordes. Nada más cambia (ruedas, ♯/♭, ×, Deshacer, corrección). Banco 14/14 a 1280, 1024 y 820, con ratón y
+  táctil (antes 3/14). Para volver: git revert de este commit, o subir el index.html de
+  APPs/_PARA BORRAR/14-oct-2026-teoria-antes-de-acordes-en-cualquier-orden/. Espejo de Dropbox igual que GitHub.
 - 14-oct 09:19 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
   fichero; el relevo comprueba que index.html y este registro son los del último commit). Iago (14-oct): «¿eso también vela
   por las fichas de teoría?» → «sí, las dos cosas». SENTRY en la teoría y en las fichas, como en el ritmo: bloque al principio
