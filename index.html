@@ -2,6 +2,29 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<!-- (14-oct-2026, Iago: «sí, las dos cosas») Sentry, como en el ritmo: errores JS en producción de la teoría y de las fichas, sin datos
+     personales (solo el id anónimo de la cuenta) y sin el secreto del profesor. Lo revisa la tarea «Incidencias» (también si los
+     errores empiezan con una versión nueva de Chrome). Para quitarlo: borrar este bloque, desde aquí hasta su segundo </script>. -->
+<script src="https://browser.sentry-cdn.com/10.70.0/bundle.min.js" crossorigin="anonymous"></script>
+<script>
+if(window.Sentry && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){
+  Sentry.init({ dsn:'https://c2f1bb8373171bd486ca2ec64d472b33@o4512064125861888.ingest.de.sentry.io/4512064142704720',
+    release:'teoriaathome@2026-10-14', environment:'production', sendDefaultPii:false,
+    initialScope:{ tags:{ app:'teoriaathome' } },
+    ignoreErrors:['ResizeObserver loop','Non-Error promise rejection','AbortError','Load failed','NetworkError','Failed to fetch'],
+    beforeSend:function(ev){
+      try{ var s=(JSON.parse(localStorage.getItem('lmeav_session')||localStorage.getItem('lmpro_session')||'null')||window.__LM_SES||null); if(s&&s.id){ ev.tags=ev.tags||{}; ev.tags.cuenta=String(s.id); } }catch(e){}
+      try{ if(!(ev.tags&&ev.tags.cuenta)){ var q=new URLSearchParams(location.search); var c=q.get('cuenta')||String(q.get('revision')||'').split(':')[1]||''; if(/^[0-9a-f-]{36}$/i.test(c)){ ev.tags=ev.tags||{}; ev.tags.cuenta=c; } } }catch(e){}   /* en Teoría la cuenta viene en el enlace */
+      try{ var tapa=function(u){ return String(u==null?'':u).replace(/([?&#](?:s|secreto|p_secreto|token|tok)=)[^&#]*/gi,'$1***'); };   /* el secreto del profesor (?s=) no sale nunca */
+        if(ev.request){ if(ev.request.url) ev.request.url=tapa(ev.request.url); if(typeof ev.request.query_string==='string') ev.request.query_string=tapa('?'+ev.request.query_string).slice(1); if(ev.request.headers&&ev.request.headers.Referer) ev.request.headers.Referer=tapa(ev.request.headers.Referer); }
+        (ev.breadcrumbs||[]).forEach(function(b){ if(b&&b.data){ ['url','from','to'].forEach(function(x){ if(b.data[x]) b.data[x]=tapa(b.data[x]); }); } if(b&&b.message) b.message=tapa(b.message); }); }catch(e){}
+      window.__lmSentryN=(window.__lmSentryN||0)+1; if(window.__lmSentryN>5) return null;   /* como mucho 5 avisos por página */
+      if(ev.user) delete ev.user;
+      return ev;
+    }
+  });
+}
+</script>
 <script>/* LM piel (27-sep-2026): estetica nueva SOLO en los navegadores de Iago Tester/Protester (marca lm_piel=1). Para quitarla, borra esta linea. */try{if((' '+document.cookie).indexOf(' lm_piel=1')>-1||location.search.indexOf('piel=1')>-1)document.write('<script src="https://ge.lmathome.es/piel/lm-piel.js" data-app="teoria-ge"></scr'+'ipt>')}catch(e){}</script>
 <!-- ⚠ (27-sep-2026, Iago) VARIAS CONVERSACIONES DE CLAUDE SUBEN CAMBIOS A ESTE REPOSITORIO A LA VEZ.
      Antes de subir nada, lee _COORDINACION-IA.md (en la raíz del repositorio): quién toca qué y cómo subir sin pisarse.

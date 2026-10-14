@@ -75,6 +75,17 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 14-oct 09:19 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
+  fichero; el relevo comprueba que index.html y este registro son los del último commit). Iago (14-oct): «¿eso también vela
+  por las fichas de teoría?» → «sí, las dos cosas». SENTRY en la teoría y en las fichas, como en el ritmo: bloque al principio
+  del <head>, justo después de <meta charset> (copiado POR SCRIPT del index.html de ritmoathome, con su misma dirección de
+  Sentry, proyecto de los portales), con app='teoriaathome' y release 'teoriaathome@2026-10-14'. En beforeSend, además de lo de
+  siempre: la cuenta sale del enlace (?cuenta= o ?revision=ficha:cuenta), se tapan ?s= (secreto del profesor), token y
+  secreto en la dirección y en las migas de pan, y como mucho 5 avisos por página. Lo revisa la tarea «Incidencias» (también
+  si los errores empiezan con un Chrome nuevo). Banco: 12/12 (portada, revisión del profesor y del alumno: la página sale
+  igual, sin avisos nuevos, y el aviso a Sentry va sin secreto). El mismo cambio, en teoriapro. Para volver: git revert
+  de este commit, o subir el index.html de APPs/_PARA BORRAR/14-oct-2026-teoria-antes-de-sentry/ge/. OJO: si tocas el
+  <head>, deja el bloque de Sentry después de <meta charset>. Espejo de Dropbox igual que GitHub.
 - 14-oct 08:20 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
   fichero; el relevo comprueba que index.html y este registro son los del último commit). Iago (14-oct): RECLAMACIONES
   POR EJERCICIO Y POR APARTADO («sea lo que sea que se corrige, si se acepta, que suba la nota»). En la ficha corregida
