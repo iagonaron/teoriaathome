@@ -75,6 +75,18 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 14-oct 08:20 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
+  fichero; el relevo comprueba que index.html y este registro son los del último commit). Iago (14-oct): RECLAMACIONES
+  POR EJERCICIO Y POR APARTADO («sea lo que sea que se corrige, si se acepta, que suba la nota»). En la ficha corregida
+  (?revision=…, la del alumno y la del profesor), si la entrega trae payload.ajustes {n: {pct 0-1, tipo, apartados}}
+  (lo escribe suite_reclamacion_decidir cuando Iago acepta desde la campana del Diario: dar por bueno, +N apartados o
+  % a mano), ese % manda sobre el que sacó (nunca lo baja) y el ejercicio lleva la marca «✔ Reclamación aceptada:
+  dado por bueno / +N apartados / nota puesta a mano (antes 75 %)»; en el rótulo del alumno salen todos los ejercicios
+  de la reclamación (reclamacion.ns), no solo el primero. Bloques marcados «(14-oct-2026, Iago)»: al cargar la revisión,
+  en la tarjeta de cada ejercicio y en el rótulo. Banco con la copia saneada: 8/8 (marcas, % nuevo, rótulo, nota
+  registrada, revisión del profesor, sin errores nuevos). El mismo cambio, en teoriapro. Para volver: git revert de
+  este commit, o subir el index.html de APPs/_PARA BORRAR/14-oct-2026-teoria-antes-de-las-marcas-de-reclamacion/ge/.
+  Espejo de Dropbox igual que GitHub.
 - 13-oct 17:10 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
   fichero; comprobado antes que el último commit seguía siendo df4ae4f). Iago (13-oct): en clase, «Acordes» (práctica)
   daba la fundamental por mal puesta con la rueda bien. Causa: al colocar o borrar una nota en los compases de
