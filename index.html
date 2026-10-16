@@ -927,6 +927,83 @@ if(window.Sentry && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){
 
 </head>
 <body>
+<script>
+/* (16-oct-2026, Iago · «Fichas y rediseño») LM_ACO · ACORDES: reglas comunes (teoría GE y GP)
+   1) CONSTRUIR: «lo que importa es la nota del bajo y cómo se llaman las tres notas en total y que las otras dos estén
+      por encima». Vale el bajo pedido y las demás notas con su nombre y su alteración, en CUALQUIER octava y orden,
+      siempre por encima del bajo. Se compara la grafía (Mi♯ no vale por Fa). Antes: la octava exacta de la solución.
+   2) IDENTIFICAR: además del tipo (y de la inversión), la FUNDAMENTAL con su alteración: rueda Do…Si (guion = sin
+      elegir) y botones ♭/♯, como en «Acordes». Las fichas ya repartidas (sin la marca _v:2) siguen como estaban.
+   Para quitarlo: borrar este bloque y los sitios marcados «LM_ACO». */
+(function(){
+  var ST={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+  var NOTAS=['Si','La','Sol','Fa','Mi','Re','Do'];   // como en «Acordes»: guion abajo y, encima, Do, Re, Mi…
+  var N2S={Do:'C',Re:'D',Mi:'E',Fa:'F',Sol:'G',La:'A',Si:'B'}, S2N={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
+  function midi(n){ return (n.octave+1)*12+ST[n.step]+(n.alter||0); }
+  function nom(n){ return n.step+'_'+(n.alter||0); }
+  /* La fundamental está DADA (es el bajo): las notas puestas deben llamarse como las de «objetivo» (una por nombre) y
+     sonar por encima de ella. → {ok, marcas: acierto de cada nota puesta} */
+  function arriba(fund, puestas, objetivo){
+    puestas=(puestas||[]).filter(Boolean); objetivo=(objetivo||[]).filter(Boolean);
+    var fm=fund?midi(fund):-1e9, libres=objetivo.map(nom), marcas=[];
+    puestas.forEach(function(u){ var k=libres.indexOf(nom(u)), ok=(k>=0 && midi(u)>fm); if(ok) libres[k]=null; marcas.push(ok); });
+    return { ok: !!fund && puestas.length===objetivo.length && marcas.every(Boolean), marcas: marcas };
+  }
+  /* El alumno pone TODO el acorde (inversiones): la más grave debe llamarse como acorde[0] (el bajo pedido) y las demás,
+     por encima, como el resto. Para las marcas, el bajo es la nota más grave con ese nombre (si la hay): lo que quede por
+     debajo de ella es lo que está mal. → {ok, marcas, iBajo} */
+  function bajo(puestas, acorde){
+    puestas=(puestas||[]).filter(Boolean); acorde=(acorde||[]).filter(Boolean);
+    if(!puestas.length || !acorde.length) return { ok:false, marcas:puestas.map(function(){ return false; }), iBajo:-1 };
+    var ms=puestas.map(midi), nb=nom(acorde[0]), iB=-1;
+    puestas.forEach(function(u,i){ if(nom(u)===nb && (iB<0 || ms[i]<ms[iB])) iB=i; });
+    if(iB<0){ var min=Math.min.apply(null, ms); iB=ms.indexOf(min); }
+    var libres=acorde.slice(1).map(nom), marcas=[];
+    puestas.forEach(function(u,i){ if(i===iB){ marcas.push(nom(u)===nb); return; } var k=libres.indexOf(nom(u)), ok=(k>=0 && ms[i]>ms[iB]); if(ok) libres[k]=null; marcas.push(ok); });
+    return { ok: puestas.length===acorde.length && marcas.every(Boolean), marcas: marcas, iBajo: iB };
+  }
+  function altDe(a){ return a==='#'?1:a==='b'?-1:0; }
+  function raizOk(nota, alt, fund){ return !!(nota && fund && N2S[nota]===fund.step && altDe(alt)===(fund.alter||0)); }
+  function txtAlt(a){ return a===1?'♯':a===-1?'♭':a===2?'𝄪':a===-2?'𝄫':''; }
+  function raizTxt(fund){ return fund ? (S2N[fund.step]||fund.step)+txtAlt(fund.alter||0) : ''; }
+  function selTxt(nota, alt){ return nota ? nota+(alt==='#'?'♯':alt==='b'?'♭':'') : '—'; }
+  /* Rueda de la fundamental + ♭/♯ (mismo aspecto que en «Acordes»). Guarda en o[kN] ('Do'…'Si' | null) y o[kA] (''|'#'|'b'). */
+  function raizRueda(host, o, opc){
+    opc=opc||{}; var kN=opc.kN||'nota', kA=opc.kA||'alt';
+    if(o[kN]===undefined) o[kN]=null; if(o[kA]==null) o[kA]='';
+    var col=document.createElement('div'); col.className='lm-raiz';
+    if(opc.label){ var l=document.createElement('div'); l.className='wlab'; l.textContent=opc.label; col.appendChild(l); }
+    var w=document.createElement('div'); w.className='wheel'; w.style.cssText='height:'+(opc.alto||90)+'px;width:'+(opc.ancho||60)+'px';
+    var acc=document.createElement('div'); acc.className='lm-raiz-acc';
+    acc.innerHTML='<button type="button" class="acc-btn aco-acc" data-a="b">♭</button><button type="button" class="acc-btn aco-acc" data-a="#">♯</button>';
+    col.appendChild(w); col.appendChild(acc); if(host) host.appendChild(col);
+    var quieta=false;
+    function items(){ var a=o[kA]==='#'?'♯':o[kA]==='b'?'♭':''; return NOTAS.map(function(n){ return n===o[kN]?(n+a):n; }).concat(['—']); }
+    function idx(){ var i=o[kN]?NOTAS.indexOf(o[kN]):-1; return i>=0?i:NOTAS.length; }
+    var api=window.makeWheel(w, items(), idx(), function(i){ if(quieta) return; o[kN]=(i<NOTAS.length)?NOTAS[i]:null; o[kA]=''; pinta(); if(opc.onChange) opc.onChange(o); });
+    function pinta(){ try{ api.setItems(items(), true); api.setIndex(idx(), true); }catch(e){}
+      var bs=acc.querySelectorAll('.aco-acc'); for(var j=0;j<bs.length;j++) bs[j].classList.toggle('on', bs[j].getAttribute('data-a')===o[kA] && o[kA]!==''); }
+    var bs=acc.querySelectorAll('.aco-acc');
+    for(var j=0;j<bs.length;j++){ (function(b){ b.addEventListener('click', function(){ if(quieta || !o[kN]) return; var a=b.getAttribute('data-a'); o[kA]=(o[kA]===a)?'':a; pinta(); if(opc.onChange) opc.onChange(o); }); })(bs[j]); }
+    pinta();
+    return { el:col, wheel:w, pinta:pinta,
+      marca:function(bien, fund){ quieta=true; w.style.color=bien?'#22c98a':'#e11d1d'; col.classList.remove('lm-raiz-bien','lm-raiz-mal'); col.classList.add(bien?'lm-raiz-bien':'lm-raiz-mal');
+        if(!bien && fund && !col.querySelector('.lm-raiz-sol')){ var s=document.createElement('div'); s.className='lm-raiz-sol'; s.textContent=raizTxt(fund); col.appendChild(s); } } };
+  }
+  window.LM_ACO={ midi:midi, nom:nom, arriba:arriba, bajo:bajo, raizOk:raizOk, raizTxt:raizTxt, selTxt:selTxt, raizRueda:raizRueda };
+})();
+</script>
+<style>/* (16-oct-2026) LM_ACO · la fundamental al identificar acordes */
+.lm-raiz{display:flex;flex-direction:column;align-items:center;gap:6px}
+.lm-raiz-acc{display:flex;gap:5px}
+.lm-raiz-sol{font-size:12px;font-weight:800;color:#2f6df6;text-align:center;line-height:1.1}
+.lm-raiz.lm-raiz-bien .wheel{box-shadow:0 0 0 2px #22c98a}
+.lm-raiz.lm-raiz-mal .wheel{box-shadow:0 0 0 2px #e11d1d}
+.lm-raiz.lm-raiz-bien .wheel .sel{color:#22c98a!important}
+.lm-raiz.lm-raiz-mal .wheel .sel{color:#e11d1d!important}
+.ac-num{display:none;font-size:11px;font-weight:800;text-align:center;margin-bottom:6px;opacity:.8}
+@media (max-width:620px){ .ac-ctrls.lm-raiz-on{grid-template-columns:1fr;gap:18px} .ac-ctrls.lm-raiz-on .ac-num{display:block} }
+</style>
 
 <div class="teo-neb-bg" aria-hidden="true">
   <span class="neb b1"></span><span class="neb b2"></span><span class="neb b3"></span>
@@ -1072,7 +1149,7 @@ if(window.Sentry && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){
       <button id="tabACOa" class="on" onclick="acoTab('identificar')">A · Identifica</button>
       <button id="tabACOb" onclick="acoTab('construir')">B · Construye</button>
     </div></div>
-    <p class="iv-sub" id="subACO">Identifica el tipo de acorde y su inversión. Puedes ordenarlo en el paréntesis gris si te resulta útil.</p>
+    <p class="iv-sub" id="subACO">Identifica el acorde (su fundamental y su tipo) y su inversión. Puedes ordenarlo en el paréntesis gris si te resulta útil.</p>
     <div class="ex-card" id="cardINVACO">
       <div class="ex-top">
         <div class="ex-letter"><b id="modeLblACO">A · Identifica</b><span id="modeSubACO">identifica el acorde y su inversión</span></div>
@@ -5282,6 +5359,7 @@ function corregirACO(){
         const a=norm(got), b=norm(obj);
         for(let k=0;k<a.length;k++){ if(a[k]!==b[k]){ ok=false; break; } }
       }
+      if(window.LM_ACO) ok=LM_ACO.arriba(e.fund, got, obj).ok;   /* LM_ACO (16-oct-2026): cada nota con su nombre, en cualquier octava, por encima de la fundamental */
       cell.classList.remove('ok','bad'); cell.classList.add(ok?'ok':'bad');
       e._corregido=true; e._solVisible=!ok;
       if(ok){ tag.style.color=green; tag.textContent='✓'; }
@@ -10905,7 +10983,8 @@ function __grados_marker__(){}
       } else {
         const got=(estado.resp&&estado.resp[i])||[];
         const obj=sd.objetivo||[];
-        if(got.length===obj.length){
+        if(window.LM_ACO){ if(LM_ACO.arriba(sd.fund, got, obj).ok) aciertos++; }   /* LM_ACO (16-oct-2026): cualquier octava, por encima de la fundamental */
+        else if(got.length===obj.length){
           const norm=arr=>arr.map(nb=>nb.step+nb.octave+'_'+(nb.alter||0)).sort();
           const a=norm(got), b=norm(obj);
           let ok=true; for(let k=0;k<a.length;k++){ if(a[k]!==b[k]){ ok=false; break; } }
@@ -11727,7 +11806,7 @@ function __grados_marker__(){}
     ena_avanzado:'Reescribe la enarmonía parcial y total de cada intervalo y escribe la tonalidad enarmónica.',
     inv_simples:'Clasifica el intervalo, inviértelo y vuelve a clasificarlo.',
     inv_compuestos:'Analiza el intervalo compuesto, inviértelo y vuelve a analizarlo.',
-    aco_identificar:'Identifica el tipo de acorde y su inversión (ordena en el paréntesis si te ayuda).',
+    aco_identificar:'Identifica el acorde (fundamental y tipo) y su inversión (ordena en el paréntesis si te ayuda).',   /* LM_ACO (16-oct-2026) */
     aco_construir:'Construye cada acorde en el estado pedido (mitad izquierda del compás).',
     adorno_quiz:'Marca la respuesta correcta: test (a, b o c) y verdadero/falso.',
     abrev_quiz:'Marca la respuesta correcta: test (a, b o c) y verdadero/falso.',
@@ -11960,7 +12039,7 @@ function __grados_marker__(){}
     gra_senalar:/rodea la nota|grado/i,
     semitonos:/semitono/i,
     acordes:/identifica los dos primeros acordes|acordes\s*\(identificar|identifica los siguientes acordes|construye los siguientes acordes/i,
-    aco_identificar:/identifica el tipo de acorde|identifica el acorde y la inversi[óo]n/i,
+    aco_identificar:/identifica el tipo de acorde|identifica el acorde y la inversi[óo]n|identifica el acorde \(fundamental/i,
     aco_construir:/construye cada acorde en el estado|construye el acorde en la inversi[óo]n/i,
     ena_a:/enarmon[íi]as? de cada nota|^\s*\d*\.?\s*enarmon[íi]as?\.?\s*$/i,
     ena_avanzado:/enarmon[íi]a parcial y total/i,
@@ -13732,12 +13811,13 @@ function __grados_marker__(){}
         const arr=(rsp[i]||[]).filter(Boolean); const obj=sd.objetivo||[];
         const usadas=[];
         const notas=[{nb:sd.fund, col:COR_NEG}];
-        arr.forEach(u=>{ const k=obj.findIndex((o,oi)=>!usadas.includes(oi)&&o.step===u.step&&o.octave===u.octave&&(o.alter||0)===(u.alter||0));
+        const _lm = window.LM_ACO ? LM_ACO.arriba(sd.fund, arr, obj) : null;   /* LM_ACO (16-oct-2026): verde/rojo como se corrige */
+        arr.forEach((u,ui)=>{ const k=obj.findIndex((o,oi)=>!usadas.includes(oi)&&o.step===u.step&&o.octave===u.octave&&(o.alter||0)===(u.alter||0));
           if(k>=0) usadas.push(k);
-          notas.push({nb:u, col:(k>=0)?COR_OK:COR_BAD});
+          notas.push({nb:u, col:(_lm ? _lm.marcas[ui] : k>=0)?COR_OK:COR_BAD});
         });
         tick.push(mkAcorde(notas));
-        const completo = usadas.length===obj.length && arr.length===obj.length;
+        const completo = _lm ? _lm.ok : (usadas.length===obj.length && arr.length===obj.length);
         if(!completo){ // acorde correcto entero en azul al lado
           tick.push(mkAcorde([{nb:sd.fund, col:COR_SOL}].concat(obj.map(o=>({nb:o, col:COR_SOL})))));
         }
@@ -13787,7 +13867,7 @@ function __grados_marker__(){}
           ul.appendChild(filaCorr('Compás '+(i+1)+' tipo:', g.tipo?(TIPO[g.tipo==='7D'?'D7':g.tipo]||g.tipo):'', TIPO[sd.tipo]||sd.tipo, okTipo));
         } else {
           const arr=(rsp[i]||[]); const obj=sd.objetivo||[];
-          const okAll = obj.length===arr.length && obj.every(o=>arr.some(u=>u.step===o.step&&u.octave===o.octave&&(u.alter||0)===(o.alter||0)));
+          const okAll = window.LM_ACO ? LM_ACO.arriba(sd.fund, arr, obj).ok : (obj.length===arr.length && obj.every(o=>arr.some(u=>u.step===o.step&&u.octave===o.octave&&(u.alter||0)===(o.alter||0))));   /* LM_ACO */
           ul.appendChild(filaCorr('Compás '+(i+1)+' (notas):', arr.map(nN).join(' '), obj.map(nN).join(' '), okAll));
         }
       });
@@ -16734,7 +16814,7 @@ window.SuiteTiempo=(function(){
   function generar(tipo){ var t=(tipo==='construir')?'construir':'identificar';
     var a1=genAcorde(), a2=genAcorde(), kAco=function(a){ return a.tipo+'|'+a.root.step+a.root.alter+'|'+a.inv; };
     for(var q=0;q<40 && kAco(a2)===kAco(a1);q++) a2=genAcorde();
-    return { tipo:t, items:[a1, a2], _sel:null }; }
+    return { tipo:t, items:[a1, a2], _sel:null, _v:2 }; }   /* LM_ACO (16-oct-2026): _v:2 = al identificar se pide la fundamental; al construir, por nombres sobre el bajo */
 
   /* ---------------- SVG util ---------------- */
   var NS='http://www.w3.org/2000/svg';
@@ -16857,6 +16937,7 @@ window.SuiteTiempo=(function(){
     var sbox=document.createElement('div'); sbox.className='ac-staffbox'; wrap.appendChild(sbox);
     var ctrls=document.createElement('div'); ctrls.className='ac-ctrls'; wrap.appendChild(ctrls);
     g.items.forEach(function(it){ it.ord=it.ord||[]; it.sel=it.sel||{tipo:null,inv:null}; });
+    var conRaiz=(g._v>=2) && !!window.LM_ACO; if(conRaiz) ctrls.classList.add('lm-raiz-on');   /* LM_ACO (16-oct-2026): la fundamental, con su rueda y ♭/♯ */
     var selA=null;   // {i,k} nota del paréntesis seleccionada (para la ✕)
     function measuresOf(res){ return g.items.map(function(it,ci){
       var sm=(!res && selA && selA.i===ci && it.ord[selA.k])?{key:it.ord[selA.k].step+it.ord[selA.k].octave, zona:'ord'}:null;
@@ -16902,8 +16983,9 @@ window.SuiteTiempo=(function(){
       svg.onmouseleave=function(){ svg._gnLastNat=null; acoClr(svg); };
       svg.onclick=function(ev){ if(svg._touchHandled) return; place(ev); };
       if(window.GN_UNIF) GN_UNIF.wireGhostTouch(svg,{ hover:function(t){ hover(t); }, click:function(t){ place(t); }, clear:function(){ acoClr(svg); } }); }
-    g.items.forEach(function(it){
+    g.items.forEach(function(it, _ix){
       var cell=document.createElement('div'); cell.className='ac-cell';
+      if(conRaiz) it.__raiz=LM_ACO.raizRueda(cell, it.sel, {label:'Fundamental'});   /* LM_ACO */
       var wcol=document.createElement('div'); var wl=document.createElement('div'); wl.className='wlab'; wl.textContent='Tipo de acorde'; wcol.appendChild(wl);
       var wN=document.createElement('div'); wN.className='wheel'; wN.style.cssText='height:90px;width:64px'; wcol.appendChild(wN);
       /* orden pedido: guión en el centro · arriba PM, Aum, 7D · abajo Pm, Dis */
@@ -16920,15 +17002,21 @@ window.SuiteTiempo=(function(){
       if(it.sel.inv!=null){ icol.querySelectorAll('.ac-invbtn').forEach(function(x,j){ x.classList.toggle('on', j===it.sel.inv); }); }   // restaura inversión
       cell.appendChild(wcol); cell.appendChild(icol);
       var sol=document.createElement('div'); sol.className='ac-wsol'; it._solEl=sol;
-      var boxd=document.createElement('div'); boxd.appendChild(cell); boxd.appendChild(sol); ctrls.appendChild(boxd);
+      var boxd=document.createElement('div'); if(conRaiz){ var _num=document.createElement('div'); _num.className='ac-num'; _num.textContent='Acorde '+(_ix+1); boxd.appendChild(_num); }   /* LM_ACO: en el móvil, cada uno con su número */
+      boxd.appendChild(cell); boxd.appendChild(sol); ctrls.appendChild(boxd);
     });
     redraw(false);
     return { corregir:function(){ var e=evaluaIdentificar(g);
-      g.items.forEach(function(it){ if(it._solEl){ var ok=it._okTipo&&it._okInv; it._solEl.innerHTML='<span style="color:'+(ok?'#22c98a':COL_BLUE)+'">'+(ok?'✓ '+nombreAcorde(it)+' · '+INV_LAB[it.inv]:'Solución: '+nombreAcorde(it)+' · '+INV_LAB[it.inv])+'</span>'; } });
+      g.items.forEach(function(it){ if(it.__raiz) it.__raiz.marca(!!it._okRaiz, it.root);   /* LM_ACO */
+        if(it._solEl){ var ok=it._okNotas; it._solEl.innerHTML='<span style="color:'+(ok?'#22c98a':COL_BLUE)+'">'+(ok?'✓ '+nombreAcorde(it)+' · '+INV_LAB[it.inv]:'Solución: '+nombreAcorde(it)+' · '+INV_LAB[it.inv])+'</span>'; } });
       redraw(true); return e; }, undo:doUndo, onUndo:function(cb){ undoCb=cb; if(undoCb) undoCb(undoStack.length>0); } };
   }
-  function evaluaIdentificar(g){ var vals=[]; g.items.forEach(function(it){ it._okTipo=(it.sel.tipo===it.tipo); it._okInv=(it.sel.inv===it.inv); it._okNotas=it._okTipo&&it._okInv; vals.push({tipo:it._okTipo?1:0, inv:it._okInv?1:0}); });
-    var tot=0; vals.forEach(function(v){ tot+=(v.tipo*0.5+v.inv*0.5); }); tot/=Math.max(1,vals.length); return {vals:vals, val:tot}; }
+  function evaluaIdentificar(g){ var vals=[], v2=(g._v>=2) && !!window.LM_ACO; g.items.forEach(function(it){ var sel=it.sel||{};   /* WAVE10: sin abrir el ejercicio no hay sel */
+      it._okTipo=(sel.tipo===it.tipo); it._okInv=(sel.inv===it.inv);
+      it._okRaiz=v2 ? LM_ACO.raizOk(sel.nota, sel.alt, it.root) : true;   /* LM_ACO (16-oct-2026): con _v:2, también la fundamental (un tercio cada cosa) */
+      it._okNotas=it._okRaiz&&it._okTipo&&it._okInv;
+      vals.push(v2 ? {raiz:it._okRaiz?1:0, tipo:it._okTipo?1:0, inv:it._okInv?1:0} : {tipo:it._okTipo?1:0, inv:it._okInv?1:0}); });
+    var tot=0; vals.forEach(function(v){ tot+= v2 ? (v.raiz+v.tipo+v.inv)/3 : (v.tipo*0.5+v.inv*0.5); }); tot/=Math.max(1,vals.length); return {vals:vals, val:tot}; }
 
   /* ======= B · CONSTRUYE ======= */
   function montarConstruir(host, g){
@@ -16942,7 +17030,7 @@ window.SuiteTiempo=(function(){
     function measuresOf(res){ return g.items.map(function(it,ci){
       var sm=(!res && g._sel && g._sel.i===ci)?(function(){ var arr=(g._sel.zona==='ord')?it.ord:it.user; var n=arr[g._sel.k]; return n?{key:n.step+n.octave, zona:g._sel.zona}:null; })():null;
       return {
-      main: res ? colConstruir(it) : {notes:it.user, col:COL_INK},
+      main: res ? colConstruir(it, g) : {notes:it.user, col:COL_INK},
       paren:true, parenNotes:it.ord.map(function(n){return {n:n,col:GRAY};}), parenText:'ordena aquí (opcional)',
       box:{r1:nombreAcorde(it), r2:INV_LAB[it.inv]}, selMark:sm, railDelKey:(sm && sm.zona==='user')?sm.key:null, parenDelKey:(sm && sm.zona==='ord')?sm.key:null }; }); }
     var meta=null;
@@ -16985,13 +17073,23 @@ window.SuiteTiempo=(function(){
     return { corregir:function(){ var e=evaluaConstruir(g); redraw(true); return e; }, undo:doUndo, onUndo:function(cb){ undoCb=cb; if(undoCb) undoCb(undoStack.length>0); } };
   }
   function evaluaConstruir(g){ var vals=[]; g.items.forEach(function(it){ var ok=false;
-      if(it.user.length===it.voiced.length){ var uS=it.user.slice().sort(function(a,b){return midi(a)-midi(b);});
+      if(g._v>=2 && window.LM_ACO){ ok=LM_ACO.bajo(it.user||[], it.voiced).ok; }   /* LM_ACO (16-oct-2026): el bajo pedido y las demás por encima, por su nombre, en cualquier octava */
+      else if(it.user.length===it.voiced.length){ var uS=it.user.slice().sort(function(a,b){return midi(a)-midi(b);});
         var bajoOk=(((midi(uS[0])%12)+12)%12)===(((midi(it.voiced[0])%12)+12)%12); var setOk=pcSet(it.user)===pcSet(it.voiced); ok=bajoOk&&setOk; }
       it._ok=ok; vals.push(ok?1:0); });
     var tot=vals.reduce(function(a,b){return a+b;},0)/Math.max(1,vals.length); return {vals:vals, val:tot}; }
 
   /* coloreado de corrección (construir): verde=nota tuya correcta · rojo=nota tuya incorrecta · azul=nota correcta que faltó */
-  function colConstruir(it){
+  /* LM_ACO (16-oct-2026): con _v:2, verde/rojo como corrige LM_ACO.bajo (el bajo pedido y los nombres por encima) y en
+     azul las notas del acorde que no aparecen bien puestas */
+  function colConstruirNombres(it){
+    var u=it.user||[], r=LM_ACO.bajo(u, it.voiced||[]), bienN={};
+    u.forEach(function(n,i){ if(r.marcas[i]) bienN[LM_ACO.nom(n)]=1; });
+    var faltan=(it.voiced||[]).filter(function(v){ return !bienN[LM_ACO.nom(v)]; });
+    var col=new Map(); u.forEach(function(n,i){ col.set(n, r.marcas[i]?COL_GREEN:COL_RED); });
+    return { notes:u.concat(faltan), colFn:function(n){ return col.has(n)?col.get(n):COL_BLUE; } };
+  }
+  function colConstruir(it, g){ if(g && g._v>=2 && window.LM_ACO) return colConstruirNombres(it);   /* LM_ACO */
     /* FIX 2-ago-2026 · El corrector (evaluaConstruir) acepta el acorde en
        CUALQUIER octava (clases de nota + pc del bajo), pero este coloreado
        comparaba MIDI exacto y teñía de rojo aciertos subidos de octava.
@@ -17043,7 +17141,7 @@ window.SuiteTiempo=(function(){
     var measures=g.items.map(function(it){ return {
       main:{notes:it.voiced, col:'#000'},
       paren:true, parenNotes: resuelto ? ordenado(it).map(function(n){return {n:n,col:COL_RED};}) : [], parenText:'ordena aquí',
-      subLeft: resuelto ? (TIPOS[it.tipo].lab+' · '+INV_LAB[it.inv]) : 'Acorde  _____________        inv.  ______',
+      subLeft: resuelto ? (((g._v>=2)?nombreAcorde(it):TIPOS[it.tipo].lab)+' · '+INV_LAB[it.inv]) : 'Acorde  _____________        inv.  ______',   /* LM_ACO: con _v:2, con su fundamental */
       subLeftCol: resuelto ? COL_RED : '#1a1a1a' }; });
     renderSys(host, measures);
   }
@@ -17064,7 +17162,7 @@ window.SuiteTiempo=(function(){
 (function(){
   function $(id){return document.getElementById(id);}
   var acoApi=null, acoCur=null, acoTipo='identificar', acoMounted=false;
-  var SUBACO={ identificar:'Identifica el tipo de acorde y su inversión. Puedes ordenarlo en el paréntesis gris si te resulta útil.',
+  var SUBACO={ identificar:'Identifica el acorde (su fundamental y su tipo) y su inversión. Puedes ordenarlo en el paréntesis gris si te resulta útil.',
     construir:'Construye el acorde en el estado pedido (mitad izquierda del compás). Usa los botones de alteración. El paréntesis gris (derecha) es para ordenarlo (opcional).' };
   function acoMount(){ if(!window.ACORD) return; acoCur=ACORD.generar(acoTipo); acoApi=ACORD.montar($('scoreINVACO'), acoCur); var fb=$('fbACO'); if(fb) fb.innerHTML=''; if(acoApi&&acoApi.onUndo) acoApi.onUndo(function(has){ var b=$('undoINVACO'); if(b) b.disabled=!has; }); acoMounted=true; }
   window.openInvAcordes=function(){ showView('view-inv-acordes'); if(!acoMounted) acoMount(); };
