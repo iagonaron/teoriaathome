@@ -75,10 +75,17 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 16-oct 18:28 · Intros didácticas (desde la conversación del Magnetófono) · EN CURSO · parto de 31022e5 · solo
-  intros/inversion-acordes/escenas.js. Iago (16-oct): en el vídeo «Inversión de acordes», el acorde ordenado DENTRO DEL
-  PARÉNTESIS con cabezas pequeñas, rellenas y en cursiva («como de borrador», como en las fichas); el acorde oficial sigue
-  en redondas; sin tocar el audio ni el esquema del vídeo. El mismo cambio, en teoriapro.
+- 16-oct 18:28 · Intros didácticas (desde la conversación del Magnetófono) · HECHO · commit 52fd572 (EN CURSO en 4b30d82,
+  parto de 31022e5) · solo intros/inversion-acordes/escenas.js. Iago (16-oct): en el vídeo «Inversión de acordes», «las
+  cabezas de las notas que hay dentro del gran paréntesis sean con la estética esta como de borrador. Las del acorde oficial,
+  que sigan siendo redondas»; sin tocar el audio ni el esquema. Función nueva acordeBorrador(): cabeza negra de Bravura al 73 %
+  (la proporción de las fichas: 4,4 frente a 6), alteraciones y líneas adicionales a la misma escala, centrada donde iba la
+  redonda (mismo cx y w), así que llaves, pastillas 3M/5J, el arco y los textos no se mueven. Se usa en los tres acordes del
+  paréntesis (escenaOrdena, escenaEjercicio1 y escenaEjercicio2), marcados «(16-oct-2026, Iago)». Banco: 13 momentos
+  renderizados antes/después, solo cambian esos tres acordes (0 píxeles en el resto) y sin errores. El mismo cambio, en
+  teoriapro. Para volver: git revert de 52fd572, o subir el escenas.js de APPs/_PARA BORRAR/16-oct-2026-inversion-acordes-
+  antes-de-cabezas-de-borrador/ge/, o cambiar «acordeBorrador(» por «acorde(» en esas tres escenas. Espejo de Dropbox
+  igual que GitHub.
 - 14-oct 18:25 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
   fichero; el relevo comprueba que index.html y este registro son los del último commit). Iago (14-oct): en «construye
   acordes» de la ficha, ¿hay que poner primero la 3ª y luego la 5ª? «primero colocar la nota re y luego la nota si… eso
