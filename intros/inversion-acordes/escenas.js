@@ -554,6 +554,36 @@
     }
     return { g: G, x, notas: out };
   }
+  /** (16-oct-2026, Iago) Acorde «de borrador» para DENTRO DEL PARÉNTESIS: cabezas pequeñas, rellenas y en cursiva (negras),
+   *  como el paréntesis de las fichas interactivas (allí, cabeza negra a 4,4 frente a la redonda a 6: 0,733). El acorde
+   *  oficial sigue en redondas. Cada cabeza va centrada donde iría la redonda (mismo cx y mismo w de antes), así que
+   *  llaves, arcos, etiquetas y animaciones no se mueven; el audio y el guion tampoco cambian.
+   *  Para quitarlo: en escenaOrdena, escenaEjercicio1 y escenaEjercicio2, cambiar «acordeBorrador(» por «acorde(». */
+  function acordeBorrador(parent, notas, x, yM) {
+    const K = 4.4 / 6, wW = N.M.noteheadWhole.adv * SP, wB = N.M.noteheadBlack.adv * SP * K;
+    const xB = x + wW / 2 - wB / 2;                      // borde izquierdo de la cabeza pequeña (mismo centro que la redonda)
+    const ext = N.E.ledgerExt * SP * K;
+    const G = N.group(parent, 'acorde borrador'), out = [];
+    for (const n of notas) {
+      const W = N.group(G, 'nota');
+      const pos = N.posSol(n), y = yM - pos * SP;
+      for (let lp = -3; lp >= pos - 1e-6; lp -= 1) N.line(W, xB - ext, yM - lp * SP, xB + wB + ext, yM - lp * SP, N.E.ledger * SP);
+      for (let lp = 3; lp <= pos + 1e-6; lp += 1) N.line(W, xB - ext, yM - lp * SP, xB + wB + ext, yM - lp * SP, N.E.ledger * SP);
+      const cab = N.group(W, 'cabeza'); N.glyph(cab, 'noteheadBlack', xB, y, SP, K);
+      out.push({ n, y, pos, cx: x + wW / 2, w: wW, g: W, alt: null });
+    }
+    const cols = [];
+    for (let i = out.length - 1; i >= 0; i--) {
+      const m = /^([A-G])([#bnxd]?)(\d)$/.exec(out[i].n); if (!m[2]) continue;
+      const gl = { '#': 'accidentalSharp', b: 'accidentalFlat', n: 'accidentalNatural', x: 'accidentalDoubleSharp', d: 'accidentalDoubleFlat' }[m[2]];
+      let c = 0; while (c < cols.length && cols[c] - out[i].pos < 3) c++;
+      cols[c] = out[i].pos;
+      const A = N.group(out[i].g, 'alteracion');
+      N.glyph(A, gl, xB - (N.M[gl].adv + 0.22) * SP * K - c * 1.2 * SP * K, out[i].y, SP, K);
+      out[i].alt = A;
+    }
+    return { g: G, x, notas: out };
+  }
   /** Etiqueta a la derecha del acorde, con una línea fina hasta su nota (para que no se pisen: cada una a su altura).
    *  Devuelve el grupo (texto + línea) en currentColor. */
   function etiquetaNota(parent, n, txt, xL, yL, o) {
@@ -813,7 +843,7 @@
       const P = N.group(g);
       // (30-sep-2026, Iago) «que sea gris el paréntesis (el texto rosa)»
       const pa = N.group(P); color(pa, C.suave); parentesisDibuja(s, pa, 960, 1180, yM - 3.6 * SP, yM + 3.6 * SP, tPa, fin);
-      const O1 = acorde(P, ['D4', 'F#4', 'A4'], 1050, yM);
+      const O1 = acordeBorrador(P, ['D4', 'F#4', 'A4'], 1050, yM);   // (16-oct-2026, Iago) dentro del paréntesis, cabezas de borrador; antes: acorde(
       const tOr = Wd('O2', 'ordenemos') - 0.2;
       O1.notas.forEach((n, j) => pop(s, n.g, Math.max(tPa + 0.3, tOr) + j * 0.1, fin, n.cx, n.y, { k0: .4 }));
       const or = fraseG(g, [['ordenado', C.rosa]], 1070, yM + 190, { size: 36, peso: 800, italic: true, anchor: 'middle' });
@@ -854,7 +884,7 @@
       // (30-sep-2026, Iago) «el paréntesis no lo quiero tan alejado… pegado a lo que luego será 3M y 5J»: se dibuja más abajo,
       // cuando ya se sabe dónde caen las pastillas de las dos llaves (antes: de 790 a 1250)
       const pa = N.group(P); color(pa, C.suave);
-      const xOR = 1020, OR = acorde(P, ['D4', 'F#4', 'A4'], xOR, yM);
+      const xOR = 1020, OR = acordeBorrador(P, ['D4', 'F#4', 'A4'], xOR, yM);   // (16-oct-2026, Iago) dentro del paréntesis, cabezas de borrador; antes: acorde(
       OR.notas.forEach((n, j) => pop(s, n.g, Wd('X2', 'ordeno') + 0.3 + j * 0.1, fin, n.cx, n.y, { k0: .4 }));
       // paso 2: Re, Fa♯, La → 3M + 5J (llaves en el acorde ordenado) → Re PM
       const wN = N.M.noteheadWhole.adv * SP;
@@ -901,7 +931,7 @@
       const tN = [Wd('K3', 'sol') - 0.15, Wd('K3', 'si') - 0.15, Wd('K3', 're') - 0.15];
       const xP0 = 1000, xP1 = 1300, xOR = Math.round((xP0 + xP1) / 2 - wN / 2);
       const pa = N.group(g); color(pa, C.suave); parentesisDibuja(s, pa, xP0, xP1, yM - 3.6 * SP, yM + 3.6 * SP, Math.max(t1 - 0.1, tN[0] - 1.1), fin);
-      const OR = acorde(PE, ['G4', 'Bb4', 'D5'], xOR, yM);
+      const OR = acordeBorrador(PE, ['G4', 'Bb4', 'D5'], xOR, yM);   // (16-oct-2026, Iago) dentro del paréntesis, cabezas de borrador; antes: acorde(
       OR.notas.forEach((n, j) => pop(s, n.g, tN[j], fin, n.cx, n.y, { k0: .4 }));
       const lo = fraseTrozos(g, [['Sol', C.blanco], [' · ', C.suave], ['Si♭', C.blanco], [' · ', C.suave], ['Re', C.blanco]], xOR + wN / 2, yM + 190, { size: 34, peso: 800 });
       aparece(s, lo.g, tN[0], fin, { dy: 6 });
