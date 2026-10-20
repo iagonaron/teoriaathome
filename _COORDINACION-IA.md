@@ -75,8 +75,12 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 20-oct 10:40 · Fichas y rediseño · EN CURSO · solo index.html · ficha corregida, «Coloca la 2ª nota de cada intervalo»:
-  debajo de cada compás, el intervalo pedido (6m ↑…), como en el enunciado al hacerla. Iago: «un alumno no puede saberlo».
+- 20-oct 10:44 · Fichas y rediseño · HECHO · commit 1047528 (EN CURSO en fdb4d53, parto de 10b9385) · solo index.html (+20) ·
+  ficha corregida (al terminarla, revisión del alumno y la del profesor), «Coloca la 2ª nota de cada intervalo»: debajo de
+  cada compás, el intervalo pedido (6m ↑, 8J ↑, 3m ↓…), como en el enunciado al hacerla; centrado en su compás aunque el
+  pentagrama se escale (corregirIntConstr, bloque al final). Iago: «no me aparece el intervalo que me pidió el ejercicio…
+  es parte del enunciado… si no, un alumno no puede saberlo». Banco 12/12 (revisión del alumno, 1280/820/390). Copia de
+  antes: APPs/_PARA BORRAR/20-oct-2026-antes-intervalo-en-la-ficha-corregida-GE/index.html. Para deshacer: git revert 1047528.
 - 16-oct 18:28 · Intros didácticas (desde la conversación del Magnetófono) · HECHO · commit 52fd572 (EN CURSO en 4b30d82,
   parto de 31022e5) · solo intros/inversion-acordes/escenas.js. Iago (16-oct): en el vídeo «Inversión de acordes», «las
   cabezas de las notas que hay dentro del gran paréntesis sean con la estética esta como de borrador. Las del acorde oficial,
