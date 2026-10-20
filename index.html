@@ -13425,6 +13425,26 @@ function __grados_marker__(){}
       }catch(e){}
     }
     const svg2=host.querySelector('svg'); if(svg2){ svg2.classList.add('penta'); svg2.removeAttribute('height'); svg2.style.maxWidth='100%'; svg2.style.height='auto'; }
+    /* (20-oct-2026, Iago: «no me aparece el intervalo que me pidió el ejercicio… es parte del enunciado… debajo del primero
+       tiene que poner sexta menor ascendente, para saber qué era lo que me pedía. Si no, un alumno no puede saberlo») debajo de
+       cada compás, el intervalo pedido (6m ↑…), como en el enunciado mientras se hace. Para quitarlo: borrar este bloque. */
+    try{
+      const L=(typeof ESP_LABEL!=='undefined')?ESP_LABEL:{}, lt=ej.labelsTop||[];
+      const labs=d.map((sd,i)=> (sd && sd.num!=null && sd.code) ? (sd.num+(L[sd.code]||'')+' '+(sd.direccion==='desc'?'↓':'↑')) : String(lt[i]||''));
+      if(svg2 && labs.some(Boolean)){
+        const fila=document.createElement('div'); fila.className='ic-enun'; fila.setAttribute('aria-label','Intervalos pedidos');
+        fila.style.cssText='position:relative;height:22px;margin-top:8px';
+        labs.forEach((t,i)=>{ const sp=document.createElement('span'); sp.textContent=t;
+          sp.style.cssText='position:absolute;top:0;transform:translateX(-50%);white-space:nowrap;font-size:clamp(11px,3.2vw,14px);font-weight:900;color:#dce4f7;left:'+((x0+i*wC+wC/2)/W*100).toFixed(2)+'%';
+          fila.appendChild(sp); });
+        host.appendChild(fila);
+        /* cada etiqueta, en el centro real de su compás (el pentagrama se escala con la tarjeta) */
+        const alinear=()=>{ try{ const ctm=svg2.getScreenCTM(), fb=fila.getBoundingClientRect(); if(!ctm || !fb.width) return;
+          Array.prototype.forEach.call(fila.children,(sp,i)=>{ const p=svg2.createSVGPoint(); p.x=x0+i*wC+wC/2; p.y=0; sp.style.left=(p.matrixTransform(ctm).x-fb.left)+'px'; }); }catch(e){} };
+        requestAnimationFrame(()=>requestAnimationFrame(alinear)); setTimeout(alinear,450); setTimeout(alinear,1200);
+        try{ if(window.ResizeObserver){ const ro=new ResizeObserver(alinear); ro.observe(host); } }catch(e){}
+      }
+    }catch(e){}
     return true;
   }
 
