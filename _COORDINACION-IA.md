@@ -75,6 +75,8 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 20-oct 10:40 · Fichas y rediseño · EN CURSO · solo index.html · ficha corregida, «Coloca la 2ª nota de cada intervalo»:
+  debajo de cada compás, el intervalo pedido (6m ↑…), como en el enunciado al hacerla. Iago: «un alumno no puede saberlo».
 - 16-oct 18:28 · Intros didácticas (desde la conversación del Magnetófono) · HECHO · commit 52fd572 (EN CURSO en 4b30d82,
   parto de 31022e5) · solo intros/inversion-acordes/escenas.js. Iago (16-oct): en el vídeo «Inversión de acordes», «las
   cabezas de las notas que hay dentro del gran paréntesis sean con la estética esta como de borrador. Las del acorde oficial,
