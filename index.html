@@ -12522,6 +12522,36 @@ function __grados_marker__(){}
         mo.remove(); salirAlPortal();
       };
     }
+    /* (22-oct-2026, Iago: «en el botón del último ejercicio, al terminar ficha, aparezca una ventana emergente que ponga: ¿estás
+       seguro de que quieres enviar la ficha? Esta opción no se deshará») una alumna, pulsando deprisa, entregó sin querer y se
+       quedó con un suspenso. Antes de enviar, esta ventana (la estética de «¿Salir de la ficha?»). «Sí, enviar» tarda 1,2 s en
+       poder pulsarse, por si se viene pulsando rápido; «Repasar antes», Esc o tocar fuera vuelven a la ficha tal cual. */
+    function modalEnviarFicha(siguiente){
+      if(ov.querySelector('#simEnviarOv')) return;
+      const mo=document.createElement('div'); mo.id='simEnviarOv';
+      mo.setAttribute('role','dialog'); mo.setAttribute('aria-modal','true'); mo.setAttribute('aria-labelledby','simEnviarTit');
+      mo.style.cssText='position:fixed;inset:0;z-index:60;background:rgba(8,5,24,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:22px';
+      mo.innerHTML=
+        '<div class="sim-card sim-enter" style="max-width:470px;width:100%;background:linear-gradient(165deg,#2b2060,#170f3a);border:1px solid rgba(169,116,255,.45);border-radius:18px;padding:26px 26px 22px;box-shadow:0 26px 80px rgba(0,0,0,.55)">'+
+          '<div id="simEnviarTit" style="font-size:20px;font-weight:900;color:#f6f3ff">¿Seguro que quieres enviar la ficha?</div>'+
+          '<div style="margin-top:10px;color:#d5cdf5;font-size:14px;line-height:1.6">Esto <b>no se puede deshacer</b>: en cuanto la envíes, el profesor recibe tu nota y ya no podrás cambiar ninguna respuesta.</div>'+
+          '<div style="margin-top:12px;color:#c7bff0;font-size:13.5px;line-height:1.6">Si tienes alguna duda, vuelve y repasa los ejercicios con <b>‹ Anterior</b>.</div>'+
+          '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap">'+
+            '<button id="simEnviarNo" type="button" style="background:rgba(255,255,255,.07);border:1px solid #ffffff33;color:#e9e5ff;border-radius:10px;padding:11px 16px;font-weight:700;font-size:13.5px;cursor:pointer">Repasar antes</button>'+
+            '<button id="simEnviarSi" type="button" disabled style="border:0;background:linear-gradient(90deg,#a974ff,#5bd0ff);color:#12082e;border-radius:10px;padding:11px 18px;font-weight:800;font-size:13.5px;opacity:.45;cursor:default;transition:opacity .2s">Sí, enviar</button>'+
+          '</div>'+
+        '</div>';
+      ov.appendChild(mo);
+      const si=mo.querySelector('#simEnviarSi'), no=mo.querySelector('#simEnviarNo');
+      const tecla=(e)=>{ if(e.key==='Escape'||e.key==='Esc'){ e.stopPropagation(); cerrarM(); } };
+      const cerrarM=()=>{ document.removeEventListener('keydown', tecla, true); mo.remove(); };
+      document.addEventListener('keydown', tecla, true);
+      mo.addEventListener('click',(e)=>{ if(e.target===mo) cerrarM(); });
+      no.onclick=cerrarM;
+      setTimeout(()=>{ si.disabled=false; si.style.opacity='1'; si.style.cursor='pointer'; }, 1200);   // por si se viene pulsando deprisa
+      si.onclick=()=>{ if(si.disabled) return; cerrarM(); siguiente(); };
+      try{ no.focus({ preventScroll:true }); }catch(e){}
+    }
     ov.querySelector('#simSalir').onclick=()=>{
       if(esAlumnoProg && !enviado){ modalSalirFicha(); return; }   // alumno a mitad: confirmar
       if(esAlumnoProg && enviado){ salirAlPortal(); return; }      // ya entregada: al portal
@@ -12707,7 +12737,10 @@ function __grados_marker__(){}
             if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e){} }   // FASE 6.7 · punto de guardado
             animDir='fwd'; mostrar(); };
           if(card && !reduceMotion()){ card.classList.add('sim-slide-out'); setTimeout(()=>cartelEjercicio(i+2, go), 172); } else go();   // cartel "Ejercicio N" entre uno y otro
-        } else { enviado=true; try{ sonidoFinal(); }catch(e){} pantallaCorrigiendo(pantallaFinal); }
+        } else {
+          const fin=()=>{ enviado=true; try{ sonidoFinal(); }catch(e){} pantallaCorrigiendo(pantallaFinal); };
+          if(esAlumnoProg && !enviado && !(window.__REVISION && window.__REVISION.alumno)) modalEnviarFicha(fin); else fin();   // (22-oct-2026, Iago) ¿seguro?
+        }
       };
       main.scrollTop=0;
     }

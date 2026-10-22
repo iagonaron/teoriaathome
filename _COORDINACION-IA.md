@@ -75,6 +75,17 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 22-oct 18:30 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo commit; main
+  comprobado justo antes, parto de d9fd62d) · solo index.html · ALUMNO: «¿SEGURO QUE QUIERES ENVIAR LA FICHA?». Iago: «tengo una
+  alumna que… se pasa los ejercicios rápido y sin querer le dio… acabó y entregó una ficha con un suspenso… en el botón del
+  último ejercicio, al terminar ficha, aparezca una ventana emergente que ponga: ¿estás seguro de que quieres enviar la ficha?
+  Esta opción no se deshará». En el último ejercicio, «Enviar y ver puntuación ✓» (#simNext) abre modalEnviarFicha (la estética
+  de «¿Salir de la ficha?»): «Repasar antes», Esc o tocar fuera vuelven a la ficha tal cual; «Sí, enviar» está desactivado 1,2 s
+  (por si se viene pulsando deprisa) y luego sigue como siempre (pantallaCorrigiendo → pantallaFinal → entrega). Solo con el
+  alumno (esAlumnoProg), nunca en las pruebas del profesor ni en la revisión. Banco 12/12 (alumno 1512 y 390; con la versión de
+  antes, se entrega al primer toque). Copia de antes:
+  APPs/_PARA BORRAR/22-oct-2026-antes-confirmar-envio-ficha/teoriaathome-index.html. Para quitarlo: en el clic de #simNext,
+  llamar a fin() directamente. Para deshacer: git revert de este commit.
 - 20-oct 10:44 · Fichas y rediseño · HECHO · commit 1047528 (EN CURSO en fdb4d53, parto de 10b9385) · solo index.html (+20) ·
   ficha corregida (al terminarla, revisión del alumno y la del profesor), «Coloca la 2ª nota de cada intervalo»: debajo de
   cada compás, el intervalo pedido (6m ↑, 8J ↑, 3m ↓…), como en el enunciado al hacerla; centrado en su compás aunque el
