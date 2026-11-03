@@ -75,6 +75,9 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
   el _COORDINACION-IA.md de teoriapro). El 👍 de revisión es el mismo en los dos portales (misma clave de Supabase).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 3-nov 08:20 · Mantenimiento · HECHO · en este mismo commit (index.html) · Fichas GE: (1) TONALIDADES VECINAS en cualquier casilla:
+  comprobarVecinos/corregirVecinos emparejan sin orden (vecinosEmparejar), cada vecina cuenta una vez; (2) GRADOS (gra_senalar): si la nota
+  rodeada es el grado pedido (nombre + alteración; octava da igual) = 100 %, aunque falte escala o armadura. Iago, 3-nov. DESHACER: revertir.
 - 22-oct 18:30 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo commit; main
   comprobado justo antes, parto de d9fd62d) · solo index.html · ALUMNO: «¿SEGURO QUE QUIERES ENVIAR LA FICHA?». Iago: «tengo una
   alumna que… se pasa los ejercicios rápido y sin querer le dio… acabó y entregó una ficha con un suspenso… en el botón del

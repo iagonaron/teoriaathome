@@ -10439,6 +10439,15 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
 
     // Parte B (50%): señalar el grado correcto.
     const gradoOk = (idxGrado!=null && estado.marca===idxGrado);
+    /* (3-nov-2026, Iago: «si el alumno selecciona una nota y está correcto, quiero que lleve el 100%… ¿cuál es la
+       subdominante de La mayor? Yo seleccioné re, y aunque no puse la armadura, la nota re es correcta, porque es re
+       natural») LA NOTA SEÑALADA MANDA: si la nota rodeada es el grado pedido (nombre y alteración como suena; la octava da
+       igual), es un 100 %, aunque la escala o la armadura estén incompletas. Si no, la puntuación de antes. */
+    const marcada = (estado.marca!=null) ? got[estado.marca] : null;
+    const pedida = (idxGrado!=null) ? sol[idxGrado] : null;
+    if (marcada && pedida && marcada.step===pedida.step && (marcada.alter||0)===(pedida.alter||0)) {
+      return { ok:true, pct:100, total:2, aciertos:2 };
+    }
 
     // puntuación: 50% por señalar bien el grado, 50% por la escala/armadura.
     let pct = 0;
@@ -11213,17 +11222,34 @@ function __grados_marker__(){}
     let aciertos=0, total=0;
     for(let k=0;k<6;k++){
       if(k===given) continue; total++;
-      const want=sol[k]; const got=(estado.sel&&estado.sel[k])||{};
-      const stepG = got.nota? MAP[got.nota] : null;
-      const altG = got.alt==='#'?1:got.alt==='b'?-1:0;
-      // want.nota es solfeo ("Re"), want.alt '' / '#' / 'b'
-      const stepW = MAP[want.nota]; const altW = want.alt==='#'?1:want.alt==='b'?-1:0;
-      if(stepG===stepW && altG===altW && got.modo===want.modo) aciertos++;
     }
+    /* (3-nov-2026, Iago: «yo quiero que me deje poner en cualquier lugar de las casillas las respuestas… las 5 tonalidades
+       que yo tenía que poner están puestas, aunque sean en otros lugares») EN CUALQUIER CASILLA: cada respuesta cuenta si es
+       una de las cinco vecinas que faltan y no la ha contado ya otra casilla (sin repetir). */
+    aciertos = vecinosEmparejar(ej, estado).filter(x=>x.ok).length;
     const pct= total? Math.round((aciertos/total)*100):0;
     return { ok: aciertos===total, pct, total, aciertos };
   }
 
+  /* (3-nov-2026) emparejado sin orden: para cada casilla del alumno, {k, ok, want}. Las que no casan reciben, en orden,
+     las vecinas que quedaron sin poner (para enseñar la correcta en azul en la corrección). */
+  function vecinosEmparejar(ej, estado){
+    const { sol, given }=ej._vecinos;
+    const MAP={Do:'C',Re:'D',Mi:'E',Fa:'F',Sol:'G',La:'A',Si:'B'};
+    const clave=t=> (t&&t.nota&&t.modo)? (MAP[t.nota]+(t.alt==='#'?1:t.alt==='b'?-1:0)+t.modo) : null;
+    const libres=[]; for(let k=0;k<6;k++) if(k!==given) libres.push({k, c:clave(sol[k]), usada:false});
+    const out=[];
+    for(let k=0;k<6;k++){
+      if(k===given) continue;
+      const c=clave((estado&&estado.sel&&estado.sel[k])||{});
+      const w=c? libres.find(x=>!x.usada && x.c===c) : null;
+      if(w){ w.usada=true; out.push({k, ok:true, want:sol[w.k]}); } else out.push({k, ok:false, want:null});
+    }
+    const resto=libres.filter(x=>!x.usada);
+    out.forEach(o=>{ if(!o.ok){ const w=resto.shift(); o.want=w? sol[w.k] : null; } });
+    return out;
+  }
+  window.vecinosEmparejar = vecinosEmparejar;
   window.montarVecinos = montarVecinos;
   window.comprobarVecinos = comprobarVecinos;
 })();
@@ -13676,7 +13702,8 @@ function __grados_marker__(){}
     return dibujarEscalaCorrArm(host, sol, alumno, {
       fifths: spec.fifths||0,
       alumnoArm: (resp&&resp.arm!=null)?resp.arm:0,
-      markIdx: mkIdx, markLabel: mkLabel, markOk: !!(resp && resp.marca===mkIdx)
+      markIdx: mkIdx, markLabel: mkLabel, markOk: !!(resp && (resp.marca===mkIdx ||   /* (3-nov-2026) o la nota rodeada es la pedida */
+        (resp.marca!=null && alumno[resp.marca] && sol[mkIdx] && alumno[resp.marca].step===sol[mkIdx].step && (alumno[resp.marca].alter||0)===(sol[mkIdx].alter||0))))
     });
   }
 
@@ -13752,10 +13779,11 @@ function __grados_marker__(){}
       const cell=document.createElement('div');
       cell.style.cssText='border:1.5px solid #33406b;border-radius:10px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-weight:800;font-size:15px;padding:6px;text-align:center';
       if(k===given){ cell.textContent=nombreTon(sol[k]); cell.style.background='#eef2fb'; cell.style.color='#16203a'; grid.appendChild(cell); continue; }
-      const want=sol[k]; const got=(estado&&estado.sel&&estado.sel[k])||{};
-      const stepG=got.nota?MAPV[got.nota]:null; const altG=got.alt==='#'?1:got.alt==='b'?-1:0;
-      const stepW=MAPV[want.nota]; const altW=want.alt==='#'?1:want.alt==='b'?-1:0;
-      const ok=(stepG===stepW && altG===altW && got.modo===want.modo);
+      const got=(estado&&estado.sel&&estado.sel[k])||{};
+      /* (3-nov-2026) en cualquier casilla: verde si es una de las vecinas; si no, la que falta, en azul */
+      const em=(typeof window.vecinosEmparejar==='function') ? (window.vecinosEmparejar(ej, estado||{}).find(x=>x.k===k)||{}) : null;
+      const want=(em && em.want) || sol[k];
+      const ok=em ? !!em.ok : (MAPV[got.nota]===MAPV[sol[k].nota] && (got.alt||'')===(sol[k].alt||'') && got.modo===sol[k].modo);
       const gotTxt=got.nota?(got.nota+(got.alt==='#'?'♯':got.alt==='b'?'♭':'')+(got.modo?' '+got.modo:' …')):null;
       if(ok){
         cell.style.borderColor='#4ade80';
