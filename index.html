@@ -4436,14 +4436,16 @@ function corregirGR(){
     const n=e.cab[e.selIdx];
     const armOk = (e.userArm||0)===e.ton.f;
     const notaOk = n.step===e.sol.step && e.userAlter===e.sol.alter;
-    const ok = armOk && notaOk;
+    /* (3-nov-2026, Iago: «si el alumno selecciona una nota y está correcto, quiero que lleve el 100%… aunque no puse la
+       armadura») en los ejercicios libres, igual que en la ficha: la nota señalada correcta = bien; la armadura solo informa. */
+    const ok = notaOk;
     // estado de corrección para colorear las cabezas (verde/rojo/azul)
     e._corr=true; e._notaOk=notaOk; e._solIdx=(e.grado.n-1);
     renderGRStaveOne(i);
     ans.classList.remove('ok','bad'); ans.classList.add(ok?'ok':'bad');
     // mensaje con cada parte coloreada
     const green='var(--green)', red='var(--red)';
-    const armSpan='<span style="color:'+(armOk?green:red)+'">armadura '+(armOk?'correcta':'incorrecta')+'</span>';
+    const armSpan='<span style="color:'+(armOk?green:(notaOk?'#e0a13a':red))+'">armadura '+(armOk?'correcta':(notaOk?'sin poner (no resta)':'incorrecta'))+'</span>';
     const notaSpan='<span style="color:'+(notaOk?green:red)+'">nota '+(notaOk?'correcta':'incorrecta')+'</span>';
     let html=armSpan+' · '+notaSpan;
     if(!ok){
