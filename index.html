@@ -4456,7 +4456,10 @@ function corregirGR(){
   if(e0 && !e0._finalOk){
     const n0=e0.cab[e0.selIdx];
     const expl=(e0._userTouchedAlt===true) ? (e0.userAlter||0) : ((e0._pulsado!=null && e0._pulsado===e0.userAlter) ? e0._pulsado : null);
-    window.modalRespuestaFinal(n0.step, expl, (a)=>{ e0.userAlter=a; e0._userTouchedAlt=true; delete e0._pulsado; e0._finalOk=true; corregirGR(); });
+    window.modalRespuestaFinal(n0.step, expl, (a)=>{ e0.userAlter=a; e0._userTouchedAlt=true; delete e0._pulsado; e0._finalOk=true;
+      /* (3-nov-2026, 17:04, Iago) la casilla «Nota» muestra ya la nota CON la alteración elegida (♮ incluido) */
+      try{ updateGRBox(0); const ar=document.querySelector('#ansGR0 .gr-acc'); if(ar) paintGRAcc(0, ar.parentElement); }catch(err){}
+      corregirGR(); });
     return;
   }
   // todo señalado: corregir armadura y nota por separado
@@ -4498,15 +4501,16 @@ window.modalRespuestaFinal=function(step, alterExpl, cb){
   let a=(alterExpl==null)?null:alterExpl;
   const mo=document.createElement('div'); mo.id='respFinalOv';
   mo.setAttribute('role','dialog'); mo.setAttribute('aria-modal','true');
-  mo.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(8,5,24,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:22px';
-  mo.innerHTML='<div style="max-width:380px;width:100%;background:linear-gradient(165deg,#2b2060,#170f3a);border:1px solid rgba(169,116,255,.45);border-radius:14px;padding:24px 24px 20px;box-shadow:0 26px 80px rgba(0,0,0,.55);text-align:center">'+
-    '<div style="font-size:19px;font-weight:900;color:#f6f3ff">¿Respuesta final?</div>'+
-    '<div id="respFinalNota" style="margin:14px auto 4px;font-size:44px;font-weight:900;color:#ffd76a;min-height:56px"></div>'+
-    '<div style="color:#c7bff0;font-size:12.5px;line-height:1.5;margin-bottom:12px">Elige <b>♮, ♭ o ♯</b>: cuenta la que marques aquí.</div>'+
+  /* (3-nov-2026, 17:03, Iago) coherente con la estética (rosa, blanco, semitranslúcido) y SIN desenfocar el fondo: solo algo más oscuro, que se vea el ejercicio */
+  mo.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.32);display:flex;align-items:center;justify-content:center;padding:22px';
+  mo.innerHTML='<div style="max-width:340px;width:100%;background:rgba(18,14,34,.62);border:1px solid rgba(232,67,147,.55);border-radius:14px;padding:22px 22px 18px;box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center">'+
+    '<div style="font-size:13px;font-weight:900;color:var(--teoria);text-transform:uppercase;letter-spacing:.08em">¿Respuesta final?</div>'+
+    '<div id="respFinalNota" style="margin:10px auto 4px;font-size:44px;font-weight:900;color:#fff;min-height:56px"></div>'+
+    '<div style="color:rgba(255,255,255,.72);font-size:12.5px;line-height:1.5;margin-bottom:12px">Elige <b style="color:#fff">♮, ♭ o ♯</b>: cuenta la que marques aquí.</div>'+
     '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px">'+
       [['♮',0],['♭',-1],['♯',1]].map(p=>'<button type="button" data-a="'+p[1]+'" class="acc-btn" style="min-width:52px;height:46px;font-size:22px">'+p[0]+'</button>').join('')+
     '</div>'+
-    '<button id="respFinalOk" type="button" disabled style="border:0;background:linear-gradient(90deg,#a974ff,#5bd0ff);color:#12082e;border-radius:10px;padding:11px 28px;font-weight:900;font-size:15px;cursor:pointer;transition:opacity .15s">OK</button>'+
+    '<button id="respFinalOk" type="button" disabled style="border:0;background:var(--teoria);color:#fff;border-radius:10px;padding:11px 30px;font-weight:900;font-size:15px;cursor:pointer;transition:opacity .15s">OK</button>'+
   '</div>';
   document.body.appendChild(mo);
   const pinta=()=>{ mo.querySelector('#respFinalNota').textContent=ES[step]+(a===1?'♯':a===-1?'♭':a===0?'♮':'');
