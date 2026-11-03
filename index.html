@@ -12815,6 +12815,8 @@ function __grados_marker__(){}
         ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Identificar: elige el tipo con la rueda y la inversión con los botones. Construir: toca la mitad izquierda para colocar las notas y altera con los botones. El paréntesis es para ordenar.</div>'
         : esInv
         ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Toca el pentagrama para colocar cada nota, altérala con la cuadrícula (<b>♭ ♯</b>) y analiza con las ruedas. '+window.TXT_TIP('Borra con clic derecho.','Borra con la ×.')+'</div>'
+        : (esGrado && item.ej._spec && item.ej._spec.iv)   /* (3-nov-2026) intervalo entre dos grados */
+        ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Las cabezas ya están escritas. Pon la <b>armadura</b> y señala los <b>dos grados</b> para ayudarte (toca cada nota). Lo que cuenta es el <b>intervalo</b>: elígelo en las dos ruedas (número y especie).</div>'
         : esGrado
         ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Las cabezas ya están escritas. Pon la <b>armadura</b> y altera lo que corresponda (toca una nota y usa <b>♯ ♮ ♭</b>). Para <b>señalar el grado</b>: toca la nota para seleccionarla y tócala otra vez para rodearla.</div>'
         : esCompas
