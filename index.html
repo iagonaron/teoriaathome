@@ -1354,7 +1354,12 @@ if(window.Sentry && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){
     <div class="iv-head">
       <div class="iv-title"><span class="post">GRA</span>DOS</div>
     </div>
-    <p class="iv-sub">Para cada pregunta: pon la armadura y señala (clic) la cabeza del grado pedido. Puedes alterarla si hace falta.</p>
+    <!-- (3-nov-2026, Iago: «el qué intervalo hay puede ser como una pestaña más») -->
+    <div class="ac-tabs"><div class="in">
+      <button id="tabGRa" class="on" onclick="grTab('grado')">A · El grado</button>
+      <button id="tabGRb" onclick="grTab('intervalo')">B · Intervalo entre grados</button>
+    </div></div>
+    <p class="iv-sub" id="subGR">Para cada pregunta: pon la armadura y señala (clic) la cabeza del grado pedido. Puedes alterarla si hace falta.</p>
 
     <div class="ex-card" id="cardGR">
       <div class="ex-top">
@@ -1373,8 +1378,8 @@ if(window.Sentry && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){
       </div>
       <div id="grRows"></div>
     </div>
-    <!-- (3-nov-2026, Iago) intervalo entre dos grados -->
-    <div class="ex-card" id="cardGRI">
+    <!-- (3-nov-2026, Iago) intervalo entre dos grados (pestaña B) -->
+    <div class="ex-card" id="cardGRI" style="display:none">
       <div class="ex-top">
         <div class="ex-letter"><b></b><span>¿Qué intervalo hay entre dos grados?</span></div>
         <div style="display:flex;gap:8px">
@@ -4538,10 +4543,18 @@ function corregirGRI(){
                        : '<span style="color:var(--red)">✗ Tu respuesta: '+est.ivNum+'ª '+est.ivEsp+'</span><br><span style="color:#2f6df6">Solución: '+sp.iv.txt+'</span>';
 }
 
+function grTab(t){
+  const iv=(t==='intervalo');
+  document.getElementById('tabGRa').classList.toggle('on',!iv); document.getElementById('tabGRb').classList.toggle('on',iv);
+  document.getElementById('cardGR').style.display=iv?'none':''; document.getElementById('cardGRI').style.display=iv?'':'none';
+  document.getElementById('subGR').textContent = iv
+    ? 'Pon la armadura y señala los dos grados para ayudarte; lo que se corrige es el intervalo (número y especie).'
+    : 'Para cada pregunta: pon la armadura y señala (clic) la cabeza del grado pedido. Puedes alterarla si hace falta.';
+  if(iv && !dataGRI) nuevoGRI();
+}
 function openGrados(){
   showView('view-grados');
   if(dataGR.length===0) nuevoGR();
-  if(!dataGRI) nuevoGRI();
 }
 </script>
 <script>
@@ -15457,8 +15470,8 @@ function __grados_marker__(){}
     esc_menor:   { view:'view-escalas',     gen:()=>{ soloEscalas('menores'); } },
     esc_mayor:   { view:'view-escalas',     gen:()=>{ soloEscalas('mayores'); } },
     esc_otras:   { view:'view-escalas',     gen:()=>{ soloEscalas('otras'); } },
-    gra_senalar: { view:'view-grados',      gen:()=>{ try{ window.nuevoGR && window.nuevoGR(); }catch(e){} } },
-    gra_intervalo: { view:'view-grados',    gen:()=>{ try{ window.nuevoGRI && window.nuevoGRI(); }catch(e){} } },
+    gra_senalar: { view:'view-grados',      gen:()=>{ try{ window.grTab && window.grTab('grado'); window.nuevoGR && window.nuevoGR(); }catch(e){} } },
+    gra_intervalo: { view:'view-grados',    gen:()=>{ try{ window.grTab && window.grTab('intervalo'); window.nuevoGRI && window.nuevoGRI(); }catch(e){} } },
     acordes:     { view:'view-acordes',     gen:()=>{ try{ window.nuevoACO && window.nuevoACO(); }catch(e){} } },
     com_clasif:  { view:'view-compases',    gen:()=>{ try{ window.nuevoCOM && window.nuevoCOM(); }catch(e){} } },
     ena_a:       { view:'view-enarmonias',  gen:()=>{ try{ window.nuevoENA && window.nuevoENA(); }catch(e){} } },
