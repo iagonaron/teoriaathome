@@ -4530,69 +4530,76 @@ function corregirGR(){
    ESCRITO el alumno (la letra y solo la alteración que haya puesto él; la de la armadura no cuenta) y ♮ ♭ ♯ para
    pensárselo otra vez. «No quiero que estén amparados por la armadura»: lo que vale es lo que se confirma aquí.
    alterExpl: null = no puso nada (sale la letra sola = natural) · 0 = ♮ · -1 = ♭ · 1 = ♯. cb(alter) al pulsar OK. */
-window.modalRespuestaFinal=function(step, alterExpl, cb){
-  if(document.getElementById('respFinalOv')) return;
-  const ES={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
-  let a=(alterExpl==null)?null:alterExpl;
-  const mo=document.createElement('div'); mo.id='respFinalOv';
-  mo.setAttribute('role','dialog'); mo.setAttribute('aria-modal','true');
-  /* (3-nov-2026, 17:03, Iago) coherente con la estética (rosa, blanco, semitranslúcido) y SIN desenfocar el fondo: solo algo más oscuro, que se vea el ejercicio */
-  mo.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.32);display:flex;align-items:center;justify-content:center;padding:22px';
-  mo.innerHTML='<div style="max-width:340px;width:100%;background:rgba(18,14,34,.80);border:1px solid rgba(232,67,147,.55);border-radius:14px;padding:22px 22px 18px;box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center">'+
-    '<div style="font-size:13px;font-weight:900;color:var(--teoria);text-transform:uppercase;letter-spacing:.08em">¿Respuesta final?</div>'+
-    '<div id="respFinalNota" style="margin:10px auto 4px;font-size:44px;font-weight:900;color:#fff;min-height:56px"></div>'+
-    '<div style="color:rgba(255,255,255,.72);font-size:12.5px;line-height:1.5;margin-bottom:12px">Elige <b style="color:#fff">♭, ♮ o ♯</b>: cuenta la que marques aquí.</div>'+
-    '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px">'+
-      [['♭',-1],['♮',0],['♯',1]].map(p=>'<button type="button" data-a="'+p[1]+'" class="acc-btn" style="min-width:52px;height:46px;font-size:22px">'+p[0]+'</button>').join('')+
-    '</div>'+
-    '<button id="respFinalOk" type="button" disabled style="border:0;background:var(--teoria);color:#fff;border-radius:10px;padding:11px 30px;font-weight:900;font-size:15px;cursor:pointer;transition:opacity .15s">OK</button>'+
-  '</div>';
-  document.body.appendChild(mo);
-  const pinta=()=>{ mo.querySelector('#respFinalNota').textContent=ES[step]+(a===1?'♯':a===-1?'♭':a===0?'♮':'');
-    mo.querySelectorAll('[data-a]').forEach(b=>b.classList.toggle('on', a!=null && +b.dataset.a===a));
-    /* (3-nov-2026, 16:41, Iago) obligatorio marcar ♮, ♭ o ♯ para desbloquear el OK */
-    const ok=mo.querySelector('#respFinalOk'); ok.disabled=(a==null); ok.style.opacity=(a==null)?'.4':'1'; ok.style.cursor=(a==null)?'default':'pointer'; };
-  mo.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{ const v=+b.dataset.a; a=(a===v)?null:v; pinta(); });
-  const cerrar=()=>{ document.removeEventListener('keydown',tecla,true); mo.remove(); };
-  const tecla=(e)=>{ if(e.key==='Escape'||e.key==='Esc'){ e.stopPropagation(); cerrar(); } };
-  document.addEventListener('keydown',tecla,true);
-  mo.addEventListener('click',(e)=>{ if(e.target===mo) cerrar(); });
-  mo.querySelector('#respFinalOk').onclick=()=>{ if(a==null) return; cerrar(); cb(a); };
-  pinta();
+window.modalRespuestaFinal=function(step, alterExpl, cb){   /* (4-nov-2026, 18:08, Iago) misma ventana que la de 3 notas */
+  window.modalRespuestaFinalMulti([{step:step, expl:alterExpl}], function(al){ cb(al[0]); });
 };
 
-/* (4-nov-2026, Iago) GRADOS TONALES / MODALES: «¿Respuesta final?» con las TRES notas marcadas (una fila por nota, ♭ ♮ ♯
-   obligatorio en cada una). items=[{step, expl}] (expl como en modalRespuestaFinal) · cb([alter,…]) al pulsar OK. */
+/* (4-nov-2026, 18:08, Iago) «¿RESPUESTA FINAL?» — UNA SOLA VENTANA para todo (grado suelto o tonales/modales, ficha y libre).
+   «esa ventana emergente… me está tapando la respuesta. Necesito una solución que permita ver todo el pentagrama… tiene
+   que ser igual en las fichas y en los ejercicios libres». Ahora es una tira compacta (las notas EN FILA, cada una con
+   ♭ ♮ ♯ debajo; ♭ izquierda · ♮ centro · ♯ derecha) que se coloca FUERA del pentagrama: debajo si cabe, si no encima, y
+   si no cabe en ningún lado se pega abajo y la página sube para dejar el pentagrama a la vista. El fondo NO se oscurece.
+   items=[{step, expl}] (expl: null = no puso nada · 0 ♮ · -1 ♭ · 1 ♯) · cb([alter,…]) al pulsar OK (obligatorio elegir en todas).
+   Para volver a la de antes: commit c90fb1e de este repositorio. */
 window.modalRespuestaFinalMulti=function(items, cb){
   if(document.getElementById('respFinalOv')) return;
   const ES={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
   const al=items.map(it=>(it.expl==null)?null:it.expl);
   const mo=document.createElement('div'); mo.id='respFinalOv';
   mo.setAttribute('role','dialog'); mo.setAttribute('aria-modal','true');
-  mo.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.32);display:flex;align-items:center;justify-content:center;padding:22px';
-  mo.innerHTML='<div style="max-width:380px;width:100%;background:rgba(18,14,34,.80);border:1px solid rgba(232,67,147,.55);border-radius:14px;padding:22px 22px 18px;box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center">'+
-    '<div style="font-size:13px;font-weight:900;color:var(--teoria);text-transform:uppercase;letter-spacing:.08em">¿Respuesta final?</div>'+
-    '<div style="color:rgba(255,255,255,.72);font-size:12.5px;line-height:1.5;margin:8px 0 12px">Elige <b style="color:#fff">♭, ♮ o ♯</b> en cada nota: cuenta lo que marques aquí.</div>'+
-    items.map((it,j)=>'<div style="display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 10px">'+
-      '<div class="rfm-nota" data-j="'+j+'" style="min-width:96px;text-align:right;font-size:30px;font-weight:900;color:#fff"></div>'+
-      '<div style="display:flex;gap:6px">'+[['♭',-1],['♮',0],['♯',1]].map(p=>'<button type="button" data-j="'+j+'" data-a="'+p[1]+'" class="acc-btn" style="min-width:46px;height:40px;font-size:20px">'+p[0]+'</button>').join('')+'</div>'+
-    '</div>').join('')+
-    '<button id="respFinalOk" type="button" disabled style="margin-top:8px;border:0;background:var(--teoria);color:#fff;border-radius:10px;padding:11px 30px;font-weight:900;font-size:15px;cursor:pointer;transition:opacity .15s">OK</button>'+
+  mo.style.cssText='position:fixed;inset:0;z-index:100000;background:transparent';
+  const una=(items.length===1);
+  mo.innerHTML='<div id="respFinalCaja" style="position:fixed;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 24px);background:rgba(18,14,34,.97);border:1px solid rgba(232,67,147,.7);border-radius:14px;padding:12px 18px 12px;box-shadow:0 14px 40px rgba(0,0,0,.45);text-align:center;opacity:0;transition:opacity .12s">'+
+    '<div style="display:flex;align-items:baseline;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">'+
+      '<span style="font-size:12.5px;font-weight:900;color:var(--teoria);text-transform:uppercase;letter-spacing:.08em">¿Respuesta final?</span>'+
+      '<span style="color:rgba(255,255,255,.75);font-size:12.5px">Elige <b style="color:#fff">♭, ♮ o ♯</b>'+(una?'':' en cada nota')+': cuenta lo que marques aquí.</span>'+
+    '</div>'+
+    '<div style="display:flex;align-items:flex-end;justify-content:center;gap:14px;flex-wrap:wrap">'+
+      items.map((it,j)=>'<div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:2px 4px">'+
+        '<div class="rfm-nota" data-j="'+j+'" style="font-size:26px;font-weight:900;color:#fff;line-height:1.1;min-width:70px"></div>'+
+        '<div style="display:flex;gap:5px">'+[['♭',-1],['♮',0],['♯',1]].map(p=>'<button type="button" data-j="'+j+'" data-a="'+p[1]+'" class="acc-btn" style="min-width:40px;height:36px;font-size:18px">'+p[0]+'</button>').join('')+'</div>'+
+      '</div>').join('')+
+      '<button id="respFinalOk" type="button" disabled style="align-self:flex-end;margin-left:4px;border:0;background:var(--teoria);color:#fff;border-radius:10px;padding:0 24px;height:36px;font-weight:900;font-size:15px;cursor:pointer;transition:opacity .15s">OK</button>'+
+    '</div>'+
   '</div>';
   document.body.appendChild(mo);
+  const caja=mo.querySelector('#respFinalCaja');
+  /* el pentagrama del ejercicio que está a la vista (ficha: #simScore · libre: tonales/modales #grmHost, grado #scoreGR0) */
+  function pentagrama(){
+    const c=['#simScore','#grmHost','#scoreGR0','#griHost'].map(s=>document.querySelector(s)).filter(e=>e && e.offsetParent!==null && e.getBoundingClientRect().height>20);
+    return c[0]||null;
+  }
+  function colocar(){
+    const H=caja.offsetHeight, vh=window.innerHeight, m=10, pe=pentagrama();
+    let top=null;
+    if(pe){
+      let r=pe.getBoundingClientRect();
+      if(vh-r.bottom>=H+2*m) top=r.bottom+m;            // debajo del pentagrama
+      else if(r.top>=H+2*m) top=r.top-H-m;              // encima
+      else {                                            // no cabe: abajo del todo y sube la página
+        top=vh-H-m;
+        const sobra=r.bottom-(top-m);
+        if(sobra>0){ try{ const sc=(function(e){ while(e && e!==document.body){ const s=getComputedStyle(e); if(/(auto|scroll)/.test(s.overflowY) && e.scrollHeight>e.clientHeight) return e; e=e.parentElement; } return null; })(pe.parentElement);
+          if(sc) sc.scrollTop+=sobra; else window.scrollBy(0,sobra); }catch(err){} }
+      }
+    } else top=vh-H-m;
+    caja.style.top=Math.max(m,Math.round(top))+'px'; caja.style.opacity='1';
+  }
   const pinta=()=>{
     mo.querySelectorAll('.rfm-nota').forEach(d=>{ const j=+d.dataset.j, a=al[j]; d.textContent=ES[items[j].step]+(a===1?'♯':a===-1?'♭':a===0?'♮':''); });
     mo.querySelectorAll('[data-a]').forEach(b=>b.classList.toggle('on', al[+b.dataset.j]!=null && +b.dataset.a===al[+b.dataset.j]));
     const falta=al.some(a=>a==null); const ok=mo.querySelector('#respFinalOk');
     ok.disabled=falta; ok.style.opacity=falta?'.4':'1'; ok.style.cursor=falta?'default':'pointer'; };
   mo.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{ const j=+b.dataset.j, v=+b.dataset.a; al[j]=(al[j]===v)?null:v; pinta(); });
-  const cerrar=()=>{ document.removeEventListener('keydown',tecla,true); mo.remove(); };
+  const cerrar=()=>{ document.removeEventListener('keydown',tecla,true); window.removeEventListener('resize',colocar); mo.remove(); };
   const tecla=(e)=>{ if(e.key==='Escape'||e.key==='Esc'){ e.stopPropagation(); cerrar(); } };
   document.addEventListener('keydown',tecla,true);
+  window.addEventListener('resize',colocar);
   mo.addEventListener('click',(e)=>{ if(e.target===mo) cerrar(); });
   mo.querySelector('#respFinalOk').onclick=()=>{ if(al.some(a=>a==null)) return; cerrar(); cb(al.slice()); };
-  pinta();
+  pinta(); requestAnimationFrame(colocar);
 };
+
 /* expl de una nota del motor montarGrado: la alteración que ha puesto el alumno (null si no tocó nada) */
 window.__explNotaGrado=function(nb){ return (nb && (nb._touched===true || nb._inherited===false)) ? (nb.alter||0) : ((nb && nb._pulsado!=null && nb._pulsado===(nb.alter||0)) ? nb._pulsado : null); };
 
