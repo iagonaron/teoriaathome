@@ -4258,9 +4258,24 @@ function grCabecitas(ton){
 }
 
 let dataGR=[];
+let dataGRM=null;   /* (4-nov-2026, Iago) GRADOS TONALES / MODALES (ejercicio libre) */
 function nuevoGR(){
   unlockCard('cardGR');
-  dataGR=[];
+  dataGR=[]; dataGRM=null;
+  /* (4-nov-2026, Iago) GRADOS TONALES / MODALES · ~1/3 de los ejercicios: grados tonales o modales (mitad y mitad), con el motor de la ficha */
+  if(Math.random()<1/3 && typeof window.__genGradoTM==='function'){
+    let g=null; try{ g=window.__genGradoTM(Math.random()<0.5?'tonales':'modales'); }catch(err){ console.warn('[grm]',err); }
+    if(g){
+      dataGRM={g, est:{seq:[], arm:0, sel:null, pend:0, marca:null, marcas:[]}};
+      const host=document.getElementById('grRows');
+      host.innerHTML='<style>#grmHost svg{background:#f3f5ff;border-radius:12px}</style>'+
+        '<div id="grmPreg" class="gr-preg" style="text-align:center;margin:6px 0 4px"></div><div id="grmHost"></div>'+
+        '<div id="grmSol" class="sol" style="text-align:center;min-height:18px;margin-top:8px"></div>';
+      document.getElementById('grmPreg').textContent=g.enun;
+      window.montarGrado(document.getElementById('grmHost'), g.spec, dataGRM.est);
+      return;
+    }
+  }
   const usadas=new Set();
   for(let i=0;i<1;i++){   // un solo grado por ejercicio
     let ton,grado,key,intentos=0;
@@ -4437,7 +4452,27 @@ function grWireOne(i){
     if(accRow) paintGRAcc(i,accRow);
   });
 }
+function corregirGRM(){   /* (4-nov-2026, Iago) GRADOS TONALES / MODALES (ejercicio libre) */
+  const est=dataGRM.est, sp=dataGRM.g.spec, tag=document.getElementById('grmSol'); const L=(est.marcas||[]);
+  if(L.length!==3){ tag.style.color='#e0a13a'; tag.textContent='Tienes que marcar 3 notas (llevas '+L.length+' de 3): toca las cabezas en el pentagrama.'; return; }
+  if(!est._finalOk){
+    const orden=L.slice().sort((a,b)=>a-b);
+    window.modalRespuestaFinalMulti(orden.map(m=>({step:est.seq[m].step, expl:window.__explNotaGrado(est.seq[m])})), (alts)=>{
+      orden.forEach((m,j)=>{ const nb=est.seq[m]; nb.alter=alts[j]; nb._touched=true; nb._inherited=false; delete nb._pulsado; });
+      est._dirty=true; est._finalOk=true;
+      try{ window.montarGrado(document.getElementById('grmHost'), sp, est); }catch(err){}   // se ven ya las alteraciones elegidas
+      corregirGRM(); });
+    return;
+  }
+  const r=window.comprobarGrado(sp, est); lockCard('cardGR');
+  const ES={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
+  const tu=L.slice().sort((a,b)=>a-b).map(m=>{ const nb=est.seq[m]; return ES[nb.step]+(nb.alter===1?'♯':nb.alter===-1?'♭':''); }).join(', ');
+  tag.style.color='';
+  tag.innerHTML = r.ok ? '<span style="color:var(--green)">✓ Correcto: '+sp.multi.txt+'</span>'
+    : '<span style="color:var(--red)">✗ '+r.aciertos+' de 3 · Tus notas: '+tu+'</span><br><span style="color:#2f6df6">Solución: '+sp.multi.txt+'</span>';
+}
 function corregirGR(){
+  if(dataGRM) return corregirGRM();   /* (4-nov-2026, Iago) GRADOS TONALES / MODALES */
   // solo es obligatorio haber señalado la nota (la armadura 0 es válida)
   let faltan=[];
   dataGR.forEach((e,i)=>{ if(e.selIdx==null) faltan.push(i); });
@@ -4503,12 +4538,12 @@ window.modalRespuestaFinal=function(step, alterExpl, cb){
   mo.setAttribute('role','dialog'); mo.setAttribute('aria-modal','true');
   /* (3-nov-2026, 17:03, Iago) coherente con la estética (rosa, blanco, semitranslúcido) y SIN desenfocar el fondo: solo algo más oscuro, que se vea el ejercicio */
   mo.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.32);display:flex;align-items:center;justify-content:center;padding:22px';
-  mo.innerHTML='<div style="max-width:340px;width:100%;background:rgba(18,14,34,.62);border:1px solid rgba(232,67,147,.55);border-radius:14px;padding:22px 22px 18px;box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center">'+
+  mo.innerHTML='<div style="max-width:340px;width:100%;background:rgba(18,14,34,.80);border:1px solid rgba(232,67,147,.55);border-radius:14px;padding:22px 22px 18px;box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center">'+
     '<div style="font-size:13px;font-weight:900;color:var(--teoria);text-transform:uppercase;letter-spacing:.08em">¿Respuesta final?</div>'+
     '<div id="respFinalNota" style="margin:10px auto 4px;font-size:44px;font-weight:900;color:#fff;min-height:56px"></div>'+
-    '<div style="color:rgba(255,255,255,.72);font-size:12.5px;line-height:1.5;margin-bottom:12px">Elige <b style="color:#fff">♮, ♭ o ♯</b>: cuenta la que marques aquí.</div>'+
+    '<div style="color:rgba(255,255,255,.72);font-size:12.5px;line-height:1.5;margin-bottom:12px">Elige <b style="color:#fff">♭, ♮ o ♯</b>: cuenta la que marques aquí.</div>'+
     '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px">'+
-      [['♮',0],['♭',-1],['♯',1]].map(p=>'<button type="button" data-a="'+p[1]+'" class="acc-btn" style="min-width:52px;height:46px;font-size:22px">'+p[0]+'</button>').join('')+
+      [['♭',-1],['♮',0],['♯',1]].map(p=>'<button type="button" data-a="'+p[1]+'" class="acc-btn" style="min-width:52px;height:46px;font-size:22px">'+p[0]+'</button>').join('')+
     '</div>'+
     '<button id="respFinalOk" type="button" disabled style="border:0;background:var(--teoria);color:#fff;border-radius:10px;padding:11px 30px;font-weight:900;font-size:15px;cursor:pointer;transition:opacity .15s">OK</button>'+
   '</div>';
@@ -4525,6 +4560,41 @@ window.modalRespuestaFinal=function(step, alterExpl, cb){
   mo.querySelector('#respFinalOk').onclick=()=>{ if(a==null) return; cerrar(); cb(a); };
   pinta();
 };
+
+/* (4-nov-2026, Iago) GRADOS TONALES / MODALES: «¿Respuesta final?» con las TRES notas marcadas (una fila por nota, ♭ ♮ ♯
+   obligatorio en cada una). items=[{step, expl}] (expl como en modalRespuestaFinal) · cb([alter,…]) al pulsar OK. */
+window.modalRespuestaFinalMulti=function(items, cb){
+  if(document.getElementById('respFinalOv')) return;
+  const ES={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
+  const al=items.map(it=>(it.expl==null)?null:it.expl);
+  const mo=document.createElement('div'); mo.id='respFinalOv';
+  mo.setAttribute('role','dialog'); mo.setAttribute('aria-modal','true');
+  mo.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.32);display:flex;align-items:center;justify-content:center;padding:22px';
+  mo.innerHTML='<div style="max-width:380px;width:100%;background:rgba(18,14,34,.80);border:1px solid rgba(232,67,147,.55);border-radius:14px;padding:22px 22px 18px;box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center">'+
+    '<div style="font-size:13px;font-weight:900;color:var(--teoria);text-transform:uppercase;letter-spacing:.08em">¿Respuesta final?</div>'+
+    '<div style="color:rgba(255,255,255,.72);font-size:12.5px;line-height:1.5;margin:8px 0 12px">Elige <b style="color:#fff">♭, ♮ o ♯</b> en cada nota: cuenta lo que marques aquí.</div>'+
+    items.map((it,j)=>'<div style="display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 10px">'+
+      '<div class="rfm-nota" data-j="'+j+'" style="min-width:96px;text-align:right;font-size:30px;font-weight:900;color:#fff"></div>'+
+      '<div style="display:flex;gap:6px">'+[['♭',-1],['♮',0],['♯',1]].map(p=>'<button type="button" data-j="'+j+'" data-a="'+p[1]+'" class="acc-btn" style="min-width:46px;height:40px;font-size:20px">'+p[0]+'</button>').join('')+'</div>'+
+    '</div>').join('')+
+    '<button id="respFinalOk" type="button" disabled style="margin-top:8px;border:0;background:var(--teoria);color:#fff;border-radius:10px;padding:11px 30px;font-weight:900;font-size:15px;cursor:pointer;transition:opacity .15s">OK</button>'+
+  '</div>';
+  document.body.appendChild(mo);
+  const pinta=()=>{
+    mo.querySelectorAll('.rfm-nota').forEach(d=>{ const j=+d.dataset.j, a=al[j]; d.textContent=ES[items[j].step]+(a===1?'♯':a===-1?'♭':a===0?'♮':''); });
+    mo.querySelectorAll('[data-a]').forEach(b=>b.classList.toggle('on', al[+b.dataset.j]!=null && +b.dataset.a===al[+b.dataset.j]));
+    const falta=al.some(a=>a==null); const ok=mo.querySelector('#respFinalOk');
+    ok.disabled=falta; ok.style.opacity=falta?'.4':'1'; ok.style.cursor=falta?'default':'pointer'; };
+  mo.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{ const j=+b.dataset.j, v=+b.dataset.a; al[j]=(al[j]===v)?null:v; pinta(); });
+  const cerrar=()=>{ document.removeEventListener('keydown',tecla,true); mo.remove(); };
+  const tecla=(e)=>{ if(e.key==='Escape'||e.key==='Esc'){ e.stopPropagation(); cerrar(); } };
+  document.addEventListener('keydown',tecla,true);
+  mo.addEventListener('click',(e)=>{ if(e.target===mo) cerrar(); });
+  mo.querySelector('#respFinalOk').onclick=()=>{ if(al.some(a=>a==null)) return; cerrar(); cb(al.slice()); };
+  pinta();
+};
+/* expl de una nota del motor montarGrado: la alteración que ha puesto el alumno (null si no tocó nada) */
+window.__explNotaGrado=function(nb){ return (nb && (nb._touched===true || nb._inherited===false)) ? (nb.alter||0) : ((nb && nb._pulsado!=null && nb._pulsado===(nb.alter||0)) ? nb._pulsado : null); };
 
 /* (3-nov-2026, Iago) GRADOS · ¿QUÉ INTERVALO HAY ENTRE DOS GRADOS? (ejercicio libre). Usa el mismo motor que la ficha
    (montarGrado con spec.iv): escala con su armadura y los dos grados señalados de ayuda; SOLO puntúa el intervalo. */
@@ -4558,7 +4628,7 @@ function grTab(t){
 }
 function openGrados(){
   showView('view-grados');
-  if(dataGR.length===0) nuevoGR();
+  if(dataGR.length===0 && !dataGRM) nuevoGR();
 }
 </script>
 <script>
@@ -8012,6 +8082,7 @@ function openTerminos(){
      ============================================================ */
   const GR_NOMBRES={1:'Tónica',2:'Supertónica',3:'Mediante',4:'Subdominante',5:'Dominante',6:'Superdominante',7:(m)=> m==='m'?'Sensible':'Sensible'};
   function genGrado(){
+    if(Math.random()<1/3) return genGradoTM(Math.random()<0.5?'tonales':'modales');   /* (4-nov-2026, Iago) GRADOS TONALES / MODALES · ~1/3 */
     // tónicas naturales cómodas (sin alteración en el nombre, para que la armadura sea simple)
     const TONS_OK=[{s:'C'},{s:'G'},{s:'D'},{s:'F'},{s:'A'},{s:'E'},{s:'B'}];
     const modo=pick(['M','m']);
@@ -8079,6 +8150,44 @@ function openTerminos(){
     };
   }
   function articulo(nombre){ return 'la'; }
+
+  /* (4-nov-2026, Iago) GRADOS TONALES / MODALES: «¿cuáles son los grados tonales de Do m?» (I, IV, V) o
+     «¿cuáles son los grados modales de Fa M?» (III, VI, VII). Se marcan 3 notas; en menor, el VII de la menor natural
+     (sin subir). Sale en ~1/3 de los «Señalar el grado» (mitad tonales, mitad modales). spec.multi = {tipo, idx}.
+     Para quitarlo: borrar esta función y la línea «~1/3» al principio de genGrado (y en nuevoGR del ejercicio libre). */
+  function genGradoTM(tipo){
+    tipo=(tipo==='modales')?'modales':'tonales';
+    const TONS_OK=['C','G','D','F','A','E','B'];
+    const modo=pick(['M','m']); const tonStep=pick(TONS_OK);
+    const fifths=(modo==='m') ? (MINOR_FIFTHS[tonStep]||0) : (MAJOR_FIFTHS[tonStep]||0);
+    const o=4, it=STEPS.indexOf(tonStep);
+    const ksMap=(function(f){const SOST=['F','C','G','D','A','E','B'],BEM=['B','E','A','D','G','C','F'];const m={};if(f>0)for(let k=0;k<f;k++)m[SOST[k]]=1;else if(f<0)for(let k=0;k<-f;k++)m[BEM[k]]=-1;return m;})(fifths);
+    const notas=[];
+    for(let i=0;i<7;i++){ const idx=(it+i)%7, oc=o+Math.floor((it+i)/7), step=STEPS[idx]; notas.push({step,octave:oc,alter:ksMap[step]||0}); }
+    const G=(tipo==='tonales')?[1,4,5]:[3,6,7];
+    const idx=G.map(g=>g-1);
+    const noms=idx.map(k=>solfDe(notas[k].step,notas[k].alter));
+    const tonLabel=solfDe(tonStep,0)+' '+(modo==='m'?'m':'M');
+    const keysig=(fifths!==0)? KS_VF[String(fifths)] : null;
+    const notesSpec=notas.map(n=>({key:keyDe(n.step,n.alter,n.octave), acc:false}));
+    notesSpec.push({key:keyDe(tonStep,0,o+1), acc:false, dim:true});
+    return {
+      titulo:'Señalar los grados '+tipo,
+      enun:'¿Cuáles son los grados '+tipo+' de '+tonLabel+'? Marca las 3 notas.',
+      resp:noms.join(', '),
+      spec:{type:'scale',clef:'treble',fifths,keysig,tonicLabel:tonLabel,notes:notesSpec,precolocada:true,
+            marks:idx.map((k,j)=>({index:k,text:noms[j],color:PINK,dir:'up'})),
+            multi:{tipo:tipo, idx:idx, txt:noms.join(', ')}},
+      pasos:[
+        'Pongo las cabezas desde la tónica ('+solfDe(tonStep,0)+') y la armadura'+(keysig?(' ('+Math.abs(fifths)+(fifths>0?' sostenido(s))':' bemol(es))')):' (ninguna alteración)')+'.',
+        (tipo==='tonales')
+          ? 'Los grados <b>tonales</b> son el I, el IV y el V: la tónica, la subdominante y la dominante.'
+          : 'Los grados <b>modales</b> son el III, el VI y el VII: la mediante, la superdominante y el séptimo grado'+(modo==='m'?' (en menor, el de la escala natural, sin subir)':'')+'.',
+        'Los busco y miro por el retrovisor si llevan alteración: <b>'+noms.join(', ')+'</b>.'
+      ]
+    };
+  }
+  window.__genGradoTM = genGradoTM;
 
   /* (3-nov-2026, Iago) ¿QUÉ INTERVALO HAY ENTRE DOS GRADOS? «¿qué intervalo hay entre la mediante y la dominante de Si m?»
      Dos grados de la escala (de grave a agudo, dentro de la octava). En menor, la sensible va elevada (armónica).
@@ -10463,7 +10572,19 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
 
     const sc=document.createElement('div'); sc.style.cssText='flex:1;min-width:300px;position:relative';
     wrap.appendChild(ctrl); wrap.appendChild(sc);
+    /* (4-nov-2026, Iago) GRADOS TONALES / MODALES: contador siempre a la vista «Marca 3 notas · n/3» */
+    let cnt=null, cntAviso=false;
+    if(spec.multi){
+      if(!Array.isArray(estado.marcas)) estado.marcas=[];
+      cnt=document.createElement('div'); cnt.className='grm-cnt';
+      cnt.style.cssText='text-align:center;font-size:13px;font-weight:900;letter-spacing:.02em;margin:0 0 8px;padding:6px 10px;border-radius:9px;border:1px solid rgba(232,67,147,.55);color:#e84393;background:rgba(232,67,147,.10)';
+      host.appendChild(cnt);
+    }
     host.appendChild(wrap);
+    function pintaCnt(){ if(!cnt) return; const n=(estado.marcas||[]).length;
+      if(cntAviso){ cnt.textContent='Ya tienes 3 notas: toca una marcada para quitarla y cambiarla'; cnt.style.color='#e0a13a'; cnt.style.borderColor='rgba(224,161,58,.7)'; return; }
+      cnt.textContent=(n===3)?'✓ 3 de 3 notas marcadas':('Marca 3 notas · '+n+'/3');
+      cnt.style.color=(n===3)?'#22c98a':'#e84393'; cnt.style.borderColor=(n===3)?'rgba(34,201,138,.6)':'rgba(232,67,147,.55)'; }
 
     let yMap={}, geom={ noteXs:[], noteYs:[] };
 
@@ -10496,7 +10617,7 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
         let prevAlt=null; for(let j=k-1;j>=0;j--){ const pv=estado.seq[j]; if(pv.step===nb.step && pv.octave===nb.octave){ prevAlt=pv.alter; break; } }
         if(!nb._inherited && nb.alter!==armA) sn.addModifier(new VFx.Accidental(acc(nb.alter)),0);
         else if(!nb._inherited && nb.alter===armA && nb.alter===0 && prevAlt!==null && prevAlt!==0) sn.addModifier(new VFx.Accidental('n'),0);
-        if(spec.iv ? (estado.marcas||[]).indexOf(k)>=0 : k===estado.marca) sn.setStyle({fillStyle:'#e84393',strokeStyle:'#e84393'});      // grado señalado (rosa) · (3-nov) en modo intervalo, los dos
+        if((spec.iv||spec.multi) ? (estado.marcas||[]).indexOf(k)>=0 : k===estado.marca) sn.setStyle({fillStyle:'#e84393',strokeStyle:'#e84393'});      // grado señalado (rosa) · (3-nov) en modo intervalo, los dos
         else if(k===estado.sel) sn.setStyle({fillStyle:'#e84393',strokeStyle:'#e84393'});   // seleccionada para alterar (rosa)
         else sn.setStyle({fillStyle:'#16203a',strokeStyle:'#16203a'});
         return sn;
@@ -10521,9 +10642,9 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
         if(estado.marca!=null && geom.noteXs[estado.marca]!=null){
           drawMarca(sc.querySelector('svg'), stave, geom.noteXs[estado.marca]+6.5, geom.noteYs[estado.marca]);
         }
-        if(spec.iv) (estado.marcas||[]).forEach(m=>{ if(m!==estado.marca && geom.noteXs[m]!=null) drawMarca(sc.querySelector('svg'), stave, geom.noteXs[m]+6.5, geom.noteYs[m]); });   /* (3-nov) */
+        if(spec.iv||spec.multi) (estado.marcas||[]).forEach(m=>{ if(m!==estado.marca && geom.noteXs[m]!=null) drawMarca(sc.querySelector('svg'), stave, geom.noteXs[m]+6.5, geom.noteYs[m]); });   /* (3-nov) */
       }
-      refreshAcc(); refreshGradoLabel(); wireSvg();
+      refreshAcc(); refreshGradoLabel(); wireSvg(); pintaCnt();
     }
 
     function drawMarca(svg, stave, x, y){
@@ -10565,6 +10686,13 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     function onClick(ev){ const svg=sc.querySelector('svg'); if(!svg) return; const p=pt(svg,ev); if(!p) return;
       const hit=noteHit(p);
       if(hit>=0){
+        if(spec.multi){   /* (4-nov-2026, Iago) GRADOS TONALES / MODALES: hasta TRES notas; la 4.ª no entra (avisa) — tocar una marcada la quita */
+          const L=estado.marcas||(estado.marcas=[]); const p=L.indexOf(hit); cntAviso=false;
+          if(p>=0){ L.splice(p,1); if(estado.sel===hit) estado.sel=null; }
+          else if(L.length>=3){ cntAviso=true; estado.sel=null; pintar(); setTimeout(()=>{ cntAviso=false; pintaCnt(); },2200); return; }
+          else { L.push(hit); estado.sel=hit; }
+          estado.marca=null; estado._finalOk=false; estado._dirty=true; pintar(); return;
+        }
         if(spec.iv){   /* (3-nov-2026) modo intervalo: hasta DOS grados señalados (ayuda); un tercero sustituye al más antiguo */
           const L=estado.marcas||(estado.marcas=[]); const p=L.indexOf(hit);
           if(p>=0){ L.splice(p,1); if(estado.sel===hit) estado.sel=null; } else { L.push(hit); if(L.length>2) L.shift(); estado.sel=hit; }
@@ -10592,6 +10720,14 @@ window.FichaWheel = function(hostEl, labels, values, currentIdx, onPick){
     const idxGrado = (spec.marks && spec.marks[0]) ? spec.marks[0].index : null;
     /* (3-nov-2026, Iago: «lo que hace que esté bien o no es el intervalo, solo el intervalo») */
     if(spec.iv){ const okIv = estado.ivNum===spec.iv.num && estado.ivEsp===spec.iv.esp; return { ok:okIv, pct:okIv?100:0, total:1, aciertos:okIv?1:0 }; }
+    /* (4-nov-2026, Iago) GRADOS TONALES / MODALES: 1/3 por cada nota marcada que sea uno de los tres grados (nombre y alteración como suena) */
+    if(spec.multi){
+      const need=spec.multi.idx.map(k=>sol[k]); const usados=new Set(); let ac=0;
+      (estado.marcas||[]).slice(0,3).forEach(m=>{ const g=got[m]; if(!g) return;
+        const j=need.findIndex((n,jj)=>!usados.has(jj) && n && n.step===g.step && (n.alter||0)===(g.alter||0));
+        if(j>=0){ usados.add(j); ac++; } });
+      return { ok:ac===3, pct:Math.round(ac*100/3), total:3, aciertos:ac };
+    }
 
     // si el alumno no ha introducido nada (ni armadura, ni alteración, ni señalar grado), 0%.
     if(!estado._dirty){ return { ok:false, pct:0, total:2, aciertos:0 }; }
@@ -12817,6 +12953,8 @@ function __grados_marker__(){}
         ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Toca el pentagrama para colocar cada nota, altérala con la cuadrícula (<b>♭ ♯</b>) y analiza con las ruedas. '+window.TXT_TIP('Borra con clic derecho.','Borra con la ×.')+'</div>'
         : (esGrado && item.ej._spec && item.ej._spec.iv)   /* (3-nov-2026) intervalo entre dos grados */
         ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Las cabezas ya están escritas. Pon la <b>armadura</b> y señala los <b>dos grados</b> para ayudarte (toca cada nota). Lo que cuenta es el <b>intervalo</b>: elígelo en las dos ruedas (número y especie).</div>'
+        : (esGrado && item.ej._spec && item.ej._spec.multi)   /* (4-nov-2026, Iago) GRADOS TONALES / MODALES */
+        ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Las cabezas ya están escritas. Pon la <b>armadura</b> y <b>marca las 3 notas</b> que son los grados '+item.ej._spec.multi.tipo+' (toca cada una; tócala otra vez para quitarla). Al pasar, te pediré <b>♭, ♮ o ♯</b> en cada una.</div>'
         : esGrado
         ? '<div style="margin-top:14px;color:#9aa3c0;font-size:12.5px">Las cabezas ya están escritas. Pon la <b>armadura</b> y altera lo que corresponda (toca una nota y usa <b>♯ ♮ ♭</b>). Para <b>señalar el grado</b>: toca la nota para seleccionarla y tócala otra vez para rodearla.</div>'
         : esCompas
@@ -12933,6 +13071,17 @@ function __grados_marker__(){}
         if(item.ej._interactivo==='grado' && item.ej._spec && item.ej._spec.iv){   /* (3-nov-2026) intervalo entre dos grados */
           const r=item._respuesta||{};
           if(r.ivNum==null || !r.ivEsp || r.ivEsp==='—'){ mostrarBannerSim('Elige el intervalo en las dos ruedas: el número y la especie.'); return; }
+        } else if(item.ej._interactivo==='grado' && item.ej._spec && item.ej._spec.multi){   /* (4-nov-2026, Iago) GRADOS TONALES / MODALES */
+          const r=item._respuesta||{}; const L=r.marcas||[];
+          if(L.length!==3){ mostrarBannerSim('Tienes que marcar 3 notas: los grados '+item.ej._spec.multi.tipo+' (llevas '+L.length+' de 3).'); return; }
+          if(!r._finalOk){
+            const orden=L.slice().sort((a,b)=>a-b); const btn=ov.querySelector('#simNext');
+            window.modalRespuestaFinalMulti(orden.map(m=>({step:r.seq[m].step, expl:window.__explNotaGrado(r.seq[m])})), (alts)=>{
+              orden.forEach((m,j)=>{ const nb=r.seq[m]; nb.alter=alts[j]; nb._touched=true; nb._inherited=false; delete nb._pulsado; });
+              r._dirty=true; r._finalOk=true; if(btn) btn.click(); });
+            return;
+          }
+          r._finalOk=false;   // si vuelve atrás y la cambia, se le vuelve a preguntar
         } else if(item.ej._interactivo==='grado'){
           const marcado = item._respuesta && item._respuesta.marca!=null;
           if(!marcado){ mostrarBannerSim('Tienes que señalar el grado: toca la nota que crees que es la respuesta para rodearla.'); return; }
@@ -13414,7 +13563,7 @@ function __grados_marker__(){}
         if(esAlumnoProg && enviado){ salirAlPortal(); return; }
         if(window.__REVISION && window.__REVISION.alumno){ salirAlPortal(); return; }   /* (22-sep-2026) */
         cerrar(); }
-      else if(!enviado && e.key==='ArrowRight'){ if(i<n-1){ const it=PP.ficha[i]; if(it.ej._interactivo==='grado' && !(it._respuesta && it._respuesta.marca!=null)){ mostrarBannerSim('Tienes que señalar el grado: toca la nota que crees que es la respuesta para rodearla.'); return; } i++; if(i>maxAvance) maxAvance=i; if(esAlumnoProg){ try{ progGuardar(i, maxAvance); }catch(e2){} } mostrar(); } }
+      else if(!enviado && e.key==='ArrowRight'){ if(i<n-1){ const it=PP.ficha[i]; if(it.ej._interactivo==='grado'){ const nx=document.querySelector('#simNext'); if(nx) nx.click(); return; }   /* (4-nov-2026, Iago) GRADOS TONALES / MODALES: la flecha pasa por las mismas comprobaciones que «Siguiente» */ i++; if(i>maxAvance) maxAvance=i; if(esAlumnoProg){ try{ progGuardar(i, maxAvance); }catch(e2){} } mostrar(); } }
       else if(!enviado && e.key==='ArrowLeft'){ if(i>0){ i--; if(esAlumnoProg){ try{ progGuardar(i, maxAvance); }catch(e2){} } mostrar(); } } };
     document.addEventListener('keydown',onKey);
     if(window.__REVISION){                      /* ELE-W5 · el profesor entra directo a la corrección */
@@ -13890,6 +14039,15 @@ function __grados_marker__(){}
       const tu=(resp && resp.ivNum!=null && resp.ivEsp && resp.ivEsp!=='—') ? (resp.ivNum+'ª '+resp.ivEsp) : '';
       const okIv=!!(resp && resp.ivNum===spec.iv.num && resp.ivEsp===spec.iv.esp);
       try{ host.appendChild(filaCorr('Intervalo:', tu, spec.iv.txt, okIv)); }catch(e){}
+      return hecho;
+    }
+    if(spec.multi){   /* (4-nov-2026, Iago) GRADOS TONALES / MODALES: escala resuelta + fila con las tres notas (1/3 cada una) */
+      const hecho=dibujarEscalaCorrArm(host, sol, sol.map(n=>Object.assign({},n)), { fifths:spec.fifths||0, alumnoArm:spec.fifths||0, markIdx:-1, markLabel:'', markOk:true });
+      const ES2={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
+      const L=((resp&&resp.marcas)||[]).slice().sort((a,b)=>a-b);
+      const tu=L.map(m=>{ const nb=resp.seq&&resp.seq[m]; return nb?(ES2[nb.step]+(nb.alter===1?'♯':nb.alter===-1?'♭':'')):''; }).filter(Boolean).join(', ');
+      let r={ok:false,aciertos:0}; try{ r=window.comprobarGrado(spec, resp||{}); }catch(e){}
+      try{ host.appendChild(filaCorr('Grados '+spec.multi.tipo+(r.ok?'':' ('+r.aciertos+'/3)')+':', tu, spec.multi.txt, r.ok)); }catch(e){}
       return hecho;
     }
     const alumno=((resp&&resp.seq)||[]).map(n=>({step:n.step,octave:n.octave,alter:n.alter||0}));
@@ -15031,11 +15189,12 @@ function __grados_marker__(){}
           }
           // GRADOS: "Respuesta" + cuadrado PEQUEÑO a su derecha (solo cabe un nombre de nota: Do, Re#, Mi♯…)
           if(ej._interactivo==='grado'){
-            const bw=16, bh=10, bx=M+CW-6-bw, byy=by+4;
+            const _multi=!!(ej._spec && ej._spec.multi);   /* (4-nov-2026, Iago) GRADOS TONALES / MODALES: cabe «Do, Fa, Sol» */
+            const bw=_multi?46:16, bh=10, bx=M+CW-6-bw, byy=by+4;
             doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(120,124,140);
             doc.text('Respuesta', bx-3.5, byy+bh/2+1.5, {align:'right'});           // etiqueta a la IZQUIERDA del cuadrado
             doc.setDrawColor(150,150,150); doc.setLineWidth(0.45); doc.roundedRect(bx, byy, bw, bh, 1.5, 1.5, 'S');
-            if(esSolucion){ let ans=''; try{ ans=(ej._spec&&ej._spec.marks&&ej._spec.marks[0]&&ej._spec.marks[0].text)||''; }catch(e){}
+            if(esSolucion){ let ans=''; try{ ans=_multi ? ej._spec.multi.txt : ((ej._spec&&ej._spec.marks&&ej._spec.marks[0]&&ej._spec.marks[0].text)||''); }catch(e){}
               if(ans){ doc.setFont('helvetica','bold'); doc.setFontSize(11.5); doc.setTextColor(209,29,29); doc.text(pdfSafe(ans), bx+bw/2, byy+bh/2+2, {align:'center', maxWidth:bw-2}); } }
           }
         }
