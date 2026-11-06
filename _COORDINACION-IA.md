@@ -367,3 +367,4 @@ Este fichero es el punto de encuentro. Empieza por «_» para que la web no lo p
 - 27-sep 21:57 · Apuntes en fichas · commit 99163e1 · botón APUNTES en la ficha del alumno (solo Tester).
 - 27-sep 14:23 · Fichas y rediseño · commit d6d66cd · FIX guardado de fichas.
 - 6-nov 17:15 · Mantenimiento (tonos vecinos) · HECHO · index.html: la ventana de elegir tonalidad de «Tonos vecinos» (tarjeta C) ya no tiene botón «Añadir»: la tonalidad se registra en cuanto tiene nota y modo, y al pulsar fuera se cierra con ella puesta (cerrarTonPop repinta). El clic de soltar un arrastre de la rueda ya no cierra la ventana (pointerdown + composedPath). Las fichas no cambian (no tenían botón). Mismo cambio en teoriapro.
+- 6-nov 17:20 · Mantenimiento · nota: relanza la publicación de Pages del commit de «Tonos vecinos» (la anterior falló en GitHub).
