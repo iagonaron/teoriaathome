@@ -3052,9 +3052,9 @@ function abrirTonPop(k,anchor){
     '<span style="width:10px"></span>'+
     '<button class="pbtn" id="pp_M">M</button>'+
     '<button class="pbtn" id="pp_m">m</button>';
-  const ok=document.createElement('button'); ok.className='ok-btn'; ok.textContent='Añadir'; ok.disabled=true;
-  ok.style.opacity='.4'; ok.style.cursor='default';
-  pop.appendChild(wNota); pop.appendChild(row); pop.appendChild(ok);
+  /* (6-nov-2026, Iago) sin botón «Añadir»: la tonalidad queda puesta en cuanto tiene nota y modo,
+     y al pulsar fuera de la ventana se cierra con ella registrada. Para quitarlo: volver al commit anterior. */
+  pop.appendChild(wNota); pop.appendChild(row);
   document.body.appendChild(pop);
   // posicionar a la IZQUIERDA de la rejilla de celdas (en el hueco libre)
   posicionarTonPop(pop);
@@ -3069,10 +3069,15 @@ function abrirTonPop(k,anchor){
     api.setItems(items,true); api.setIndex(idx,true);
   };
   const wheelApi=makeWheel(wNota,NOTAS_ES_REV.concat(['—']),NOTAS_ES_REV.length,(idx)=>{ tonPopState.nota=(idx<NOTAS_ES_REV.length)?NOTAS_ES_REV[idx]:null; repaintWheel(wheelApi); refreshOk(); });
-  const refreshOk=()=>{ const okToIns = tonPopState.modo!=null && tonPopState.nota!=null;
-    ok.disabled=!okToIns; ok.style.opacity=okToIns?'1':'.4'; ok.style.cursor=okToIns?'pointer':'default'; };
+  const refreshOk=()=>{   // (6-nov-2026) registra la tonalidad en la casilla en cuanto está completa
+    if(!tonPopState || tonPopState.modo==null || tonPopState.nota==null) return;
+    const t=TONS.find(x=>x.nota===tonPopState.nota && x.alt===tonPopState.alt && x.modo===tonPopState.modo);
+    tcCeldas[k]= t? {given:false,ton:t} : {given:false,ton:{nom:tonPopState.nota+(tonPopState.alt==='#'?'♯':tonPopState.alt==='b'?'♭':'')+(tonPopState.modo),_invalid:true}};
+    tonPopState.cambiado=true;
+    const cel=document.getElementById('tc'+k); if(cel){ cel.textContent=tcCeldas[k].ton.nom; cel.classList.remove('ok','bad'); }
+  };
   const setAlt=(a)=>{ tonPopState.alt=(tonPopState.alt===a)?'':a;
-    pp_b.classList.toggle('on',tonPopState.alt==='b'); pp_s.classList.toggle('on',tonPopState.alt==='#'); repaintWheel(wheelApi); };
+    pp_b.classList.toggle('on',tonPopState.alt==='b'); pp_s.classList.toggle('on',tonPopState.alt==='#'); repaintWheel(wheelApi); refreshOk(); };
   pop.querySelector('#pp_b').onclick=()=>setAlt('b');
   pop.querySelector('#pp_s').onclick=()=>setAlt('#');
   const setModo=(m)=>{ tonPopState.modo=m;
@@ -3080,14 +3085,8 @@ function abrirTonPop(k,anchor){
     repaintWheel(wheelApi); refreshOk(); };
   pop.querySelector('#pp_M').onclick=()=>setModo('M');
   pop.querySelector('#pp_m').onclick=()=>setModo('m');
-  ok.onclick=()=>{
-    if(tonPopState.modo==null) return;   // no inserta sin modo
-    const t=TONS.find(x=>x.nota===tonPopState.nota && x.alt===tonPopState.alt && x.modo===tonPopState.modo);
-    tcCeldas[k]= t? {given:false,ton:t} : {given:false,ton:{nom:tonPopState.nota+(tonPopState.alt==='#'?'♯':tonPopState.alt==='b'?'♭':'')+(tonPopState.modo),_invalid:true}};
-    cerrarTonPop(); renderTC();
-  };
 }
-function cerrarTonPop(){ const p=document.getElementById('tonpop'); if(p) p.remove(); tonPopState=null; }
+function cerrarTonPop(){ const p=document.getElementById('tonpop'); if(p) p.remove(); const cambio=tonPopState&&tonPopState.cambiado; tonPopState=null; if(cambio) renderTC(); }   // (6-nov-2026) al cerrar, la casilla queda con la tonalidad elegida
 /* coloca el popover en el hueco a la izquierda de la rejilla de celdas (sin tapar) */
 function posicionarTonPop(pop){
   const grid=document.getElementById('gridTC');
@@ -3106,9 +3105,15 @@ function posicionarTonPop(pop){
     pop.style.left='50%'; pop.style.top='50%'; pop.style.transform='translate(-50%,-50%)';
   }
 }
+/* (6-nov-2026, Iago) un arrastre de la rueda que se suelta fuera de la ventana no la cierra (el clic de después llegaba «de fuera») */
+let _tonPopDownDentro=false;
+document.addEventListener('pointerdown',(e)=>{ const p=document.getElementById('tonpop'); _tonPopDownDentro=!!(p && (e.composedPath?e.composedPath():[]).indexOf(p)>=0); },true);
 document.addEventListener('click',(e)=>{
   const p=document.getElementById('tonpop');
-  if(p && !p.contains(e.target) && !e.target.closest('.vcell')) cerrarTonPop();
+  if(_tonPopDownDentro){ _tonPopDownDentro=false; return; }
+  /* (6-nov-2026) composedPath: la rueda repinta sus ítems al elegir y el clic llegaba «de fuera» (cerraba la ventana) */
+  const dentro=(e.composedPath?e.composedPath():[]).indexOf(p)>=0;
+  if(p && !dentro && !p.contains(e.target) && !(e.target.closest&&e.target.closest('.vcell'))) cerrarTonPop();
 });
 function corregirTC(){
   // validación por CONJUNTO: las 6 tonalidades correctas pueden ir en cualquier celda.
