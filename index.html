@@ -14689,6 +14689,7 @@ function __grados_marker__(){}
   const TIT_EXAMEN={ inicial:'Evaluación inicial', t1:'Examen · 1er trimestre', t2:'Examen · 2º trimestre', t3:'Examen · 3er trimestre', extra:'Evaluación extraordinaria' };
   PP.tipoFicha = PP.tipoFicha || 'semanal';
   function tituloFicha(tipo){
+    if(PP.__exTitulo) return PP.__exTitulo;   /* (8-nov-2026) modo examen: «EXAMEN · 1.er TRIMESTRE · 4.º A» */
     const t = tipo || PP.tipoFicha || 'semanal';
     if(t!=='semanal' && TIT_EXAMEN[t]) return TIT_EXAMEN[t];
     if(window.__FICHA_NUMERO!=null && String(window.__FICHA_NUMERO)!=='') return 'Ficha '+window.__FICHA_NUMERO;
@@ -14813,7 +14814,7 @@ function __grados_marker__(){}
     let PERSONA = null;
     copias = PERSONAS ? PERSONAS.length : Math.max(1, parseInt(copias, 10) || 1);
     const { jsPDF }=window.jspdf;
-    const doc=new jsPDF({unit:'mm', format:'a4'});
+    const doc=new jsPDF({unit:'mm', format:'a4', compress:!!PP.__exPar});   /* (8-nov-2026) modo examen: PDF comprimido (se copia una vez por alumno) */
     const W=210, H=297, M=14, CW=W-2*M;
     const tituloBase=tituloFicha();
     const titulo=tituloBase+(esSolucion?' — Solución':'');   // nombre del archivo
@@ -15217,6 +15218,7 @@ function __grados_marker__(){}
       }
     }
     }
+    if(PP.__exPar && (doc.getNumberOfPages()%2)) doc.addPage();   /* (8-nov-2026) modo examen: páginas pares (doble cara) */
     const base=tituloFicha().replace(/[^\wáéíóúñ]+/gi,'_');
     return { name:(esSolucion?'(solucion) ':'(alumno) ')+base+'.pdf', blob:doc.output('blob') };
   }
@@ -15600,6 +15602,169 @@ function __grados_marker__(){}
         err.textContent = (e && e.message) ? e.message : 'Error de red al enviar. Reintenta.';
       }
     };
+  }
+
+  /* ============================================================
+     (8-nov-2026, Iago · bloque G «Exámenes 1T») MODO EXAMEN A/B POR GRUPO · 4.º A | 4.º B
+     ?panel=profesor&examen=1T&curso=2026-27 (lo abre el Diario en la semana de exámenes). La cesta funciona como
+     siempre; «Generar ficha y revisar» ya NO baraja de nuevo lo que hay: conserva los ejercicios y solo añade o quita
+     los que cambiaron en la cesta. PP.ficha es el modelo del 1.er grupo y PP.ex.B el del 2.º: mismo tipo y orden,
+     enlazados por _exId; cada ejercicio del 2.º se crea regenerando el del 1.º (sin repetir casos). «↻» cambia solo ese
+     ejercicio de ese grupo; «✕» lo quita de los dos (y de la cesta). «💾 Guardar examen» escribe en
+     EXÁMENES/<T> <curso>/4GE/IMPRIMIR (núcleo común: ExamenCore). No envía nada ni toca Supabase.
+     Para quitarlo: borrar este bloque, la línea «examen» de autoApertura y las dos líneas «PP.__ex…» de tituloFicha /
+     construirPDF.
+     ============================================================ */
+  const EX_GRUPOS=[ {id:'4A', lab:'4.º A'}, {id:'4B', lab:'4.º B'} ];
+  const EX_LINEA_NOMBRE='Nombre: ______________________________________';   /* la misma raya que construirPDF */
+  function exOtros(item, listas){ const r=[]; listas.forEach(L=>L.forEach(f=>{ if(f!==item && f.key===item.key && f.ej) r.push(f.ej); })); return r; }
+  function exLabel(key){ return (PP_FLAT[key]||{}).label||key; }
+  function exVariante(a, extra){
+    const ej=fichaBloqueSinRepetir(a.key, exOtros(a, [extra, PP.ficha]));
+    return { n:a.n, key:a.key, label:a.label, ej:ej||a.ej, _exId:a._exId };
+  }
+  function exSync(){
+    const ex=PP.ex, viejo=ex.B, porId={};
+    viejo.forEach(b=>{ porId[b._exId]=b; });
+    (PP.ficha||[]).forEach((a,k)=>{ if(a._exId==null) a._exId=++ex.seq; a.n=k+1; });
+    const nuevoB=[];
+    (PP.ficha||[]).forEach(a=>{ let b=porId[a._exId]; if(b && b.key!==a.key) b=null;
+      if(b){ b.n=a.n; nuevoB.push(b); } else nuevoB.push(exVariante(a, viejo.concat(nuevoB))); });
+    ex.B=nuevoB;
+  }
+  function exComponer(){   /* conserva lo hecho: quita lo que sobra y añade lo que falta según la cesta */
+    if(!PP.config.items.length){ alert('Añade al menos un tipo de ejercicio a la ficha.'); return false; }
+    if(!PP.ficha || !PP.ficha.length){ if(!_exGenerarBase()) return false; }
+    else {
+      const meta={}, cnt={}; PP.config.items.forEach(it=>{ meta[it.key]=it.peso; });
+      PP.ficha=PP.ficha.filter(f=>{ cnt[f.key]=(cnt[f.key]||0)+1; return cnt[f.key]<=(meta[f.key]||0); });
+      PP.config.items.forEach(it=>{ let ya=PP.ficha.filter(f=>f.key===it.key).length;
+        for(; ya<it.peso; ya++){ const ej=fichaBloqueSinRepetir(it.key, PP.ficha.filter(f=>f.key===it.key).map(f=>f.ej).concat(PP.ex.B.filter(f=>f.key===it.key).map(f=>f.ej)));
+          if(ej) PP.ficha.push({ n:PP.ficha.length+1, key:it.key, label:exLabel(it.key), ej }); } });
+    }
+    exSync();
+    return true;
+  }
+  function exCambiar(g, i){
+    const L=g===0?PP.ficha:PP.ex.B, it=L[i]; if(!it) return;
+    const nuevo=fichaBloqueSinRepetir(it.key, exOtros(it, [PP.ficha, PP.ex.B]));
+    if(nuevo){ it.ej=nuevo; exRevisar(); }
+  }
+  function exQuitar(i){
+    const a=PP.ficha[i]; if(!a) return;
+    PP.ficha.splice(i,1); addPeso(a.key, -1);
+    exSync(); renderSelector(); renderCesta(); exRevisar();
+  }
+  function exRevisar(){
+    const host=document.getElementById('ppRevisar'); if(!host) return;
+    exSync();
+    const G=EX_GRUPOS, A=PP.ficha||[], B=PP.ex.B, y0=window.scrollY;
+    host.innerHTML=
+      '<div class="pp-toolbar">'+
+        '<div class="t">Examen '+esc(PP.ex.cfg.trim)+' · '+A.length+' ejercicios por grupo</div>'+
+        '<button class="pp-btn small exc-ico pp-ex-ojo" id="ppToggleSol" title="'+(PP.mostrarSol?'Ocultar soluciones':'Ver soluciones')+'">'+(PP.mostrarSol?'👁':'◌')+'</button>'+
+      '</div>'+
+      '<div id="ppExList" class="pp-exam'+(PP.mostrarSol?'':' pp-hide-sol')+'"></div>';
+    const list=document.getElementById('ppExList');
+    const cab=document.createElement('div'); cab.className='pp-exam-cab';
+    cab.innerHTML=G.map(g=>'<div class="pp-exam-gr">'+esc(g.lab)+'</div>').join('');
+    list.appendChild(cab);
+    A.forEach((a,i)=>{
+      const row=document.createElement('div'); row.className='pp-exam-row';
+      row.innerHTML='<div class="pp-exam-row-h"><span class="pp-n">'+(i+1)+'.</span><span class="pp-lab">'+esc(a.label)+'</span>'+
+        '<button class="pp-regen exc-ico pp-exam-x" title="Quitar de los dos grupos">✕</button></div><div class="pp-exam-par"></div>';
+      const par=row.querySelector('.pp-exam-par');
+      [a, B[i]].forEach((it,g)=>{
+        const card=cardEjercicio(it); card.dataset.gl=G[g].lab;
+        const rg=card.querySelector('.pp-regen');
+        if(rg){ rg.textContent='↻'; rg.classList.add('exc-ico'); rg.title='Cambiar (solo '+G[g].lab+')'; rg.onclick=()=>exCambiar(g, i); }
+        const lab=card.querySelector('.pp-ex-top > div'); if(lab) lab.innerHTML='<span class="pp-enun-ex">'+esc((it.ej&&it.ej.enun)||'')+'</span>';
+        const en=card.querySelector('.pp-enun'); if(en) en.remove();
+        par.appendChild(card);
+      });
+      row.querySelector('.pp-exam-x').onclick=()=>exQuitar(i);
+      list.appendChild(row);
+    });
+    if(!A.length){ const v=document.createElement('p'); v.className='pp-note'; v.textContent='Añade tipos en la cesta y pulsa «Generar ficha y revisar»: cada ejercicio entra en los dos grupos.'; list.appendChild(v); }
+    const acc=document.createElement('div'); acc.className='pp-actions'; acc.style.cssText='margin-top:22px;border-top:1px solid rgba(255,255,255,.14);padding-top:18px';
+    host.appendChild(acc);
+    PP.ex.barra=ExamenCore.barra(acc, { cfg:PP.ex.cfg, cls:'pp-btn', clsPrim:'pp-btn primary', guardar:exGuardar, cargar:exCargar,
+      hayAlgo:()=> (PP.ficha||[]).length>0 });
+    document.getElementById('ppToggleSol').onclick=()=>{ PP.mostrarSol=!PP.mostrarSol; exRevisar(); };
+    try{ window.scrollTo(0, y0); }catch(e){}
+  }
+  function exEstado(){
+    const C=PP.ex.cfg, G=EX_GRUPOS, ej={}, tit={}, fich={};
+    const serial=f=>({ id:f._exId, key:f.key, label:f.label, ej:f.ej });
+    ej[G[0].id]=(PP.ficha||[]).map(serial); ej[G[1].id]=PP.ex.B.map(serial);
+    G.forEach(g=>{ tit[g.id]=ExamenCore.titulo(C.trim, g.lab); fich[g.id]={ alumno:'teoria-'+g.id+'.pdf', solucion:'teoria-'+g.id+'-solucion.pdf' }; });
+    return { version:1, app:'teoriaathome', grado:C.grado, trim:C.trim, curso:C.curso,
+      grupos:G.map(g=>g.id), etiquetas:G.reduce((o,g)=>{ o[g.id]=g.lab; return o; },{}),
+      titulo:ExamenCore.titulo(C.trim), titulos:tit, ficheros:fich,
+      nombre:ExamenCore.nombreCoords(EX_LINEA_NOMBRE),
+      cesta:JSON.parse(JSON.stringify(PP.config.items||[])), opciones:JSON.parse(JSON.stringify(PP.config.opciones||{})),
+      ejercicios:ej, guardado:new Date().toISOString() };
+  }
+  function exConCasos(f){ try{ const cs=casosDeBloque(f.key, f.ej); Object.defineProperty(f.ej,'__casos',{ value:cs, enumerable:false, configurable:true }); }catch(e){} return f; }
+  function exCargar(j){
+    const G=EX_GRUPOS, a=(j.ejercicios||{})[G[0].id]||[], b=(j.ejercicios||{})[G[1].id]||[]; let seq=0;
+    const A=a.map((o,k)=>{ const id=(o.id!=null?o.id:k+1); seq=Math.max(seq,id); return exConCasos({ n:k+1, key:o.key, label:o.label||exLabel(o.key), ej:o.ej, _exId:id }); });
+    const B=b.map((o,k)=>exConCasos({ n:k+1, key:o.key, label:o.label||exLabel(o.key), ej:o.ej, _exId:(o.id!=null?o.id:(A[k]&&A[k]._exId)) }));
+    PP.ficha=A; PP.ex.B=B; PP.ex.seq=seq;
+    if(Array.isArray(j.cesta) && j.cesta.length){ PP.config.items=j.cesta.map(x=>({ key:x.key, peso:x.peso })); }
+    else { const c={}; A.forEach(f=>{ c[f.key]=(c[f.key]||0)+1; }); PP.config.items=Object.keys(c).map(k=>({ key:k, peso:c[k] })); }
+    if(j.opciones) Object.assign(PP.config.opciones, j.opciones);
+    saveCfg(); renderSelector(); renderCesta(); exRevisar();
+  }
+  async function exGuardar(){
+    if(!(PP.ficha||[]).length){ alert('Genera primero el examen (cesta → «Generar ficha y revisar»).'); return; }
+    if(!window.jspdf || !window.jspdf.jsPDF){ alert('No se pudo cargar el generador de PDF.'); return; }
+    const C=PP.ex.cfg, dir=await ExamenCore.prepararDestino(C);   /* el permiso, antes de hacer los PDF (aún dura el clic) */
+    exSync();
+    const G=EX_GRUPOS, A=PP.ficha, fich=[];
+    PP.__exPar=true;
+    try{
+      for(let g=0; g<G.length; g++){
+        PP.ficha=(g===0?A:PP.ex.B); PP.__exTitulo=ExamenCore.titulo(C.trim, G[g].lab);
+        const alu=await construirPDF(false, 1), sol=await construirPDF(true);
+        fich.push({ nombre:'teoria-'+G[g].id+'.pdf', blob:alu.blob });
+        fich.push({ nombre:'teoria-'+G[g].id+'-solucion.pdf', blob:sol.blob });
+      }
+    } finally { PP.ficha=A; PP.__exTitulo=null; PP.__exPar=false; }
+    fich.push({ nombre:'teoria.json', blob:new Blob([JSON.stringify(exEstado())], {type:'application/json'}) });
+    const modo=await ExamenCore.entregar(dir, fich, C);
+    const ruta=C.trim+' '+C.curso+' › '+C.grado+' › IMPRIMIR';
+    ExamenCore.toast(modo==='carpeta' ? ('✓ Examen guardado en EXÁMENES › '+ruta+' (4.º A y 4.º B).')
+                                      : ('✓ Examen descargado (5 ficheros). Para que se guarde solo en EXÁMENES › '+ruta+', elige la carpeta con 📁.'), 8000);
+  }
+  const _exGenerarBase=generarFicha, _exRevisarBase=renderRevisar, _exRenderBase=render;
+  generarFicha=function(){ return PP.ex ? exComponer() : _exGenerarBase(); };
+  renderRevisar=function(){ return PP.ex ? exRevisar() : _exRevisarBase(); };
+  render=function(){ _exRenderBase(); if(PP.ex && !(PP.ficha && PP.ficha.length)) exRevisar(); };   /* en examen, la barra (📁 · 📂 · 💾) siempre a la vista */
+  function exArrancar(){
+    const p=window.ExamenCore && ExamenCore.params(); if(!p) return;
+    PP.ex={ cfg:{ trim:p.trim, curso:p.curso, grado:'4GE' }, B:[], seq:0 };
+    window.__SUITE_ENVIO_TOKEN=null; window.__SUITE_CTX=null; window.__FICHA_NUMERO=null;
+    PP.ficha=null;   /* el examen se compone de cero (o se abre el guardado con 📂) */
+    try{ const v=document.getElementById('view-profesor'); v.classList.add('pp-modo-examen');
+      const s=v.querySelector('.iv-sub'); if(s) s.textContent='Examen '+p.trim+' · '+p.curso+' · un modelo por grupo (4.º A y 4.º B). No se envía nada a los alumnos.'; }catch(e){}
+    document.title='Examen '+p.trim+' · TEORÍA at home';
+    if(!document.getElementById('pp-ex-css')){ const s=document.createElement('style'); s.id='pp-ex-css'; s.textContent=
+      '.pp-exam-cab{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:sticky;top:0;z-index:3;padding:6px 0;background:rgba(22,18,52,.92);border-radius:10px;margin-bottom:8px}'+
+      '.pp-exam-gr{text-align:center;font-size:15px;font-weight:900;letter-spacing:.06em;color:#fff;border:1px solid var(--teoria);border-radius:10px;padding:7px}'+
+      '.pp-exam-row{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 12px;margin-bottom:12px;background:rgba(22,18,52,.35)}'+
+      '.pp-exam-row-h{display:flex;align-items:center;gap:6px;margin-bottom:8px}'+
+      '.pp-exam-row-h .pp-n{font-weight:900;color:var(--teoria);font-size:14px;margin-right:4px}'+
+      '.pp-exam-row-h .pp-lab{font-size:11px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:#c9cde0}'+
+      '.pp-exam-row-h .pp-exam-x{margin-left:auto}'+
+      '.pp-exam-par{display:grid;grid-template-columns:1fr 1fr;gap:12px}'+
+      '.pp-exam-par .pp-ex{margin:0;min-width:0}'+
+      '.pp-exam-par .pp-score svg,.pp-exam-par .pp-solnote svg{max-width:100%;height:auto}'+
+      '.pp-enun-ex{font-size:14px;font-weight:700;color:#16203a}'+
+      '.pp-regen.exc-ico,.pp-btn.pp-ex-ojo{width:34px;height:34px;padding:0!important;justify-content:center;font-size:15px!important}'+
+      '.pp-ex-ojo{margin-left:auto}'+
+      '@media(max-width:820px){.pp-exam-par{grid-template-columns:1fr}.pp-exam-cab{display:none}.pp-exam-par .pp-ex:before{content:attr(data-gl);display:block;font-size:11px;font-weight:900;color:var(--teoria);margin-bottom:4px}}';
+      document.head.appendChild(s); }
   }
 
   /* ============================================================
@@ -15994,7 +16159,7 @@ function __grados_marker__(){}
       }   /* (6-ago Iago) ficha «puntúa opcional» */
       // Número de ficha para el título "Ficha N" (el Diario pasa ?ficha=N numérico).
       { const _fq=qs.get('ficha'); if(_fq && /^\d+$/.test(_fq)) window.__FICHA_NUMERO=_fq; }
-      if(qs.get('panel')==='profesor' || hash==='profesor'){ abrirPanelProfesor(); return; }
+      if(qs.get('panel')==='profesor' || hash==='profesor'){ if(qs.get('examen')) exArrancar(); abrirPanelProfesor(); return; }   /* (8-nov-2026) ?examen=1T: modo examen A/B por grupo, sin envío */
       // práctica dirigida: abre la vista y genera SOLO ese sub-apartado
       const pk=qs.get('practice');
       if(pk && PRACTICE_MAP[pk]){
@@ -20340,5 +20505,174 @@ html body .ivg-caja .ivg-cara .pad{-webkit-backdrop-filter:none!important;backdr
   ['mousemove', 'pointerdown', 'keydown', 'touchstart'].forEach(function(t){ document.addEventListener(t, mueve, { passive: true }); });
 })();
 </script>
+<script>
+/* ============================================================
+   (8-nov-2026, Iago · bloque G «Exámenes 1T») MODO EXAMEN · NÚCLEO COMÚN (idéntico en teoriaathome y teoriapro)
+   ------------------------------------------------------------
+   ?panel=profesor&examen=1T&curso=2026-27 → el generador compone el examen de teoría con UN MODELO POR GRUPO
+   (GE: 4.º A / 4.º B · GP: 2.º GP C / 2.º GP F) y «💾 Guardar examen» escribe en la carpeta
+   EXÁMENES/<T> <curso>/<GRADO>/IMPRIMIR: teoria-<grupo>.pdf, teoria-<grupo>-solucion.pdf y teoria.json.
+   La carpeta EXÁMENES se elige UNA vez con «📁» (File System Access; el acceso queda en IndexedDB, como en
+   fichas-carpeta.js pero con su propia base «examenes-carpeta»). Sin la API o sin carpeta: se descargan los ficheros.
+   No envía nada a los alumnos ni toca Supabase. Para quitarlo: borrar este <script> y el bloque «MODO EXAMEN» de la app.
+   ============================================================ */
+(function(){
+  'use strict';
+  var DB='examenes-carpeta', STORE='h', KEY='dir';
+  var soportado=(typeof window.showDirectoryPicker==='function');
+  var _h=null;
+  function idb(){ return new Promise(function(res,rej){ try{ var r=indexedDB.open(DB,1);
+    r.onupgradeneeded=function(){ r.result.createObjectStore(STORE); }; r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ rej(r.error); };
+  }catch(e){ rej(e); } }); }
+  function leerH(){ return idb().then(function(db){ return new Promise(function(res){ var t=db.transaction(STORE,'readonly').objectStore(STORE).get(KEY);
+    t.onsuccess=function(){ res(t.result||null); }; t.onerror=function(){ res(null); }; }); }).catch(function(){ return null; }); }
+  function guardarH(h){ return idb().then(function(db){ return new Promise(function(res){ var t=db.transaction(STORE,'readwrite'); t.objectStore(STORE).put(h,KEY);
+    t.oncomplete=res; t.onerror=res; t.onabort=res; }); }).catch(function(){}); }
+  async function handle(){ if(_h) return _h; _h=await leerH(); return _h; }
+  async function permiso(pedir){
+    var h=await handle(); if(!h) return 'sin_carpeta';
+    try{ var o={mode:'readwrite'};
+      if((await h.queryPermission(o))==='granted') return 'ok';
+      if(!pedir) return 'pedir';
+      return ((await h.requestPermission(o))==='granted') ? 'ok' : 'denegado';
+    }catch(e){ return 'denegado'; }
+  }
+  function norm(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim(); }
+  async function hijo(dir, nombre, crear){   /* busca la subcarpeta sin mirar tildes ni mayúsculas (Dropbox en Mac guarda NFD) */
+    try{ return await dir.getDirectoryHandle(nombre, {create:false}); }catch(e){}
+    try{ for await (var par of dir.entries()){ if(par[1].kind==='directory' && norm(par[0])===norm(nombre)) return par[1]; } }catch(e){}
+    if(!crear) return null;
+    return await dir.getDirectoryHandle(nombre, {create:true});
+  }
+  async function elegir(){
+    if(!soportado){ toast('Elegir carpeta solo funciona en Chrome/Edge de ordenador: los ficheros se descargarán.'); return null; }
+    var h;
+    try{ h=await window.showDirectoryPicker({ id:'examenes', mode:'readwrite', startIn:'documents' }); }catch(e){ return null; }   // cancelado
+    if(norm(h.name)!=='EXAMENES'){   /* si eligió la carpeta de encima, baja sola a EXÁMENES */
+      var sub=await hijo(h, 'EXÁMENES', false);
+      if(sub) h=sub;
+      else toast('Ojo: la carpeta elegida se llama «'+h.name+'», no «EXÁMENES». Se usará igualmente.', 7000);
+    }
+    _h=h; await guardarH(h);
+    return h;
+  }
+  async function dirImprimir(cfg, crear){
+    var h=await handle(); if(!h) return null;
+    var d=await hijo(h, cfg.trim+' '+cfg.curso, crear); if(!d) return null;
+    d=await hijo(d, cfg.grado, crear); if(!d) return null;
+    return await hijo(d, 'IMPRIMIR', crear);
+  }
+  async function escribir(dir, nombre, blob){
+    var fh=await dir.getFileHandle(nombre, {create:true});
+    var w=await fh.createWritable(); await w.write(blob); await w.close();
+  }
+  async function leerJSON(dir, nombre){
+    try{ var fh=await dir.getFileHandle(nombre||'teoria.json'); var f=await fh.getFile(); return JSON.parse(await f.text()); }catch(e){ return null; }
+  }
+  function descargar(blob, nombre){
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nombre;
+    document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  }
+  function toast(msg, ms){
+    try{ var t=document.createElement('div'); t.className='exc-toast'; t.textContent=msg; document.body.appendChild(t);
+      setTimeout(function(){ t.remove(); }, ms||5000); }catch(e){}
+  }
+  function params(){
+    var q; try{ q=new URLSearchParams(location.search); }catch(e){ return null; }
+    var t=String(q.get('examen')||'').trim().toUpperCase(); if(!t) return null;
+    if(!/^[0-9A-Z]{1,8}$/.test(t)) t='1T';
+    var c=String(q.get('curso')||'').trim();
+    if(!/^\d{4}-\d{2}$/.test(c)){ var d=new Date(), y=d.getFullYear(), m=d.getMonth()+1, a=(m>=9?y:y-1); c=a+'-'+String(a+1).slice(2); }
+    return { trim:t, curso:c };
+  }
+  var TRIM={ '1T':'1.er TRIMESTRE', '2T':'2.º TRIMESTRE', '3T':'3.er TRIMESTRE' };
+  function titulo(trim, grupoLab){ return 'EXAMEN · '+(TRIM[trim]||trim)+(grupoLab?(' · '+grupoLab):''); }
+  /* dónde escribir el nombre del alumno: en PUNTOS PDF desde ARRIBA-izquierda (línea base), sobre la raya de «Nombre:».
+     Cabecera de las dos apps: «Nombre: ____» en Helvetica 9,5 en (14 mm, 30 mm); el nombre va en negrita 12 justo detrás. */
+  function nombreCoords(lineaNombre){
+    var k=72/25.4, r=function(v){ return Math.round(v*100)/100; };
+    var d=new window.jspdf.jsPDF({unit:'mm', format:'a4'}); d.setFont('helvetica','normal'); d.setFontSize(9.5);
+    var wn=d.getTextWidth('Nombre: '), wl=d.getTextWidth(lineaNombre);
+    return { pagina:0, x:r((14+wn)*k), y:r(30*k), tam:12, ancho:r((wl-wn)*k) };
+  }
+  function css(){
+    if(document.getElementById('exc-css')) return;
+    var s=document.createElement('style'); s.id='exc-css';
+    s.textContent=
+      '.exc-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}'+
+      '.exc-bar [hidden]{display:none!important}'+
+      '.exc-ico{width:40px;height:40px;padding:0!important;justify-content:center;font-size:17px!important;flex:none}'+
+      '.exc-est{font-size:12px;opacity:.72;max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'+
+      '.exc-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#0f172a;color:#e2e8f0;border:1px solid rgba(255,255,255,.14);'+
+        'border-radius:12px;padding:10px 14px;font-size:13px;z-index:99999;box-shadow:0 10px 30px rgba(0,0,0,.35);max-width:92vw}';
+    document.head.appendChild(s);
+  }
+  /* barra: [📁] [destino] [📂 Abrir el examen guardado] [💾 Guardar examen]
+     o = { cfg:{trim,curso,grado}, cls:'clase de botón', clsPrim:'clase del principal', guardar:async fn(), cargar:fn(json), hayAlgo:fn() } */
+  function barra(host, o){
+    css();
+    var w=document.createElement('div'); w.className='exc-bar';
+    var bC=document.createElement('button'); bC.type='button'; bC.className=o.cls+' exc-ico'; bC.textContent='📁';
+    bC.title='Carpeta EXÁMENES (se elige una vez; dentro se usa '+o.cfg.trim+' '+o.cfg.curso+' › '+o.cfg.grado+' › IMPRIMIR)';
+    var est=document.createElement('span'); est.className='exc-est';
+    var bA=document.createElement('button'); bA.type='button'; bA.className=o.cls; bA.hidden=true;
+    var bG=document.createElement('button'); bG.type='button'; bG.className=o.clsPrim; bG.textContent='💾 Guardar examen';
+    w.appendChild(bC); w.appendChild(est); w.appendChild(bA); w.appendChild(bG);
+    host.appendChild(w);
+    var ruta=o.cfg.trim+' '+o.cfg.curso+' › '+o.cfg.grado+' › IMPRIMIR';
+    async function refrescar(){
+      bA.hidden=true;
+      if(!soportado){ est.textContent='sin carpeta (este navegador descarga los ficheros)'; return; }
+      var h=await handle();
+      if(!h){ est.textContent='sin carpeta: se descargarán los ficheros'; return; }
+      est.textContent=h.name+' › '+ruta; est.title=est.textContent;
+      var p=await permiso(false);
+      if(p==='ok'){
+        var d=null; try{ d=await dirImprimir(o.cfg, false); }catch(e){}
+        var j=d ? await leerJSON(d) : null;
+        if(j && Array.isArray(j.grupos)){ bA.hidden=false; bA.classList.remove('exc-ico'); bA.textContent='📂 Abrir el examen guardado';
+          bA.title='Carga '+ruta+'/teoria.json'+(j.guardado?(' (guardado el '+new Date(j.guardado).toLocaleString('es-ES')+')'):''); bA._json=j; }
+      } else {   /* sin permiso todavía: el icono lo pide (hace falta un clic) */
+        bA.hidden=false; bA.classList.add('exc-ico'); bA.textContent='📂'; bA.title='Buscar el examen guardado en '+ruta+' (pide permiso a la carpeta)'; bA._json=null;
+      }
+    }
+    bC.onclick=async function(){ var h=await elegir(); if(h){ toast('📁 El examen se guardará en «'+h.name+' › '+ruta+'».', 6000); } refrescar(); };
+    bA.onclick=async function(){
+      var j=bA._json;
+      if(!j){ var p=await permiso(true); if(p!=='ok'){ toast('Sin permiso para leer la carpeta.'); return; }
+        var d=await dirImprimir(o.cfg, false); j=d ? await leerJSON(d) : null;
+        if(!j){ toast('Todavía no hay examen guardado en '+ruta+'.'); refrescar(); return; } }
+      if(o.hayAlgo && o.hayAlgo() && !confirm('¿Sustituir lo que tienes en pantalla por el examen guardado?')) return;
+      try{ o.cargar(j); toast('📂 Examen guardado cargado: puedes seguir editándolo.'); }catch(e){ console.warn('[examen] cargar', e); toast('⚠ No se pudo cargar el examen guardado: '+((e&&e.message)||e)); }
+      refrescar();
+    };
+    bG.onclick=async function(){
+      bG.disabled=true; var txt=bG.textContent; bG.textContent='Guardando…';
+      try{ await o.guardar(); }catch(e){ console.warn('[examen] guardar', e); toast('⚠ No se pudo guardar el examen: '+((e&&e.message)||e), 8000); }
+      bG.disabled=false; bG.textContent=txt; refrescar();
+    };
+    refrescar();
+    return { refrescar:refrescar, boton:bG };
+  }
+  /* guarda (o descarga) los ficheros: ficheros = [{nombre, blob}] · devuelve 'carpeta' | 'descarga'.
+     El permiso se pide ANTES de construir los PDF (prepararDestino), mientras dura el gesto del clic. */
+  async function prepararDestino(cfg){
+    if(!soportado || !(await handle())) return null;
+    var p=await permiso(true); if(p!=='ok') return null;
+    return await dirImprimir(cfg, true);
+  }
+  async function entregar(dir, ficheros, cfg){
+    if(dir){
+      for(var i=0;i<ficheros.length;i++) await escribir(dir, ficheros[i].nombre, ficheros[i].blob);
+      return 'carpeta';
+    }
+    for(var j=0;j<ficheros.length;j++){ descargar(ficheros[j].blob, ficheros[j].nombre); await new Promise(function(r){ setTimeout(r, 450); }); }
+    return 'descarga';
+  }
+  window.ExamenCore={ params:params, titulo:titulo, nombreCoords:nombreCoords, barra:barra, prepararDestino:prepararDestino,
+    entregar:entregar, toast:toast, soportado:soportado, _dirImprimir:dirImprimir };
+})();
+</script>
+
 </body>
 </html>
