@@ -806,6 +806,13 @@ if(window.Sentry && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){
      sin cambiar su tamaño visible (20px): el ::after amplía el área de toque */
   .nota-del-pop{ touch-action:manipulation }
   .nota-del-pop::after{ content:''; position:absolute; left:-6px; top:-6px; right:-6px; bottom:-6px; border-radius:50% }
+/* (10-nov-2026, Iago, igual que en GP) botón de reclamar al final de la ficha corregida: barra rosa rellena con texto blanco;
+   al abrirlo, el contenido va debajo en cristal oscuro. Deshacer = borrar estas reglas y devolver los estilos en línea. */
+#simFbBox{margin:26px auto 8px;max-width:680px;background:rgba(11,19,32,.82);border:1.5px solid #db2777;border-radius:14px;padding:0;overflow:hidden}
+#simFbBox>summary{cursor:pointer;font-weight:800;font-size:14px;list-style-position:inside;background:#db2777;color:#fff;padding:13px 16px}
+#simFbBox>summary:hover{background:#ec4899}
+#simFbBox>:not(summary){margin-left:16px;margin-right:16px}
+#simFbBox[open]{padding-bottom:14px}
 </style>
 
 <style id="qz-styles">
@@ -13322,8 +13329,8 @@ function __grados_marker__(){}
           '</div>'+
           '<div style="margin-top:14px">'+cuerpo+'</div>'+
           (esAlumno?(
-          '<details id="simFbBox" style="margin:26px auto 8px;max-width:680px;background:rgba(255,255,255,.05);border:1px solid rgba(169,116,255,.4);border-radius:14px;padding:12px 16px">'+
-            '<summary style="cursor:pointer;font-weight:800;color:#c9a8ff;font-size:14px;list-style-position:inside">💬 ¿Crees que algún ejercicio está mal corregido o tuviste algún problema con la ficha?</summary>'+
+          '<details id="simFbBox">'+
+            '<summary>💬 ¿Crees que algún ejercicio está mal corregido o tuviste algún problema con la ficha?</summary>'+
             '<div style="color:#b6abdf;font-size:12.5px;margin-top:8px">Deja aquí tu comentario y me encargo de solucionarlo. Si hay un problema con el ejercicio, te lo marca mal y no ha sido culpa tuya, lo eliminaré y tu nota se recalculará sin él. ¡Gracias por la comprensión!</div>'+
             '<div id="simFbList"></div>'+
             '<div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">'+
