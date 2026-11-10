@@ -813,6 +813,20 @@ if(window.Sentry && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){
 #simFbBox>summary:hover{background:#ec4899}
 #simFbBox>:not(summary){margin-left:16px;margin-right:16px}
 #simFbBox[open]{padding-bottom:14px}
+#simFbBox>summary+div{color:#cbd5e1!important}
+#simFbBox .simFbItem{border-top:1px dashed rgba(236,72,153,.35)!important}
+#simFbBox .simFbItem label{color:#e2e8f0!important}
+#simFbBox .simFbItem label span{color:#f9a8d4!important}
+#simFbBox .simFbItem .fbN{border:1.5px solid #ec4899!important;color:#fff!important;border-radius:8px!important}
+#simFbBox .simFbItem .fbT{border:1px solid rgba(236,72,153,.45)!important;color:#fff!important;border-radius:10px!important}
+#simFbBox .simFbItem .fbT{font-family:inherit!important;font-size:13px!important;line-height:1.45!important}
+/* (10-nov-2026, Iago: «que sea igual en GE y en GP… lo de dorado y degradados era de la versión estética de hace unos meses») botones lisos: enviar en rosa relleno, añadir con contorno rosa */
+#simFbMas,#simFbSend{border-radius:10px!important;padding:9px 16px!important;font-family:inherit!important;font-weight:800!important;font-size:13px!important;line-height:1.2!important;cursor:pointer;box-shadow:none!important;transition:background .15s ease}
+#simFbMas{background:rgba(219,39,119,.10)!important;border:1.5px solid rgba(236,72,153,.7)!important;color:#fff!important}
+#simFbMas:hover{background:rgba(219,39,119,.22)!important}
+#simFbSend{background:#db2777!important;border:1.5px solid #db2777!important;color:#fff!important}
+#simFbSend:hover{background:#ec4899!important;border-color:#ec4899!important}
+#simFbSend[disabled]{opacity:.55;cursor:default}
 </style>
 
 <style id="qz-styles">
