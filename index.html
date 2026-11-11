@@ -12781,6 +12781,7 @@ function __grados_marker__(){}
     // FASE 6.7 · puntos de guardado (solo modo alumno; el profe nunca guarda)
     const esAlumnoProg = !!window.__SUITE_ALUMNO;
     let maxAvance=0;           // ejercicios COMPLETADOS (índice máximo alcanzado)
+    let pasando=false;         /* (11-nov-2026, Sentry «undefined is not an object (item.ej)») un doble toque en «Siguiente» durante la animación avanzaba DOS veces y se salía de la ficha: mientras pasa de ejercicio, los toques se ignoran */
     let animDir=null;          // 'fwd' | 'back' | null -> dirección de la transición de tarjeta
     const reduceMotion=()=>{ try{ return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
     let reanudado=null;
@@ -12955,6 +12956,7 @@ function __grados_marker__(){}
       head.textContent=tituloFicha()+' · ejercicio '+(i+1)+' de '+n;
       // la barra refleja los ejercicios ya COMPLETADOS (al avanzar): a 0 en el ejercicio 1, se llena al pasar al siguiente
       bar.style.width=Math.round((i/n)*100)+'%';
+      if(i>=n) i=n-1; if(i<0) i=0;   /* (11-nov-2026) nunca fuera de la ficha */
       const item=PP.ficha[i];
       const esEscala = item.ej._interactivo==='escala' && item.ej._spec && typeof window.montarEscalaInteractiva==='function';
       const esRuedas = item.ej._interactivo==='ruedas' && item.ej._solData && typeof window.montarRuedasInteractivas==='function';
@@ -13096,7 +13098,8 @@ function __grados_marker__(){}
       foot.innerHTML = btn('simPrev','‹ Anterior') + btn('simNext', i===n-1?'Enviar y ver puntuación ✓':'Siguiente ›', true);
       const p=ov.querySelector('#simPrev'); p.style.visibility=(i===0?'hidden':'visible'); p.onclick=()=>{ if(i>0){ if(window.SFX) window.SFX.back();
         const card=main.querySelector('.sim-card');
-        const go=()=>{ i--; if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e){} } animDir='back'; mostrar(); };
+        if(pasando) return; pasando=true;
+        const go=()=>{ pasando=false; if(i<=0) return; i--; if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e){} } animDir='back'; mostrar(); };
         if(card && !reduceMotion()){ card.classList.add('sim-slide-out-r'); setTimeout(go, 160); } else go();
       } };
       ov.querySelector('#simNext').onclick=()=>{
@@ -13132,7 +13135,8 @@ function __grados_marker__(){}
           try{ sonidoAvance(); }catch(e){}
           const card=main.querySelector('.sim-card');
           // transición tipo juego: la tarjeta actual sale y entra la siguiente
-          const go=()=>{ i++; if(i>maxAvance) maxAvance=i;
+          if(pasando) return; pasando=true;
+          const go=()=>{ pasando=false; if(i>=n-1) return; i++; if(i>maxAvance) maxAvance=i;
             if(esAlumnoProg && !enviado){ try{ progGuardar(i, maxAvance); }catch(e){} }   // FASE 6.7 · punto de guardado
             animDir='fwd'; mostrar(); };
           if(card && !reduceMotion()){ card.classList.add('sim-slide-out'); setTimeout(()=>cartelEjercicio(i+2, go), 172); } else go();   // cartel "Ejercicio N" entre uno y otro
