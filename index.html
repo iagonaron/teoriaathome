@@ -20699,5 +20699,49 @@ html body .ivg-caja .ivg-cara .pad{-webkit-backdrop-filter:none!important;backdr
 })();
 </script>
 
+<!-- (12-nov-2026, Iago: «quiero que el vídeo de actitud vaya dentro de los vídeos didácticos o como un apartado aparte, pero que
+     se llame actitud») «MI ACTITUD»: franja aparte debajo de la rejilla de temas, con el vídeo «Cómo valoro tu actitud».
+     Hasta el 31-dic-2026, la versión de este curso; desde el 1-ene-2027, la genérica. Para quitarlo: borrar este bloque. -->
+<style>
+#mi-act-bar{display:flex;align-items:center;gap:16px;width:100%;box-sizing:border-box;margin:18px 0 6px;padding:16px 20px;border-radius:16px;border:2px solid rgba(250,204,21,.7);background:rgba(250,204,21,.08);color:#fff;font-family:inherit;text-align:left;cursor:pointer;transition:background .2s,transform .2s}
+#mi-act-bar:hover{background:rgba(250,204,21,.16);transform:translateY(-1px)}
+#mi-act-bar .ic{flex:0 0 auto;display:grid;place-items:center;width:46px;height:46px;border-radius:11px;background:#facc15;color:#111;font-size:24px}
+#mi-act-bar .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+#mi-act-bar .tx b{font-size:20px;font-weight:900;letter-spacing:.02em}
+#mi-act-bar .tx span{font-size:14px;color:rgba(255,255,255,.72)}
+#mi-act-bar .pl{flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border-radius:10px;background:#facc15;color:#111;font-weight:900;font-size:15px}
+#mi-act-vid{position:fixed;inset:0;z-index:2147483000;background:#000;display:none}#mi-act-vid.open{display:block}
+#mi-act-vid iframe{width:100%;height:100%;border:0;display:block}
+#mi-act-vid .x{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:10px;border:1.5px solid rgba(255,255,255,.3);background:rgba(10,12,18,.85);color:#fff;font-size:18px;cursor:pointer;z-index:2}
+</style>
+<script>
+(function () {
+  'use strict';
+  if (new URLSearchParams(location.search).get('fichaId')) return;   /* no en la ficha del alumno */
+  var NIVEL = 'ge', REJILLA = '#padGrid';
+  function url() { var curso = Date.now() >= Date.parse('2027-01-01T00:00:00+01:00');
+    return 'https://ge.lmathome.es/piel/avisos/actitud/?g=' + NIVEL + '&v=' + (curso ? 'curso' : 'hoy') + '&auto=1'; }
+  function cerrar() { var v = document.getElementById('mi-act-vid'); if (!v) return; v.classList.remove('open'); v.querySelector('iframe').src = 'about:blank'; }
+  function abrir() {
+    var v = document.getElementById('mi-act-vid');
+    if (!v) { v = document.createElement('div'); v.id = 'mi-act-vid';
+      v.innerHTML = '<button type="button" class="x" aria-label="Cerrar">✕</button><iframe allow="autoplay; fullscreen" title="Cómo valoro tu actitud"></iframe>';
+      document.body.appendChild(v); v.querySelector('.x').addEventListener('click', cerrar);
+      window.addEventListener('message', function (e) { if (e.data && e.data.tipo === 'lme-cerrar') cerrar(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && v.classList.contains('open')) { e.stopImmediatePropagation(); cerrar(); } }, true); }
+    v.querySelector('iframe').src = url(); v.classList.add('open');
+  }
+  function monta() {
+    var g = document.querySelector(REJILLA); if (!g || document.getElementById('mi-act-bar')) return;
+    var b = document.createElement('button'); b.type = 'button'; b.id = 'mi-act-bar';
+    b.innerHTML = '<span class="ic">⚖</span><span class="tx"><b>Mi actitud</b><span>Vídeo · Cómo valoro tu actitud (5 % de tu nota)</span></span><span class="pl">▶ Ver vídeo</span>';
+    b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); abrir(); });
+    g.parentNode.insertBefore(b, g.nextSibling);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', monta); else monta();
+  setTimeout(monta, 1500);
+})();
+</script>
+
 </body>
 </html>
