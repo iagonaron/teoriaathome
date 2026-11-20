@@ -12686,13 +12686,37 @@ function __grados_marker__(){}
       return l.map(c=>JSON.stringify(c));
     }catch(e){ return []; }
   }
+  /* (20-nov-2026, Iago: «la ficha 8 y 9 … en tonos vecinos ha salido el mismo… que entre fichas colindantes no salga exactamente
+     el mismo») Además de los bloques de ESTA ficha, cuentan los casos del mismo tipo de la FICHA ANTERIOR del curso (el Diario
+     los manda en el contexto: __SUITE_CTX.anterior = [{key, enun, motor}]). Se comparan en forma canónica (claves ordenadas:
+     lo guardado pasa por la base y cambia el orden). Tonos vecinos: el caso es la tonalidad, no la casilla dada.
+     Para quitarlo: que ya se rellene solo con «otros». */
+  function _casoCanon(key, s){
+    try{
+      const o=JSON.parse(s);
+      if(key==='ton_vecinos' && o && Array.isArray(o.sol)) return 'vec:'+o.sol.map(t=>t&&t.nom).sort().join(',');
+      const st=x=>Array.isArray(x)?'['+x.map(st).join(',')+']':((x&&typeof x==='object')?'{'+Object.keys(x).sort().filter(k=>x[k]!==undefined).map(k=>JSON.stringify(k)+':'+st(x[k])).join(',')+'}':JSON.stringify(x));
+      return st(o);
+    }catch(e){ return s; }
+  }
+  function casosFichaAnterior(key){
+    try{
+      if(key==='int_clasif' || key==='cla_a') return [];   /* sus casos viven en datos del motor, no en lo guardado */
+      const c=window.__SUITE_CTX, A=(c && Array.isArray(c.anterior)) ? c.anterior : [], out=[];
+      A.forEach(a=>{ if(!a || a.key!==key || !a.motor) return;
+        const ej=Object.assign({}, a.motor, { enun:a.enun||'' });
+        casosDeBloque(key, ej).forEach(x=>out.push(_casoCanon(key, x))); });
+      return out;
+    }catch(e){ return []; }
+  }
   function fichaBloqueSinRepetir(key, otros){
-    const ya=new Set(); (otros||[]).forEach(o=>{ ((o && o.__casos)||[]).forEach(c=>ya.add(c)); });
+    const ya=new Set(); (otros||[]).forEach(o=>{ ((o && o.__casos)||[]).forEach(c=>ya.add(_casoCanon(key, c))); });
+    casosFichaAnterior(key).forEach(c=>ya.add(c));   /* (20-nov-2026) ficha anterior */
     let mejor=null, mejorN=1e9, mejorCs=[];
     const dibuja=!!MOTOR[key] || /^(esc_|gra_)/.test(key);   // estos bloques pintan notación al generarse (unos ms cada vez)
     const tope=!dibuja ? 201 : ((otros||[]).length<=2 ? 31 : 13);   // con muchos bloques del mismo tipo el dominio ya no da: menos intentos
     for(let q=0;q<tope;q++){
-      const ej=fichaBloque(key), cs=casosDeBloque(key, ej), n=cs.filter(c=>ya.has(c)).length;
+      const ej=fichaBloque(key), cs=casosDeBloque(key, ej), n=cs.filter(c=>ya.has(_casoCanon(key, c))).length;
       if(ej && n<mejorN){ mejor=ej; mejorN=n; mejorCs=cs; }
       if(!ej || !ya.size || n===0) break;
     }
